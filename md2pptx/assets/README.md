@@ -1,37 +1,43 @@
 # md2pptx
 
-Lightweight Markdown to PowerPoint converter using Effect-TS and pptxgenjs.
+Lightweight Markdown to PowerPoint / HTML slide generator using Effect-TS and pptxgenjs.
 
 ## Overview
 
-`md2pptx` converts Markdown files directly to PPTX using a custom AST, bypassing the heavyweight Markdown → HTML → Playwright → PPTX pipeline used in `md2html2pptx`.
+`md2pptx` converts Markdown directly to PPTX using a custom AST, bypassing the heavyweight
+Markdown → HTML → Playwright → PPTX pipeline used in `md2html2pptx`.
+
+A shared layout engine computes every coordinate once, and both renderers consume the same
+`LayoutResult` — so the HTML preview and the PPTX file place elements identically.
 
 **Pipeline:**
 ```
-Markdown → AST → pptxgenjs → PPTX
+Markdown → AST (parser/) → validated Presentation (schema/) → LayoutResult (renderer/layout/)
+                                                            ├→ .pptx  (renderer/pptx/)
+                                                            └→ .html  (renderer/html/)
 ```
 
-## TODO
-- リーンキャンバス
-- コード表示
-- 表
-- カスタマージャーニー
-- グラフ表示
-- Good/Bad/Hat
-- Mermaid
-- GoogleマテリアルアイコンでMermaidみたいな図解
+## Backlog
 
+See [../BACKLOG.md](../BACKLOG.md) for the feature backlog (prioritized, with acceptance criteria).
 
 ## Features
 
-- Effect-TS functional pipeline with typed errors
-- Direct pptxgenjs API calls (no browser dependency)
-- 240-character validation per slide (excludes MD syntax)
-- Multiple layout types:
-  - **TitleSlide**: Dark background with centered title/subtitle
-  - **DefaultLayout**: Vertical sections
-  - **LeftRightLayout**: Horizontal split with custom ratios
-  - **GridLayout**: M×N grid layout
+- Effect-TS functional pipeline with typed errors (`ParseError`, `ValidationError`, `RenderError`)
+- Direct pptxgenjs API calls — no browser dependency
+- Two output formats from one source: `.pptx` and a self-contained `.html` deck (arrow-key navigation)
+- 3-way verification (`--verify`): AST vs HTML vs PPTX coordinate/text comparison
+- Per-slide character validation (1000 chars by default, excluding Markdown syntax)
+- Bullet and numbered lists rendered as native PPTX bullets / CSS pseudo-elements
+- Inline formatting (`**bold**`, `*italic*`, `` `code` ``) and syntax-highlighted code blocks
+- Material Icons (SVG) and emoji icons
+- YAML themes (`--theme`)
+- 16 layout types:
+  - Core: `TitleSlide`, `Default`, `LeftRight`, `TopBottom`, `Grid`, `CodeDisplay`
+  - Plugins: `IconColumns`, `IconCards`, `Steps`, `NumberedList`, `TextOnly`, `Table`,
+    `Quote`, `Agenda`, `LeanCanvas`, `CustomerJourney`, `PatternLanguage`
+
+See [../SKILL.md](../SKILL.md) for the full Markdown syntax table with directives and examples.
 
 ## Installation
 
@@ -44,21 +50,32 @@ npm install
 ### CLI
 
 ```bash
-# Basic usage (uncompressed)
-npx tsx src/cli.ts input.md output.pptx
-
-# With compression option
-npx tsx src/cli.ts --compress input.md output.pptx
-# or
-npx tsx src/cli.ts -c input.md output.pptx
+npx tsx src/cli.ts input.md output.pptx                  # PPTX
+npx tsx src/cli.ts input.md output.html --html           # HTML deck
+npx tsx src/cli.ts input.md out.html --html --verify     # both + 3-way inventory diff
+npx tsx src/cli.ts input.md output.pptx --theme doc/theme.yaml
+npx tsx src/cli.ts input.md output.pptx --compress
 ```
 
-**Note:** The `--compress` flag enables ZIP compression in pptxgenjs, though actual file size reduction may be minimal for small presentations.
+| Option | Description |
+|--------|-------------|
+| `--html` | Generate HTML instead of PPTX |
+| `--verify` | Generate PPTX + HTML, then compare both against the AST inventory |
+| `--theme <path>`, `-t <path>` | YAML theme file (falls back to `DEFAULT_THEME`) |
+| `--compress`, `-c` | Enable ZIP compression in pptxgenjs (default: off) |
+
+**Note:** `--compress` reduces file size only marginally for small presentations.
+
+Batch mode — convert a directory of drafts into HTML plus an index page:
+
+```bash
+npx tsx src/batch-html.ts <drafts-dir> <htmls-dir>
+```
 
 ### Programmatic
 
 ```typescript
-import { md2pptx } from "./src/index.js"
+import { md2pptx, md2html } from "./src/index.js"
 import { Effect } from "effect"
 import { writeFileSync } from "fs"
 
@@ -67,19 +84,13 @@ Subtitle text
 
 ## Content Slide
 ### Section 1
-Body text here
+- Body bullet
+- Another bullet
 `
 
-// Without compression (default)
 const program = Effect.gen(function* () {
-  const buffer = yield* md2pptx(markdown)
-  writeFileSync("output.pptx", buffer)
-})
-
-// With compression option
-const programCompressed = Effect.gen(function* () {
-  const buffer = yield* md2pptx(markdown, { compression: true })
-  writeFileSync("output.pptx", buffer)
+  writeFileSync("output.pptx", yield* md2pptx(markdown))          // { compression, theme }
+  writeFileSync("output.html", yield* md2html(markdown), "utf-8") // { theme }
 })
 
 Effect.runPromise(program)
@@ -87,25 +98,22 @@ Effect.runPromise(program)
 
 ## Markdown Syntax
 
-### Title Slide
+Full reference: [../SKILL.md](../SKILL.md). The basics:
 
 ```markdown
-# Main Title
+# Main Title            ← title slide
 Subtitle or description
-```
 
-### Content Slide (Default Layout)
+---                     ← slide separator
 
-```markdown
-## Slide Title
+## Slide Title          ← content slide
 ### Section Heading
 Section body text
-
-### Another Section
-More body text
+- bullet item
+1. numbered item
 ```
 
-### Left-Right Layout
+Layouts are selected with HTML-comment directives, e.g.:
 
 ```markdown
 ## Slide Title
@@ -117,32 +125,16 @@ Left content (2/3 width)
 ### Right Heading
 Right content (1/3 width)
 ```
-### Top-Bottom Layout
-
-```markdown
-## Slide Title
-<!--top:4-->
-### Top Heading
-Top content (upper half)
-
-<!--bottom:4-->
-### Bottom Heading
-Bottom content (lower half)
-```
-
-### Grid Layout
 
 ```markdown
 ## Slide Title
 <!--grid:2x3-->
 ### Cell 1
 Content 1
-
-### Cell 2
-Content 2
-
-...6 cells total for 2×3 grid
+...6 cells total for a 2×3 grid
 ```
+
+Append `<!--takeaway-->` at the end of any layout to add a summary/source line.
 
 ## Note: Icons in PPTX
 
@@ -150,90 +142,60 @@ Material Icon（`<!--icon:mi:home-->`）は SVG 画像として PPTX に埋め�
 
 ## Validation
 
-Each slide is limited to 240 characters (excluding Markdown syntax like `#`, `##`, `###`, `<!--...-->`).
+Each slide is limited to **1000 characters** (`MAX_CHARS_PER_SLIDE` in `src/constants.ts`),
+excluding Markdown syntax such as `#`, `##`, `-`, `1.`, `**bold**`, and `<!--...-->`.
+Individual layouts may raise that limit via a plugin's `maxChars` (currently only
+`PatternLanguageOverview`, at 1024).
 
-Exceeding this limit will throw a `ValidationError`:
+For readability, aim for roughly **240 characters** per slide — that is a design guideline,
+not an enforced limit.
+
+Exceeding the limit throws a `ValidationError`:
 
 ```
-Slide 2 exceeds 240 characters (found 186)
+Slide 2 exceeds 1000 characters (found 1183)
 ```
 
 ## Architecture
 
 ```
 src/
-  errors.ts           # Tagged errors (ParseError, ValidationError, RenderError)
-  constants.ts        # Layout constants (margins, fonts, colors)
-  pipeline.ts         # Main md2pptx pipeline
-  parser/
-    tokenizer.ts      # Line-based tokenizer
-    ast-builder.ts    # Token stream → Presentation AST
-    index.ts          # parseMarkdown function
-  schema/
-    presentation.ts   # Effect Schema types (TitleSlide, ContentSlide, etc.)
-    validation.ts     # 240-char validation logic
+  index.ts            Public API (md2pptx, md2html)
+  cli.ts              CLI wrapper (--html, --verify, --theme, --compress)
+  pipeline.ts         parse → validate → render
+  batch-html.ts       drafts/*.md → htmls/*.html + index.html
+  constants.ts        Slide dimensions, margins, gaps, MAX_CHARS_PER_SLIDE
+  errors.ts           Tagged errors (ParseError, ValidationError, RenderError)
+  parser/             Markdown → AST (tokenizer, ast-builder, handlers/,
+                      block-formatter, inline-formatter, slide-converter)
+  schema/             Validated types (presentation.ts, theme.ts, validation.ts)
   renderer/
-    layout-engine.ts  # Coordinate calculation (inches)
-    slide-builder.ts  # AST → pptxgenjs API calls
-    index.ts          # renderPresentation function
+    layout/           Shared layout engine — the single source of coordinates
+    pptx/             LayoutResult → pptxgenjs API calls
+    html/             LayoutResult → inline-styled HTML
+    syntax-highlighter.ts, icon-resolver.ts, icon-mapping.ts
+  plugins/            Self-registering layout plugins (11 registrations)
+  tools/              inventory, html-inspector, pptx-inspector, inventory-diff
 ```
+
+See [../CLAUDE.md](../CLAUDE.md) for the annotated reading order and the plugin/theme mechanics.
 
 ## Testing
 
 ```bash
-npm test
+npm test           # vitest run
+npm run test:watch
 ```
+
+`__tests__/markdown-spec/*.md` holds golden inputs exercised end to end by `e2e.test.ts`.
 
 ## Example
 
-Input (`Spec.md`):
-```markdown
-# タイトルスライド
-追加の解説
+`doc/Spec.md` contains a sample deck covering every layout:
 
-## スライトタイトル
-### 見出しA
-ここには本文Aです
-
-### 見出しB
-ここには本文Bです
-
-## グリッド左右の例
-<!--left:2-->
-### 左
-こちらのエリアの方が広いです
-
-<!--right:1-->
-### 見出し１行目中央
-こちらの本文は
-
-## グリッドの例
-<!--grid:2x3-->
-### 見出し1行目左
-ここには本文Aです
-
-### 見出し１行目中央
-ここには本文Aです
-
-### 見出し１行目右
-ここには本文Aです
-
-### 見出し2行目左
-ここには本文Aです
-
-### 見出し2行目中央
-ここには本文Aです
-
-### 見出し2行目右
-ここには本文Aです
+```bash
+npx tsx src/cli.ts doc/Spec.md doc/Spec.html --html && open doc/Spec.html
 ```
-
-Output:
-- 4 slides in PPTX format
-- Slide 1: Title slide with dark background
-- Slide 2: Default layout with 2 sections
-- Slide 3: Left-right split (2:1 ratio)
-- Slide 4: 2×3 grid
 
 ## License
 

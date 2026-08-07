@@ -40,7 +40,9 @@ src/parser/
 ├── builder-types.ts    ビルダーの型定義
 ├── builder-state.ts    ビルダーの状態管理
 ├── slide-converter.ts  RawSlide → Slide 変換
-└── handlers/           トークンハンドラ (structural, layout-directives, etc.)
+├── block-formatter.ts  body → Paragraph[] 変換 (箇条書き・番号付きリストの解釈)
+├── inline-formatter.ts インライン装飾 (**bold**, *italic*, `code`) → InlineTextRun[]
+└── handlers/           トークンハンドラ (structural, layout-directives, inline, body-text)
 ```
 
 ### 3. Validation: AST → Validated Presentation
@@ -50,7 +52,7 @@ src/schema/
 ├── index.ts            barrel export
 ├── presentation.ts     Plain class 型 (TitleSlide, ContentSlide, コアレイアウト各種)
 ├── theme.ts            Theme 型 + DEFAULT_THEME
-└── validation.ts       240文字制限バリデーション
+└── validation.ts       文字数制限バリデーション (既定 1000文字・プラグインごとに上書き)
 ```
 
 ### 4. Rendering: Validated AST → Output
@@ -63,11 +65,12 @@ src/renderer/
 │
 ├── layout/             ★ 共有レイアウトエンジン (PPTX・HTML 両方が使う)
 │   ├── index.ts        layoutSlide() ディスパッチャ + barrel re-export
-│   ├── types.ts        TextBox, BorderBox, IconBox, CodeBox, ShapeBox, LayoutResult
-│   ├── helpers.ts      buildSectionBoxes, 座標計算ユーティリティ
+│   ├── types.ts        TextBox, BorderBox, IconBox, CodeBox, ShapeBox, Paragraph, LayoutResult
+│   ├── helpers.ts      buildSectionBoxes, estimateTextHeight, 座標計算ユーティリティ
 │   ├── basic.ts        Default, LeftRight, TopBottom, Grid, TitleSlide
-│   ├── visual.ts       IconColumns, IconCards, Steps, NumberedList
 │   └── special.ts      CodeDisplay
+│   ※ IconColumns / IconCards / Steps / NumberedList 等の座標計算は
+│      各プラグインの layout.ts に移動済み (layoutSlide が registry 経由で dispatch)
 │
 ├── pptx/               PPTX レンダラ
 │   ├── index.ts        renderPresentation() — PptxGenJS で書き出し
@@ -104,6 +107,13 @@ src/tools/
 └── inventory-diff.ts  3者比較 (AST vs HTML vs PPTX)
 ```
 
+### 6. Batch: 複数 Markdown の一括 HTML 化
+
+```
+src/batch-html.ts   drafts/*.md → htmls/*.html + index.html 目次ページ生成
+                    (pattern-language ブロックからメタ情報を抽出して目次を作る)
+```
+
 ### Shared: Constants & Errors
 
 ```
@@ -128,7 +138,8 @@ pipe(handlers.map(h => h(input)), A.findFirst(O.isSome), O.flatten, O.getOrElse(
 ## Key Constraints
 
 - スライド区切り: `---`。`#` = タイトルスライド、`##` = コンテンツスライド、`###` = セクション
-- 240文字制限 (Markdown 構文を除く本文+見出し)
+- 箇条書き: `- ` / `* ` / `+ ` (バレット)、`1. ` (番号付き)。`block-formatter.ts` が Paragraph[] に変換し、PPTX はネイティブバレット・HTML は CSS 疑似要素で記号を描く (リテラルの `•` は書かない — 二重表示になる)
+- 文字数制限: 1スライド 1000文字 (`MAX_CHARS_PER_SLIDE`、Markdown 構文を除く本文+見出し)。超過で ValidationError。プラグインは `maxChars` で上書き可 (現状 PatternLanguageOverview のみ 1024)。読みやすさの目安は 240文字程度
 - レイアウト指定: `<!--left:N-->`, `<!--right:M-->`, `<!--grid:RxC-->`, `<!--top:N-->`, `<!--bottom:M-->` 等
 - 新レイアウト追加時: `plugins/` にプラグインフォルダを作成 + `plugins/index.ts` に import 追加
 
@@ -141,20 +152,32 @@ src/plugins/
 ├── types.ts              LayoutPlugin インターフェース + TokenMatcher/TokenHandler/LayoutHandler 型
 ├── registry.ts           registerPlugin() + 派生ルックアップ (getConverters, getLayoutHandlers 等)
 ├── index.ts              side-effect imports でプラグインをロード
-├── lean-canvas/          Tier 1 プラグイン (sectionRoute ベース)
-│   ├── index.ts          自己登録
-│   ├── schema.ts         LeanCanvasLayout
+│
+├── lean-canvas/          `<!--lean-canvas-->` — 各プラグインの標準ファイル構成:
+│   ├── index.ts          自己登録 (registerPlugin 呼び出し)
+│   ├── schema.ts         LeanCanvasLayout (SlideLayout 実装)
 │   ├── handler.ts        ディレクティブハンドラ
 │   ├── converter.ts      RawSlide → LeanCanvasLayout
-│   ├── layout.ts         座標計算
+│   ├── layout.ts         座標計算 (LayoutResult を返す)
 │   └── constants.ts      LEAN_CANVAS_* 定数
-└── customer-journey/     Tier 2 プラグイン (modeHandlers ベース)
-    ├── index.ts          自己登録
-    ├── schema.ts         CustomerJourneyLayout, CustomerJourneyRow, CustomerJourneyCell
-    ├── handler.ts        ディレクティブ + H3/H4/BodyText モードハンドラ
-    ├── converter.ts      RawSlide → CustomerJourneyLayout (ページネーション含む)
-    └── layout.ts         座標計算
+│
+├── customer-journey/     `<!--カスタマージャーニー:-->` (converter がページネーション)
+├── steps/                `<!--steps-->`
+├── numbered-list/        `<!--numbered-list:circle-->` / `<!--numbered-list:bar-->`
+├── icon-layout/          `<!--icon-cols-->` と `<!--icon-cards-->` の**2プラグインを登録**
+├── text-only/            `<!--text-only-->`
+├── table/                `<!--table-->` (shape + text の自力描画)
+├── quote/                `<!--quote-->`
+├── agenda/               `<!--agenda-->`
+└── pattern-language/     `<!--pattern-language-a-->` (1ブロック → Overview + Detail の2スライド)
 ```
+
+10ディレクトリ・**11プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
+
+- `sectionRoute`: `###` セクションを `pluginData` の指定フィールドに集めるだけの標準ルート — lean-canvas, numbered-list, steps, icon-layout, agenda
+- `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ — customer-journey, pattern-language, quote, table, text-only, steps, icon-layout, agenda
+
+(steps / icon-layout / agenda は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる)
 
 **新プラグイン追加**: `plugins/index.ts` に `import "./my-layout/index.js"` を 1 行追加のみ。
 
@@ -168,13 +191,18 @@ src/plugins/
 |---|---|
 | `e2e.test.ts` | 全パイプライン (markdown → .pptx buffer) |
 | `parser.test.ts` | parser/ (AST 構築) |
-| `validation.test.ts` | schema/validation.ts (240文字制限) |
+| `block-formatter.test.ts` | parser/block-formatter.ts (リスト → Paragraph 変換) |
+| `inline-formatting.test.ts` | parser/inline-formatter.ts (**bold** / *italic* / `code`) |
+| `validation.test.ts` | schema/validation.ts (文字数制限) |
 | `layout-engine.test.ts` | renderer/layout/ (座標計算・スナップショット) |
 | `html-renderer.test.ts` | renderer/html/ (HTML 生成・data 属性) |
 | `theme.test.ts` | schema/theme.ts (YAML テーマ読み込み) |
 | `snapshot-comparison.test.ts` | tools/ (インベントリ比較) |
 | `cli.test.ts` | cli.ts (CLI 引数・ファイル出力) |
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
+| `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
+| `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
+| `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |
 | `icon-resolver.test.ts` | renderer/icon-resolver.ts |
 | `syntax-highlighter.test.ts` | renderer/syntax-highlighter.ts |
