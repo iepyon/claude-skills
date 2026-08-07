@@ -58,6 +58,22 @@ describe("pptx-inspector", () => {
     expect(bodyA.color).toBe("1F2937")
   })
 
+  it("should preserve box-level bold on the richText path", async () => {
+    const md = `# T
+---
+## Content
+### 見出し
+本文に**強調**を含む`
+    const inventory = await Effect.runPromise(inspectPptx(await Effect.runPromise(md2pptx(md))))
+
+    // shape-1 = セクション見出し。layout が isBold: true を付けている
+    expect(inventory["slide-1"]["shape-1"].paragraphs[0].bold).toBe(true)
+    // shape-2 = 本文。ボックス自体は太字ではないので先頭 run も太字にならない。
+    // parseParagraph は段落内の最初の <a:rPr> だけを読むため、本文は
+    // インライン強調を後方に置いて先頭 run が素であることを確かめる。
+    expect(inventory["slide-1"]["shape-2"].paragraphs[0].bold).toBeUndefined()
+  })
+
   it("should handle PPTX with multiple slides", async () => {
     const inventory = await Effect.runPromise(inspectPptx(pptxBuffer))
 

@@ -15,15 +15,17 @@ function inlineTextRunsToPptxRuns(
   runs: InlineTextRun[],
   baseFontSize: number,
   baseColor: string,
-  baseFontFace: string
+  baseFontFace: string,
+  baseBold: boolean,
+  baseItalic: boolean
 ): Array<{ text: string; options: any }> {
   return runs.map(run => {
     const options: any = {
       fontSize: baseFontSize,
       color: baseColor,
       fontFace: run.code ? "Courier New" : baseFontFace,
-      bold: run.bold || false,
-      italic: run.italic || false,
+      bold: run.bold || baseBold,
+      italic: run.italic || baseItalic,
     }
 
     // インラインコードには灰色のハイライト（背景色）を追加
@@ -215,7 +217,9 @@ export function buildSlide(pptx: PptxGenJS, slide: Slide, theme: Theme): Effect.
           box.richText,
           box.fontSize || 14,
           box.color || "000000",
-          box.fontFace || theme.fonts.body
+          box.fontFace || theme.fonts.body,
+          box.isBold || false,
+          box.isItalic || false
         )
         pptxSlide.addText(pptxRuns, {
           x: box.x,
