@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest"
+import { Effect, Exit } from "effect"
+import { md2pptx, md2html } from "../src/pipeline.js"
 import { detectOverflow } from "../src/renderer/layout/overflow.js"
 import { layoutSlide } from "../src/renderer/layout/index.js"
 import { ContentSlide, DefaultLayout, TextBlock } from "../src/schema/index.js"
@@ -79,5 +81,43 @@ describe("dispatchLayout font shrinking", () => {
 
     const bodyBox = result.textBoxes.find(b => b.richText && !b.isBold)
     expect(bodyBox!.fontSize).toBe(DEFAULT_THEME.contentSlide.bodySize)
+  })
+})
+
+describe("validateLayout via the pipeline", () => {
+  it("fails with a ValidationError when a slide overflows even at the minimum font size", async () => {
+    // 1000文字制限には収まるが 4x4 グリッドの1セルには到達不能な量
+    const md = `# T
+---
+## Dense
+<!--grid:4x4-->
+${Array.from({ length: 16 }, (_, i) => `### Cell ${i + 1}\n${"あ".repeat(55)}`).join("\n")}`
+
+    const exit = await Effect.runPromiseExit(md2pptx(md))
+    expect(Exit.isFailure(exit)).toBe(true)
+    const message = JSON.stringify(exit)
+    expect(message).toContain("overflow")
+    expect(message).toContain("Slide 2")
+  })
+
+  it("passes slides that fit after shrinking", async () => {
+    const md = `# T
+---
+## Fits after shrink
+### H
+${"あ".repeat(600)}`
+
+    await expect(Effect.runPromise(md2pptx(md))).resolves.toBeInstanceOf(Buffer)
+  })
+
+  it("applies the same check to the HTML path", async () => {
+    const md = `# T
+---
+## Dense
+<!--grid:4x4-->
+${Array.from({ length: 16 }, (_, i) => `### Cell ${i + 1}\n${"あ".repeat(55)}`).join("\n")}`
+
+    const exit = await Effect.runPromiseExit(md2html(md))
+    expect(Exit.isFailure(exit)).toBe(true)
   })
 })

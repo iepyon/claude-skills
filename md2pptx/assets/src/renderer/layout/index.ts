@@ -54,6 +54,7 @@ export {
 
 export { detectOverflow } from "./overflow.js"
 export type { Overflow } from "./overflow.js"
+export { validateLayout } from "./validate-layout.js"
 
 export {
   layoutTitleSlide,
