@@ -20,7 +20,7 @@ const SZ_TO_POINTS = 100
  */
 function extractText(xml: string): string {
   const textMatches = xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)
-  return Array.from(textMatches, (m) => m[1]).join("")
+  return Array.from(textMatches, (m) => m[1]).join("").trim()
 }
 
 /**

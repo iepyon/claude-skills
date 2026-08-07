@@ -29,14 +29,22 @@ export interface PresentationInventory {
   [slideKey: string]: SlideInventory
 }
 
-// Convert TextBox to ParagraphInventory
+// Flatten whichever text representation this box carries into one string per paragraph.
+// Runs are joined without a separator to match pptx-inspector's extractText().
+export function boxToParagraphTexts(box: TextBox): string[] {
+  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
+  return [(box.text ?? "").trim()]
+}
+
+// Convert one paragraph of a TextBox to ParagraphInventory
 function textBoxToParagraph(
   box: TextBox,
+  text: string,
   fontName: string,
   isTitleSlide: boolean
 ): ParagraphInventory {
   const paragraph: ParagraphInventory = {
-    text: box.text,
+    text,
     ...(isTitleSlide ? { alignment: "CENTER" as const } : {}),
     font_name: fontName,
     font_size: box.fontSize ?? 16,
@@ -58,7 +66,9 @@ function textBoxToShape(
     top: box.y,
     width: box.w,
     height: box.h,
-    paragraphs: [textBoxToParagraph(box, fontName, isTitleSlide)],
+    paragraphs: boxToParagraphTexts(box).map((text) =>
+      textBoxToParagraph(box, text, fontName, isTitleSlide)
+    ),
   }
 }
 

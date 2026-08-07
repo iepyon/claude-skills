@@ -79,12 +79,25 @@ const parseInchesAttributes = (element: string): O.Option<{
   )
 }
 
+// &amp; must be decoded last so that "&amp;lt;" yields "&lt;" and not "<".
+const decodeEntities = (text: string): string =>
+  text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+
 /**
- * Extracts text content from HTML element
+ * Extracts text content from an HTML element.
+ *
+ * Strips the outer tag, then all inner markup, so that inline formatting
+ * (<strong>, <em>, <code>) contributes its text instead of truncating the
+ * result at the first child element.
  */
 const extractTextContent = (element: string): string => {
-  const textMatch = element.match(/>([^<]+)</i)
-  return textMatch?.[1]?.trim() ?? ""
+  const inner = element.replace(/^<[^>]*>/, "").replace(/<\/[^>]*>\s*$/, "")
+  return decodeEntities(inner.replace(/<[^>]*>/g, "")).trim()
 }
 
 /**

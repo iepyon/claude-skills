@@ -52,6 +52,13 @@ Content 3
 
 ### Cell 4
 Content 4`,
+
+  "inline-formatting": `# Title Slide
+Subtitle
+---
+## Inline Formatting
+### Section **A**
+Body with **bold**, *italic*, and \`code\``,
 }
 
 describe("Snapshot comparison tests", () => {
@@ -274,6 +281,46 @@ describe("Snapshot comparison tests", () => {
       )
 
       // Compare
+      const diff = diffInventory(pptxInventory, htmlInventory)
+      expect(diff.mismatches).toEqual([])
+    })
+  })
+
+  describe("inline-formatting", () => {
+    const markdown = testCases["inline-formatting"]
+
+    it("should match: reference vs PPTX", async () => {
+      const ast = await Effect.runPromise(parseMarkdown(markdown))
+      const presentation = await Effect.runPromise(validatePresentation(ast))
+      const referenceInventory = await Effect.runPromise(
+        slidesToInventory(presentation.slides, DEFAULT_THEME)
+      )
+      const pptxBuffer = await Effect.runPromise(md2pptx(markdown))
+      const pptxInventory = await Effect.runPromise(inspectPptx(pptxBuffer))
+
+      const diff = diffInventory(referenceInventory, pptxInventory)
+      expect(diff.mismatches).toEqual([])
+    })
+
+    it("should match: reference vs HTML", async () => {
+      const ast = await Effect.runPromise(parseMarkdown(markdown))
+      const presentation = await Effect.runPromise(validatePresentation(ast))
+      const referenceInventory = await Effect.runPromise(
+        slidesToInventory(presentation.slides, DEFAULT_THEME)
+      )
+      const html = await Effect.runPromise(md2html(markdown))
+      const htmlInventory = await Effect.runPromise(extractInventoryFromHtml(html))
+
+      const diff = diffInventory(referenceInventory, htmlInventory)
+      expect(diff.mismatches).toEqual([])
+    })
+
+    it("should match: PPTX vs HTML", async () => {
+      const pptxBuffer = await Effect.runPromise(md2pptx(markdown))
+      const pptxInventory = await Effect.runPromise(inspectPptx(pptxBuffer))
+      const html = await Effect.runPromise(md2html(markdown))
+      const htmlInventory = await Effect.runPromise(extractInventoryFromHtml(html))
+
       const diff = diffInventory(pptxInventory, htmlInventory)
       expect(diff.mismatches).toEqual([])
     })
