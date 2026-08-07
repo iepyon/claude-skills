@@ -214,15 +214,29 @@ export function estimateTextHeight(
   fontSize: number,
   containerWidth: number
 ): number {
+  const lineHeight = (fontSize / 72) * 1.5
+  return Math.max(0.25, countVisualLines(text, fontSize, containerWidth) * lineHeight + 0.05)
+}
+
+/**
+ * 明示的な改行と折返しを合わせた視覚的な行数を返す。
+ *
+ * `estimateTextHeight`（レイアウトの領域確保用、行間 150% で余裕を持たせる）と
+ * `detectOverflow`（はみ出し判定用、1行ぶんを過大に数えない）が同じ折返し規則を
+ * 共有するために切り出してある。
+ */
+export function countVisualLines(
+  text: string,
+  fontSize: number,
+  containerWidth: number
+): number {
   const emWidth = fontSize / 72
-  const lineHeight = emWidth * 1.5
-  const lines = text.split('\n')
   let totalLines = 0
-  for (const line of lines) {
+  for (const line of text.split('\n')) {
     const lineWidth = visualWidthInEm(line) * emWidth
     totalLines += Math.max(1, Math.ceil(lineWidth / containerWidth))
   }
-  return Math.max(0.25, totalLines * lineHeight + 0.05)
+  return totalLines
 }
 
 /**
