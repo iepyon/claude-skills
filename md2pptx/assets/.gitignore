@@ -1,4 +1,5 @@
 node_modules/
 *.pptx
+*.html
 package-lock.json
 dist/
