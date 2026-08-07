@@ -1,0 +1,48 @@
+# Default theme for md2pptx
+#
+# このファイルはデフォルトテーマの定義です。
+# カスタマイズする場合は、このファイルをコピーして編集し、
+# CLI で --theme オプションを使用してください:
+#   npx tsx src/cli.ts input.md output.pptx --theme my-theme.yaml
+#
+# 色は6桁の16進数で指定します（# プレフィックスは任意）
+# 例: "1E293B" または "#1E293B"
+
+fonts:
+  body: "Arial"
+
+titleSlide:
+  background: "1E293B"      # ダークスレート
+  titleColor: "FFFFFF"      # ホワイト
+  titleSize: 32
+  subtitleColor: "94A3B8"   # ミディアムグレー
+  subtitleSize: 18
+
+contentSlide:
+  background: ""            # 背景なし（白）
+  titleColor: "1E3A8A"      # ダークブルー（スライドタイトル ##）
+  titleSize: 22
+  headingColor: "475569"    # スレートグレー（セクション見出し ###）
+  headingSize: 20
+  textColor: "374151"       # ダークグレー（本文）
+  bodySize: 16
+  gridHeadingSize: 10      # LeanCanvas用（セル内見出し）
+  gridBodySize: 9           # LeanCanvas用（セル内本文）
+  takeawaySize: 19          # テイクアウェイ用フォントサイズ
+  takeawayColor: "1E3A8A"    # ダークブルー（テイクアウェイ）
+  iconCardAccentColors:      # アイコンカードのアクセントバー色
+    - "E67E22"               # オレンジ
+    - "0891B2"               # シアン
+    - "7C3AED"               # パープル
+  iconCardBackground: "F8FAFC"  # アイコンカード背景色
+  iconCardHeadingSize: 16    # アイコンカード見出しサイズ
+  iconCardBodySize: 14       # アイコンカード本文サイズ
+
+border:
+  color: "9CA3AF"           # ミディアムグレー
+  width: 1.5
+
+indent:
+  body: 0                   # 本文のインデント（インチ）
+                            # 0 = 見出しと位置を揃える
+                            # 0.08 = 従来の右ずれ表示

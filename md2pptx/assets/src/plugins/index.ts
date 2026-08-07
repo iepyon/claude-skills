@@ -1,0 +1,12 @@
+// Plugin loader — side-effect imports trigger self-registration
+import "./lean-canvas/index.js"
+import "./customer-journey/index.js"
+import "./steps/index.js"
+import "./numbered-list/index.js"
+import "./icon-layout/index.js"
+import "./text-only/index.js"
+import "./table/index.js"
+import "./quote/index.js"
+import "./agenda/index.js"
+import "./pattern-language/index.js"
+// Add new plugins here: import "./my-layout/index.js"

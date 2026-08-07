@@ -1,0 +1,124 @@
+{
+  "slide-0": {
+    "shape-0": {
+      "left": 0.5,
+      "top": 2.31,
+      "width": 9.0,
+      "height": 1.0,
+      "paragraphs": [
+        {
+          "text": "スライドタイトル",
+          "alignment": "CENTER",
+          "font_name": "Arial",
+          "font_size": 32.0,
+          "bold": true,
+          "color": "FFFFFF"
+        }
+      ]
+    }
+  },
+  "slide-1": {
+    "shape-0": {
+      "left": 0.5,
+      "top": 0.3,
+      "width": 9.0,
+      "height": 0.6,
+      "paragraphs": [
+        {
+          "text": "コンテンツスライド",
+          "font_name": "Arial",
+          "font_size": 28.0,
+          "bold": true,
+          "color": "1E40AF"
+        }
+      ]
+    },
+    "shape-1": {
+      "left": 0.5,
+      "top": 1.0,
+      "width": 9.0,
+      "height": 0.3,
+      "paragraphs": [
+        {
+          "text": "見出しA",
+          "font_name": "Arial",
+          "font_size": 18.0,
+          "bold": true,
+          "color": "3B82F6"
+        }
+      ]
+    },
+    "shape-2": {
+      "left": 0.5,
+      "top": 1.5,
+      "width": 9.0,
+      "height": 0.5,
+      "paragraphs": [
+        {
+          "text": "デフォルトレイアウトでは各セクションが縦方向に配置されます。見出しと本文で情報を階層的に整理できます。",
+          "font_name": "Arial",
+          "font_size": 16.0,
+          "color": "1F2937"
+        }
+      ]
+    },
+    "shape-3": {
+      "left": 0.5,
+      "top": 2.4,
+      "width": 9.0,
+      "height": 0.3,
+      "paragraphs": [
+        {
+          "text": "見出しB",
+          "font_name": "Arial",
+          "font_size": 18.0,
+          "bold": true,
+          "color": "3B82F6"
+        }
+      ]
+    },
+    "shape-4": {
+      "left": 0.5,
+      "top": 2.9,
+      "width": 9.0,
+      "height": 0.5,
+      "paragraphs": [
+        {
+          "text": "複数セクションでは適切な間隔で配置され、視覚的バランスを保ちながら情報をまとめられます2",
+          "font_name": "Arial",
+          "font_size": 16.0,
+          "color": "1F2937"
+        }
+      ]
+    },
+    "shape-5": {
+      "left": 0.5,
+      "top": 3.8,
+      "width": 9.0,
+      "height": 0.3,
+      "paragraphs": [
+        {
+          "text": "見出しC",
+          "font_name": "Arial",
+          "font_size": 18.0,
+          "bold": true,
+          "color": "3B82F6"
+        }
+      ]
+    },
+    "shape-6": {
+      "left": 0.5,
+      "top": 4.3,
+      "width": 9.0,
+      "height": 0.5,
+      "paragraphs": [
+        {
+          "text": "複数セクションでは適切な間隔で配置され、視覚的バランスを保ちながら情報をまとめられます3",
+          "font_name": "Arial",
+          "font_size": 16.0,
+          "color": "1F2937"
+        }
+      ]
+    }
+  }
+}
