@@ -31,6 +31,7 @@ registerPlugin({
   id: "icon-cols",
   layoutTag: "IconColumn",
   mode: "icon-cols",
+  docDirective: "<!--icon-cols-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--icon-cols-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "icon-cols", line: lineNum })
@@ -50,6 +51,7 @@ registerPlugin({
   id: "icon-cards",
   layoutTag: "IconCard",
   mode: "icon-cards",
+  docDirective: "<!--icon-cards-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--icon-cards-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "icon-cards", line: lineNum })

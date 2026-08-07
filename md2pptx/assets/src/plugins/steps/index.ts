@@ -30,6 +30,7 @@ registerPlugin({
   id: "steps",
   layoutTag: "Steps",
   mode: "steps",
+  docDirective: "<!--steps-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--steps-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "steps", line: lineNum })

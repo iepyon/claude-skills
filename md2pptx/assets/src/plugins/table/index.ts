@@ -25,6 +25,7 @@ registerPlugin({
   id: "table",
   layoutTag: "Table",
   mode: "table",
+  docDirective: "<!--table-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--table-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "table", line: lineNum })

@@ -24,6 +24,16 @@ export interface LayoutPlugin {
   readonly layoutTag: string             // _tag on SlideLayout, e.g. "LeanCanvas"
   readonly mode: string                  // parser mode value
 
+  /**
+   * The directive users actually type, e.g. "<!--lean-canvas-->".
+   *
+   * Exists for documentation, not for parsing — tokenMatcher owns recognition and keeps
+   * its pattern in a closure, so nothing outside can read it. docs-consistency.test.ts
+   * asserts this string appears in SKILL.md's layout table, which is what stops a newly
+   * added plugin from staying invisible to the Claude that has to use it.
+   */
+  readonly docDirective: string
+
   // Tokenizer: directive recognition
   readonly tokenMatcher: TokenMatcher
 

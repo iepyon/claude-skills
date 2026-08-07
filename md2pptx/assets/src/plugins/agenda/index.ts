@@ -31,6 +31,7 @@ registerPlugin({
   id: "agenda",
   layoutTag: "Agenda",
   mode: "agenda",
+  docDirective: "<!--agenda-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--agenda-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "agenda", line: lineNum })

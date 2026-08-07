@@ -29,6 +29,7 @@ registerPlugin({
   id: "lean-canvas",
   layoutTag: "LeanCanvas",
   mode: "lean-canvas",
+  docDirective: "<!--lean-canvas-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--lean-canvas-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "lean-canvas", line: lineNum })

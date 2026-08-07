@@ -41,6 +41,7 @@ registerPlugin({
   id: "pattern-language",
   layoutTag: "PatternLanguageOverview",
   mode: "pattern-language",
+  docDirective: "<!--pattern-language-a-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--pattern-language-a-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "pattern-language", line: lineNum })

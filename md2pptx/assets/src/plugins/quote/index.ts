@@ -16,6 +16,7 @@ registerPlugin({
   id: "quote",
   layoutTag: "Quote",
   mode: "quote",
+  docDirective: "<!--quote-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--quote-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "quote", line: lineNum })

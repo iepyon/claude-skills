@@ -23,6 +23,7 @@ registerPlugin({
   id: "customer-journey",
   layoutTag: "CustomerJourney",
   mode: "customer-journey",
+  docDirective: "<!--カスタマージャーニー:-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--カスタマージャーニー:-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "customer-journey", line: lineNum })

@@ -16,6 +16,7 @@ registerPlugin({
   id: "text-only",
   layoutTag: "TextOnly",
   mode: "text-only",
+  docDirective: "<!--text-only-->",
   tokenMatcher: (line, lineNum) =>
     line.trim() === "<!--text-only-->"
       ? O.some({ type: "PluginDirective" as const, pluginId: "text-only", line: lineNum })
