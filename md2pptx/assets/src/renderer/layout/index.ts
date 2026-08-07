@@ -17,6 +17,7 @@ import {
 } from "../../constants.js"
 import { Slide, SlideLayout, Theme, DefaultLayout, LeftRightLayout, TopBottomLayout, GridLayout, CodeDisplayLayout } from "../../schema/index.js"
 import { getLayoutHandlers, getTitleFontSize } from "../../plugins/registry.js"
+import { detectOverflow } from "./overflow.js"
 
 // --- Barrel re-exports (preserves all existing import paths) ---
 
@@ -50,6 +51,10 @@ export {
   withTakeaway,
   reservedForTakeaway,
 } from "./helpers.js"
+
+export { detectOverflow } from "./overflow.js"
+export type { Overflow } from "./overflow.js"
+export { validateLayout } from "./validate-layout.js"
 
 export {
   layoutTitleSlide,
@@ -139,8 +144,26 @@ function buildLayoutHandlers(): ReadonlyArray<LayoutHandler> {
   ]
 }
 
-// Dispatch layout to appropriate handler
-function dispatchLayout(
+// テーマのフォントサイズをこの倍率で段階的に下げて再レイアウトを試みる。
+// 下限 6pt は calculateGridSpacing の下限と揃えている。
+const FONT_SCALE_STEPS = [0.9, 0.8, 0.7, 0.6] as const
+const MIN_FONT_SIZE = 6
+
+function scaleThemeFonts(theme: Theme, scale: number): Theme {
+  const scaled = (size: number) => Math.max(MIN_FONT_SIZE, Math.round(size * scale))
+  return {
+    ...theme,
+    contentSlide: {
+      ...theme.contentSlide,
+      headingSize: scaled(theme.contentSlide.headingSize),
+      bodySize: scaled(theme.contentSlide.bodySize),
+      gridHeadingSize: scaled(theme.contentSlide.gridHeadingSize),
+      gridBodySize: scaled(theme.contentSlide.gridBodySize),
+    },
+  }
+}
+
+function dispatchLayoutOnce(
   layout: SlideLayout,
   titleY: number,
   theme: Theme
@@ -152,6 +175,32 @@ function dispatchLayout(
     O.flatten,
     O.getOrElse(() => ({ textBoxes: [] }))
   )
+}
+
+/**
+ * Dispatch layout, shrinking theme font sizes stepwise if the content overflows.
+ *
+ * Only layouts that read font sizes from the theme respond to this (Default,
+ * LeftRight, TopBottom, Grid, LeanCanvas). Plugins with hardcoded sizes get the
+ * same result on every attempt; their overflow is reported by validateLayout
+ * instead of being silently shipped.
+ */
+function dispatchLayout(
+  layout: SlideLayout,
+  titleY: number,
+  theme: Theme
+): LayoutResult {
+  let result = dispatchLayoutOnce(layout, titleY, theme)
+  if (detectOverflow(result).length === 0) return result
+
+  for (const scale of FONT_SCALE_STEPS) {
+    const attempt = dispatchLayoutOnce(layout, titleY, scaleThemeFonts(theme, scale))
+    if (detectOverflow(attempt).length === 0) return attempt
+    result = attempt
+  }
+
+  // 最小サイズでも収まらない。validateLayout が ValidationError にする
+  return result
 }
 
 // --- Slide dispatch ---

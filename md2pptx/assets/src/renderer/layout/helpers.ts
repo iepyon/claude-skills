@@ -12,7 +12,7 @@ import {
   BULLET_INDENT,
 } from "../../constants.js"
 import { TextBlock, Theme } from "../../schema/index.js"
-import { parseInlineFormatting } from "../../parser/inline-formatter.js"
+import { parseInlineFormatting, stripInlineFormatting } from "../../parser/inline-formatter.js"
 import { hasListMarker, parseBlockToParagraphs, stripListMarkers } from "../../parser/block-formatter.js"
 import {
   TextBox,
@@ -181,12 +181,29 @@ export function calculateRowDimensions(
   }
 }
 
+// 全角として数える文字の範囲（CJK 統合漢字・かな・全角記号・全角英数）
+const FULL_WIDTH = /[ᄀ-ᅟ⺀-〾ぁ-㏿㐀-䶿一-鿿ꀀ-꓏가-힣豈-﫿︰-﹯＀-｠￠-￦]/
+
+/**
+ * 1行の視覚的な幅を「全角文字何個ぶんか」で返す。
+ * 半角は 0.5、全角は 1。
+ */
+function visualWidthInEm(line: string): number {
+  let width = 0
+  for (const char of line) {
+    width += FULL_WIDTH.test(char) ? 1 : 0.5
+  }
+  return width
+}
+
 /**
  * Estimate text height based on content length and container width.
  *
  * Algorithm:
- * 1. Approximate character width as fontSize/72 inches (works for CJK and Latin).
- * 2. Line height = fontSize/72 * 1.5 (standard 150% line spacing).
+ * 1. Measure each line in "em" units: full-width chars count 1, half-width 0.5.
+ *    Counting ASCII as full-width over-estimates Latin text by about 2x, which
+ *    would make the overflow check reject correct slides.
+ * 2. Em width = fontSize/72 inches. Line height = em width * 1.5 (150% spacing).
  * 3. For each explicit newline, calculate how many visual lines it wraps to
  *    given the container width.
  * 4. Sum all visual lines, convert to inches, add 0.05" padding.
@@ -197,15 +214,29 @@ export function estimateTextHeight(
   fontSize: number,
   containerWidth: number
 ): number {
-  const charWidth = fontSize / 72        // approximate char width (CJK-safe)
-  const lineHeight = fontSize / 72 * 1.5 // line height in inches
-  const lines = text.split('\n')
+  const lineHeight = (fontSize / 72) * 1.5
+  return Math.max(0.25, countVisualLines(text, fontSize, containerWidth) * lineHeight + 0.05)
+}
+
+/**
+ * 明示的な改行と折返しを合わせた視覚的な行数を返す。
+ *
+ * `estimateTextHeight`（レイアウトの領域確保用、行間 150% で余裕を持たせる）と
+ * `detectOverflow`（はみ出し判定用、1行ぶんを過大に数えない）が同じ折返し規則を
+ * 共有するために切り出してある。
+ */
+export function countVisualLines(
+  text: string,
+  fontSize: number,
+  containerWidth: number
+): number {
+  const emWidth = fontSize / 72
   let totalLines = 0
-  for (const line of lines) {
-    const lineWidth = line.length * charWidth
+  for (const line of text.split('\n')) {
+    const lineWidth = visualWidthInEm(line) * emWidth
     totalLines += Math.max(1, Math.ceil(lineWidth / containerWidth))
   }
-  return Math.max(0.25, totalLines * lineHeight + 0.05)
+  return totalLines
 }
 
 /**
@@ -259,15 +290,21 @@ export function buildSectionBoxes(
 
     const naturalBodyHeights: number[] = sections.map(section => {
       if (!section.body) return 0
-      // 箇条書きはぶら下げインデントのぶん実効幅が狭く、折返しが増える
+      // 実際に描画されるのは parseInlineFormatting 後のテキストなので、
+      // 見積もりでも `**` や `` ` `` を除いた長さで数える
       if (hasListMarker(section.body)) {
+        // 箇条書きはぶら下げインデントのぶん実効幅が狭く、折返しが増える
         return estimateTextHeight(
-          stripListMarkers(section.body),
+          stripInlineFormatting(stripListMarkers(section.body)),
           bodyFontSize,
           textWidth - BULLET_INDENT
         )
       }
-      return estimateTextHeight(section.body, bodyFontSize, textWidth)
+      return estimateTextHeight(
+        stripInlineFormatting(section.body),
+        bodyFontSize,
+        textWidth
+      )
     })
 
     const totalNaturalHeight = naturalBodyHeights.reduce((sum, h) => sum + h, 0)
