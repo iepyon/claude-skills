@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleIconColDirective, handleIconCardDirective, iconLayoutModeHandlers } from "./handler.js"
@@ -31,10 +30,7 @@ registerPlugin({
   id: "icon-cols",
   layoutTag: "IconColumn",
   mode: "icon-cols",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--icon-cols-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "icon-cols", line: lineNum })
-      : O.none(),
+  docDirective: "<!--icon-cols-->",
   directiveHandler: handleIconColDirective,
   sectionRoute: { field: "iconColumns" },
   modeHandlers: iconLayoutModeHandlers,
@@ -50,10 +46,7 @@ registerPlugin({
   id: "icon-cards",
   layoutTag: "IconCard",
   mode: "icon-cards",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--icon-cards-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "icon-cards", line: lineNum })
-      : O.none(),
+  docDirective: "<!--icon-cards-->",
   directiveHandler: handleIconCardDirective,
   sectionRoute: { field: "iconColumns" },
   modeHandlers: iconLayoutModeHandlers,

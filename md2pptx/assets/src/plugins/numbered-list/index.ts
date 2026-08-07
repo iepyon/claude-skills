@@ -30,6 +30,7 @@ registerPlugin({
   id: "numbered-list",
   layoutTag: "NumberedList",
   mode: "numbered-list",
+  docDirective: "<!--numbered-list:circle-->",
   tokenMatcher: (line, lineNum) => {
     const m = line.match(/^<!--numbered-list:(circle|bar)-->$/)
     return m

@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleQuoteDirective, quoteModeHandlers } from "./handler.js"
@@ -16,10 +15,7 @@ registerPlugin({
   id: "quote",
   layoutTag: "Quote",
   mode: "quote",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--quote-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "quote", line: lineNum })
-      : O.none(),
+  docDirective: "<!--quote-->",
   directiveHandler: handleQuoteDirective,
   modeHandlers: quoteModeHandlers,
   converterPriority: 44,

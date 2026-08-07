@@ -1,10 +1,30 @@
+import { Option as O } from "effect"
 import type { LayoutPlugin, TokenMatcher, TokenHandler, LayoutHandler } from "./types.js"
 
-const plugins: LayoutPlugin[] = []
+/** A plugin whose optional fields have been resolved to their derived defaults. */
+type RegisteredPlugin = LayoutPlugin & { readonly tokenMatcher: TokenMatcher }
+
+const plugins: RegisteredPlugin[] = []
+
+/**
+ * Recognize a directive by exact match on the line.
+ *
+ * Every plugin but numbered-list is recognized this way, so deriving the matcher from
+ * the declared directive keeps the string in one place instead of repeating it in each
+ * plugin's closure where nothing could check the two spellings still agree.
+ */
+const directiveMatcher = (directive: string, pluginId: string): TokenMatcher =>
+  (line, lineNum) =>
+    line.trim() === directive
+      ? O.some({ type: "PluginDirective" as const, pluginId, line: lineNum })
+      : O.none()
 
 /** Called by plugins at import time to self-register */
 export function registerPlugin(plugin: LayoutPlugin): void {
-  plugins.push(plugin)
+  plugins.push({
+    ...plugin,
+    tokenMatcher: plugin.tokenMatcher ?? directiveMatcher(plugin.docDirective, plugin.id),
+  })
 }
 
 /** All registered plugins (read-only) */

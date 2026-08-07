@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleTableDirective, tableModeHandlers } from "./handler.js"
@@ -25,10 +24,7 @@ registerPlugin({
   id: "table",
   layoutTag: "Table",
   mode: "table",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--table-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "table", line: lineNum })
-      : O.none(),
+  docDirective: "<!--table-->",
   directiveHandler: handleTableDirective,
   modeHandlers: tableModeHandlers,
   converterPriority: 25,

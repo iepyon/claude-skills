@@ -1,6 +1,6 @@
 ---
 name: md2pptx
-description: Markdown to PowerPoint/HTML slide generator with layout plugins. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 12+ layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, and customer journey. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
+description: Markdown to PowerPoint/HTML slide generator with layout plugins. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 16 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, and pattern language. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
 ---
 
 # md2pptx
@@ -43,7 +43,22 @@ npx tsx src/cli.ts input.md out.html --html --verify  # 3者比較検証
 
 - `#` = タイトルスライド、`##` = コンテンツスライド、`###` = セクション見出し
 - `---` = スライド区切り
-- 各スライド全体で **240文字以内**（Markdown 構文を除く）
+- `- item` / `* item` / `+ item` = 箇条書き、`1. item` = 番号付きリスト（本文中で使用可）
+- 1スライドが **1000文字**を超えると ValidationError（Markdown 構文を除く本文+見出し）。ただし読みやすさのため **240文字程度**に収めることを推奨
+- 上限はレイアウトごとに上書きできる（現状 PatternLanguage の概要ページのみ 1024文字、他は全て 1000文字）
+
+### 箇条書き
+
+```markdown
+## タイトル
+### 見出し
+- 項目A
+- 項目B
+1. 手順1
+2. 手順2
+```
+
+PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素で記号を描画する。**リテラルの `•` を書いてはいけない**（記号が二重に表示される）。
 
 ### レイアウト一覧
 
@@ -64,6 +79,7 @@ npx tsx src/cli.ts input.md out.html --html --verify  # 3者比較検証
 | Agenda | `<!--agenda-->` | TOC/アジェンダ |
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
+| PatternLanguage | `<!--pattern-language-a-->` | パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成 |
 
 ### Takeaway
 
