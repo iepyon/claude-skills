@@ -1327,6 +1327,17 @@ Expected: 検証すべき3点。
     const startAt = first?.bullet?.type === "number" ? first.bullet.startAt : undefined
     const stackStyle = startAt !== undefined ? ` style="counter-reset: para-num ${startAt - 1}"` : ""
 
+    // 段落には html-inspector の parseParagraphStyle が読む属性だけを付ける。
+    // data-shape-id / data-inches-* を付けてはならない（後述の理由）。
+    const paraDataAttrs = [
+      box.fontSize ? `data-font-size="${box.fontSize}"` : "",
+      box.color ? `data-color="${box.color}"` : "",
+      box.isBold ? `data-bold="true"` : "",
+      isTitleSlide || box.align === "center" ? `data-alignment="CENTER"` : "",
+    ]
+      .filter(Boolean)
+      .join(" ")
+
     const items = box.paragraphs
       .map(para => {
         const cls = !para.bullet
@@ -1334,7 +1345,7 @@ Expected: 検証すべき3点。
           : para.bullet.type === "bullet"
             ? "para-bullet"
             : "para-number"
-        return `<p class="${cls}" ${dataAttrs}>${richTextToHtml(para.runs)}</p>`
+        return `<p class="${cls}" ${paraDataAttrs}>${richTextToHtml(para.runs)}</p>`
       })
       .join("")
 
@@ -1347,7 +1358,22 @@ Expected: 検証すべき3点。
 
 `white-space: pre-wrap` を `normal` に落とすのは、段落が個別の `<p>` 要素になったため改行を保持する必要がなく、また `<p>` 間の余白が可視化されるのを防ぐため。
 
-各 `<p>` に `dataAttrs` を付けるのは、`html-inspector.ts:151-157` の段落ループが `parseParagraph` でフォントサイズ・色・太字を読むため。外側の `<div>` と同じ属性を持たせることで、参照側（ボックス単位のフォント情報を全段落に複製する `textBoxToShape`）と一致する。
+**`<p>` に `dataAttrs` をそのまま流用してはならない（実測で確認済み）。** `dataAttrs`（`element-renderers.ts:71-84`）には `data-shape-id` と `data-inches-*` が含まれる。`html-inspector.ts:220-239` の `extractElements` は `regex.exec` のループで走査し、マッチ後の再開位置が**開始タグの直後**（閉じタグの後ではない）なので、外側の `<div data-shape-id="shape-2">` に加えて内側の `<p data-shape-id="shape-2">` も全部マッチする。
+
+実測（`<div data-shape-id="shape-2">` に同属性の `<p>` を2個入れた場合）:
+
+```
+match 1: index=0  tag=<div data-shape-id="shape-2" ...
+match 2: index=47 tag=<p data-shape-id="shape-2" ...
+match 3: index=97 tag=<p data-shape-id="shape-2" ...
+総マッチ数: 3
+```
+
+`shapeData[shape.id] = parsed.value`（`html-inspector.ts:272`）は同じ id で上書きされ、かつ `<p>` が `data-inches-*` を持つと `parseShape` が `O.none()` を返さず成功してしまう。結果、最後の `<p>` が勝ってシェイプの段落数が N ではなく 1 になり、`diffInventory` が `paragraphs.length` の不一致を報告する — `breakLine` の付け方を疑って無駄な調査に入りやすい罠。
+
+`data-shape-id` を `<p>` に付けなければ `extractElements` は外側の div のみを拾い、`parseShape` の `paragraphRegex`（`:151`）が `<p>` の一覧を正しく段落として拾う。これがこの設計が依拠しているメカニズムである。
+
+なお、現状 `data-shape-id` を持つ要素が入れ子になるケースは存在しないため、この `extractElements` のループは一度も踏まれていない。この変更が最初の利用者になる。
 
 - [ ] **Step 8: 文字数カウントからリストマーカーを除外する**
 
@@ -1898,11 +1924,14 @@ export function detectOverflow(result: LayoutResult): Overflow[] {
   const overflows: Overflow[] = []
 
   for (const box of result.textBoxes) {
+    // 下辺・右辺のみを見る。全コアレイアウトが availableHeight を
+    // SLIDE_HEIGHT - titleY - MARGIN_Y で計算しており、この境界を守る前提で
+    // 書かれている。左辺・上辺をデザインマージンで判定すると、独自のオフセットを
+    // 持つプラグイン（customer-journey は自グリッド原点から +0.03 する等）が
+    // 正常なスライドでも失敗する。
     if (
       box.y + box.h > SLIDE_HEIGHT - MARGIN_Y + BOUNDS_EPSILON ||
-      box.x + box.w > SLIDE_WIDTH - MARGIN_X + BOUNDS_EPSILON ||
-      box.y < MARGIN_Y - BOUNDS_EPSILON ||
-      box.x < MARGIN_X - BOUNDS_EPSILON
+      box.x + box.w > SLIDE_WIDTH - MARGIN_X + BOUNDS_EPSILON
     ) {
       overflows.push({ kind: "outOfBounds", box })
       continue
@@ -2336,8 +2365,9 @@ Expected: PASS が望ましいが、**失敗する可能性が高い**。既存�
 1. エラーメッセージの `Slide N` とボックス寸法を読む
 2. 該当ファイルを `npx tsx src/cli.ts __tests__/markdown-spec/<file>.md /tmp/check.html --html` で HTML 化し（この時点では失敗するので、一時的に `pipeline.ts` の `validateLayout` 呼び出しをコメントアウトして生成する）、ブラウザで実際にはみ出しているか目で見る
 3. **実際にはみ出している場合**: ゴールデン入力の該当スライドの本文を短くする。これは検出器が正しく働いた証拠であり、修正すべきはコンテンツ側
-4. **見た目は収まっているのに検出されている場合（誤検出）**: `overflow.ts` の `ESTIMATE_TOLERANCE`（初期値 1.2）を上げる。ただし上げすぎると検出器の意味がなくなるので、1.5 を超える必要がある場合は `estimateTextHeight` の精度自体を見直す
-5. どちらの判断をしたかを次のコミットメッセージに残す
+4. **`textTooTall` なのに見た目は収まっている場合（誤検出）**: `overflow.ts` の `ESTIMATE_TOLERANCE`（初期値 1.2）を上げる。ただし上げすぎると検出器の意味がなくなるので、1.5 を超える必要がある場合は `estimateTextHeight` の精度自体を見直す
+5. **`outOfBounds` がプラグインレイアウトで出ている場合**: 境界の定義が間違っている。`ESTIMATE_TOLERANCE` はこのケースに何の効果もないので触らないこと。該当プラグインがどの座標系でボックスを置いているかを確認し、`detectOverflow` の境界判定を緩める（例: 右辺を `SLIDE_WIDTH - MARGIN_X` ではなく `SLIDE_WIDTH` で判定する）
+6. どの判断をしたかを次のコミットメッセージに残す
 
 - [ ] **Step 8: 全テストを実行する**
 
