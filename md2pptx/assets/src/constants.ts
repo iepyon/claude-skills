@@ -29,3 +29,7 @@ export const CODE_CAPTION_GAP = 0.15
 
 // Validation
 export const MAX_CHARS_PER_SLIDE = 1000
+
+// Bullet lists
+export const BULLET_INDENT = 0.25   // 箇条書きのぶら下げインデント（インチ）
+export const PARA_SPACE_AFTER = 4   // 段落間のスペース（ポイント）

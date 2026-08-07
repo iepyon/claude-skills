@@ -22,6 +22,8 @@ import { getLayoutHandlers, getTitleFontSize } from "../../plugins/registry.js"
 
 export type {
   TextBox,
+  Paragraph,
+  InlineTextRun,
   BorderBox,
   IconBox,
   CodeBox,

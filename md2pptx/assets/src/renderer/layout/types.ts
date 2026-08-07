@@ -9,13 +9,22 @@ export interface InlineTextRun {
   code?: boolean
 }
 
+// 段落。bullet があれば箇条書き項目として描画される。
+// PPTX はネイティブ bullet、HTML は CSS 生成コンテンツで記号を出すため、
+// runs のテキストにリテラルの記号を含めてはならない（二重表示になる）。
+export interface Paragraph {
+  runs: InlineTextRun[]
+  bullet?: { type: "bullet" } | { type: "number"; startAt?: number }
+}
+
 export interface TextBox {
   x: number
   y: number
   w: number
   h: number
   text?: string                    // シンプルテキスト（既存・後方互換用）
-  richText?: InlineTextRun[]       // リッチテキスト（新規）
+  richText?: InlineTextRun[]       // リッチテキスト（単一段落）
+  paragraphs?: Paragraph[]         // 複数段落（箇条書きを含む）
   isBold?: boolean
   isItalic?: boolean
   fontSize?: number
