@@ -8,6 +8,7 @@ import {
 import type { SlideLayout, Theme } from "../../schema/index.js"
 import type { TextBox, BorderBox, ShapeBox, LayoutResult } from "../../renderer/layout/types.js"
 import { reservedForTakeaway, withTakeaway } from "../../renderer/layout/helpers.js"
+import { hasListMarker, parseBlockToParagraphs } from "../../parser/block-formatter.js"
 import { TextOnlyLayout } from "./schema.js"
 
 const PADDING = 0.15
@@ -49,7 +50,9 @@ export function layoutTextOnly(
     y: titleY + PADDING,
     w: contentWidth - ACCENT_BAR_WIDTH - 2 * PADDING,
     h: availableHeight - 2 * PADDING,
-    text: body,
+    ...(hasListMarker(body)
+      ? { paragraphs: parseBlockToParagraphs(body) }
+      : { text: body }),
     fontSize,
     color: theme.contentSlide.textColor,
     valign: "top",

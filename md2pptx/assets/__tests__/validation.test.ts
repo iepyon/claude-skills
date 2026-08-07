@@ -91,4 +91,23 @@ describe("validatePresentation", () => {
     const result = await Effect.runPromiseExit(validatePresentation(pres))
     expect(Exit.isFailure(result)).toBe(true)
   })
+
+  it("does not count list markers toward the character limit", async () => {
+    // 199行 × "- aaaa"（6文字）+ 改行198個 = 1392文字。
+    // マーカー "- " を199回除去すると 1392 - 398 = 994 文字。
+    // タイトル1文字を足して 995 <= 1000 なので通る。
+    // マーカーを数えると 1393 > 1000 で落ちる。
+    const body = Array.from({ length: 199 }, () => "- aaaa").join("\n")
+    const pres = new Presentation({
+      slides: [
+        new ContentSlide({
+          title: "T",
+          layout: new DefaultLayout({ sections: [new TextBlock({ body })] }),
+        }),
+      ],
+    })
+
+    const result = await Effect.runPromiseExit(validatePresentation(pres))
+    expect(Exit.isSuccess(result)).toBe(true)
+  })
 })

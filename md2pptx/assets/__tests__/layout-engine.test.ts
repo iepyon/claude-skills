@@ -14,6 +14,7 @@ import {
   layoutSlide,
   calculateGridSpacing,
 } from "../src/renderer/layout/index.js"
+import { layoutTextOnly } from "../src/plugins/text-only/layout.js"
 import {
   TAKEAWAY_HEIGHT,
   TAKEAWAY_GAP,
@@ -81,6 +82,27 @@ describe("layout-engine baseline snapshots", () => {
       ]
       const result = layoutDefault(sections, 1.0, DEFAULT_THEME)
       expect(result).toMatchSnapshot()
+    })
+
+    it("should emit paragraphs with bullets for a list body", () => {
+      const sections = [new TextBlock({ heading: "H", body: "- first\n- second" })]
+      const result = layoutDefault(sections, 1.0, DEFAULT_THEME)
+
+      const bodyBox = result.textBoxes.find(box => box.paragraphs !== undefined)
+      expect(bodyBox).toBeDefined()
+      expect(bodyBox!.richText).toBeUndefined()
+      expect(bodyBox!.paragraphs).toHaveLength(2)
+      expect(bodyBox!.paragraphs![0].bullet).toEqual({ type: "bullet" })
+      expect(bodyBox!.paragraphs![0].runs.map(r => r.text).join("")).toBe("first")
+    })
+
+    it("should keep non-list bodies on the richText path", () => {
+      const sections = [new TextBlock({ heading: "H", body: "plain body" })]
+      const result = layoutDefault(sections, 1.0, DEFAULT_THEME)
+
+      const bodyBox = result.textBoxes.find(box => box.richText !== undefined && !box.isBold)
+      expect(bodyBox).toBeDefined()
+      expect(bodyBox!.paragraphs).toBeUndefined()
     })
   })
 
@@ -1043,6 +1065,26 @@ describe("layout-engine baseline snapshots", () => {
         expect(iconY).toBeLessThan(boxY)
         expect(boxY).toBeLessThan(descY)
       }
+    })
+  })
+
+  describe("layoutTextOnly", () => {
+    it("should emit paragraphs with bullets for a list body", () => {
+      const result = layoutTextOnly("- alpha\n- beta", undefined, 1.0, DEFAULT_THEME)
+
+      const box = result.textBoxes.find(b => b.paragraphs !== undefined)
+      expect(box).toBeDefined()
+      expect(box!.text).toBeUndefined()
+      expect(box!.paragraphs).toHaveLength(2)
+      expect(box!.paragraphs![1].runs.map(r => r.text).join("")).toBe("beta")
+    })
+
+    it("should keep non-list bodies on the plain text path", () => {
+      const result = layoutTextOnly("plain prose", undefined, 1.0, DEFAULT_THEME)
+
+      const box = result.textBoxes[0]
+      expect(box.text).toBe("plain prose")
+      expect(box.paragraphs).toBeUndefined()
     })
   })
 })

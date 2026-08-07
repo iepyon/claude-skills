@@ -17,23 +17,26 @@ export function hasListMarker(body: string): boolean {
 /**
  * body を段落配列に変換する。リストマーカーは除去し、bullet として構造化する。
  *
- * 番号付きリストの startAt は連続グループの先頭にのみ付ける。全項目に付けると
- * pptxgenjs が段落ごとに番号をリセットしうるため。
+ * 番号付き項目の `startAt` には**その項目自身の番号**を必ず入れる（Markdown に
+ * 書かれた数値をそのまま使う）。実測（pptxgenjs 3.x）で確認した理由:
+ *
+ * - `bullet: { type: "number" }` を startAt 抜きで渡すと、pptxgenjs は
+ *   `<a:buAutoNum startAt="1"/>` を出す。つまり「省略」は継続ではなく 1 への
+ *   リセットとして出力される。
+ * - 全項目に自身の番号を入れておけば、PowerPoint が per-paragraph の startAt を
+ *   「その項目からの振り直し」と解釈しても、同レベル連続段落を1つのリストとして
+ *   「継続」と解釈しても、どちらでも同じ番号が出る。
  */
 export function parseBlockToParagraphs(body: string): Paragraph[] {
   const paragraphs: Paragraph[] = []
-  let prevWasOrdered = false
 
   for (const line of body.split("\n")) {
     const ordered = line.match(ORDERED)
     if (ordered) {
       paragraphs.push({
         runs: parseInlineFormatting(ordered[2]),
-        bullet: prevWasOrdered
-          ? { type: "number" }
-          : { type: "number", startAt: parseInt(ordered[1], 10) },
+        bullet: { type: "number", startAt: parseInt(ordered[1], 10) },
       })
-      prevWasOrdered = true
       continue
     }
 
@@ -43,12 +46,10 @@ export function parseBlockToParagraphs(body: string): Paragraph[] {
         runs: parseInlineFormatting(unordered[1]),
         bullet: { type: "bullet" },
       })
-      prevWasOrdered = false
       continue
     }
 
     paragraphs.push({ runs: parseInlineFormatting(line) })
-    prevWasOrdered = false
   }
 
   return paragraphs

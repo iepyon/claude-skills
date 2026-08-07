@@ -32,6 +32,9 @@ export interface PresentationInventory {
 // Flatten whichever text representation this box carries into one string per paragraph.
 // Runs are joined without a separator to match pptx-inspector's extractText().
 export function boxToParagraphTexts(box: TextBox): string[] {
+  if (box.paragraphs) {
+    return box.paragraphs.map((para) => para.runs.map((run) => run.text).join("").trim())
+  }
   if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
   return [(box.text ?? "").trim()]
 }

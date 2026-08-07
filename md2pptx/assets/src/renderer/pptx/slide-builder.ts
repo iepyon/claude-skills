@@ -1,11 +1,29 @@
 import PptxGenJS from "pptxgenjs"
 import { Effect } from "effect"
 import { RenderError } from "../../errors.js"
+import { PARA_SPACE_AFTER } from "../../constants.js"
 import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
 import { resolveIconOrFallback } from "../icon-resolver.js"
 import { codeTextRunsToPptxRuns } from "../syntax-highlighter.js"
-import type { InlineTextRun } from "../layout/types.js"
+import type { InlineTextRun, Paragraph } from "../layout/types.js"
+
+/**
+ * Paragraph.bullet → pptxgenjs の bullet オプション。
+ *
+ * 実測で確認した2点（pptxgenjs 3.x、`types/index.d.ts` の記述とは異なる）:
+ * - `{ type: "bullet" }` は **無視される**（buChar が一切出ない）。素の箇条書きは
+ *   `true` を渡さなければならない。型定義は 'bullet' を受け付けると書いているが
+ *   ランタイムは見ていない。
+ * - 番号の開始値は `numberStartAt`。`startAt` は v3.3.0 で deprecated。
+ */
+function bulletToPptxOption(bullet: NonNullable<Paragraph["bullet"]>): unknown {
+  if (bullet.type === "bullet") return true
+  return {
+    type: "number",
+    ...(bullet.startAt !== undefined ? { numberStartAt: bullet.startAt } : {}),
+  }
+}
 
 /**
  * InlineTextRun[] → pptxgenjs TextRun[] への変換
@@ -211,8 +229,41 @@ export function buildSlide(pptx: PptxGenJS, slide: Slide, theme: Theme): Effect.
       const align = box.align === "center" ? "center" : (slide._tag === "TitleSlide" ? "center" : "left")
       const valign = box.valign || (box.align === "center" ? "middle" : (slide._tag === "TitleSlide" ? "middle" : "top"))
 
-      // richText がある場合は TextRun[] で描画
-      if (box.richText) {
+      // paragraphs がある場合は段落ごとに bullet/breakLine を付けて描画
+      if (box.paragraphs) {
+        const paras = box.paragraphs
+        const pptxRuns = paras.flatMap((para, paraIndex) => {
+          const runs = inlineTextRunsToPptxRuns(
+            para.runs,
+            box.fontSize || 14,
+            box.color || "000000",
+            box.fontFace || theme.fonts.body,
+            box.isBold || false,
+            box.isItalic || false
+          )
+          const isLastPara = paraIndex === paras.length - 1
+          return runs.map((run, runIndex) => ({
+            text: run.text,
+            options: {
+              ...run.options,
+              // bullet は段落プロパティ。同一段落の全 run に付けて取りこぼしを防ぐ
+              ...(para.bullet ? { bullet: bulletToPptxOption(para.bullet) } : {}),
+              // 最終 run に breakLine を立てると次の段落が始まる
+              ...(runIndex === runs.length - 1 && !isLastPara ? { breakLine: true } : {}),
+            },
+          }))
+        })
+        pptxSlide.addText(pptxRuns, {
+          x: box.x,
+          y: box.y,
+          w: box.w,
+          h: box.h,
+          align,
+          valign,
+          paraSpaceAfter: PARA_SPACE_AFTER,
+          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
+        })
+      } else if (box.richText) {
         const pptxRuns = inlineTextRunsToPptxRuns(
           box.richText,
           box.fontSize || 14,

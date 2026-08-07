@@ -9,9 +9,11 @@ import {
   BODY_HEIGHT,
   TAKEAWAY_HEIGHT,
   TAKEAWAY_GAP,
+  BULLET_INDENT,
 } from "../../constants.js"
 import { TextBlock, Theme } from "../../schema/index.js"
 import { parseInlineFormatting } from "../../parser/inline-formatter.js"
+import { hasListMarker, parseBlockToParagraphs, stripListMarkers } from "../../parser/block-formatter.js"
 import {
   TextBox,
   LayoutResult,
@@ -255,9 +257,18 @@ export function buildSectionBoxes(
     const bodyFontSize = context.theme.contentSlide.bodySize
     const textWidth = context.contentWidth - 2 * context.padding - context.theme.indent.body
 
-    const naturalBodyHeights: number[] = sections.map(section =>
-      section.body ? estimateTextHeight(section.body, bodyFontSize, textWidth) : 0
-    )
+    const naturalBodyHeights: number[] = sections.map(section => {
+      if (!section.body) return 0
+      // 箇条書きはぶら下げインデントのぶん実効幅が狭く、折返しが増える
+      if (hasListMarker(section.body)) {
+        return estimateTextHeight(
+          stripListMarkers(section.body),
+          bodyFontSize,
+          textWidth - BULLET_INDENT
+        )
+      }
+      return estimateTextHeight(section.body, bodyFontSize, textWidth)
+    })
 
     const totalNaturalHeight = naturalBodyHeights.reduce((sum, h) => sum + h, 0)
 
@@ -304,7 +315,9 @@ export function buildSectionBoxes(
         y: currentY,
         w: context.contentWidth - 2 * context.padding - context.theme.indent.body,
         h: bodyH,
-        richText: parseInlineFormatting(section.body),
+        ...(hasListMarker(section.body)
+          ? { paragraphs: parseBlockToParagraphs(section.body) }
+          : { richText: parseInlineFormatting(section.body) }),
         fontSize: context.theme.contentSlide.bodySize,
         color: context.theme.contentSlide.textColor,
         valign: "top",

@@ -56,9 +56,12 @@ const extractTextFromMarkdown = (markdown: string): string[] => {
     }
     // Extract body text (non-heading lines with content)
     else if (trimmed.length > 0) {
-      // In customer-journey mode, parser strips "- " and layout adds "• " prefix
-      if (inCustomerJourney && trimmed.startsWith("- ")) {
-        texts.push(`• ${trimmed.slice(2)}`)
+      // List markers never survive into the output: customer-journey strips "- " and
+      // re-adds a literal "• " in its layout, while every other layout renders native
+      // PPTX bullets / CSS glyphs, neither of which appears in the extracted text.
+      const listMatch = trimmed.match(/^(?:[-*+]|\d+\.)\s+(.*)$/)
+      if (listMatch) {
+        texts.push(inCustomerJourney ? `• ${listMatch[1]}` : listMatch[1])
       } else {
         texts.push(trimmed)
       }

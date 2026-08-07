@@ -83,6 +83,44 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     .filter(Boolean)
     .join(" ")
 
+  // paragraphs がある場合は段落ごとに <p> を出す。
+  // バレット記号は CSS の ::before で描画するため DOM テキストには含まれない
+  // （PPTX のネイティブバレットと抽出結果を一致させるため）。
+  if (box.paragraphs) {
+    // 段落には html-inspector の parseParagraphStyle が読む属性だけを付ける。
+    // data-shape-id / data-inches-* を付けてはならない: extractElements は
+    // 開始タグの直後から走査を再開するため、内側の <p> も同じ shape id で
+    // マッチしてシェイプを上書きし、段落数が N ではなく 1 になる。
+    const paraDataAttrs = [
+      box.fontSize ? `data-font-size="${box.fontSize}"` : "",
+      box.color ? `data-color="${box.color}"` : "",
+      box.isBold ? `data-bold="true"` : "",
+      isTitleSlide || box.align === "center" ? `data-alignment="CENTER"` : "",
+    ]
+      .filter(Boolean)
+      .join(" ")
+
+    const items = box.paragraphs
+      .map(para => {
+        if (!para.bullet) {
+          return `<p class="para-plain" ${paraDataAttrs}>${richTextToHtml(para.runs)}</p>`
+        }
+        if (para.bullet.type === "bullet") {
+          return `<p class="para-bullet" ${paraDataAttrs}>${richTextToHtml(para.runs)}</p>`
+        }
+        // 番号付き: この項目自身の番号を counter-reset で宣言し、
+        // .para-number の counter-increment がそれを +1 して確定させる。
+        const startAt = para.bullet.startAt ?? 1
+        return `<p class="para-number" style="counter-reset: para-num ${startAt - 1}" ${paraDataAttrs}>${richTextToHtml(para.runs)}</p>`
+      })
+      .join("")
+
+    // display: flex の子は1つに保つ。段落は stack 側で縦に積む。
+    // 段落が個別の <p> になったので改行の保持は不要（<p> 間の余白の可視化も防ぐ）。
+    const listStyle = style.replace("white-space: pre-wrap", "white-space: normal")
+    return `<div class="text-box" style="${listStyle}" ${dataAttrs}><div class="para-stack">${items}</div></div>`
+  }
+
   // richText がある場合は HTML タグでレンダリング
   const content = box.richText
     ? richTextToHtml(box.richText)

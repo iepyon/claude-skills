@@ -8,6 +8,8 @@ import { getValidationConfig } from "../plugins/registry.js"
 function countPlainTextChars(text: string): number {
   return text
     .replace(/^#+\s+/gm, "") // # ## ###
+    .replace(/^\s*[-*+]\s+/gm, "")    // - item / * item / + item
+    .replace(/^\s*\d+\.\s+/gm, "")    // 1. item
     .replace(/<!--.*?-->/gs, "") // HTML comments
     .replace(/`(.+?)`/g, '$1')        // `code` → code
     .replace(/\*\*(.+?)\*\*/g, '$1')  // **bold** → bold

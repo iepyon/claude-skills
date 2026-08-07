@@ -8,6 +8,7 @@ import { inspectPptx } from "../src/tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "../src/tools/html-inspector.js"
 import { diffInventory } from "../src/tools/inventory-diff.js"
 import { DEFAULT_THEME } from "../src/schema/theme.js"
+import JSZip from "jszip"
 
 // Test markdown samples
 const testCases = {
@@ -59,6 +60,14 @@ Subtitle
 ## Inline Formatting
 ### Section **A**
 Body with **bold**, *italic*, and \`code\``,
+
+  "bullet-list": `# Title Slide
+Subtitle
+---
+## Bullet List
+### Items
+- first item
+- second item with **bold**`,
 }
 
 describe("Snapshot comparison tests", () => {
@@ -323,6 +332,58 @@ describe("Snapshot comparison tests", () => {
 
       const diff = diffInventory(pptxInventory, htmlInventory)
       expect(diff.mismatches).toEqual([])
+    })
+  })
+
+  describe("bullet-list", () => {
+    const markdown = testCases["bullet-list"]
+
+    it("should match: reference vs PPTX", async () => {
+      const ast = await Effect.runPromise(parseMarkdown(markdown))
+      const presentation = await Effect.runPromise(validatePresentation(ast))
+      const referenceInventory = await Effect.runPromise(
+        slidesToInventory(presentation.slides, DEFAULT_THEME)
+      )
+      const pptxBuffer = await Effect.runPromise(md2pptx(markdown))
+      const pptxInventory = await Effect.runPromise(inspectPptx(pptxBuffer))
+
+      const diff = diffInventory(referenceInventory, pptxInventory)
+      expect(diff.mismatches).toEqual([])
+    })
+
+    it("should match: reference vs HTML", async () => {
+      const ast = await Effect.runPromise(parseMarkdown(markdown))
+      const presentation = await Effect.runPromise(validatePresentation(ast))
+      const referenceInventory = await Effect.runPromise(
+        slidesToInventory(presentation.slides, DEFAULT_THEME)
+      )
+      const html = await Effect.runPromise(md2html(markdown))
+      const htmlInventory = await Effect.runPromise(extractInventoryFromHtml(html))
+
+      const diff = diffInventory(referenceInventory, htmlInventory)
+      expect(diff.mismatches).toEqual([])
+    })
+
+    it("should match: PPTX vs HTML", async () => {
+      const pptxBuffer = await Effect.runPromise(md2pptx(markdown))
+      const pptxInventory = await Effect.runPromise(inspectPptx(pptxBuffer))
+      const html = await Effect.runPromise(md2html(markdown))
+      const htmlInventory = await Effect.runPromise(extractInventoryFromHtml(html))
+
+      const diff = diffInventory(pptxInventory, htmlInventory)
+      expect(diff.mismatches).toEqual([])
+    })
+
+    it("should not embed a literal bullet glyph in either output", async () => {
+      const html = await Effect.runPromise(md2html(markdown))
+      expect(html).not.toContain("• first item")
+
+      const pptxBuffer = await Effect.runPromise(md2pptx(markdown))
+      const zip = await JSZip.loadAsync(pptxBuffer)
+      const slideXml = await zip.files["ppt/slides/slide2.xml"].async("string")
+      expect(slideXml).not.toContain("<a:t>• first item</a:t>")
+      // ネイティブバレットが入っていること
+      expect(slideXml).toMatch(/<a:buChar|<a:buAutoNum/)
     })
   })
 })

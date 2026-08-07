@@ -25,10 +25,12 @@ describe("parseBlockToParagraphs", () => {
     expect(result[1].runs.map(r => r.text).join("")).toBe("second")
   })
 
-  it("carries startAt on the first item of a numbered group only", () => {
+  // startAt は「その項目自身の番号」。省略すると pptxgenjs が startAt="1" を
+  // 出してしまい 3, 1 と描画されるため、全項目に明示する（block-formatter.ts 参照）。
+  it("carries each numbered item's own ordinal in startAt", () => {
     const result = parseBlockToParagraphs("3. three\n4. four")
     expect(result[0].bullet).toEqual({ type: "number", startAt: 3 })
-    expect(result[1].bullet).toEqual({ type: "number" })
+    expect(result[1].bullet).toEqual({ type: "number", startAt: 4 })
   })
 
   it("restarts numbering after a non-list line", () => {

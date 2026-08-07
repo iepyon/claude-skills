@@ -107,6 +107,17 @@ export function generateHtml(slidesHtml: string[], theme: Theme): string {
       cursor: not-allowed;
     }
 
+    /* 箇条書き。記号は ::before で描画するため DOM テキストには現れない
+       （PPTX のネイティブバレットと抽出結果を一致させるため）。 */
+    .para-stack { width: 100%; }
+    .para-stack > p { margin: 0; }
+    .para-bullet, .para-number { padding-left: 0.25in; text-indent: -0.25in; }
+    .para-bullet::before { content: "\\2022  "; }
+    /* 各項目が自分の番号を counter-reset で宣言し、increment で確定させる。
+       非リスト行を挟んでも番号が狂わない。 */
+    .para-number { counter-increment: para-num; }
+    .para-number::before { content: counter(para-num) ". "; }
+
 ${SYNTAX_HIGHLIGHT_CSS}
   </style>
 </head>
