@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleLeanCanvasDirective } from "./handler.js"
@@ -30,10 +29,6 @@ registerPlugin({
   layoutTag: "LeanCanvas",
   mode: "lean-canvas",
   docDirective: "<!--lean-canvas-->",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--lean-canvas-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "lean-canvas", line: lineNum })
-      : O.none(),
   directiveHandler: handleLeanCanvasDirective,
   sectionRoute: { field: "leanCanvasBlocks" },
   converterPriority: 80,

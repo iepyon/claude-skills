@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleAgendaDirective, agendaModeHandlers } from "./handler.js"
@@ -32,10 +31,6 @@ registerPlugin({
   layoutTag: "Agenda",
   mode: "agenda",
   docDirective: "<!--agenda-->",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--agenda-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "agenda", line: lineNum })
-      : O.none(),
   directiveHandler: handleAgendaDirective,
   sectionRoute: { field: "agendaItems" },
   modeHandlers: agendaModeHandlers,

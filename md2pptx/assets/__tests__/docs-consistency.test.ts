@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { readFileSync, readdirSync, existsSync } from "fs"
+import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
 import { getPlugins } from "../src/plugins/registry.js"
 import { MAX_CHARS_PER_SLIDE } from "../src/constants.js"
@@ -30,8 +30,8 @@ const read = (path: string): string => readFileSync(path, "utf-8")
  */
 const layoutTableRows = (skill: string): string[] => {
   const table = skill.match(/### レイアウト一覧\n\n([\s\S]*?)\n\n/)
-  expect(table, "SKILL.md must have a レイアウト一覧 table").not.toBeNull()
-  return table![1]
+  if (!table) throw new Error("SKILL.md must have a レイアウト一覧 table")
+  return table[1]
     .split("\n")
     .filter((line) => line.startsWith("|") && !/^\|\s*-+/.test(line))
     .slice(1) // ヘッダ行を除く
@@ -41,9 +41,8 @@ describe("docs consistency", () => {
   it("SKILL.md's layout table lists every registered plugin directive", () => {
     const rows = layoutTableRows(read(SKILL_MD)).join("\n")
 
-    // 登録が0件なら以下の照合は空振りで緑になる。plugins/index.ts から
-    // プラグインが1つ落ちた場合もここで気付ける（icon-layout は2つ登録するので 10 ディレクトリ = 11 登録）
-    expect(getPlugins().length).toBe(11)
+    // 登録が0件なら以下の照合は空振りで緑になる（件数そのものは次のテストがドキュメントと突き合わせる）
+    expect(getPlugins().length).toBeGreaterThan(0)
 
     const undocumented = getPlugins()
       .filter((p) => !rows.includes(p.docDirective))
@@ -59,26 +58,53 @@ describe("docs consistency", () => {
     }
   })
 
+  it("docs name every plugin that overrides the character limit", () => {
+    // 「PatternLanguageOverview のみ 1024、他は全て 1000」という記述は、上書きが
+    // 増減しても上の 1000 チェックでは落ちない。上書きしているプラグインを列挙して突き合わせる。
+    const overrides = getPlugins().filter((p) => p.maxChars !== MAX_CHARS_PER_SLIDE)
+
+    for (const p of overrides) {
+      for (const path of [SKILL_MD, CLAUDE_MD, ASSETS_README]) {
+        expect(read(path), `${path} must mention ${p.id}'s ${p.maxChars}-char limit`).toContain(
+          String(p.maxChars)
+        )
+      }
+      // レイアウト名は日英で表記が揺れる SKILL.md を除き、実タグ名で書かれていること
+      for (const path of [CLAUDE_MD, ASSETS_README]) {
+        expect(read(path), `${path} must name the overriding layout`).toContain(p.layoutTag)
+      }
+    }
+  })
+
+  it("CLAUDE.md and README state the current plugin count", () => {
+    const pluginDirs = readdirSync(join(ASSETS_DIR, "src", "plugins"), {
+      withFileTypes: true,
+    }).filter((e) => e.isDirectory())
+
+    // icon-layout が2つ登録するのでディレクトリ数と登録数は一致しない。どちらも
+    // ドキュメントが数字で書いているため、プラグイン追加時に両方の更新を強制する。
+    expect(read(CLAUDE_MD)).toContain(`${pluginDirs.length}ディレクトリ`)
+    expect(read(CLAUDE_MD)).toContain(`${getPlugins().length}プラグイン登録`)
+    expect(read(ASSETS_README)).toContain(`(${getPlugins().length} registrations)`)
+  })
+
   it("docs never reference a .ts file that does not exist", () => {
     // src/ 配下・__tests__ 配下・assets 直下のいずれかに同名ファイルがあればよい。
     // ツリー図のインデントやパス表記の揺れに強くするため basename で照合する。
-    const known = new Set<string>()
-    const walk = (dir: string): void => {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        if (entry.name === "node_modules") continue
-        if (entry.isDirectory()) walk(join(dir, entry.name))
-        else if (entry.name.endsWith(".ts")) known.add(entry.name)
-      }
-    }
-    walk(join(ASSETS_DIR, "src"))
-    walk(join(ASSETS_DIR, "__tests__"))
-    for (const entry of readdirSync(ASSETS_DIR)) {
-      if (entry.endsWith(".ts")) known.add(entry)
-    }
+    const basename = (path: string): string => path.split("/").pop()!
+    const known = new Set(
+      [
+        ...readdirSync(join(ASSETS_DIR, "src"), { recursive: true }),
+        ...readdirSync(join(ASSETS_DIR, "__tests__"), { recursive: true }),
+        ...readdirSync(ASSETS_DIR),
+      ]
+        .map((entry) => basename(String(entry)))
+        .filter((name) => name.endsWith(".ts"))
+    )
 
     for (const path of [CLAUDE_MD, ASSETS_README]) {
       const mentioned = new Set(read(path).match(/[\w.-]+\.ts\b/g) ?? [])
-      const missing = [...mentioned].filter((name) => !known.has(name.split("/").pop()!))
+      const missing = [...mentioned].filter((name) => !known.has(basename(name)))
       expect(missing, `${path} references nonexistent files`).toEqual([])
     }
   })

@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleTextOnlyDirective, textOnlyModeHandlers } from "./handler.js"
@@ -17,10 +16,6 @@ registerPlugin({
   layoutTag: "TextOnly",
   mode: "text-only",
   docDirective: "<!--text-only-->",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--text-only-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "text-only", line: lineNum })
-      : O.none(),
   directiveHandler: handleTextOnlyDirective,
   modeHandlers: textOnlyModeHandlers,
   converterPriority: 45,

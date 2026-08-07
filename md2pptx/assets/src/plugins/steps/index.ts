@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleStepsDirective, stepsModeHandlers } from "./handler.js"
@@ -31,10 +30,6 @@ registerPlugin({
   layoutTag: "Steps",
   mode: "steps",
   docDirective: "<!--steps-->",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--steps-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "steps", line: lineNum })
-      : O.none(),
   directiveHandler: handleStepsDirective,
   sectionRoute: { field: "stepsData" },
   modeHandlers: stepsModeHandlers,

@@ -179,6 +179,10 @@ src/plugins/
 
 (steps / icon-layout / agenda は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる)
 
+ディレクティブは `docDirective` に1度だけ宣言する。`registerPlugin()` がそこから完全一致の
+`tokenMatcher` を導出するので、**通常 `tokenMatcher` は書かない**。手書きするのは認識が
+リテラル1本で表せない場合のみ (numbered-list の `circle|bar` 正規表現が唯一の例)。
+
 **新プラグイン追加**: `plugins/index.ts` に `import "./my-layout/index.js"` を 1 行追加のみ。
 
 ## Theme System

@@ -27,15 +27,23 @@ export interface LayoutPlugin {
   /**
    * The directive users actually type, e.g. "<!--lean-canvas-->".
    *
-   * Exists for documentation, not for parsing — tokenMatcher owns recognition and keeps
-   * its pattern in a closure, so nothing outside can read it. docs-consistency.test.ts
-   * asserts this string appears in SKILL.md's layout table, which is what stops a newly
-   * added plugin from staying invisible to the Claude that has to use it.
+   * Single source of truth for the directive: `registerPlugin` derives `tokenMatcher`
+   * from this string, and docs-consistency.test.ts asserts it appears in SKILL.md's
+   * layout table — so parsing and documentation cannot drift apart, and a newly added
+   * plugin cannot stay invisible to the Claude that has to use it.
    */
   readonly docDirective: string
 
-  // Tokenizer: directive recognition
-  readonly tokenMatcher: TokenMatcher
+  /**
+   * Tokenizer: directive recognition. **Omit it** — the registry derives an exact-match
+   * matcher from `docDirective`, which covers every plugin but one.
+   *
+   * Supply one only when recognition is genuinely richer than a single literal, as with
+   * numbered-list's `<!--numbered-list:(circle|bar)-->`. A hand-written matcher takes
+   * over recognition completely, so `docDirective` then only documents the canonical
+   * spelling.
+   */
+  readonly tokenMatcher?: TokenMatcher
 
   // Parser: directive handler
   readonly directiveHandler: TokenHandler

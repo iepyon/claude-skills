@@ -1,4 +1,3 @@
-import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handlePatternLanguageDirective, patternLanguageModeHandlers } from "./handler.js"
@@ -42,10 +41,6 @@ registerPlugin({
   layoutTag: "PatternLanguageOverview",
   mode: "pattern-language",
   docDirective: "<!--pattern-language-a-->",
-  tokenMatcher: (line, lineNum) =>
-    line.trim() === "<!--pattern-language-a-->"
-      ? O.some({ type: "PluginDirective" as const, pluginId: "pattern-language", line: lineNum })
-      : O.none(),
   directiveHandler: handlePatternLanguageDirective,
   modeHandlers: patternLanguageModeHandlers,
   converterPriority: 15,
