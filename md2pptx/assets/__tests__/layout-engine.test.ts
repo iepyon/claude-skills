@@ -13,6 +13,7 @@ import {
   layoutContentSlide,
   layoutSlide,
   calculateGridSpacing,
+  estimateTextHeight,
 } from "../src/renderer/layout/index.js"
 import { layoutTextOnly } from "../src/plugins/text-only/layout.js"
 import {
@@ -1065,6 +1066,34 @@ describe("layout-engine baseline snapshots", () => {
         expect(iconY).toBeLessThan(boxY)
         expect(boxY).toBeLessThan(descY)
       }
+    })
+  })
+
+  describe("estimateTextHeight", () => {
+    it("counts half-width characters as half the width of full-width ones", () => {
+      const ascii = estimateTextHeight("a".repeat(40), 16, 2.0)
+      const cjk = estimateTextHeight("あ".repeat(40), 16, 2.0)
+      expect(ascii).toBeLessThan(cjk)
+    })
+
+    it("wraps ASCII at roughly twice the characters per line as CJK", () => {
+      // 幅 2.0in、16pt → 全角幅 16/72in ≈ 0.222in → 全角は約9文字/行、半角は約18文字/行
+      const oneLineAscii = estimateTextHeight("a".repeat(18), 16, 2.0)
+      const oneLineCjk = estimateTextHeight("あ".repeat(9), 16, 2.0)
+      expect(oneLineAscii).toBeCloseTo(oneLineCjk, 5)
+    })
+
+    it("still counts explicit newlines as separate lines", () => {
+      const one = estimateTextHeight("a", 16, 2.0)
+      const three = estimateTextHeight("a\na\na", 16, 2.0)
+      expect(three).toBeGreaterThan(one * 2)
+    })
+
+    it("never returns less than the minimum box height", () => {
+      // 空文字でも1行ぶんは数えるため 16pt では 16/72*1.5 + 0.05 ≈ 0.383in になる。
+      // 下限 0.25 が効くのはフォントが極端に小さいときだけ。
+      expect(estimateTextHeight("", 1, 2.0)).toBe(0.25)
+      expect(estimateTextHeight("", 16, 2.0)).toBeGreaterThanOrEqual(0.25)
     })
   })
 

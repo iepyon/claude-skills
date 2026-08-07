@@ -1550,7 +1550,7 @@ exports[`layout-engine baseline snapshots > layoutLeanCanvas > should match lean
     {
       "color": "1F2937",
       "fontSize": 9,
-      "h": 0.425,
+      "h": 0.25,
       "richText": [
         {
           "text": "Quality at low cost",
@@ -1911,7 +1911,7 @@ exports[`layout-engine baseline snapshots > layoutLeftRight > should match left-
     {
       "color": "1F2937",
       "fontSize": 16,
-      "h": 0.7166666666666667,
+      "h": 0.3833333333333333,
       "richText": [
         {
           "text": "Right content here",
