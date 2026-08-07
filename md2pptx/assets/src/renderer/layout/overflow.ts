@@ -28,11 +28,17 @@ export interface Overflow {
  * 行間は行と行の「あいだ」にしか掛からないので、L 行の必要高は
  * `em * (1 + (L-1) * 1.5)` とする。ビルドを失敗させる判定なので、
  * 過大評価（誤検出）より過小評価（見逃し）に寄せる。
+ *
+ * `estimateTextHeight` が足している 0.05in のパディングはここでは足さない。
+ * あれはレイアウトが領域を確保するときの余裕であってインクの高さではなく、
+ * 小さな固定ボックスでは支配的になる。実例: steps レイアウトの矢印グリフは
+ * 24pt を 0.30in の箱に入れるが、em は 0.333in で収まる一方、0.05 を足すと
+ * 0.383in となり比 1.278 で誤検出される（パディングだけが原因）。
  */
 function requiredHeight(text: string, fontSize: number, width: number): number {
   const em = fontSize / 72
   const lines = countVisualLines(text, fontSize, width)
-  return em * (1 + (lines - 1) * 1.5) + 0.05
+  return em * (1 + (lines - 1) * 1.5)
 }
 
 /**

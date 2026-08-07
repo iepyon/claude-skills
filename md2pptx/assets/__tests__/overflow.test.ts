@@ -85,15 +85,18 @@ describe("dispatchLayout font shrinking", () => {
 })
 
 describe("validateLayout via the pipeline", () => {
-  it("fails with a ValidationError when a slide overflows even at the minimum font size", async () => {
-    // 1000文字制限には収まるが 4x4 グリッドの1セルには到達不能な量
-    const md = `# T
+  // 行数で溢れさせる。文字数ではなく行数を稼ぐことで 1000 文字制限に引っかからず
+  // （= 先に ValidationError が別の理由で出ることなく）、縮小してもどうにもならない
+  // 高さを作れる。60行は最小フォント（16pt * 0.6 = 10pt）でも 10/72 * (1 + 59*1.5)
+  // ≒ 12.4in 必要で、コンテンツ領域の約 4.5in には収まらない。
+  const unfittableSlide = `# T
 ---
-## Dense
-<!--grid:4x4-->
-${Array.from({ length: 16 }, (_, i) => `### Cell ${i + 1}\n${"あ".repeat(55)}`).join("\n")}`
+## Too many lines
+### H
+${Array.from({ length: 60 }, () => "あ").join("\n")}`
 
-    const exit = await Effect.runPromiseExit(md2pptx(md))
+  it("fails with a ValidationError when a slide overflows even at the minimum font size", async () => {
+    const exit = await Effect.runPromiseExit(md2pptx(unfittableSlide))
     expect(Exit.isFailure(exit)).toBe(true)
     const message = JSON.stringify(exit)
     expect(message).toContain("overflow")
@@ -111,13 +114,7 @@ ${"あ".repeat(600)}`
   })
 
   it("applies the same check to the HTML path", async () => {
-    const md = `# T
----
-## Dense
-<!--grid:4x4-->
-${Array.from({ length: 16 }, (_, i) => `### Cell ${i + 1}\n${"あ".repeat(55)}`).join("\n")}`
-
-    const exit = await Effect.runPromiseExit(md2html(md))
+    const exit = await Effect.runPromiseExit(md2html(unfittableSlide))
     expect(Exit.isFailure(exit)).toBe(true)
   })
 })
