@@ -199,6 +199,7 @@ src/plugins/
 | `inline-formatting.test.ts` | parser/inline-formatter.ts (**bold** / *italic* / `code`) |
 | `validation.test.ts` | schema/validation.ts (文字数制限) |
 | `layout-engine.test.ts` | renderer/layout/ (座標計算・スナップショット) |
+| `overflow.test.ts` | renderer/layout/overflow.ts + validate-layout.ts (はみ出し検出・縮小・失敗) |
 | `html-renderer.test.ts` | renderer/html/ (HTML 生成・data 属性) |
 | `theme.test.ts` | schema/theme.ts (YAML テーマ読み込み) |
 | `snapshot-comparison.test.ts` | tools/ (インベントリ比較) |
