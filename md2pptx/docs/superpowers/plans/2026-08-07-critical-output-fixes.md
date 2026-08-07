@@ -295,6 +295,7 @@ which did honor it."
 ### Task 3: 3者比較検証のテキスト抽出を修復する
 
 **Files:**
+- Create: `assets/src/renderer/layout/text-content.ts`
 - Modify: `assets/src/tools/inventory.ts:32-63`
 - Modify: `assets/src/tools/pptx-inspector.ts:21-24`
 - Modify: `assets/src/tools/html-inspector.ts:82-88`
@@ -302,7 +303,9 @@ which did honor it."
 
 **Interfaces:**
 - Consumes: Task 2 の PPTX 太字修正（これが入っていないと参照と PPTX で `bold` が食い違い、テキスト修正の効果を確認できない）
-- Produces: `boxToParagraphTexts(box: TextBox): string[]`（`assets/src/tools/inventory.ts` から export）— ボックスが持つテキスト表現を段落ごとの文字列配列に平坦化する。Task 6 がここに `paragraphs` の分岐を1本追加する。
+- Produces: `flattenBoxText(box: TextBox): string[]`（`assets/src/renderer/layout/text-content.ts`）— ボックスが持つテキスト表現を段落ごとの文字列配列に平坦化する。Task 4 が `paragraphs` の分岐を追加し、Task 8 の `detectOverflow` が同じ関数を使う。
+
+**なぜ `tools/` ではなく `renderer/layout/` に置くか:** 「TextBox からテキストを読み出す方法」はレイアウトの領域知識であり、`tools/` は利用側。Task 8 の `detectOverflow`（コアのレンダリング経路）も同じ平坦化を必要とするが、コアが `tools/` を import する向きは避けたい。1箇所に置けば、`TextBox` にテキスト表現が増えたとき（Task 4 の `paragraphs`）に直すのが1箇所で済む。
 
 **正規化の規約（3者で必ず一致させる）:** どの抽出器も「そのボックスの run テキストを区切りなしで連結し、前後の空白を trim した文字列」を返す。根拠は `assets/src/tools/pptx-inspector.ts:23` の `Array.from(textMatches, (m) => m[1]).join("")` — PPTX 側は空文字連結である。したがって参照側も空文字連結にする。
 
@@ -370,7 +373,28 @@ Body with **bold**, *italic*, and \`code\``,
 Run: `cd assets && npx vitest run __tests__/snapshot-comparison.test.ts`
 Expected: FAIL — 12件（既存9件 + 新規3件）。ミスマッチの `property` に `.text` を含む行があり、`expected` が `undefined` になっていること。
 
-- [ ] **Step 4: 参照インベントリが richText を読むようにする**
+- [ ] **Step 4: テキスト平坦化を共有モジュールに切り出す**
+
+`assets/src/renderer/layout/text-content.ts` を新規作成する。
+
+```typescript
+import type { TextBox } from "./types.js"
+
+/**
+ * TextBox が保持するテキスト表現を、段落ごとの文字列に平坦化する。
+ *
+ * TextBox は複数のテキスト表現を持ちうる（text / richText、Task 4 以降は paragraphs）。
+ * 「そのボックスに何が書かれているか」を知りたい利用者は全員ここを通す:
+ * 参照インベントリ（tools/inventory.ts）と、はみ出し検出（layout/overflow.ts）。
+ *
+ * run は区切りなしで連結する。pptx-inspector の extractText() が
+ * <a:t> を空文字で連結しているのに合わせるため。
+ */
+export function flattenBoxText(box: TextBox): string[] {
+  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
+  return [(box.text ?? "").trim()]
+}
+```
 
 `assets/src/tools/inventory.ts:32-48` を置き換える。
 
@@ -397,13 +421,6 @@ function textBoxToParagraph(
 
 変更後:
 ```typescript
-// Flatten whichever text representation this box carries into one string per paragraph.
-// Runs are joined without a separator to match pptx-inspector's extractText().
-export function boxToParagraphTexts(box: TextBox): string[] {
-  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
-  return [(box.text ?? "").trim()]
-}
-
 // Convert one paragraph of a TextBox to ParagraphInventory
 function textBoxToParagraph(
   box: TextBox,
@@ -422,6 +439,12 @@ function textBoxToParagraph(
 
   return paragraph
 }
+```
+
+同ファイルのインポートに追加する。
+
+```typescript
+import { flattenBoxText } from "../renderer/layout/text-content.js"
 ```
 
 `ParagraphInventory.text` の型が `string` であるため（`inventory.ts:8`）、`box.text` が `string | undefined` だった従来の代入は型上も緩かった。この変更で `string` に確定する。
@@ -461,7 +484,7 @@ function textBoxToShape(
     top: box.y,
     width: box.w,
     height: box.h,
-    paragraphs: boxToParagraphTexts(box).map((text) =>
+    paragraphs: flattenBoxText(box).map((text) =>
       textBoxToParagraph(box, text, fontName, isTitleSlide)
     ),
   }
@@ -578,16 +601,20 @@ Adds an inline-formatting test case, which the previous four cases never covered
 - Create: `assets/__tests__/block-formatter.test.ts`
 - Modify: `assets/src/renderer/layout/types.ts:5-27`
 - Modify: `assets/src/renderer/layout/index.ts:23-38`
+- Modify: `assets/src/renderer/layout/text-content.ts`（Task 3 で作成）
 - Modify: `assets/src/constants.ts`
 
 **Interfaces:**
-- Consumes: なし（純関数の新規追加）
+- Consumes: Task 3 の `flattenBoxText`
 - Produces:
   - `Paragraph` 型（`assets/src/renderer/layout/types.ts`）: `{ runs: InlineTextRun[]; bullet?: { type: "bullet" } | { type: "number"; startAt?: number } }`
   - `TextBox.paragraphs?: Paragraph[]`
   - `hasListMarker(body: string): boolean`
   - `parseBlockToParagraphs(body: string): Paragraph[]`
   - `stripListMarkers(body: string): string`
+  - `richBodyContent(body): Pick<TextBox, "paragraphs" | "richText">`
+  - `plainBodyContent(body): Pick<TextBox, "paragraphs" | "text">`
+  - `flattenBoxText` が `paragraphs` に対応（参照インベントリと Task 8 の検出器が同じ関数を共有する）
   - `BULLET_INDENT = 0.25`（インチ）、`PARA_SPACE_AFTER = 4`（ポイント）
 
 - [ ] **Step 1: 失敗するテストを書く**
@@ -751,13 +778,36 @@ import type { Paragraph } from "../renderer/layout/types.js"
 const UNORDERED = /^\s*[-*+]\s+(.*)$/
 const ORDERED = /^\s*(\d+)\.\s+(.*)$/
 
+type ClassifiedLine =
+  | { kind: "plain"; text: string }
+  | { kind: "unordered"; text: string }
+  | { kind: "ordered"; text: string; number: number }
+
+/**
+ * 1行をリストマーカーの有無で分類し、マーカーを除いた本文を返す。
+ * この関数だけがマーカーの正規表現を知っている。
+ */
+function classifyLine(line: string): ClassifiedLine {
+  const ordered = line.match(ORDERED)
+  if (ordered) {
+    return { kind: "ordered", text: ordered[2], number: parseInt(ordered[1], 10) }
+  }
+  const unordered = line.match(UNORDERED)
+  if (unordered) {
+    return { kind: "unordered", text: unordered[1] }
+  }
+  return { kind: "plain", text: line }
+}
+
+const classifyBody = (body: string): ClassifiedLine[] => body.split("\n").map(classifyLine)
+
 /**
  * body のいずれかの行がリストマーカーで始まるか。
  * 呼び出し側はこれで richText パスと paragraphs パスを振り分ける。
  * リストを含まない body は従来どおり richText として扱われる（既存出力の不変性）。
  */
 export function hasListMarker(body: string): boolean {
-  return body.split("\n").some((line) => UNORDERED.test(line) || ORDERED.test(line))
+  return classifyBody(body).some((line) => line.kind !== "plain")
 }
 
 /**
@@ -767,73 +817,131 @@ export function hasListMarker(body: string): boolean {
  * pptxgenjs が段落ごとに番号をリセットしうるため。
  */
 export function parseBlockToParagraphs(body: string): Paragraph[] {
-  const paragraphs: Paragraph[] = []
   let prevWasOrdered = false
 
-  for (const line of body.split("\n")) {
-    const ordered = line.match(ORDERED)
-    if (ordered) {
-      paragraphs.push({
-        runs: parseInlineFormatting(ordered[2]),
-        bullet: prevWasOrdered
-          ? { type: "number" }
-          : { type: "number", startAt: parseInt(ordered[1], 10) },
-      })
-      prevWasOrdered = true
-      continue
+  return classifyBody(body).map((line) => {
+    const runs = parseInlineFormatting(line.text)
+    const wasOrdered = prevWasOrdered
+    prevWasOrdered = line.kind === "ordered"
+
+    switch (line.kind) {
+      case "ordered":
+        return {
+          runs,
+          bullet: wasOrdered
+            ? { type: "number" as const }
+            : { type: "number" as const, startAt: line.number },
+        }
+      case "unordered":
+        return { runs, bullet: { type: "bullet" as const } }
+      case "plain":
+        return { runs }
     }
-
-    const unordered = line.match(UNORDERED)
-    if (unordered) {
-      paragraphs.push({
-        runs: parseInlineFormatting(unordered[1]),
-        bullet: { type: "bullet" },
-      })
-      prevWasOrdered = false
-      continue
-    }
-
-    paragraphs.push({ runs: parseInlineFormatting(line) })
-    prevWasOrdered = false
-  }
-
-  return paragraphs
+  })
 }
 
 /**
  * 高さ見積もり用。マーカーを除去して行構造だけを残す。
  */
 export function stripListMarkers(body: string): string {
-  return body
-    .split("\n")
-    .map((line) => {
-      const ordered = line.match(ORDERED)
-      if (ordered) return ordered[2]
-      const unordered = line.match(UNORDERED)
-      if (unordered) return unordered[1]
-      return line
-    })
+  return classifyBody(body)
+    .map((line) => line.text)
     .join("\n")
 }
 ```
 
-- [ ] **Step 7: テストが通ることを確認する**
+`classifyLine` に正規表現を閉じ込めたことで、`hasListMarker` / `parseBlockToParagraphs` / `stripListMarkers` の3つが同じ分岐構造を書き写す必要がなくなる。マーカーの記法を増やすとき（B-19 のネストリスト等）に触るのは `classifyLine` だけになる。
+
+- [ ] **Step 7: `text-content.ts` を `paragraphs` 対応にし、body → TextBox フィールドの変換を一元化する**
+
+`assets/src/renderer/layout/text-content.ts`（Task 3 で作成）を置き換える。
+
+変更前:
+```typescript
+import type { TextBox } from "./types.js"
+```
+
+変更後:
+```typescript
+import { hasListMarker, parseBlockToParagraphs } from "../../parser/block-formatter.js"
+import { parseInlineFormatting } from "../../parser/inline-formatter.js"
+import type { TextBox } from "./types.js"
+```
+
+`flattenBoxText` に `paragraphs` の分岐を追加する。
+
+変更前:
+```typescript
+export function flattenBoxText(box: TextBox): string[] {
+  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
+  return [(box.text ?? "").trim()]
+}
+```
+
+変更後:
+```typescript
+export function flattenBoxText(box: TextBox): string[] {
+  if (box.paragraphs) {
+    return box.paragraphs.map((para) => para.runs.map((run) => run.text).join("").trim())
+  }
+  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
+  return [(box.text ?? "").trim()]
+}
+```
+
+同ファイルの末尾に、body から TextBox のテキストフィールドを決める2つの関数を追加する。
+
+```typescript
+/**
+ * body を TextBox のテキストフィールドに変換する（リッチテキスト対応レイアウト用）。
+ *
+ * リストを含まない body は richText のまま返す。paragraphs に一本化しないのは、
+ * 既存レイアウトの出力（とスナップショット）をバイト単位で変えないため。
+ */
+export function richBodyContent(body: string): Pick<TextBox, "paragraphs" | "richText"> {
+  return hasListMarker(body)
+    ? { paragraphs: parseBlockToParagraphs(body) }
+    : { richText: parseInlineFormatting(body) }
+}
+
+/**
+ * body を TextBox のテキストフィールドに変換する（プレーンテキストで描画していたレイアウト用）。
+ * 非リスト時の挙動を text のまま保つことで、既存の見た目を変えない。
+ */
+export function plainBodyContent(body: string): Pick<TextBox, "paragraphs" | "text"> {
+  return hasListMarker(body)
+    ? { paragraphs: parseBlockToParagraphs(body) }
+    : { text: body }
+}
+```
+
+この2つを設けるのは、`hasListMarker(body) ? { paragraphs } : { ... }` という同じ形の三項演算子を `helpers.ts` と `text-only/layout.ts` に書き写すのを避けるため（Task 5 で両方の呼び出し側になる）。今後バレット対応レイアウトを増やすときも、追加するのは1行の呼び出しだけになる。
+
+- [ ] **Step 8: 型チェックを通す**
+
+Run: `cd assets && npx tsc --noEmit`
+Expected: エラーなし。`renderer/layout/text-content.ts` が `parser/` を import する向きは、既存の `renderer/layout/helpers.ts` が `parser/inline-formatter.js` を import しているのと同じ（`helpers.ts` の冒頭で確認できる）。
+
+- [ ] **Step 9: テストが通ることを確認する**
 
 Run: `cd assets && npx vitest run __tests__/block-formatter.test.ts`
 Expected: PASS（8件）
 
-- [ ] **Step 8: 全テストが緑のままであることを確認する**
+- [ ] **Step 10: 全テストが緑のままであることを確認する**
 
 Run: `cd assets && npm test`
 Expected: 全緑。`paragraphs` はまだどこからも設定されていないので既存出力は一切変わらない。
 
-- [ ] **Step 9: コミット**
+- [ ] **Step 11: コミット**
 
 ```bash
-git add assets/src/parser/block-formatter.ts assets/__tests__/block-formatter.test.ts assets/src/renderer/layout/types.ts assets/src/renderer/layout/index.ts assets/src/constants.ts
+git add assets/src/parser/block-formatter.ts assets/__tests__/block-formatter.test.ts assets/src/renderer/layout/types.ts assets/src/renderer/layout/index.ts assets/src/renderer/layout/text-content.ts assets/src/constants.ts
 git commit -m "feat(parser): add block-level list parsing and the Paragraph type
 
-Pure functions only; nothing sets TextBox.paragraphs yet so output is unchanged."
+Pure functions only; nothing sets TextBox.paragraphs yet so output is unchanged.
+
+flattenBoxText now understands paragraphs, and richBodyContent/plainBodyContent
+give layouts a single place to turn a body string into TextBox text fields."
 ```
 
 ---
@@ -916,7 +1024,8 @@ Expected: FAIL — `expected undefined not to be undefined`（`paragraphs` を�
 `assets/src/renderer/layout/helpers.ts` の先頭のインポート群に追加する。`BULLET_INDENT` は既存の `import { ... } from "../../constants.js"` に追記してもよい。
 
 ```typescript
-import { hasListMarker, parseBlockToParagraphs, stripListMarkers } from "../../parser/block-formatter.js"
+import { hasListMarker, stripListMarkers } from "../../parser/block-formatter.js"
+import { richBodyContent } from "./text-content.js"
 import { BULLET_INDENT } from "../../constants.js"
 ```
 
@@ -945,9 +1054,7 @@ import { BULLET_INDENT } from "../../constants.js"
         y: currentY,
         w: context.contentWidth - 2 * context.padding - context.theme.indent.body,
         h: bodyH,
-        ...(hasListMarker(section.body)
-          ? { paragraphs: parseBlockToParagraphs(section.body) }
-          : { richText: parseInlineFormatting(section.body) }),
+        ...richBodyContent(section.body),
         fontSize: context.theme.contentSlide.bodySize,
         color: context.theme.contentSlide.textColor,
         valign: "top",
@@ -1006,9 +1113,7 @@ import { BULLET_INDENT } from "../../constants.js"
     y: titleY + PADDING,
     w: contentWidth - ACCENT_BAR_WIDTH - 2 * PADDING,
     h: availableHeight - 2 * PADDING,
-    ...(hasListMarker(body)
-      ? { paragraphs: parseBlockToParagraphs(body) }
-      : { text: body }),
+    ...plainBodyContent(body),
     fontSize,
     color: theme.contentSlide.textColor,
     valign: "top",
@@ -1018,7 +1123,7 @@ import { BULLET_INDENT } from "../../constants.js"
 同ファイルのインポートに追加する。
 
 ```typescript
-import { hasListMarker, parseBlockToParagraphs } from "../../parser/block-formatter.js"
+import { plainBodyContent } from "../../renderer/layout/text-content.js"
 ```
 
 - [ ] **Step 7: テストが通ることを確認する**
@@ -1055,14 +1160,15 @@ byte-identical. Renderers are wired up in the next commit."
 - Modify: `assets/src/renderer/pptx/slide-builder.ts`（インポート、`:212-228`）
 - Modify: `assets/src/renderer/html/element-renderers.ts:40-98`
 - Modify: `assets/src/renderer/html/template.ts`
-- Modify: `assets/src/tools/inventory.ts`（`boxToParagraphTexts`）
 - Modify: `assets/src/schema/validation.ts:8-17`
 - Modify: `assets/__tests__/e2e.test.ts:21-69`
 - Modify: `assets/__tests__/snapshot-comparison.test.ts`
 
 **Interfaces:**
-- Consumes: Task 5 が生成する `TextBox.paragraphs`、Task 2 の `inlineTextRunsToPptxRuns(runs, fontSize, color, fontFace, bold, italic)`、Task 3 の `boxToParagraphTexts`
+- Consumes: Task 5 が生成する `TextBox.paragraphs`、Task 2 の `inlineTextRunsToPptxRuns(runs, fontSize, color, fontFace, bold, italic)`、Task 4 が `paragraphs` 対応にした `flattenBoxText`
 - Produces: リストを含むスライドが PPTX / HTML 両方に描画され、3者比較が一致する
+
+参照インベントリ側は Task 4 で `flattenBoxText` が `paragraphs` に対応済みなので、このタスクでは触らない。
 
 **HTML の設計:** バレット記号は CSS の `::before` で出す。理由は2つ。(1) CSS 生成コンテンツは DOM のテキストに含まれないため、PPTX のネイティブバレット（記号が `<a:t>` に入らない）と抽出結果が自動的に一致する。(2) `<ul>/<li>` は `element-renderers.ts:60` の `display: flex` で潰れる。段落は `<p>` 要素で出す — `html-inspector.ts:151` の段落正規表現がすでに `<p>` を拾うので、PPTX 側の `<a:p>` 個数と自然に対応する。
 
@@ -1147,32 +1253,9 @@ import JSZip from "jszip"
 Run: `cd assets && npx vitest run __tests__/snapshot-comparison.test.ts -t "bullet-list"`
 Expected: FAIL — 参照側は `paragraphs` を平坦化していないため text が空、PPTX/HTML 側は描画分岐がないためテキストが存在しない。
 
-- [ ] **Step 3: 参照インベントリを `paragraphs` 対応にする**
+- [ ] **Step 3: PPTX に描画分岐を追加する**
 
-`assets/src/tools/inventory.ts` の `boxToParagraphTexts`（Task 3 で作成）に分岐を1本追加する。
-
-変更前:
-```typescript
-export function boxToParagraphTexts(box: TextBox): string[] {
-  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
-  return [(box.text ?? "").trim()]
-}
-```
-
-変更後:
-```typescript
-export function boxToParagraphTexts(box: TextBox): string[] {
-  if (box.paragraphs) {
-    return box.paragraphs.map((para) => para.runs.map((run) => run.text).join("").trim())
-  }
-  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
-  return [(box.text ?? "").trim()]
-}
-```
-
-- [ ] **Step 4: PPTX に描画分岐を追加する**
-
-`assets/src/renderer/pptx/slide-builder.ts:212-229` を置き換える。
+`assets/src/renderer/pptx/slide-builder.ts:212-245`（テキストボックス描画の if/else チェーン全体）を置き換える。分岐が3本になるので、全分岐で同じだったジオメトリ引数と run 変換を先に括り出す。
 
 変更前:
 ```typescript
@@ -1196,22 +1279,54 @@ export function boxToParagraphTexts(box: TextBox): string[] {
           ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
         })
       } else {
+        // 既存のシンプルテキストパス（後方互換性）
+        pptxSlide.addText(box.text, {
+          x: box.x,
+          y: box.y,
+          w: box.w,
+          h: box.h,
+          fontSize: box.fontSize || 14,
+          bold: box.isBold || false,
+          italic: box.isItalic || false,
+          color: box.color,
+          fontFace: box.fontFace || theme.fonts.body,
+          align,
+          valign,
+          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
+        })
+      }
 ```
 
 変更後:
 ```typescript
+      const fontSize = box.fontSize || 14
+
+      // 全分岐で共通の配置オプション
+      const geometry = {
+        x: box.x,
+        y: box.y,
+        w: box.w,
+        h: box.h,
+        align,
+        valign,
+        ...(box.lineHeight ? { lineSpacing: box.lineHeight * fontSize } : {}),
+      }
+
+      const toRuns = (runs: InlineTextRun[]) =>
+        inlineTextRunsToPptxRuns(
+          runs,
+          fontSize,
+          box.color || "000000",
+          box.fontFace || theme.fonts.body,
+          box.isBold || false,
+          box.isItalic || false
+        )
+
       // paragraphs がある場合は段落ごとに bullet/breakLine を付けて描画
       if (box.paragraphs) {
         const paras = box.paragraphs
         const pptxRuns = paras.flatMap((para, paraIndex) => {
-          const runs = inlineTextRunsToPptxRuns(
-            para.runs,
-            box.fontSize || 14,
-            box.color || "000000",
-            box.fontFace || theme.fonts.body,
-            box.isBold || false,
-            box.isItalic || false
-          )
+          const runs = toRuns(para.runs)
           const isLastPara = paraIndex === paras.length - 1
           return runs.map((run, runIndex) => ({
             text: run.text,
@@ -1224,44 +1339,32 @@ export function boxToParagraphTexts(box: TextBox): string[] {
             },
           }))
         })
-        pptxSlide.addText(pptxRuns, {
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
-          align,
-          valign,
-          paraSpaceAfter: PARA_SPACE_AFTER,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-        })
+        pptxSlide.addText(pptxRuns, { ...geometry, paraSpaceAfter: PARA_SPACE_AFTER })
       } else if (box.richText) {
-        const pptxRuns = inlineTextRunsToPptxRuns(
-          box.richText,
-          box.fontSize || 14,
-          box.color || "000000",
-          box.fontFace || theme.fonts.body,
-          box.isBold || false,
-          box.isItalic || false
-        )
-        pptxSlide.addText(pptxRuns, {
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
-          align,
-          valign,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-        })
+        pptxSlide.addText(toRuns(box.richText), geometry)
       } else {
+        // 既存のシンプルテキストパス（後方互換性）
+        // run に分かれていないので、書式はボックス単位で addText に直接渡す
+        pptxSlide.addText(box.text, {
+          ...geometry,
+          fontSize,
+          bold: box.isBold || false,
+          italic: box.isItalic || false,
+          color: box.color,
+          fontFace: box.fontFace || theme.fonts.body,
+        })
+      }
 ```
 
-同ファイルのインポートに `PARA_SPACE_AFTER` を追加する。
+`InlineTextRun` は `slide-builder.ts:8` で既にインポート済み。同ファイルのインポートに `PARA_SPACE_AFTER` を追加する。
 
 ```typescript
 import { PARA_SPACE_AFTER } from "../../constants.js"
 ```
 
-- [ ] **Step 5: PPTX の XML を実測して bullet 指定が正しいか確認する**
+`fontSize` をローカルに束ねたことで、`box.fontSize || 14` が5箇所から1箇所になり、`lineSpacing` の計算で `box.fontSize` を取り違える余地がなくなる。
+
+- [ ] **Step 4: PPTX の XML を実測して bullet 指定が正しいか確認する**
 
 Run:
 ```bash
@@ -1299,7 +1402,7 @@ Expected: 検証すべき3点。
 
 `startAt` が反映されていない、または各項目が "1." にリセットされている場合は、`bullet` を段落の先頭 run のみに付ける形（`runIndex === 0 && para.bullet`）に変えて再測定する。それでも駄目なら `startAt` の指定を諦め、`Paragraph.bullet` から `startAt` を落として「番号は常に 1 から」と Task 10 のドキュメントに明記する。**推測で進めず、必ずこの probe の出力で判断する。**
 
-- [ ] **Step 6: HTML のスタイルシートにバレット用 CSS を追加する**
+- [ ] **Step 5: HTML のスタイルシートにバレット用 CSS を追加する**
 
 `assets/src/renderer/html/template.ts` の `<style>` ブロック内（17行目が `<style>`、111行目が `</style>`。既存の `.text-box` ルールは 59/64行目）の、`</style>` の直前に追加する。
 
@@ -1314,7 +1417,7 @@ Expected: 検証すべき3点。
 
 `content` に CSS のエスケープ（`\2022`）を使うのは、テンプレートリテラル内でリテラルの `•` を書かないため。CSS 生成コンテンツは DOM テキストに含まれないので、抽出器には現れない。
 
-- [ ] **Step 7: HTML に描画分岐を追加する**
+- [ ] **Step 6: HTML に描画分岐を追加する**
 
 `assets/src/renderer/html/element-renderers.ts:40-98` の `textBoxToHtml` を変更する。`const dataAttrs = [...]` の定義（71-84行）の後、`// richText がある場合は HTML タグでレンダリング` のコメント（86行）の直前に、段落分岐を挿入する。
 
@@ -1375,7 +1478,7 @@ match 3: index=97 tag=<p data-shape-id="shape-2" ...
 
 なお、現状 `data-shape-id` を持つ要素が入れ子になるケースは存在しないため、この `extractElements` のループは一度も踏まれていない。この変更が最初の利用者になる。
 
-- [ ] **Step 8: 文字数カウントからリストマーカーを除外する**
+- [ ] **Step 7: 文字数カウントからリストマーカーを除外する**
 
 `assets/src/schema/validation.ts:8-17` を置き換える。
 
@@ -1411,7 +1514,7 @@ function countPlainTextChars(text: string): number {
 
 リストマーカーの除去を `*italic*` の除去より**前**に置くのは、行頭 `* item` が斜体パターンに食われるのを防ぐため。
 
-- [ ] **Step 9: 文字数カウントのテストを追加する**
+- [ ] **Step 8: 文字数カウントのテストを追加する**
 
 `assets/__tests__/validation.test.ts` の `describe("validatePresentation", ...)` 内に追加する。既存テストと同じスタイル（`Presentation` を組み立てて `validatePresentation` を直接呼ぶ）に合わせる。
 
@@ -1440,7 +1543,7 @@ function countPlainTextChars(text: string): number {
 
 `TextBlock` の `heading` を省略できることは `assets/src/schema/presentation.ts:2-9` で確認済み（両方 optional）。
 
-- [ ] **Step 10: e2e のテキスト抽出ヘルパーを一般化する**
+- [ ] **Step 9: e2e のテキスト抽出ヘルパーを一般化する**
 
 `assets/__tests__/e2e.test.ts:57-65` を置き換える。既存の customer-journey 専用の特例を、全リストマーカーを扱う汎用処理に置き換える。
 
@@ -1473,22 +1576,22 @@ function countPlainTextChars(text: string): number {
     }
 ```
 
-- [ ] **Step 11: 3者比較テストが通ることを確認する**
+- [ ] **Step 10: 3者比較テストが通ることを確認する**
 
 Run: `cd assets && npx vitest run __tests__/snapshot-comparison.test.ts`
 Expected: PASS（19件）。落ちた場合はミスマッチの `property` を読む。`paragraphs.length` の不一致なら PPTX の段落数と参照/HTML の段落数がずれている（`breakLine` の付け方を Step 4 で見直す）。`.text` の不一致なら trim/連結規約のずれ。
 
-- [ ] **Step 12: e2e が通ることを確認する**
+- [ ] **Step 11: e2e が通ることを確認する**
 
 Run: `cd assets && npx vitest run __tests__/e2e.test.ts`
-Expected: PASS。`08-lean-canvas.md`（リスト26行）と `09-takeaway-layouts.md`（同9行）が Step 10 の変更で通るようになる。落ちたファイル名とアサート内容を読み、そのレイアウトが `buildSectionBoxes` を通らないプラグインである場合は、そのプラグインが `- ` をどう扱っているかを確認して個別に判断する。
+Expected: PASS。`08-lean-canvas.md`（リスト26行）と `09-takeaway-layouts.md`（同9行）が Step 9 の変更で通るようになる。落ちたファイル名とアサート内容を読み、そのレイアウトが `buildSectionBoxes` を通らないプラグインである場合は、そのプラグインが `- ` をどう扱っているかを確認して個別に判断する。
 
-- [ ] **Step 13: 全テストを実行する**
+- [ ] **Step 12: 全テストを実行する**
 
 Run: `cd assets && npm test`
 Expected: 全緑。
 
-- [ ] **Step 14: HTML を目で確認する**
+- [ ] **Step 13: HTML を目で確認する**
 
 Run:
 ```bash
@@ -1525,7 +1628,7 @@ npx tsx src/cli.ts /tmp/bullet-demo.md /tmp/bullet-demo.pptx && open /tmp/bullet
 
 Expected: HTML と PowerPoint の両方で、(1) バレット記号が1個だけ表示される（二重表示していない）、(2) ハイフンや `1.` がテキストとして残っていない、(3) 番号付きリストが 1,2,3 と振られている、(4) 折返しがぶら下げインデントになっている。
 
-- [ ] **Step 15: コミット**
+- [ ] **Step 14: コミット**
 
 ```bash
 git add assets/src/renderer/pptx/slide-builder.ts assets/src/renderer/html/element-renderers.ts assets/src/renderer/html/template.ts assets/src/tools/inventory.ts assets/src/schema/validation.ts assets/__tests__/
@@ -1882,8 +1985,8 @@ Expected: FAIL — `Cannot find module '../src/renderer/layout/overflow.js'`
 
 ```typescript
 import { SLIDE_WIDTH, SLIDE_HEIGHT, MARGIN_X, MARGIN_Y } from "../../constants.js"
-import { stripInlineFormatting } from "../../parser/inline-formatter.js"
 import { estimateTextHeight } from "./helpers.js"
+import { flattenBoxText } from "./text-content.js"
 import type { LayoutResult, TextBox } from "./types.js"
 
 // 見積もりは近似なので、この倍率を超えて溢れた場合のみ報告する。
@@ -1893,23 +1996,11 @@ const ESTIMATE_TOLERANCE = 1.2
 // 座標の丸め誤差を吸収する許容値（インチ）
 const BOUNDS_EPSILON = 0.02
 
-export interface Overflow {
-  readonly kind: "outOfBounds" | "textTooTall"
-  readonly box: TextBox
-  readonly needed?: number
-}
-
-/**
- * ボックスが保持するテキストを、行区切り付きのプレーンテキストに平坦化する。
- * 高さ見積もりに渡すため、実描画されないインライン記法は除去する。
- */
-function boxPlainText(box: TextBox): string {
-  if (box.paragraphs) {
-    return box.paragraphs.map((para) => para.runs.map((run) => run.text).join("")).join("\n")
-  }
-  if (box.richText) return box.richText.map((run) => run.text).join("")
-  return stripInlineFormatting(box.text ?? "")
-}
+// needed を持つのは textTooTall だけなので判別可能ユニオンにする。
+// 利用側（validate-layout.ts）で非 null アサーションが不要になる。
+export type Overflow =
+  | { readonly kind: "outOfBounds"; readonly box: TextBox }
+  | { readonly kind: "textTooTall"; readonly box: TextBox; readonly needed: number }
 
 /**
  * LayoutResult のテキストボックスを検査して、はみ出しを列挙する。
@@ -1937,8 +2028,10 @@ export function detectOverflow(result: LayoutResult): Overflow[] {
       continue
     }
 
-    const text = boxPlainText(box)
-    if (!text) continue
+    // flattenBoxText は tools/inventory.ts と共有。テキスト表現が増えたときに
+    // 検出器とインベントリの片方だけ更新される事故を防ぐ
+    const text = flattenBoxText(box).join("\n")
+    if (!text.trim()) continue
 
     const needed = estimateTextHeight(text, box.fontSize ?? 14, box.w)
     if (needed > box.h * ESTIMATE_TOLERANCE) {
@@ -1949,6 +2042,10 @@ export function detectOverflow(result: LayoutResult): Overflow[] {
   return overflows
 }
 ```
+
+**独自の高さ見積もりを持つプラグインへの注意（実測で確認済み）:** `assets/src/plugins/pattern-language/layout.ts` は `estimateTextHeight` を使わず、独自の見積もりを3箇所に持つ（`:363` で `CJK_CHARS_PER_LINE = 40`、`:828` と `:946` で `38`、行高係数はいずれも `1.45` で共有実装の `1.5` と異なる）。しかもいずれも `line.length` を使っており、Task 7 で共有側だけ直した半角/全角の区別が入っていない。
+
+つまり `detectOverflow` は「精度 A で測る検出器」で「精度 B で組まれたボックス」を判定することになる。pattern-language のスライドで `textTooTall` の誤検出が出るのは**予期される**ので、Task 9 Step 7 の判断手順ではこれを候補として最初に疑う。恒久対応（プラグインの見積もりを共有実装に統一する）は B-08 のスコープ外なので Task 10 でバックログに追記する。
 
 - [ ] **Step 4: 検出テストだけが通ることを確認する**
 
@@ -1980,11 +2077,12 @@ function dispatchLayout(
 変更後:
 ```typescript
 // テーマのフォントサイズをこの倍率で段階的に下げて再レイアウトを試みる。
-// 下限 6pt は calculateGridSpacing の下限と揃えている。
-const FONT_SCALE_STEPS = [0.9, 0.8, 0.7, 0.6] as const
+// 先頭の 1 は「まず等倍で試す」。下限 6pt は calculateGridSpacing の下限と揃えている。
+const FONT_SCALE_STEPS = [1, 0.9, 0.8, 0.7, 0.6] as const
 const MIN_FONT_SIZE = 6
 
 function scaleThemeFonts(theme: Theme, scale: number): Theme {
+  if (scale === 1) return theme
   const scaled = (size: number) => Math.max(MIN_FONT_SIZE, Math.round(size * scale))
   return {
     ...theme,
@@ -2025,19 +2123,19 @@ function dispatchLayout(
   titleY: number,
   theme: Theme
 ): LayoutResult {
-  let result = dispatchLayoutOnce(layout, titleY, theme)
-  if (detectOverflow(result).length === 0) return result
+  let result: LayoutResult = { textBoxes: [] }
 
   for (const scale of FONT_SCALE_STEPS) {
-    const attempt = dispatchLayoutOnce(layout, titleY, scaleThemeFonts(theme, scale))
-    if (detectOverflow(attempt).length === 0) return attempt
-    result = attempt
+    result = dispatchLayoutOnce(layout, titleY, scaleThemeFonts(theme, scale))
+    if (detectOverflow(result).length === 0) return result
   }
 
   // 最小サイズでも収まらない。validateLayout が ValidationError にする
   return result
 }
 ```
+
+`FONT_SCALE_STEPS` の先頭に `1` を入れて `scaleThemeFonts` が等倍のときテーマをそのまま返すようにすると、「まず等倍で試す」処理をループの外に書き出す必要がなくなる。等倍で収まる通常ケースは1回目の反復で return するので、既存の挙動と計算量は変わらない。
 
 同ファイルのインポートに追加する。
 
@@ -2096,6 +2194,16 @@ an error in the next commit instead of shipping silently."
 - Produces: `validateLayout(pres: Presentation, theme: Theme): Effect.Effect<Presentation, ValidationError>` — `md2pptx` / `md2html` の Stage 2.5 として呼ばれる
 
 **テーマのスレッド:** `pipeline.ts` は現在テーマをレンダラに素通ししており、`DEFAULT_THEME` へのフォールバックはレンダラ内（`renderer/pptx/index.ts:20`、`renderer/html/index.ts:20`）で起きている。レイアウトを検証段階で走らせるにはテーマがそこで確定していなければならないので、フォールバックを `pipeline.ts` に引き上げる。レンダラ側のフォールバックはそのまま残す（他からの直接呼び出しを壊さないため）。
+
+**レイアウトを2回走らせるコストは無視できる（実測済み）:** `validateLayout` が `layoutSlide` を呼び、その後 Stage 3 のレンダラが同じ `layoutSlide` を呼ぶので、レイアウト計算は2回走る。Task 8 の段階縮小（最大5回）と掛けると最悪10パス相当になる。`doc/Spec.md`（29スライド）で実測した結果:
+
+```
+スライド数: 29
+全スライド1パス: 0.38 ms
+最悪ケース (縮小5回 x 検証+描画2回 = 10パス相当): 3.8 ms
+```
+
+CLI の1回のバッチ実行として 4ms は無視できる。**`LayoutResult` をキャッシュして渡す最適化は入れないこと** — パイプラインの段間にキャッシュを持ち込む複雑さに見合わない。
 
 - [ ] **Step 1: 失敗するテストを書く**
 
@@ -2167,11 +2275,12 @@ import { layoutSlide } from "./index.js"
 import { detectOverflow, type Overflow } from "./overflow.js"
 
 function describeOverflow(overflow: Overflow): string {
-  const at = `(${overflow.box.x.toFixed(2)}, ${overflow.box.y.toFixed(2)})`
+  const { box } = overflow
+  const at = `(${box.x.toFixed(2)}, ${box.y.toFixed(2)})`
   if (overflow.kind === "outOfBounds") {
-    return `a box at ${at} sized ${overflow.box.w.toFixed(2)}x${overflow.box.h.toFixed(2)}in extends outside the slide's safe area`
+    return `a box at ${at} sized ${box.w.toFixed(2)}x${box.h.toFixed(2)}in extends outside the slide's safe area`
   }
-  return `text in the box at ${at} needs about ${overflow.needed!.toFixed(2)}in but the box is only ${overflow.box.h.toFixed(2)}in tall`
+  return `text in the box at ${at} needs about ${overflow.needed.toFixed(2)}in but the box is only ${box.h.toFixed(2)}in tall`
 }
 
 /**
@@ -2365,7 +2474,7 @@ Expected: PASS が望ましいが、**失敗する可能性が高い**。既存�
 1. エラーメッセージの `Slide N` とボックス寸法を読む
 2. 該当ファイルを `npx tsx src/cli.ts __tests__/markdown-spec/<file>.md /tmp/check.html --html` で HTML 化し（この時点では失敗するので、一時的に `pipeline.ts` の `validateLayout` 呼び出しをコメントアウトして生成する）、ブラウザで実際にはみ出しているか目で見る
 3. **実際にはみ出している場合**: ゴールデン入力の該当スライドの本文を短くする。これは検出器が正しく働いた証拠であり、修正すべきはコンテンツ側
-4. **`textTooTall` なのに見た目は収まっている場合（誤検出）**: `overflow.ts` の `ESTIMATE_TOLERANCE`（初期値 1.2）を上げる。ただし上げすぎると検出器の意味がなくなるので、1.5 を超える必要がある場合は `estimateTextHeight` の精度自体を見直す
+4. **`textTooTall` なのに見た目は収まっている場合（誤検出）**: まず該当スライドが pattern-language レイアウトかを確認する。pattern-language は共有の `estimateTextHeight` を使わず独自の見積もり（`layout.ts:363,828,946`、行高 1.45、`line.length` ベース）でボックスを組んでいるため、精度の異なる検出器と食い違うのが**予期される**。この場合はプラグイン側の見積もりを共有実装に寄せるのが本筋だが B-08 のスコープ外なので、`ESTIMATE_TOLERANCE` を上げて回避し Task 10 でバックログに追記する。pattern-language 以外で誤検出が出る場合は `ESTIMATE_TOLERANCE`（初期値 1.2）を上げる。ただし 1.5 を超える必要があるなら `estimateTextHeight` の精度自体を見直す
 5. **`outOfBounds` がプラグインレイアウトで出ている場合**: 境界の定義が間違っている。`ESTIMATE_TOLERANCE` はこのケースに何の効果もないので触らないこと。該当プラグインがどの座標系でボックスを置いているかを確認し、`detectOverflow` の境界判定を緩める（例: 右辺を `SLIDE_WIDTH - MARGIN_X` ではなく `SLIDE_WIDTH` で判定する）
 6. どの判断をしたかを次のコミットメッセージに残す
 
@@ -2680,9 +2789,29 @@ src/batch-html.ts   drafts/ を一括 HTML 化 + index 生成
 - `getTitleFontSize("PatternLanguageDetail")` も `undefined` となり `titleFontSize: 1` が適用されない
 
 **受け入れ基準**: Detail レイアウトも登録され、上限・カウント・タイトルフォントサイズが Overview と同じ扱いになる。
+
+<a id="b-23"></a>
+### B-23: pattern-language が独自の高さ見積もりを持つ
+
+**背景**: `assets/src/plugins/pattern-language/layout.ts` は共有の `estimateTextHeight`（`renderer/layout/helpers.ts`）を使わず、独自の見積もりを3箇所に持つ: `:363`（`CJK_CHARS_PER_LINE = 40`）、`:828` と `:946`（同 `38`）。行高係数はいずれも `1.45` で共有実装の `1.5` と異なり、`line.length` ベースなので半角/全角の区別もない。
+
+B-08 で導入した `detectOverflow` は共有の `estimateTextHeight` で判定するため、**精度 A の検出器が精度 B で組まれたボックスを判定する**状態になっている。pattern-language のスライドで `textTooTall` の誤検出が起きやすく、`ESTIMATE_TOLERANCE` を上げて回避している。
+
+**受け入れ基準**: pattern-language の3箇所が共有の `estimateTextHeight` を使い、`ESTIMATE_TOLERANCE` を上げずに誤検出がなくなる。
+
+<a id="b-24"></a>
+### B-24: customer-journey のリテラル `•` を段落バレットに寄せる
+
+**背景**: `assets/src/plugins/customer-journey/layout.ts:140` が `cell.items.map(item => \`• ${item}\`).join('\n')` でリテラルのバレット記号をテキストに埋め込んでいる。B-02 で他レイアウトが PPTX ネイティブバレット + CSS 生成コンテンツに移行したため、同じ「箇条書きの表現」に2つの実装が併存している。
+
+plain text パスを使っているので二重表示にはならないが、(1) バレットの見た目が他レイアウトと揃わない、(2) 抽出テキストに記号が混入するため `e2e.test.ts` に customer-journey 専用の分岐が残り続ける、という代償がある。
+
+**受け入れ基準**: customer-journey も `Paragraph` + `bullet` で描画され、`e2e.test.ts` のリストマーカー処理から customer-journey の特例が消える。
 ```
 
-4. Task 3 の Step 11 で `--verify` を手動実行した際にプラグイン固有のミスマッチが見つかっていれば、それも新規項目として追加する
+4. 上記の B-22 に続けて B-23（pattern-language の独自見積もり）と B-24（customer-journey のリテラル `•`）も追加する。どちらも Phase 1・2 でスコープ外と判断した項目で、判断の根拠は本計画の該当箇所に記録済み
+5. 一覧表（`BACKLOG.md:11-33`）に B-22 / B-23 / B-24 の行を追加する
+6. Task 3 の Step 11 で `--verify` を手動実行した際にプラグイン固有のミスマッチが見つかっていれば、それも新規項目として追加する
 
 - [ ] **Step 11: ドキュメントの記述が実装と一致することを機械的に確認する**
 
@@ -2744,14 +2873,15 @@ B-08 の受け入れ基準「全コアレイアウトで縮小されるか失敗
 
 **2. 未確定事項として意図的に残したもの（推測で埋めていない箇所）**
 
-- Task 6 Step 5: pptxgenjs が `bullet.startAt` をどう XML に落とすかは probe で実測してから判断する。フォールバック（`startAt` を諦める）まで手順に含めた
+- Task 6 Step 4: pptxgenjs が `bullet.startAt` をどう XML に落とすかは probe で実測してから判断する。フォールバック（`startAt` を諦める）まで手順に含めた
 - Task 9 Step 7: 既存ゴールデン入力が新しい検出を通るかは実行するまで分からない。誤検出と真の検出を切り分ける判断手順と、それぞれの対処を手順に含めた
 - Task 3 Step 9 / Task 9 Step 7: 既存テストが落ちた場合の判断基準を明記した
 
 **3. 型と名前の整合**
 
 - `inlineTextRunsToPptxRuns` は Task 2 で6引数になり、Task 6 の `paragraphs` 分岐も同じ6引数で呼ぶ
-- `boxToParagraphTexts` は Task 3 で `string[]` を返す形で導入し、Task 6 で `paragraphs` の分岐を1本足すだけ（シグネチャ不変）
+- `flattenBoxText` は Task 3 で `renderer/layout/text-content.ts` に導入し、Task 4 で `paragraphs` の分岐を足す（シグネチャ不変）。参照インベントリ（`tools/inventory.ts`）と検出器（`layout/overflow.ts`）が同じ関数を共有するので、`TextBox` にテキスト表現が増えたとき片方だけ更新される事故が起きない
+- `richBodyContent` / `plainBodyContent` は Task 4 で導入し Task 5 の2箇所（`helpers.ts` / `text-only/layout.ts`）が唯一の呼び出し側
 - `Paragraph.bullet` は `{ type: "bullet" } | { type: "number"; startAt?: number }` で Task 4 / 6 / 8 を通して一貫
 - `detectOverflow(result: LayoutResult): Overflow[]` は Task 8 で定義し Task 9 でそのまま使う
 - `estimateTextHeight(text, fontSize, containerWidth)` は Task 7 で挙動が変わるがシグネチャは不変
