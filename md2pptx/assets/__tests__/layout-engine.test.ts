@@ -215,7 +215,7 @@ describe("layout-engine baseline snapshots", () => {
 
       expect(result.borderBoxes).toBeDefined()
       expect(result.borderBoxes).toHaveLength(9)
-      expect(result.textBoxes).toHaveLength(5) // 2 blocks × 2 textBoxes (heading + body) + 1 date
+      expect(result.textBoxes).toHaveLength(4) // 2 blocks × 2 textBoxes (heading + body)
     })
 
     it("should handle empty blocks gracefully", () => {
@@ -223,7 +223,7 @@ describe("layout-engine baseline snapshots", () => {
       const result = layoutLeanCanvas(blocks, 1.0, DEFAULT_THEME)
 
       expect(result.borderBoxes).toHaveLength(9)
-      expect(result.textBoxes).toHaveLength(1) // date text box only
+      expect(result.textBoxes).toHaveLength(0)
       expect(result).toMatchSnapshot()
     })
 

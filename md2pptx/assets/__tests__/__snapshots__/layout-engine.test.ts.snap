@@ -1411,17 +1411,7 @@ exports[`layout-engine baseline snapshots > layoutLeanCanvas > should handle emp
       "y": 4.189090909090909,
     },
   ],
-  "textBoxes": [
-    {
-      "color": "1F2937",
-      "fontSize": 10,
-      "h": 0.3,
-      "text": "2026.02.16",
-      "w": 1.2,
-      "x": 8.4,
-      "y": 0.35,
-    },
-  ],
+  "textBoxes": [],
 }
 `;
 
@@ -1744,15 +1734,6 @@ exports[`layout-engine baseline snapshots > layoutLeanCanvas > should match lean
       "w": 4.4799999999999995,
       "x": 5.079999999999999,
       "y": 4.62909090909091,
-    },
-    {
-      "color": "1F2937",
-      "fontSize": 10,
-      "h": 0.3,
-      "text": "2026.02.16",
-      "w": 1.2,
-      "x": 8.4,
-      "y": 0.35,
     },
   ],
 }

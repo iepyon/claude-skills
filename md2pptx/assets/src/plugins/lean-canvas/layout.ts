@@ -181,19 +181,6 @@ export function layoutLeanCanvas(blocks: readonly TextBlock[], titleY: number, t
     }
   })
 
-  // Add date in top right corner
-  const today = new Date()
-  const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
-  allTextBoxes.push({
-    x: SLIDE_WIDTH - MARGIN_X - 1.2,
-    y: 0.35,
-    w: 1.2,
-    h: 0.3,
-    text: dateStr,
-    fontSize: 10,
-    color: theme.contentSlide.textColor,
-  })
-
   return { textBoxes: allTextBoxes, borderBoxes }
 }
 
