@@ -23,7 +23,7 @@ Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書�
 | [B-11](#b-11) | P2 | OOXML 検証の統合 | ツール品質 |
 | [B-12](#b-12) | P2 | テーマカバレッジ拡大 | ツール品質 |
 | [B-13](#b-13) | P2 | ページ番号・マスタースライド | 表現力 |
-| [B-14](#b-14) | P2 | ハイパーリンク対応 | Markdown基本 |
+| [B-14](#b-14) | ✅済 | ハイパーリンク対応 | Markdown基本 |
 | [B-15](#b-15) | P2 | テスト補強 | ツール品質 |
 | [B-16](#b-16) | P3 | Mermaid 図対応 | 表現力 |
 | [B-17](#b-17) | P3 | .potx テンプレート駆動出力 | 表現力 |
@@ -31,6 +31,7 @@ Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書�
 | [B-19](#b-19) | P3 | Markdown 拡張(ネストリスト・引用ブロック等) | Markdown基本 |
 | [B-20](#b-20) | P3 | スライド寸法・マージンのテーマ化 | ツール品質 |
 | [B-21](#b-21) | P3 | HTML 出力の印刷/PDF 対応 | 表現力 |
+| [B-22](#b-22) | P2 | プラグイン内テキストのリンク対応 | Markdown基本 |
 
 ---
 
@@ -178,6 +179,33 @@ Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書�
 **実装方針**: `inline-formatter.ts` に link パターンを追加し、`InlineTextRun` に `hyperlink` プロパティを追加。PPTX は `addText` の `hyperlink` オプション、HTML は `<a>` タグで出力。文字数カウントは表示テキストのみ対象。
 
 **受け入れ基準**: `[Anthropic](https://anthropic.com)` がクリック可能なリンクとして両出力に現れる。
+
+**✅ 実装済み**。想定より広く実装した:
+
+- フィールド名は `hyperlink` ではなく `link`（`{kind:"external"|"internal"}` の判別共用体）。
+  外部 URL だけでなく `[[slide-id]]` の内部リンクも同じ経路に載せたため。
+- PPTX は外部が `hyperlink:{url}`、内部が `hyperlink:{slide:N}`（`ppaction://hlinksldjump`）。
+  解決できない内部リンクはリンクを付けない。
+- 文字数カウントは表示ラベルのみ。`validation.ts` が strip 正規表現を複製していたので
+  `stripInlineFormatting` に一本化した。
+- 副産物: スライド ID（B-14 の派生）と `--wiki` 出力（`renderer/wiki/`）。
+
+**残っているスコープ外**: 下記 B-22。
+
+<a id="b-22"></a>
+### B-22: プラグイン内テキストのリンク対応
+
+**背景**: リンクが効くのは `parseInlineFormatting` を通る箇所、すなわち `###` セクションの
+見出し・本文と takeaway だけ。スライドタイトル、タイトルスライド、および11個のプラグインが
+`layout.ts` で `text:` に直接書き出す箇所（table のセル、quote の本文、steps のラベル等）では
+`[[…]]` が生の文字列として表示される。
+
+**実装方針**: 各所の `text: X` を `richText: parseInlineFormatting(X)` に置き換える。
+1行ずつの機械的な変更だが、PPTX/HTML のレンダ分岐が変わるため
+`layout-engine.test.ts` のスナップショットと `snapshot-comparison.test.ts` の確認が要る。
+`ShapeBox.text` は `richText` を持たないので、型の拡張が別途必要。
+
+**受け入れ基準**: table のセルと quote の本文に書いた `[[slide-id]]` がリンクになる。
 
 <a id="b-15"></a>
 ### B-15: テスト補強

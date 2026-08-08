@@ -1,6 +1,6 @@
 ---
 name: md2pptx
-description: Markdown to PowerPoint/HTML slide generator with layout plugins. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 16 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, and pattern language. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
+description: Markdown to PowerPoint/HTML slide generator with layout plugins, wiki-style links and a link-navigable wiki output. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 16 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, and pattern language. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, building a linked slide wiki from several decks, or when the user wants to format content for presentation output.
 ---
 
 # md2pptx
@@ -15,6 +15,7 @@ npm install                                       # 初回のみ
 npx tsx src/cli.ts input.md output.pptx           # PPTX 生成
 npx tsx src/cli.ts input.md output.html --html    # HTML 生成
 npx tsx src/cli.ts input.md out.html --html --verify  # 3者比較検証
+npx tsx src/cli.ts --wiki doc/wiki out/index.html    # リンクで辿る Wiki 生成
 ```
 
 ### CLI Options
@@ -25,6 +26,8 @@ npx tsx src/cli.ts input.md out.html --html --verify  # 3者比較検証
 | `--compress`, `-c` | PPTX を ZIP 圧縮 |
 | `--theme <path>`, `-t <path>` | YAML テーマファイル指定 |
 | `--verify` | PPTX + HTML 生成 + AST との3者比較 |
+| `--wiki` | 複数デッキを1枚のリンク可能な Wiki サイトに出力（入力はファイル・複数ファイル・ディレクトリ） |
+| `--site-title <text>` | Wiki サイトのタイトル（`--wiki` と併用） |
 
 ## Markdown 記法
 
@@ -80,6 +83,43 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
 | PatternLanguage | `<!--pattern-language-a-->` | パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成 |
+
+### リンク
+
+| 書き方 | 意味 |
+|---|---|
+| `[ラベル](https://example.com)` | 外部リンク。HTML は `<a>`、PPTX はハイパーリンク |
+| `[[slide-id]]` | 内部リンク。表示テキストは ID そのまま |
+| `[[slide-id\|表示テキスト]]` | 内部リンク。表示テキストを指定 |
+
+内部リンクは PPTX では同一ファイル内のスライドジャンプになる。解決できない場合は
+素のテキストとして描かれる。文字数制限には**表示ラベルだけ**が数えられる（URL は数えない）。
+リンクが効くのは `###` セクションの見出しと本文、および takeaway。
+
+### スライド ID
+
+`<!--id:foo-->` でスライドに ID を付ける。省略するとスライドタイトルから自動生成し、
+衝突したら連番（`-2`）を付ける。ID は `[[…]]` の解決先であり、HTML の `#hash` でもある。
+
+```markdown
+## 種ノート
+<!--id:seed-->
+### まず置く
+育て方は [[育つ見出し]] を見よ
+```
+
+### Wiki 出力（`--wiki`）
+
+複数の Markdown デッキを1枚の自己完結 HTML にまとめ、ページ送りに加えて
+**リンクを辿る／ホバーで覗く／逆リンクから戻る**という読み方ができるようにする。
+
+```bash
+npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
+```
+
+リンクの解決順は、① `deck/slide` の明示 → ② 自デッキ内 → ③ サイト全体で一意 →
+④ 未解決（複数一致しても選ばない。サイドバーに一覧が出る）。
+サンプルは `doc/wiki/`（相互リンクしたパターン集＋機能ガイドの2デッキ）。
 
 ### Takeaway
 

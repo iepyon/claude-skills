@@ -6,7 +6,7 @@
 
 ## Overview
 
-Markdown → AST → pptxgenjs → PPTX 変換の Claude Code skill。HTML プレビューモードも備え、共通のレイアウトエンジンで座標を計算し PPTX/HTML 両方に出力する。
+Markdown → AST → pptxgenjs → PPTX 変換の Claude Code skill。HTML プレビューモードと、複数デッキをリンクで辿れる Wiki モードも備え、共通のレイアウトエンジンで座標を計算して3系統に出力する。
 
 ## Commands
 
@@ -16,6 +16,7 @@ npm test                                          # 全テスト
 npx tsx src/cli.ts input.md output.pptx           # PPTX 生成
 npx tsx src/cli.ts input.md output.html --html    # HTML 生成
 npx tsx src/cli.ts input.md out.html --html --verify  # 検証
+npx tsx src/cli.ts --wiki doc/wiki _site/index.html    # Wiki サイト生成
 ```
 
 ## Code Reading Order
@@ -25,8 +26,8 @@ npx tsx src/cli.ts input.md out.html --html --verify  # 検証
 ### 1. Entry Points → Pipeline
 
 ```
-src/index.ts        md2pptx(), md2html() — 公開 API
-src/cli.ts          CLI ラッパー (--html, --verify)
+src/index.ts        md2pptx(), md2html(), md2wiki() — 公開 API
+src/cli.ts          CLI ラッパー (--html, --verify, --wiki)
 src/pipeline.ts     3段パイプラインの組み立て: parse → validate → render
 ```
 
@@ -41,7 +42,8 @@ src/parser/
 ├── builder-state.ts    ビルダーの状態管理
 ├── slide-converter.ts  RawSlide → Slide 変換
 ├── block-formatter.ts  body → Paragraph[] 変換 (箇条書き・番号付きリストの解釈)
-├── inline-formatter.ts インライン装飾 (**bold**, *italic*, `code`) → InlineTextRun[]
+├── inline-formatter.ts インライン装飾 (**bold**, *italic*, `code`, [[link]], [x](url)) → InlineTextRun[]
+├── slide-ids.ts        slug 生成 + スライド ID の一括採番 (ast-builder から呼ぶ)
 └── handlers/           トークンハンドラ (structural, layout-directives, inline, body-text)
 ```
 
@@ -77,10 +79,22 @@ src/renderer/
 │   └── slide-builder.ts  layoutSlide() → pptx.addText/addShape API
 │
 ├── html/               HTML レンダラ
-│   ├── index.ts        renderToHtml() — inline style HTML 生成
+│   ├── index.ts        renderToHtml() + renderSlide() — inline style HTML 生成
 │   ├── slide-renderers.ts  layoutSlide() → HTML div 生成
 │   ├── element-renderers.ts  TextBox → CSS 変換
+│   ├── slide-css.ts    ★ スライド1枚ぶんの CSS (html と wiki で共有)
 │   └── template.ts     HTML ドキュメントテンプレート
+│
+├── wiki/               Wiki レンダラ (複数デッキ → 1枚のリンク可能サイト)
+│   ├── index.ts        renderToWiki() / buildWikiSite()
+│   ├── types.ts        WikiDeck, WikiEntry, WikiSite, BrokenLink
+│   ├── site-index.ts   ID のデッキ名前空間化 (deck-slug/slide-id)
+│   ├── link-graph.ts   参照収集・4段階の解決・バックリンクの逆引き
+│   ├── styles.ts       サイトシェルの CSS (slide-css.ts を取り込む)
+│   ├── client-script.ts  ルーティング・ホバープレビュー・キーボード
+│   └── template.ts     サイトのドキュメントテンプレート
+│   ※ スライドの DOM は html/ の renderSlide() を再利用する。
+│      複製すると PPTX/HTML/Wiki の三者がずれるため。
 │
 ├── syntax-highlighter.ts  コードハイライト (PPTX/HTML 共用)
 ├── icon-resolver.ts       アイコン → emoji/SVG 解決
@@ -95,6 +109,7 @@ Markdown
   → layout/    → LayoutResult { textBoxes[], borderBoxes[], iconBoxes[], ... }
   → pptx/      → Buffer (.pptx)
   → html/      → string (.html)
+  → wiki/      → string (.html, 複数デッキを1枚に)
 ```
 
 ### 5. Tools: 検証ユーティリティ
@@ -142,6 +157,10 @@ pipe(handlers.map(h => h(input)), A.findFirst(O.isSome), O.flatten, O.getOrElse(
 - 文字数制限: 1スライド 1000文字 (`MAX_CHARS_PER_SLIDE`、Markdown 構文を除く本文+見出し)。超過で ValidationError。プラグインは `maxChars` で上書き可 (現状 PatternLanguageOverview のみ 1024)。読みやすさの目安は 240文字程度
 - レイアウト指定: `<!--left:N-->`, `<!--right:M-->`, `<!--grid:RxC-->`, `<!--top:N-->`, `<!--bottom:M-->` 等
 - 新レイアウト追加時: `plugins/` にプラグインフォルダを作成 + `plugins/index.ts` に import 追加
+- リンク: `[text](url)` (外部) と `[[slide-id]]` / `[[slide-id|表示]]` (内部)。文字数は**表示ラベルだけ**数える。効くのは `###` セクションの見出し・本文・takeaway のみ（プラグインが `text:` で直接吐く箇所は対象外）
+- スライド ID: `<!--id:foo-->`、省略時はタイトルの slug、衝突は連番。採番は `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
+- HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` は `html-inspector` 用なので触らない
+- `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
 
 ## Plugin System
 
