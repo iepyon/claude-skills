@@ -139,10 +139,15 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     return `<div class="text-box" style="${listStyle}" ${dataAttrs}><div class="para-stack">${items}</div></div>`
   }
 
-  // richText がある場合は HTML タグでレンダリング
-  const content = box.richText
-    ? richTextToHtml(box.richText)
-    : box.text
+  // richText は必ず1つの子にまとめてから flex コンテナへ入れる。
+  // <strong>/<em>/<a> をそのまま置くと、display:flex の子として
+  // 1つずつが flex アイテムになり、語の途中で改行される
+  // （paragraphs 側が .para-stack で1つにまとめているのと同じ理由）。
+  if (box.richText) {
+    return `<div class="text-box" style="${style}" ${dataAttrs}><span class="rich-text">${richTextToHtml(box.richText)}</span></div>`
+  }
+
+  const content = box.text
       ? box.text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

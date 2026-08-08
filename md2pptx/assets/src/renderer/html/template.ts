@@ -1,7 +1,7 @@
 import { Theme } from "../../schema/index.js"
 import { SLIDE_WIDTH, SLIDE_HEIGHT } from "../../constants.js"
-import { SYNTAX_HIGHLIGHT_CSS } from "../syntax-highlighter.js"
 import { inchesToPx } from "./element-renderers.js"
+import { slideBaseCss } from "./slide-css.js"
 
 // Generate complete HTML document
 export function generateHtml(slidesHtml: string[], theme: Theme): string {
@@ -44,88 +44,7 @@ export function generateHtml(slidesHtml: string[], theme: Theme): string {
       box-shadow: 0 4px 32px rgba(0,0,0,0.4);
     }
 
-    .slide {
-      position: absolute;
-      width: ${SLIDE_WIDTH}in;
-      height: ${SLIDE_HEIGHT}in;
-      display: none;
-      font-family: ${theme.fonts.body}, sans-serif;
-    }
-
-    .slide.active {
-      display: block;
-    }
-
-    .title-slide .text-box {
-      justify-content: center;
-      text-align: center;
-    }
-
-    .content-slide .text-box {
-      justify-content: flex-start;
-      text-align: left;
-    }
-
-    .slide-counter {
-      position: absolute;
-      bottom: 10px;
-      right: 14px;
-      padding: 4px 10px;
-      background-color: rgba(0, 0, 0, 0.45);
-      color: rgba(255,255,255,0.65);
-      border-radius: 4px;
-      font-size: 12px;
-      z-index: 1000;
-      pointer-events: none;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-      z-index: 1000;
-    }
-
-    .controls button {
-      padding: 8px 24px;
-      font-size: 14px;
-      background: rgba(255,255,255,0.06);
-      color: #aaa;
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .controls button:hover:not(:disabled) {
-      background: rgba(255,255,255,0.12);
-      color: #ddd;
-    }
-
-    .controls button:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
-    /* 箇条書き。記号は ::before で描画するため DOM テキストには現れない
-       （PPTX のネイティブバレットと抽出結果を一致させるため）。 */
-    .para-stack { width: 100%; }
-    .para-stack > p { margin: 0; }
-    .para-bullet, .para-number { padding-left: 0.25in; text-indent: -0.25in; }
-    .para-bullet::before { content: "\\2022  "; }
-    /* 各項目が自分の番号を counter-reset で宣言し、increment で確定させる。
-       非リスト行を挟んでも番号が狂わない。 */
-    .para-number { counter-increment: para-num; }
-    .para-number::before { content: counter(para-num) ". "; }
-
-    /* リンク。色は継承させ、下線だけで示す（テーマの文字色を壊さないため） */
-    .text-box a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
-    .text-box a.wikilink { text-decoration-style: dashed; cursor: pointer; }
-    .text-box a.ext-link { text-decoration-style: solid; }
-    /* 解決できなかった内部リンク。ビューアが実行時に付ける */
-    .text-box a.wikilink.broken { color: #C62828; text-decoration-color: #C62828; }
-
-${SYNTAX_HIGHLIGHT_CSS}
+${slideBaseCss(theme)}
   </style>
 </head>
 <body>

@@ -198,6 +198,7 @@ src/plugins/
 | `block-formatter.test.ts` | parser/block-formatter.ts (リスト → Paragraph 変換) |
 | `inline-formatting.test.ts` | parser/inline-formatter.ts (**bold** / *italic* / `code` / リンク) |
 | `slide-id.test.ts` | parser/slide-ids.ts (slug 生成・ID 採番・衝突の連番) |
+| `wiki.test.ts` | renderer/wiki/ (デッキ合成・リンク解決・バックリンク・自己完結性) |
 | `validation.test.ts` | schema/validation.ts (文字数制限) |
 | `layout-engine.test.ts` | renderer/layout/ (座標計算・スナップショット) |
 | `overflow.test.ts` | renderer/layout/overflow.ts + validate-layout.ts (はみ出し検出・縮小・失敗) |
