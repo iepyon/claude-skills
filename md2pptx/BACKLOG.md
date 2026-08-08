@@ -207,6 +207,10 @@ Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書�
 
 **受け入れ基準**: table のセルと quote の本文に書いた `[[slide-id]]` がリンクになる。
 
+**一部対応済み**: agenda は対応した（目次スライドで `[[…]]` が生のまま出ると
+索引としてまったく機能しないため）。残りは table / quote / steps / icon-layout /
+numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
+
 <a id="b-15"></a>
 ### B-15: テスト補強
 

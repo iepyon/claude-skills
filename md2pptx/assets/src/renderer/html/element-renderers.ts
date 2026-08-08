@@ -81,7 +81,14 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     `text-align: ${textAlign}`,
     `white-space: pre-wrap`,
     `word-wrap: break-word`,
-    `overflow: hidden`,
+    // 文字は絶対に切らない。
+    // 箱の高さはフォント metrics を知らない見積り（estimateTextHeight）と
+    // 固定値（TITLE_HEIGHT 等）で決まるが、ブラウザの line-height: normal は
+    // 実際のフォント依存で 1.33〜1.38 倍になる。閲覧者の環境に Noto Sans JP が
+    // 無ければ比率はさらに変わるので、どんな値に詰めてもどこかで溢れる。
+    // 溢れた数 px がはみ出すのは無害だが、字が切れるのは明確な不具合。
+    // 本当に入り切らない量は validateLayout がビルド時に弾いている。
+    `overflow: visible`,
     box.lineHeight ? `line-height: ${box.lineHeight}` : "",
     box.fontFace ? `font-family: ${box.fontFace}, monospace` : "",
   ].filter(Boolean).join("; ")

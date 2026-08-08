@@ -282,3 +282,29 @@ describe("viewer layout contract", () => {
     expect(narrow).not.toMatch(/\.sidebar\s*\{[^}]*display:\s*none/)
   })
 })
+
+describe("text must never be clipped", () => {
+  it("should not clip text boxes with overflow:hidden", async () => {
+    // 箱の高さはフォント metrics を知らない見積りで決まる一方、ブラウザの
+    // line-height: normal は実フォント依存（実測 1.33〜1.38倍）。
+    // 閲覧環境によって比率が変わるので、どんな値に詰めても必ずどこかで溢れる。
+    // 数 px はみ出すのは無害だが、字が切れるのは不具合。
+    const html = await Effect.runPromise(md2html("## T\n### 見出し\n本文", {}))
+    const box = html.slice(html.indexOf('<div class="text-box"'), html.indexOf("</div>"))
+    expect(box).toContain("overflow: visible")
+    expect(box).not.toContain("overflow: hidden")
+  })
+
+  it("should render agenda items as links, not raw markup", async () => {
+    // アジェンダは目次そのもの。ここで [[…]] が生のまま出ると
+    // 索引ページからどこへも飛べない。
+    const html = await Effect.runPromise(
+      md2wiki(
+        [{ name: "d", markdown: "## 読み方\n<!--agenda-->\nサブ\n### 置く: [[種ノート]]\n\n---\n\n## 種ノート\n### H\nbody" }],
+        {}
+      )
+    )
+    expect(html).toContain('data-wikilink="種ノート"')
+    expect(html).not.toContain("[[種ノート]]")
+  })
+})

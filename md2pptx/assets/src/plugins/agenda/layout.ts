@@ -13,6 +13,7 @@ import {
 } from "./constants.js"
 import type { SlideLayout, Theme } from "../../schema/index.js"
 import type { TextBlock } from "../../schema/index.js"
+import { parseInlineFormatting } from "../../parser/inline-formatter.js"
 import type {
   TextBox,
   ShapeBox,
@@ -124,7 +125,7 @@ export function layoutAgenda(
         y: blockY,
         w: textW,
         h: headingH,
-        text: item.heading || "",
+        richText: parseInlineFormatting(item.heading || ""),
         isBold: true,
         fontSize: theme.agenda.itemSize,
         color: theme.contentSlide.headingColor,
@@ -135,7 +136,7 @@ export function layoutAgenda(
         y: blockY + headingH + gap,
         w: textW,
         h: bodyH,
-        text: item.body,
+        richText: parseInlineFormatting(item.body),
         fontSize: theme.contentSlide.bodySize,
         color: theme.contentSlide.textColor,
         valign: "top",
@@ -147,7 +148,7 @@ export function layoutAgenda(
         y: badgeY,
         w: textW,
         h: AGENDA_CIRCLE_DIAMETER,
-        text: item.heading,
+        richText: parseInlineFormatting(item.heading),
         isBold: true,
         fontSize: theme.agenda.itemSize,
         color: theme.contentSlide.headingColor,
