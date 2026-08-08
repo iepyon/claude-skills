@@ -6,6 +6,9 @@ Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書�
 - 比較対象: `~/.claude/plugins/cache/anthropic-agent-skills/document-skills/*/skills/pptx/`(version b29e7cf65e5c)
 - md2pptx が既に優位な点: 決定論的再現性、レビュー可能な中間表現(Markdown)、AST/HTML/PPTX の3者比較検証(`src/tools/inventory-diff.ts`)、グラデーション表現
 
+B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュー + 動作確認）で追加した。
+上記の「3者比較検証」は**現状は機能していない** — 詳細は [B-24](#b-24)。
+
 ## 一覧
 
 | ID | 優先度 | 項目 | カテゴリ |
@@ -33,6 +36,15 @@ Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書�
 | [B-21](#b-21) | P3 | HTML 出力の印刷/PDF 対応 | 表現力 |
 | [B-22](#b-22) | P2 | プラグイン内テキストのリンク対応 | Markdown基本 |
 | [B-23](#b-23) | P2 | 記法そのものの整理（宣言で洗い出した候補） | Markdown基本 |
+| [B-24](#b-24) | P0 | `--verify` の3者比較が壊れている | ツール品質 |
+| [B-25](#b-25) | P0 | 型検査が CI にもテストにも無い | ツール品質 |
+| [B-26](#b-26) | P1 | 文字数の数え方が宣言に反する | オントロジー |
+| [B-27](#b-27) | P1 | lint の盲点（タイトルスライド・`slot.body`） | オントロジー |
+| [B-28](#b-28) | P1 | 宣言の「誰が読むか」が宣言に無い | オントロジー |
+| [B-29](#b-29) | P1 | コア側の宣言駆動化 | オントロジー |
+| [B-30](#b-30) | P2 | 層ごとに名前が違う同一概念 | オントロジー |
+| [B-31](#b-31) | P2 | `LayoutPlugin` に足りないモデル | オントロジー |
+| [B-32](#b-32) | P2 | 存在しない保証を主張しているコメント・数え上げ | ツール品質 |
 
 ---
 
@@ -293,6 +305,9 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 オントロジー導入後の整理で、lean-canvas とカスタマージャーニーの語彙はコードから消して
 `resolveTerm` 経由にした（宣言に別名を足せばその場で描画にも効く）。以下は残り:
 
+> このメモは 2026-08-08 の調査で [B-28](#b-28)（読まれていない宣言の可視化）と
+> [B-29](#b-29)（コア側の宣言駆動化）に引き継いだ。下の4点はその内訳として残す。
+
 - **pattern-language の語彙**: 節名は `handler.ts` の約10箇所にリテラルで、`sub-labels` の
   照合も handler が自前で持つ。600行の状態機械の改修になるため繰り延べた。当面は
   `ontology.test.ts` が「宣言した節名がハンドラのソースに存在すること」を照合してドリフトを
@@ -306,3 +321,279 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 - **ビルダーへの診断チャネル**: lint がトークン列に対する2つ目のパーサになっている
   （`lint.ts` 冒頭のコメント参照）。ビルダーが「いま落とした」と報告できれば、
   入れ子モデルの写しが要らなくなる
+
+---
+
+## オントロジー観点のレビューと動作確認（2026-08-08）
+
+`ontology.yaml` 導入後のスキルを、(1) 宣言と実装のズレ、(2) 実際に動かしての破損、の2観点で
+点検した結果。B-01〜B-23 が「標準スキルとの機能差」を見ていたのに対し、こちらは
+**「宣言したことが本当に効いているか」**と**「検証機構そのものが動いているか」**を見ている。
+
+### 動作確認の実測（`cd assets && npm install` 後）
+
+| 確認 | 結果 |
+|---|---|
+| `npm test` | ✅ 22 files / 444 tests |
+| `npx tsx src/ontology/selfcheck.ts` | ✅ レイアウト 16 / 注釈 3 / 語彙 3 / プラグイン 11 — 整合 |
+| `npx tsx src/tools/gen-ontology-doc.ts --check` | ✅ ドリフト無し |
+| `--lint --strict`（`doc/Spec.md` / `doc/wiki` / `__tests__/markdown-spec/` 全件） | ✅ 全通過 |
+| 全 20 デッキの PPTX / HTML 生成 | ✅ 全成功 |
+| `--verify`（3者比較） | ❌ 20 デッキ中 14 デッキで大量の偽陽性。常に exit 0 → [B-24](#b-24) |
+| `npx tsc --noEmit` | ❌ 8 件のエラー。うち1件は実行時に落ちる → [B-25](#b-25) |
+
+**緑のものが緑なのは本物**（selfcheck・gen --check・lint はいずれも宣言と実装を実際に突き合わせて
+いる）。問題は、緑のチェックが**見ていない範囲**が広いことと、赤いはずのものが赤くならないこと。
+
+---
+
+<a id="b-24"></a>
+### B-24: `--verify` の3者比較が壊れている
+
+**背景**: 「AST/HTML/PPTX の3者比較」はこのスキルの品質保証の看板（このファイルの冒頭にも
+優位点として書いてある）だが、**AST の脚が実質機能していない**。
+
+- `src/tools/inventory.ts` は `iconBoxes` を `icon-N`、`codeBoxes` を `code-N` というキーで出す
+  （`inventory.ts:130,138`）。一方 `pptx-inspector.ts:173` と `html-inspector.ts:279` は
+  `shape-N` の連番。キー空間が違うので、アイコンやコードを含むスライドでは全項目がずれる
+- `borderBoxes` / `shapeBoxes` は inventory に入らない（`layoutResultToSlideInventory` が
+  `textBoxes` / `iconBoxes` / `codeBoxes` しか見ていない）
+- `alignment` は TitleSlide にしか付かない（`inventory.ts:51`）ので、中央寄せするプラグインは
+  全て `expected undefined, got CENTER` になる
+- `cli.ts` の verify 分岐は結果を表示して `return` するだけで、mismatch を exit code に
+  反映しない（`cli.ts:236` 付近）
+
+実測（`__tests__/markdown-spec/` + `doc/`、20 デッキ）: `7-steps` で 298 mismatch、
+`10-numbered-list` で `0 shapes match, 102 mismatches`、`Spec.md` で 400 mismatch。
+一方 **PPTX vs HTML はほぼ全デッキで完全一致** — つまり実際に効いているのは2者比較だけ。
+
+`snapshot-comparison.test.ts` が緑のままなのは、このテストがコアレイアウト6種
+（title-only / default-layout / left-right / grid-2x2 / inline-formatting / bullet-list）の
+インライン markdown しか流しておらず、アイコン・コード・プラグインを1つも通していないため。
+
+**実装方針**: inventory 側をインスペクタのキー付け（描画順の `shape-N` 連番）に合わせ、
+`borderBoxes` / `shapeBoxes` も含める。`align` は `TextBox.align`（`layout/types.ts:40`）を
+そのまま反映する。`--verify` は mismatch があれば非ゼロ終了にする。
+
+**受け入れ基準**: `__tests__/markdown-spec/` 全件で3脚が一致する。同じ入力集合を回すテストを
+追加し、キーのずれが再発したら赤くなる。
+
+<a id="b-25"></a>
+### B-25: 型検査が CI にもテストにも無い
+
+**背景**: `npx tsc --noEmit` が 8 件のエラーで落ちる。vitest は esbuild で型を捨てるので
+`npm test` では検出できず、`package.json` に typecheck スクリプトも無い。
+
+最も重いのは **`src/tools/index.ts:3` が存在しない `inspectHtml` を再輸出している**点。
+実体は `extractInventoryFromHtml`（`html-inspector.ts:266`）で、このバレルを import すると
+型エラーではなく**実行時に throw する**:
+
+```
+BROKEN: The requested module './html-inspector.js' does not provide an export named 'inspectHtml'
+```
+
+CLAUDE.md は `src/tools/` を「検証ユーティリティ」の入口として紹介しているので、
+書かれたとおりに使うと落ちる。テストも `cli.ts` も個別ファイルを直接 import しているため、
+誰もこのバレルを踏んでおらず気付かれていない。
+
+残り7件:
+- `tools/html-inspector.ts:133,148,180` — `fontSize` と `font_size` の取り違え。
+  `parseParagraphStyle` が `Partial<ParagraphData>` を返すと宣言しているが `fontSize` を詰めている
+- `schema/theme.ts:210,214,236` — 配列テーマ値のマージが `(string｜undefined)[]` になる
+- `renderer/pptx/slide-builder.ts:308` — `box.text` が undefined のまま `addText` に渡りうる
+
+**併せて**: CI（`.github/workflows/pages.yml`）のトリガは `main` への push と手動実行だけで、
+**PR ではテストが一度も走らない**。`gen-ontology-doc --check` と `selfcheck` も
+`package.json` のスクリプトに無く、`ontology.test.ts` 経由でしか実行されない。
+
+**実装方針**: `npm run typecheck`（`tsc --noEmit`）を足して8件を潰し、CI に PR トリガと
+typecheck ステップを追加する。`__tests__` は tsconfig の `exclude` にあるので、テスト側も
+見るなら別 tsconfig が要る。
+
+**受け入れ基準**: `npm run typecheck` が緑。PR で test + typecheck が走る。
+`import("./src/tools/index.js")` が throw しない。
+
+---
+
+<a id="b-26"></a>
+### B-26: 文字数の数え方が宣言に反する
+
+**背景**: `ontology.yaml:762` の `limits.counts` は
+「本文と見出し（Markdown 構文を除く）。**リンクは表示ラベルだけを数え、URL は数えない**」と宣言する。
+正本の `countPlainTextChars`（`schema/validation.ts:11`）はそのとおり `stripInlineFormatting` を
+通し、リスト記号も落とす。
+
+ところが同名の関数が **5つのプラグインにコピーされている** —
+`plugins/{steps,lean-canvas,icon-layout,numbered-list,agenda}/index.ts` の各 `index.ts` 冒頭。
+いずれも `stripInlineFormatting` もリスト記号除去も持たない弱い版で、`#`・`<!--…-->`・
+空行しか落とさない。結果、**URL とリスト記号がそのまま文字数に入る**。
+
+再現（同一の本文、リンク1本、URL は 1200 文字強）:
+
+| 入力 | 結果 |
+|---|---|
+| `### 見出し` + `[ラベル](長いURL)`（Default） | ✅ 生成成功 |
+| `<!--lean-canvas-->` + `### 課題` + 同じ本文 | ❌ `ValidationError` `charCount: 1230` |
+
+宣言では両者とも「ラベル3文字」のはずで、レイアウトを変えただけで通らなくなるのは
+オントロジーが約束していない挙動。
+
+**実装方針**: `registry.getCharCounter` がプラグインから受け取るのは「どのフィールドを数えるか」
+だけにして、正規化は `validation.ts` の `countPlainTextChars` 1本に寄せる。
+プラグイン側の5コピーを削除する。
+
+**受け入れ基準**: 同じ本文は、レイアウトの `max-chars` が同じなら同じ文字数になる。
+上の URL ケースを回帰テストにする。
+
+<a id="b-27"></a>
+### B-27: lint の盲点（タイトルスライド・`slot.body`）
+
+**背景**: lint がトークン層を見ているのは「消えたブロックは AST に痕跡を残さない」から
+（`lint.ts` 冒頭）。その設計意図に対して、**黙って消える2つの経路が検査されていない**。
+
+1. **タイトルスライドを一切検査しない**。`detectLayout` は `##` を持たないトークン列に
+   `undefined` を返し（`lint.ts:100`）、`lintTokens` はそこで `continue` する（`lint.ts:292`）。
+   実測: タイトルスライドに書いた `### 未宣言の見出し` + 本文は出力から消えるが
+   `--lint --strict` は「✅ 宣言に沿っている」を返す。宣言側は
+   `annotations[].applies-to` に骨格要素を持っているのに、lint は `layouts[].annotations` しか
+   参照していないので、この情報が使われていない
+2. **`slots[].body` の `free｜lines｜bullets-only｜none` が未強制**。
+   `gen-ontology-doc.ts:186` が文書に印字するだけで、誰も照合しない。
+   実測: カスタマージャーニーの `#### タッチ` 直下に非箇条書きの行を書くと
+   `customer-journey/handler.ts:135` の `if (!token.text.startsWith('-')) return` で捨てられ、
+   HTML にも PPTX にも現れないが `--lint --strict` は緑
+
+**実装方針**: (1) `detectLayout` が undefined を返す断片にも、TitleSlide 用の宣言
+（`elements.title-slide`）を当てて注釈スコープと未宣言 `###` を見る。
+(2) `slot.body` を lint の検査項目に加える（`bullets-only` の slot 配下で `- ` 以外の
+BodyText を warning）。
+
+**受け入れ基準**: 上の2ケースが `--lint` で警告になる。既存デッキが引き続き
+`--lint --strict` を通る（通らないものが出たらデッキ側の実バグ）。
+
+<a id="b-28"></a>
+### B-28: 宣言の「誰が読むか」が宣言に無い
+
+**背景**: `ontology.yaml` は自らを正本と宣言し、CLAUDE.md も「コードに語彙や数値を再定義しない」と
+書いている。だが実際に実装を駆動しているのは4つだけ:
+
+1. プラグインのディレクティブ認識（`registry.ts` が `directiveForPlugin` から導出）
+2. 文字数上限（`validation.ts` の `maxCharsForTag` / `isCharCountExcluded`）
+3. `lean-canvas-blocks` と `journey-rows` の2語彙（`resolveTerm` 経由）
+4. lint（`lint.ts` が layouts / vocabularies / field-sets / cardinality を読む）
+
+**宣言のみで誰も読まないもの**: `elements` 全体、`annotations[].pattern｜applies-to｜cardinality｜position｜example`、
+`layouts[].directives[].pattern` と `kind: code-fence`、`slots[].body`、
+`field-sets[].keys[].kind｜separator`、`inline`（`counts-chars` を含む）、
+`vocabularies.pattern-sections`。
+
+どれが規範でどれが解説かが宣言自身に書かれていないので、読み手（Claude を含む）は全部を
+規範として読む。B-26 / B-27 はどちらもこの構造から出た具体例。
+
+さらに `selfcheck` の `CONSUMED_KEYS`（`gen-ontology-doc.ts:291-300`）は**トップレベル名しか
+見ていない**。「黙って文書化されない宣言は出してはいけない」という当のコメントを持ちながら、
+サブキーの未消費は緑のまま通る — 仕組みが防ごうとした失敗が、一段下で起きている。
+
+**実装方針**: 各フィールドに `enforced-by:` 相当の印を持たせるか、`selfcheck` に
+「宣言されているが誰も読まないフィールド」の一覧をサブキーまで降りて出させる。
+前者は宣言が重くなるので、まず後者（可視化）から。
+
+**受け入れ基準**: `selfcheck` の出力から、宣言の各項目が「実装を駆動する / 文書のみ」の
+どちらかに分類できる。新しいサブキーを足して誰も読まなければ、その一覧に載る。
+
+<a id="b-29"></a>
+### B-29: コア側の宣言駆動化
+
+**背景**: B-23 末尾のメモの具体化。プラグイン側は宣言駆動になったが、コア側は手書きのままで、
+しかも selfcheck がコアを見ていない。
+
+- **コアディレクティブの正規表現が二重管理**。`parser/tokenizer.ts` の
+  `matchLeftDirective`〜`matchTakeawayMarker`（8本、`tokenizer.ts:42,54,66,78,90,103,117,129`）と
+  `ontology.yaml:73,83,91,141,143,168,170,195` の `pattern:` が同じものを別々に持つ。
+  `selfcheck.ts:64-70` はパターンが**コンパイルできるか**しか見ていないので、
+  どちらかを変えても赤くならない
+- **selfcheck がコアレイアウトを飛ばす**。`selfcheck.ts:216` の `if (!layout.plugin) continue` により、
+  `Default` / `LeftRight` / `TopBottom` / `Grid` / `CodeDisplay` の5つと、`produces` 側の
+  `PatternLanguageDetail` は、**実クラスの `_tag` と一度も照合されていない**。
+  「宣言 ⇔ 実装を両方向で突き合わせる」と謳っているのはプラグインの11個だけ
+- **レイアウト優先順位が4箇所**。正は `parser/slide-converter.ts`、写しが
+  `lint.ts` の `CORE_PRECEDENCE`、`renderer/layout/index.ts` のディスパッチ、
+  `schema/validation.ts` の文字数分岐
+- **`numbered-list` の `bar` 綴りにテストが無い**。`ontology.test.ts` は
+  `directives[0]`（= `circle`）だけをトークン化する。`index.ts` の
+  `circle|bar` 正規表現から `bar` を落としても緑のまま
+
+**受け入れ基準**: コアディレクティブが宣言のパターンから導出される（または両者の一致がテストで
+留まる）。selfcheck がコアレイアウトの `name` と `produces` を実クラスの `_tag` と照合する。
+
+---
+
+<a id="b-30"></a>
+### B-30: 層ごとに名前が違う同一概念
+
+**背景**: `ontology.yaml` は冒頭に用語体系（`element` / `annotation` / `layout` / `slot` /
+`vocabulary` / `field-set` / `inline`）を置いているが、実装の識別子には効いていない。
+
+- **同じものが4つの名前を持つ**: 宣言の `Slot` → parser の `RawSection`
+  （`parser/builder-types.ts`）→ schema の `TextBlock`（`schema/presentation.ts`）→
+  layout の `TextBox`（`renderer/layout/types.ts`）。変換点は `parser/slide-converter.ts` の
+  `toTextBlocks`
+- **`element` が2つの意味を持つ**: 宣言では骨格要素（`#` / `##` / `###`）、
+  `renderer/html/element-renderers.ts` ではレンダラのボックス
+- **`layout` が5つの意味を持つ**: `SlideLayout`（検証済みデータ）/ `LayoutMode`（パーサの状態）/
+  各プラグインの `layout.ts`（座標計算）/ `LayoutResult`（幾何）/ 宣言の `Layout`（宣言レコード）
+
+オントロジーの目的が「同じものを同じ名前で呼ぶ」ことなら、宣言の語彙が実装の識別子に届いて
+いないのは中心的な未達。
+
+**実装方針**: まず宣言側に「宣言の語 ⇔ 各層の型名」の対応表を持たせ、`gen-ontology-doc.ts` に
+出させる（読む側の混乱がまず消える）。改名は影響が広いので段階的に、`element` の衝突など
+実害の大きいものから。
+
+**受け入れ基準**: `ontology.md` に層をまたぐ対応表がある。少なくとも `element` の二義が解消する。
+
+<a id="b-31"></a>
+### B-31: `LayoutPlugin` に足りないモデル
+
+**背景**: プラグイン機構が表現できない事情が、特例フォールバックとハックとして散っている。
+
+- **1プラグイン = 1タグの前提**。`pattern-language` は `PatternLanguageOverview` と
+  `PatternLanguageDetail` の2タグを出すのに `layoutTag` は1つしか持てず、
+  `registry.ts` の `getCharCounter` と `ontology/index.ts` の `getLayoutByTag` に
+  `produces` 経由の特例フォールバックが2本ある（後者のコメントに、これが無かったとき
+  Detail に 1024 ではなく 1000 が適用されていたと記録されている）。
+  `LayoutPlugin` に `producesTags` を持たせれば両方消える
+- **`titleFontSize: 1` が「タイトルを描かない」の代用**。`agenda/index.ts` と
+  `pattern-language/index.ts` が 1pt フォントで隠している。`showTitle: false` としてモデル化すべき
+- **ファイル構成が守られていない**。`customer-journey` と `text-only` は `constants.ts` を持たず、
+  `customer-journey/layout.ts` は `PRIMARY_COLOR = "0891B2"` をハードコードしている。
+  この色は `schema/theme.ts` の `iconCardAccentColors` にもある同じ値で、テーマを変えても追随しない
+  （B-12 のテーマカバレッジと重なる）
+
+**受け入れ基準**: `registry.ts` と `ontology/index.ts` から `produces` の特例分岐が消える。
+`titleFontSize: 1` が無くなる。
+
+<a id="b-32"></a>
+### B-32: 存在しない保証を主張しているコメント・数え上げ
+
+**背景**: B-01 で「乖離しうる事実の置き場を1つにした」が、**保証の所在についての記述**が
+乖離している。これは普通のドキュメント誤りより悪い — 読んだ人が「守られている」と信じて
+チェックを足さなくなる。
+
+- `plugins/lean-canvas/layout.ts` の `findCellIndex` のコメントが
+  「その `key` は上の `LEAN_CANVAS_CELLS` の `name` と対応する（**selfcheck が両者を突き合わせる**）」
+  と書くが、**`selfcheck.ts` は lean-canvas を import していない**。実際に守っているのは
+  `ontology.test.ts` の描画テスト。書き換えるべきは保証の名前
+- `SKILL.md:24` と `CLAUDE.md:14` の「**16レイアウト**」は生成領域の外の手書き。
+  `docs-consistency.test.ts` が見ているのは `10ディレクトリ` / `11プラグイン登録` だけで、
+  この2文は無防備。17個目を足した瞬間に両方が黙って嘘になる。
+  CLAUDE.md 自身が「そちらにある内容をここへ写さない（写した瞬間、四重管理とドリフトが始まる）」と
+  書いている、その直後の行で写している
+
+**実装方針**: コメントを実際のガード（`ontology.test.ts`）の名前に直すか、selfcheck に
+本当に照合を足す（B-29 のコアレイアウト照合と同じ作業になる）。
+レイアウト件数は `gen-ontology-doc.ts` の生成領域に入れるか、`docs-consistency.test.ts` で
+宣言の件数と突き合わせる。
+
+**受け入れ基準**: コードコメントが主張する保証が全て実在する。レイアウト件数を1つ増やすと
+テストが赤くなる。
