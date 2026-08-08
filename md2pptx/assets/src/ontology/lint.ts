@@ -5,16 +5,21 @@
  * 時点でもう失われている（どのマスにも入らなかったブロックは消え、未知のメタキーは
  * 捨てられる）。「黙って消えた」を捕まえるには、消える前＝トークン列を見るしかない。
  *
+ * なぜ2つ目のパーサを許容するか: その代償として `splitSlides`・`collectHeadings`・
+ * `metaLines` は plugin handler の入れ子モデルを小さく写している。これは承知の上の
+ * 借金で、返し方は「ビルダーに診断チャネルを通し、落とす瞬間に報告させる」
+ * （BACKLOG B-23）。Effect ベースのビルダーへの改修になるため今回は入れていない。
+ *
  * 文字数はここでは見ない。schema/validation.ts が同じ宣言（limits / max-chars）を読んで
  * ValidationError として弾いており、二重に報告しても直し方は増えないため。
  */
 import "../plugins/index.js" // side-effect: 登録が済んでいないとプラグインのディレクティブが本文に落ちる
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
-  getAnnotations,
   getFieldSet,
   getLayouts,
   getVocabulary,
+  isDynamicCardinality,
   parseCardinality,
   resolveTerm,
 } from "./index.js"
@@ -54,12 +59,28 @@ const splitSlides = (tokens: readonly Token[]): SlideTokens[] => {
 }
 
 /**
+ * コアレイアウトの優先順位。**正本は `parser/slide-converter.ts` の `rawSlideToSlide`** で、
+ * ここはその順序に追随する。
+ *
+ * 順序がずれると、描画は CodeDisplay なのに lint は Grid の件数規則で文句を言う、といった
+ * 「実際には適用されない規則」を報告してしまう（実際 grid とコードフェンスが同居する
+ * スライドでそうなっていた）。
+ */
+const CORE_PRECEDENCE: ReadonlyArray<readonly [Token["type"][], string]> = [
+  [["CodeFenceOpen"], "CodeDisplay"],
+  [["LeftDirective", "RightDirective"], "LeftRight"],
+  [["TopDirective", "BottomDirective"], "TopBottom"],
+  [["GridDirective"], "Grid"],
+]
+
+/**
  * このスライドが選んだレイアウト。
  *
  * プラグインのディレクティブは `pluginId` で分かる。numbered-list だけは
  * `numbered-list:circle` のように変種を後ろに付けるので、コロンの前で照合する。
+ * プラグインを先に見るのも `rawSlideToSlide` に合わせている。
  */
-function detectLayout(tokens: readonly Token[]): Layout | undefined {
+export function detectLayout(tokens: readonly Token[]): Layout | undefined {
   const layouts = getLayouts()
   const byName = (name: string): Layout | undefined => layouts.find((l) => l.name === name)
 
@@ -71,16 +92,12 @@ function detectLayout(tokens: readonly Token[]): Layout | undefined {
       if (found) return found
     }
   }
-  if (tokens.some((t) => t.type === "GridDirective")) return byName("Grid")
-  if (tokens.some((t) => t.type === "LeftDirective" || t.type === "RightDirective")) {
-    return byName("LeftRight")
+  const types = new Set(tokens.map((t) => t.type))
+  for (const [triggers, name] of CORE_PRECEDENCE) {
+    if (triggers.some((t) => types.has(t))) return byName(name)
   }
-  if (tokens.some((t) => t.type === "TopDirective" || t.type === "BottomDirective")) {
-    return byName("TopBottom")
-  }
-  if (tokens.some((t) => t.type === "CodeFenceOpen")) return byName("CodeDisplay")
   // タイトルスライドはレイアウトを持たない。`##` の無い断片（先頭の空行など）も同じく対象外
-  if (!tokens.some((t) => t.type === "H2")) return undefined
+  if (!types.has("H2")) return undefined
   return byName("Default")
 }
 
@@ -90,65 +107,66 @@ function gridCellCount(tokens: readonly Token[]): number | undefined {
   return grid && grid.type === "GridDirective" ? grid.rows * grid.cols : undefined
 }
 
-const headings = (tokens: readonly Token[], marker: "###" | "####"): Token[] =>
-  tokens.filter((t) => t.type === (marker === "###" ? "H3" : "H4"))
+/** 1スライドぶんの見出しを1回の走査で仕分ける */
+interface Headings {
+  readonly h3: readonly Token[]
+  readonly h4: readonly Token[]
+  /** `####` は直前の `###` に属する。件数はその区切りごとに数える */
+  readonly h4Groups: readonly (readonly Token[])[]
+}
 
-/** `####` は直前の `###` に属する。件数はその区切りごとに数える */
-function h4Groups(tokens: readonly Token[]): Token[][] {
-  const groups: Token[][] = []
-  let current: Token[] | undefined
+function collectHeadings(tokens: readonly Token[]): Headings {
+  const h3: Token[] = []
+  const h4: Token[] = []
+  // 最初の `###` より前に現れた `####` の受け皿。ここを用意しないと、
+  // 親を持たない `####` がどのグループにも入らず件数の検査から漏れる。
+  const orphans: Token[] = []
+  const groups: Token[][] = [orphans]
+  let current = orphans
+
   for (const token of tokens) {
     if (token.type === "H3") {
+      h3.push(token)
       current = []
       groups.push(current)
-    } else if (token.type === "H4" && current) {
+    } else if (token.type === "H4") {
+      h4.push(token)
       current.push(token)
     }
   }
-  return groups
+  return { h3, h4, h4Groups: groups.filter((g) => g.length > 0) }
 }
 
+/** `resolved` は grid のようにディレクティブの引数で件数が決まる宣言に渡す */
 function checkCardinality(
   slot: Slot,
   count: number,
   line: number,
-  expectedOverride?: number
+  resolved?: number
 ): Diagnostic[] {
-  const card = parseCardinality(slot.cardinality)
-  const min = expectedOverride ?? card.min
-  const max = expectedOverride ?? card.max
-  const describe = expectedOverride !== undefined ? `${expectedOverride}件` : slot.cardinality
+  const { min, max, label } = parseCardinality(slot.cardinality, resolved)
+  const tooMany = max !== undefined && count > max
+  if (count >= min && !tooMany) return []
 
-  if (count < min) {
-    return [
-      {
-        level: "warning",
-        check: "slot-cardinality",
-        line,
-        message: `${slot.marker} が ${count} 件しかない（${slot.name} は ${describe}）`,
-      },
-    ]
-  }
-  if (max !== undefined && count > max) {
-    return [
-      {
-        level: "warning",
-        check: "slot-cardinality",
-        line,
-        message: `${slot.marker} が ${count} 件ある（${slot.name} は ${describe}。超過分は描かれない）`,
-      },
-    ]
-  }
-  return []
+  return [
+    {
+      level: "warning",
+      check: "slot-cardinality",
+      line,
+      message:
+        `${slot.marker} が ${count} 件（${slot.name} は ${label}）` +
+        (tooMany ? "。超過分は描かれない" : ""),
+    },
+  ]
 }
 
-function checkVocabulary(slot: Slot, tokens: readonly Token[]): Diagnostic[] {
+function checkVocabulary(slot: Slot, headings: Headings): Diagnostic[] {
   if (slot.heading !== "vocabulary" || !slot.vocabulary) return []
   const vocab = getVocabulary(slot.vocabulary)
   if (!vocab || vocab.unknown === "ignore") return []
 
   const out: Diagnostic[] = []
-  for (const token of headings(tokens, slot.marker)) {
+  for (const token of slot.marker === "###" ? headings.h3 : headings.h4) {
     const text = "text" in token ? token.text : ""
     if (resolveTerm(vocab, text)) continue
     const accepted = vocab.terms.map((t) => t.canonical).join("・")
@@ -258,9 +276,16 @@ function checkUnknownDirectives(tokens: readonly Token[]): Diagnostic[] {
 
 /** 宣言に照らして Markdown を検証する。行番号順に返す */
 export function lintSource(markdown: string): Diagnostic[] {
+  return lintTokens(tokenize(markdown))
+}
+
+/**
+ * トークン列を受け取る版。パイプラインはこちらを使い、同じ文字列を2度トークン化しない。
+ */
+export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
   const out: Diagnostic[] = []
 
-  for (const slide of splitSlides(tokenize(markdown))) {
+  for (const slide of splitSlides(tokens)) {
     out.push(...checkUnknownDirectives(slide.tokens))
 
     const layout = detectLayout(slide.tokens)
@@ -269,28 +294,29 @@ export function lintSource(markdown: string): Diagnostic[] {
     out.push(...checkAnnotationScope(layout, slide.tokens))
     out.push(...checkFieldSet(layout, slide.tokens, slide.line))
 
+    const headings = collectHeadings(slide.tokens)
     const h4Slot = layout.slots.find((s) => s.marker === "####")
+
     for (const slot of layout.slots) {
-      out.push(...checkVocabulary(slot, slide.tokens))
+      out.push(...checkVocabulary(slot, headings))
       if (slot.marker === "###") {
-        const expected = slot.cardinality === "rows*cols" ? gridCellCount(slide.tokens) : undefined
-        out.push(
-          ...checkCardinality(slot, headings(slide.tokens, "###").length, slide.line, expected)
-        )
+        const resolved = isDynamicCardinality(slot.cardinality)
+          ? gridCellCount(slide.tokens)
+          : undefined
+        out.push(...checkCardinality(slot, headings.h3.length, slide.line, resolved))
       } else {
         // `####` は `###` ごとに数える（フェーズ4つ × 行4つ を16件と読まないため）
-        for (const group of h4Groups(slide.tokens)) {
+        for (const group of headings.h4Groups) {
           out.push(...checkCardinality(slot, group.length, group[0]?.line ?? slide.line))
         }
       }
     }
 
-    if (!h4Slot && headings(slide.tokens, "####").length > 0) {
-      const first = headings(slide.tokens, "####")[0]
+    if (!h4Slot && headings.h4.length > 0) {
       out.push({
         level: "warning",
         check: "slot-cardinality",
-        line: first.line,
+        line: headings.h4[0].line,
         message: `${layout.label} は #### を読まない（この行以下は描かれない）`,
       })
     }
@@ -305,7 +331,11 @@ export function formatDiagnostic(d: Diagnostic, file?: string): string {
   return `  [${d.level}] ${d.check} | ${where} | ${d.message}`
 }
 
-/** どの注釈がどこで効くかは宣言が正本。テストが宣言の網羅を確かめるために使う */
-export function annotationNames(): string[] {
-  return getAnnotations().map((a) => a.name)
+/**
+ * この結果で失敗させるか。**判定はここが唯一の正本** — `--lint` とパイプラインで
+ * 規則が分かれていると、語彙の `unknown:` を `error` に変えたとき片方だけが変わる。
+ */
+export function shouldFail(diagnostics: readonly Diagnostic[], strict: boolean): boolean {
+  return diagnostics.some((d) => d.level === "error") || (strict && diagnostics.length > 0)
 }
+

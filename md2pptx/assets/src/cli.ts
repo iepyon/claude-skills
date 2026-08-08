@@ -8,7 +8,7 @@ import { slidesToInventory } from "./tools/inventory.js"
 import { inspectPptx } from "./tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "./tools/html-inspector.js"
 import { diffInventory } from "./tools/inventory-diff.js"
-import { formatDiagnostic, lintSource, type Diagnostic } from "./ontology/lint.js"
+import { formatDiagnostic, lintSource, shouldFail, type Diagnostic } from "./ontology/lint.js"
 
 const args = process.argv.slice(2)
 
@@ -64,12 +64,8 @@ function collectMarkdownFiles(paths: readonly string[]): string[] {
 }
 
 /** 宣言違反の表示。パイプラインは出力を持たないので、見せ方は CLI が決める */
-const reportDiagnostics = (
-  diagnostics: readonly Diagnostic[],
-  deck?: string
-): void => {
-  // deck 名は --wiki のときだけ渡ってくる。単一デッキでは入力ファイル名を場所として使う
-  for (const d of diagnostics) console.error(formatDiagnostic(d, deck ?? inputPath))
+const reportDiagnostics = (diagnostics: readonly Diagnostic[], where: string): void => {
+  for (const d of diagnostics) console.error(formatDiagnostic(d, where))
 }
 
 // --lint は検査だけなので出力先を取らない
@@ -79,13 +75,15 @@ if (lintOnly) {
     console.error("Usage: tsx src/cli.ts --lint [--strict] <input.md|dir> [more...]")
     process.exit(1)
   }
-  let failed = false
-  for (const file of files) {
-    for (const d of lintSource(readFileSync(file, "utf-8"))) {
-      console.error(formatDiagnostic(d, file))
-      if (d.level === "error" || strict) failed = true
-    }
-  }
+  // 失敗の判定は shouldFail が正本。ここで書き下すとパイプラインと規則がずれる
+  const failed = files
+    .map((file) => {
+      const diagnostics = lintSource(readFileSync(file, "utf-8"))
+      reportDiagnostics(diagnostics, file)
+      return shouldFail(diagnostics, strict)
+    })
+    .some(Boolean)
+
   console.log(
     failed
       ? `❌ 宣言違反あり（${files.length} 件のデッキを検査）`
@@ -121,6 +119,16 @@ const [inputPath, outputPath] = wikiMode
   ? [wikiInputPaths[0], nonFlagArgs[nonFlagArgs.length - 1]]
   : nonFlagArgs
 
+/**
+ * 全パイプラインに同じ検査設定を渡す。deck 名は --wiki のときだけ渡ってくるので、
+ * 単一デッキでは入力ファイル名を場所として使う。
+ */
+const lintOpts = {
+  onDiagnostic: (diagnostics: readonly Diagnostic[], deck?: string) =>
+    reportDiagnostics(diagnostics, deck ?? inputPath),
+  strict,
+}
+
 function collectWikiSources(paths: readonly string[]): WikiSource[] {
   return collectMarkdownFiles(paths).map((f) => ({
     name: basename(f, extname(f)),
@@ -137,12 +145,7 @@ const program = Effect.gen(function* () {
       process.exit(1)
     }
     const wikiTheme = themePath ? yield* loadThemeFile(themePath) : DEFAULT_THEME
-    const html = yield* md2wiki(sources, {
-      theme: wikiTheme,
-      siteTitle,
-      onDiagnostic: reportDiagnostics,
-      strict,
-    })
+    const html = yield* md2wiki(sources, { theme: wikiTheme, siteTitle, ...lintOpts })
     // 出力先ディレクトリを作る。CI が _site/index.html のような
     // まだ存在しない場所へ書き出すため
     mkdirSync(dirname(outputPath), { recursive: true })
@@ -156,11 +159,7 @@ const program = Effect.gen(function* () {
 
   // --html mode: Generate HTML output
   if (htmlMode && !verifyMode) {
-    const html = yield* md2html(markdown, {
-      theme,
-      onDiagnostic: reportDiagnostics,
-      strict,
-    })
+    const html = yield* md2html(markdown, { theme, ...lintOpts })
     writeFileSync(outputPath, html, "utf-8")
     console.log(`✅ Generated HTML: ${outputPath}`)
     return
@@ -171,17 +170,13 @@ const program = Effect.gen(function* () {
     console.log("🔍 Verify mode: Generating PPTX and HTML, comparing inventories...")
 
     // Generate PPTX
-    const pptxBuffer = yield* md2pptx(markdown, {
-      compression,
-      theme,
-      onDiagnostic: reportDiagnostics,
-      strict,
-    })
+    const pptxBuffer = yield* md2pptx(markdown, { compression, theme, ...lintOpts })
     const pptxPath = outputPath.replace(/\.(html|pptx)$/, ".pptx")
     writeFileSync(pptxPath, pptxBuffer)
     console.log(`✅ Generated PPTX: ${pptxPath}`)
 
-    // Generate HTML
+    // Generate HTML — lintOpts をあえて渡さない。同じ markdown を上の md2pptx が
+    // 既に検査しており、渡すと同じ違反が二度出る
     const html = yield* md2html(markdown, { theme })
     const htmlPath = outputPath.replace(/\.(html|pptx)$/, ".html")
     writeFileSync(htmlPath, html, "utf-8")
@@ -241,12 +236,7 @@ const program = Effect.gen(function* () {
   }
 
   // Default mode: Generate PPTX
-  const buffer = yield* md2pptx(markdown, {
-    compression,
-    theme,
-    onDiagnostic: reportDiagnostics,
-    strict,
-  })
+  const buffer = yield* md2pptx(markdown, { compression, theme, ...lintOpts })
   writeFileSync(outputPath, buffer)
   console.log(`✅ Generated PPTX: ${outputPath} ${compression ? "(compressed)" : "(uncompressed)"}`)
 })

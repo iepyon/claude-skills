@@ -1,11 +1,18 @@
 import { Option as O } from "effect"
-import { directiveForPlugin, getLayoutByTag, maxCharsForTag } from "../ontology/index.js"
+import { directiveForPlugin, getLayoutByTag } from "../ontology/index.js"
 import type { LayoutPlugin, TokenMatcher, TokenHandler, LayoutHandler } from "./types.js"
 
-/** A plugin whose optional fields have been resolved to their derived defaults. */
-type RegisteredPlugin = LayoutPlugin & { readonly tokenMatcher: TokenMatcher }
+const plugins: LayoutPlugin[] = []
 
-const plugins: RegisteredPlugin[] = []
+/**
+ * Matchers, derived from the declaration on first use.
+ *
+ * Deriving them eagerly in `registerPlugin` would parse ontology.yaml as a side effect of
+ * importing `plugins/index.js` — which every entry point and every test file does, so a
+ * 32 KB YAML parse landed on startup even for paths that never tokenize anything.
+ * Registration is always complete before the first `tokenize()`, so first-use is safe.
+ */
+let matchers: TokenMatcher[] | undefined
 
 /**
  * Recognize a directive by exact match on the line.
@@ -20,18 +27,10 @@ const directiveMatcher = (directive: string, pluginId: string): TokenMatcher =>
       ? O.some({ type: "PluginDirective" as const, pluginId, line: lineNum })
       : O.none()
 
-/**
- * Called by plugins at import time to self-register.
- *
- * Throws when ontology.yaml has no layout for this plugin id — registering without a
- * declaration would give a layout that parses but appears in no documentation and is
- * checked by no lint, which is the exact failure the ontology exists to prevent.
- */
+/** Called by plugins at import time to self-register */
 export function registerPlugin(plugin: LayoutPlugin): void {
-  plugins.push({
-    ...plugin,
-    tokenMatcher: plugin.tokenMatcher ?? directiveMatcher(directiveForPlugin(plugin.id), plugin.id),
-  })
+  plugins.push(plugin)
+  matchers = undefined // a later registration must not be missed by an already-built list
 }
 
 /** All registered plugins (read-only) */
@@ -41,8 +40,20 @@ export function getPlugins(): ReadonlyArray<LayoutPlugin> {
 
 // --- Derived lookups for each pipeline layer ---
 
+/**
+ * One matcher per plugin, derived from ontology.yaml unless the plugin supplies its own.
+ *
+ * `directiveForPlugin` throws when the declaration has no layout for this id — registering
+ * without a declaration would give a layout that parses but appears in no documentation and
+ * is checked by no lint, which is the exact failure the ontology exists to prevent.
+ */
 export function getTokenMatchers(): ReadonlyArray<TokenMatcher> {
-  return plugins.map(p => p.tokenMatcher)
+  if (!matchers) {
+    matchers = plugins.map(
+      p => p.tokenMatcher ?? directiveMatcher(directiveForPlugin(p.id), p.id)
+    )
+  }
+  return matchers
 }
 
 export function getDirectiveHandlers(): ReadonlyArray<TokenHandler> {
@@ -68,24 +79,21 @@ export function getLayoutHandlers(): ReadonlyArray<LayoutHandler> {
 }
 
 /**
- * The character budget for a layout and how to measure it.
+ * How to measure this layout's characters. The *limit* is not here — ontology.yaml owns it,
+ * and `validation.ts` reads it via `maxCharsForTag`. Keeping one door onto the number is the
+ * point of the ontology, so the registry does not offer a second.
  *
- * The limit comes from ontology.yaml (keyed by `_tag`), the counter from the plugin.
- * Splitting them this way is what lets a layout that renders as two slides —
- * PatternLanguage's overview and detail — share one declared limit: the detail page has
- * no registration of its own, so keying the limit off the registry silently gave it the
- * default while the declaration said 1024.
+ * `produces`-side tags (PatternLanguageDetail) have no registration of their own, so fall
+ * back to the plugin that owns the declaring layout. That fallback is general — it keys off
+ * the declared `produces` list, not off any layout name.
  */
-export function getValidationConfig(tag: string): {
-  maxChars: number
-  countChars?: (layout: import("../schema/presentation.js").SlideLayout) => number
-} {
-  // `produces` side tags (PatternLanguageDetail) have no registration of their own, so
-  // fall back to the plugin that owns the declaring layout.
+export function getCharCounter(
+  tag: string
+): ((layout: import("../schema/presentation.js").SlideLayout) => number) | undefined {
   const owner =
     plugins.find(p => p.layoutTag === tag) ??
     plugins.find(p => p.id === getLayoutByTag(tag)?.plugin)
-  return { maxChars: maxCharsForTag(tag), countChars: owner?.countChars }
+  return owner?.countChars
 }
 
 export function getTitleFontSize(tag: string): number | undefined {

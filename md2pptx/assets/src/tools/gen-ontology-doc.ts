@@ -39,6 +39,13 @@ const code = (s: string): string => (s.includes("`") ? "`` " + s + " ``" : "`" +
 /** 表のセルに入れるインラインコード。`[[a|b]]` のパイプは列区切りに食われるのでエスケープする */
 const codeCell = (s: string): string => code(s).replace(/\|/g, "\\|")
 
+/** ヘッダと区切り行を手書きしない（列数の数え間違いが起きる） */
+const table = (headers: readonly string[], rows: readonly (readonly string[])[]): string[] => [
+  `| ${headers.join(" | ")} |`,
+  `|${headers.map(() => "---").join("|")}|`,
+  ...rows.map((r) => `| ${r.join(" | ")} |`),
+]
+
 /** 散文を段落として出す（YAML のブロックスカラー末尾の改行を落とす） */
 const prose = (s: string | undefined): string[] => (s ? ["", s.trimEnd(), ""] : [])
 
@@ -50,31 +57,32 @@ const directiveCell = (layout: Layout): string =>
 // ── 部品（ontology.md と SKILL.md で共有する表） ─────────────────────
 
 function layoutsTable(): string[] {
-  const lines = ["| レイアウト | ディレクティブ | 説明 |", "|---|---|---|"]
-  for (const l of getLayouts()) {
-    lines.push(`| ${l.label} | ${directiveCell(l)} | ${cell(l.description)} |`)
-  }
-  return lines
+  return table(
+    ["レイアウト", "ディレクティブ", "説明"],
+    getLayouts().map((l) => [l.label, directiveCell(l), cell(l.description)])
+  )
 }
 
 function annotationsTable(): string[] {
-  const lines = ["| 注釈 | 記法 | 効くレイアウト | 説明 |", "|---|---|---|---|"]
-  for (const a of getAnnotations()) {
-    // 逆リストは layouts[].annotations から毎回導く（宣言に逆向きを持たせない）
-    const users = getLayouts().filter((l) => l.annotations.includes(a.name))
-    const where =
-      users.length === getLayouts().length ? "すべて" : users.map((l) => l.label).join("・")
-    lines.push(`| ${codeCell(a.name)} | ${codeCell(a.syntax)} | ${cell(where)} | ${cell(a.description)} |`)
-  }
-  return lines
+  const layouts = getLayouts()
+  return table(
+    ["注釈", "記法", "効くレイアウト", "説明"],
+    getAnnotations().map((a) => {
+      // 逆リストは layouts[].annotations から導く（宣言に逆向きを持たせない）
+      const users = layouts.filter((l) => l.annotations.includes(a.name))
+      const where =
+        users.length === layouts.length ? "すべて" : users.map((l) => l.label).join("・")
+      return [codeCell(a.name), codeCell(a.syntax), cell(where), cell(a.description)]
+    })
+  )
 }
 
 function inlineTable(): string[] {
   const inline = loadOntology().inline
-  const lines = ["| 書き方 | 意味 |", "|---|---|"]
-  for (const s of inline.syntaxes) {
-    lines.push(`| ${codeCell(s.syntax)} | ${cell(s.description)} |`)
-  }
+  const lines = table(
+    ["書き方", "意味"],
+    inline.syntaxes.map((s) => [codeCell(s.syntax), cell(s.description)])
+  )
   lines.push("")
   lines.push(`効くのは ${inline["effective-in"].map(code).join("・")}。${cell(inline["not-effective-in-note"])}`)
   return lines
@@ -98,18 +106,19 @@ function limitsBullets(): string[] {
 
 // ── ontology.md ────────────────────────────────────────────────────
 
-function subLabelsTable(sub: SubLabels, indent: string): string[] {
-  const lines = [`${indent}| 小項目 | ラベル |`, `${indent}|---|---|`]
-  for (const t of sub.terms) {
-    const conditions: string[] = []
-    if (t.contains?.length) conditions.push(`${t.contains.map(code).join(" か ")} を含む`)
-    if (t["contains-all"]?.length) {
-      conditions.push(`${t["contains-all"].map(code).join(" と ")} を両方含む`)
-    }
-    const label = sub.match === "exact" ? code(`**${t.canonical}:**`) : conditions.join(" / ")
-    lines.push(`${indent}| ${code(t.key)} | ${label} |`)
-  }
-  return lines
+function subLabelsTable(sub: SubLabels): string[] {
+  return table(
+    ["小項目", "ラベル"],
+    sub.terms.map((t) => {
+      const conditions: string[] = []
+      if (t.contains?.length) conditions.push(`${t.contains.map(code).join(" か ")} を含む`)
+      if (t["contains-all"]?.length) {
+        conditions.push(`${t["contains-all"].map(code).join(" と ")} を両方含む`)
+      }
+      const label = sub.match === "exact" ? code(`**${t.canonical}:**`) : conditions.join(" / ")
+      return [code(t.key), label]
+    })
+  )
 }
 
 function vocabularySection(name: string, vocab: Vocabulary): string[] {
@@ -120,18 +129,21 @@ function vocabularySection(name: string, vocab: Vocabulary): string[] {
   )
   lines.push(...prose(vocab.guidance))
   lines.push("")
-  lines.push("| キー | 正書 | 別表記 | 説明 |", "|---|---|---|---|")
-  for (const t of vocab.terms) {
-    const alt = t.pattern
-      ? `正規表現 ${code(t.pattern)}`
-      : (t.aliases ?? []).map(code).join("・") || "—"
-    lines.push(`| ${code(t.key)} | ${cell(t.canonical)} | ${alt} | ${cell(t.description)} |`)
-  }
+  lines.push(
+    ...table(
+      ["キー", "正書", "別表記", "説明"],
+      vocab.terms.map((t) => [
+        code(t.key),
+        cell(t.canonical),
+        t.pattern ? `正規表現 ${code(t.pattern)}` : (t.aliases ?? []).map(code).join("・") || "—",
+        cell(t.description),
+      ])
+    )
+  )
   for (const t of vocab.terms) {
     const sub = t["sub-labels"]
     if (!sub) continue
-    lines.push("", `**${t.canonical}** の中の小項目:`, "")
-    lines.push(...subLabelsTable(sub, ""))
+    lines.push("", `**${t.canonical}** の中の小項目:`, "", ...subLabelsTable(sub))
   }
   return lines
 }
@@ -163,15 +175,19 @@ function layoutSection(layout: Layout): string[] {
 
   if (layout.slots.length > 0) {
     lines.push("")
-    lines.push("| スロット | 記号 | 個数 | 見出し | 本文 | 説明 |", "|---|---|---|---|---|---|")
-    for (const s of layout.slots) {
-      const heading =
-        s.heading === "vocabulary" ? `語彙 ${code(s.vocabulary ?? "")}` : "自由"
-      lines.push(
-        `| ${code(s.name)} | ${code(s.marker)} | ${code(s.cardinality)} | ${heading} | ` +
-          `${code(s.body ?? "free")} | ${cell(s.description)} |`
+    lines.push(
+      ...table(
+        ["スロット", "記号", "個数", "見出し", "本文", "説明"],
+        layout.slots.map((s) => [
+          code(s.name),
+          code(s.marker),
+          code(s.cardinality),
+          s.heading === "vocabulary" ? `語彙 ${code(s.vocabulary ?? "")}` : "自由",
+          code(s.body ?? "free"),
+          cell(s.description),
+        ])
       )
-    }
+    )
   }
 
   if (layout.example) {
@@ -194,12 +210,15 @@ function buildOntologyDoc(): string {
     "",
     "## md の骨格要素",
     "",
-    "| 要素 | 記号 | 説明 |",
-    "|---|---|---|",
+    ...table(
+      ["要素", "記号", "説明"],
+      Object.entries(onto.elements).map(([name, el]) => [
+        `${code(name)}（${el.label}）`,
+        el.marker ? code(el.marker) : "—",
+        cell(el.description),
+      ])
+    ),
   ]
-  for (const [name, el] of Object.entries(onto.elements)) {
-    L.push(`| ${code(name)}（${el.label}） | ${el.marker ? code(el.marker) : "—"} | ${cell(el.description)} |`)
-  }
   for (const [name, el] of Object.entries(onto.elements)) {
     if (el.guidance) L.push("", `- ${code(name)} — ${cell(el.guidance)}`)
   }
@@ -227,13 +246,19 @@ function buildOntologyDoc(): string {
     L.push(`### ${fs.label}（${code(name)}）`, "")
     L.push(`- レイアウト: ${code(fs.layout)}`, `- 書き方: ${cell(fs.syntax)}`, `- 未宣言キーの扱い: **${fs.unknown}**`)
     L.push(...prose(fs.guidance))
-    L.push("", "| キー | 必須 | 種別 | 説明 | 例 |", "|---|---|---|---|---|")
-    for (const k of fs.keys) {
-      L.push(
-        `| ${code(k.name)} | ${k.required ? "必須" : "省略可"} | ${code(k.kind)} | ` +
-          `${cell(k.description)} | ${k.example ? code(k.example) : "—"} |`
+    L.push(
+      "",
+      ...table(
+        ["キー", "必須", "種別", "説明", "例"],
+        fs.keys.map((k) => [
+          code(k.name),
+          k.required ? "必須" : "省略可",
+          code(k.kind),
+          cell(k.description),
+          k.example ? code(k.example) : "—",
+        ])
       )
-    }
+    )
   }
 
   L.push("", "## インライン記法", "", ...inlineTable())
@@ -253,6 +278,32 @@ function skillRegions(): Record<string, string[]> {
     annotations: annotationsTable(),
     inline: inlineTable(),
   }
+}
+
+/**
+ * `buildOntologyDoc` が読むトップレベルキー。
+ *
+ * ここに無いキーを ontology.yaml に足すと、宣言したのに ontology.md へ出ないまま
+ * すべてが緑になる（`--check` は生成物どうしを比べるだけなので気づけない）。
+ * 「宣言＝ドキュメント」を掲げる以上、黙って文書化されない宣言は出してはいけないので、
+ * selfcheck がこの集合を実際のキーと突き合わせる。
+ */
+export const CONSUMED_KEYS: ReadonlySet<string> = new Set([
+  "version", // ヘッダの ontology-version に出る
+  "elements",
+  "annotations",
+  "layouts",
+  "vocabularies",
+  "field-sets",
+  "inline",
+  "limits",
+])
+
+/** SKILL.md にあるが生成側が作らない領域マーカー（＝永久に古いまま残る領域） */
+export function staleSkillRegions(skill: string): string[] {
+  const produced = new Set(Object.keys(skillRegions()))
+  const found = [...skill.matchAll(/<!-- BEGIN GENERATED: ([\w-]+) -->/g)].map((m) => m[1])
+  return found.filter((name) => !produced.has(name))
 }
 
 const BEGIN = (name: string): string => `<!-- BEGIN GENERATED: ${name} -->`
@@ -276,39 +327,31 @@ export function applySkillRegions(skill: string): string {
 
 // ── エントリポイント ───────────────────────────────────────────────
 
-interface Target {
-  readonly path: string
-  readonly label: string
-  readonly build: () => string
-}
-
-const targets = (): Target[] => [
-  { path: ONTOLOGY_MD, label: "ontology.md", build: buildOntologyDoc },
-  {
-    path: SKILL_MD,
-    label: "SKILL.md",
-    build: () => applySkillRegions(readFileSync(SKILL_MD, "utf-8")),
-  },
-]
-
 export function main(argv: readonly string[]): number {
   const check = argv.includes("--check")
   let drifted = 0
 
-  for (const target of targets()) {
-    const built = target.build()
-    // 未生成（初回）もドリフト扱い。--check が「まだ無い」を見逃すと CI が素通りする
-    const current = existsSync(target.path) ? readFileSync(target.path, "utf-8") : ""
-    if (built === current) continue
+  // 未生成（初回）もドリフト扱い。--check が「まだ無い」を見逃すと CI が素通りする
+  const current = (path: string): string => (existsSync(path) ? readFileSync(path, "utf-8") : "")
+
+  // SKILL.md は現物を読んで生成領域だけ差し替えるので、比較対象と入力が同じ1回の読み取り
+  const skill = current(SKILL_MD)
+  const outputs: ReadonlyArray<readonly [string, string, string, string]> = [
+    [ONTOLOGY_MD, "ontology.md", buildOntologyDoc(), current(ONTOLOGY_MD)],
+    [SKILL_MD, "SKILL.md", skill === "" ? "" : applySkillRegions(skill), skill],
+  ]
+
+  for (const [path, label, built, existing] of outputs) {
+    if (built === existing) continue
     if (check) {
       console.error(
-        `ドリフト検出: ${target.label} が ontology.yaml と不一致。` +
+        `ドリフト検出: ${label} が ontology.yaml と不一致。` +
           "`npx tsx src/tools/gen-ontology-doc.ts` で再生成する"
       )
       drifted++
     } else {
-      writeFileSync(target.path, built, "utf-8")
-      console.log(`生成: ${target.label}`)
+      writeFileSync(path, built, "utf-8")
+      console.log(`生成: ${label}`)
     }
   }
 

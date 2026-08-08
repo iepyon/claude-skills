@@ -1,14 +1,19 @@
 import { describe, it, expect } from "vitest"
+import { Effect } from "effect"
 import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
-import { getPlugins, getValidationConfig } from "../src/plugins/registry.js"
+import { getCharCounter, getPlugins } from "../src/plugins/registry.js"
 import { tokenize } from "../src/parser/tokenizer.js"
-import { lintSource } from "../src/ontology/lint.js"
+import { parseMarkdown } from "../src/parser/index.js"
+import { layoutSlide } from "../src/renderer/layout/index.js"
+import { DEFAULT_THEME } from "../src/schema/theme.js"
+import { detectLayout, lintSource } from "../src/ontology/lint.js"
 import { selfcheckProblems } from "../src/ontology/selfcheck.js"
 import {
   getLayouts,
   getLimits,
   getVocabulary,
+  isDynamicCardinality,
   maxCharsForTag,
   parseCardinality,
   resolveTerm,
@@ -65,9 +70,25 @@ describe("ontology declaration", () => {
 
   it("resolves every layout's own example as that layout", () => {
     // 宣言の example が宣言どおりに読まれること。ドキュメントの実例が嘘にならない。
+    //
+    // 診断が空であることだけを見てはいけない — detectLayout が解決に失敗すると
+    // lintSource はそのスライドを丸ごと飛ばすので、**失敗したときこそ緑になる**。
+    // どのレイアウトとして読まれたかを直接見る。
     for (const layout of getLayouts()) {
+      const tokens = tokenize(layout.example ?? "")
+      expect(detectLayout(tokens)?.name, `${layout.name} の example が別のレイアウトに解決された`).toBe(
+        layout.name
+      )
       expect(lintSource(layout.example ?? ""), `${layout.name} の example が宣言に違反`).toEqual([])
     }
+  })
+
+  it("follows the same layout precedence as the converter", () => {
+    // 本物の順序は parser/slide-converter.ts の rawSlideToSlide（CodeDisplay が Grid より先）。
+    // ずれると「実際には適用されない規則」を報告する。
+    const gridAndCode = ["## 両方", "<!--grid:2x2-->", "```ts", "const a = 1", "```"].join("\n")
+    expect(detectLayout(tokenize(gridAndCode))?.name).toBe("CodeDisplay")
+    expect(lintSource(gridAndCode)).toEqual([])
   })
 })
 
@@ -77,7 +98,7 @@ describe("ontology drives validation", () => {
     // 宣言が 1024 と言っている裏で 1000 が効いていた。
     expect(maxCharsForTag("PatternLanguageOverview")).toBe(1024)
     expect(maxCharsForTag("PatternLanguageDetail")).toBe(1024)
-    expect(getValidationConfig("PatternLanguageDetail").countChars).toBeTypeOf("function")
+    expect(getCharCounter("PatternLanguageDetail")).toBeTypeOf("function")
   })
 
   it("falls back to the declared deck-wide limit", () => {
@@ -133,13 +154,82 @@ describe("vocabulary resolution", () => {
   })
 })
 
+/**
+ * 宣言した語彙を、実際に描画するコードが本当に受理するか。
+ *
+ * lint が語彙を照合するようになった以上、宣言とパーサがずれると最悪の形で壊れる —
+ * lint は「宣言どおり」と言い、描画だけが黙って落ちる。ここはその一致を留める。
+ */
+describe("the implementation accepts every declared vocabulary term", () => {
+  const parse = (markdown: string): any => Effect.runSync(parseMarkdown(markdown))
+
+  it("lean-canvas draws every canonical and alias into a cell", () => {
+    // 「パーサが拾ったか」では足りない — マスを決めるのは layout 側で、そこで語彙が
+    // 解決できないとブロックはどのマスにも入らず**描かれない**（旧来の失敗はこれ）。
+    // 実際に座標計算まで通して、本文が描かれることを見る。
+    const vocab = getVocabulary("lean-canvas-blocks")!
+    for (const term of vocab.terms) {
+      for (const spelling of [term.canonical, ...(term.aliases ?? [])]) {
+        const deck = ["## C", "<!--lean-canvas-->", `### ${spelling}`, "本文XYZ"].join("\n")
+        const slide = parse(deck).slides[0]
+        expect(slide.layout._tag, `'${spelling}' が LeanCanvas として読まれない`).toBe("LeanCanvas")
+
+        const drawn = layoutSlide(slide, DEFAULT_THEME).textBoxes.some((b) =>
+          JSON.stringify(b).includes("本文XYZ")
+        )
+        expect(drawn, `'${spelling}' のブロックがどのマスにも入らず描かれない`).toBe(true)
+        expect(lintSource(deck), `'${spelling}' が lint に弾かれる`).toEqual([])
+      }
+    }
+  })
+
+  it("customer-journey routes every row label, with either colon or none", () => {
+    const vocab = getVocabulary("journey-rows")!
+    for (const term of vocab.terms) {
+      for (const suffix of ["", ":", "："]) {
+        const deck = [
+          "## J",
+          "<!--カスタマージャーニー:-->",
+          "### 認知",
+          `#### ${term.canonical}${suffix}`,
+          "- 項目",
+        ].join("\n")
+        const rows = parse(deck).slides[0].layout.rows
+        const row = rows.find((r: any) => r.label === term.canonical)
+        expect(row?.cells[0].items, `'${term.canonical}${suffix}' の項目が落ちた`).toEqual(["項目"])
+        expect(lintSource(deck)).toEqual([])
+      }
+    }
+  })
+
+  it("pattern-language's handler still spells every declared section the same way", () => {
+    // このプラグインの語彙はまだハンドラ側が持っている（BACKLOG B-23）。
+    // 移すまでの間、2つの写しが一致していることだけを留める。
+    const handler = read(join(ASSETS_DIR, "src", "plugins", "pattern-language", "handler.ts"))
+    for (const term of getVocabulary("pattern-sections")!.terms) {
+      if (term.pattern) {
+        expect(handler, `具体例の正規表現が宣言とずれている`).toContain(term.pattern)
+        continue
+      }
+      expect(handler, `節 '${term.canonical}' がハンドラに無い`).toContain(term.canonical)
+    }
+  })
+})
+
 describe("cardinality parsing", () => {
   it("reads every form the declarations use", () => {
-    expect(parseCardinality("0..n")).toEqual({ min: 0, max: undefined, dynamic: false })
-    expect(parseCardinality("3..n")).toEqual({ min: 3, max: undefined, dynamic: false })
-    expect(parseCardinality("1..9")).toEqual({ min: 1, max: 9, dynamic: false })
-    expect(parseCardinality("3")).toEqual({ min: 3, max: 3, dynamic: false })
-    expect(parseCardinality("rows*cols")).toEqual({ min: 0, dynamic: true })
+    expect(parseCardinality("0..n")).toEqual({ min: 0, max: undefined, label: "0..n" })
+    expect(parseCardinality("3..n")).toEqual({ min: 3, max: undefined, label: "3..n" })
+    expect(parseCardinality("1..9")).toEqual({ min: 1, max: 9, label: "1..9" })
+    expect(parseCardinality("3")).toEqual({ min: 3, max: 3, label: "3" })
+  })
+
+  it("pins a directive-resolved count to an exact range", () => {
+    // grid のように件数が実行時に決まる宣言。resolved が無いうちは下限も課さない
+    expect(isDynamicCardinality("rows*cols")).toBe(true)
+    expect(isDynamicCardinality("1..n")).toBe(false)
+    expect(parseCardinality("rows*cols")).toEqual({ min: 0, label: "rows*cols" })
+    expect(parseCardinality("rows*cols", 4)).toEqual({ min: 4, max: 4, label: "4件" })
   })
 
   it("refuses a form it cannot interpret", () => {

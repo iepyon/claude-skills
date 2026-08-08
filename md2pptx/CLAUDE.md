@@ -45,7 +45,7 @@ npx tsx src/tools/gen-ontology-doc.ts [--check]   # ontology.md / SKILL.md 生�
 ```
 src/index.ts        md2pptx(), md2html(), md2wiki() — 公開 API
 src/cli.ts          CLI ラッパー (--html, --verify, --wiki, --lint, --strict)
-src/pipeline.ts     パイプラインの組み立て: lint → parse → validate → render
+src/pipeline.ts     パイプラインの組み立て: prepare()（tokenize → lint → parse → validate）→ render
 ```
 
 ### 1.5 Ontology: 宣言の読み取りと検査
@@ -65,7 +65,7 @@ src/ontology/
 
 ```
 src/parser/
-├── index.ts            barrel export (parseMarkdown)
+├── index.ts            barrel export (parseMarkdown / parseTokens)
 ├── tokenizer.ts        行ベースのトークン化 (matchers 配列 → Option パターン)
 ├── ast-builder.ts      トークン列 → 未検証 AST (handlers 配列 → Option パターン)
 ├── builder-types.ts    ビルダーの型定義
@@ -186,7 +186,7 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 [ontology.md](ontology.md) が正本。ここに書くのは**実装側の制約だけ**。
 
 - 箇条書きの描画: `block-formatter.ts` が Paragraph[] に変換し、PPTX はネイティブバレット・HTML は CSS 疑似要素で記号を描く (リテラルの `•` は書かない — 二重表示になる)
-- 新レイアウト追加時: `ontology.yaml` の `layouts` に宣言 → `plugins/` にプラグインフォルダを作成 → `plugins/index.ts` に import 追加 → `gen-ontology-doc.ts` を実行。宣言が無いと `registerPlugin()` が落ちる（ドキュメントにも lint にも現れないレイアウトを作らせないため）
+- 新レイアウト追加時: `ontology.yaml` の `layouts` に宣言 → `plugins/` にプラグインフォルダを作成 → `plugins/index.ts` に import 追加 → `gen-ontology-doc.ts` を実行。宣言が無いと最初のトークン化で落ちる（ドキュメントにも lint にも現れないレイアウトを作らせないため）
 - スライド ID の採番: `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
 - HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` は `html-inspector` 用なので触らない
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
@@ -228,8 +228,9 @@ src/plugins/
 (steps / icon-layout / agenda は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる)
 
 ディレクティブと文字数上限は**プラグインには書かない**。正本は `ontology.yaml` の `layouts` で、
-`registerPlugin()` が `id` を鍵に完全一致の `tokenMatcher` を導出し、`getValidationConfig()` が
-`max-chars` を引く。したがって**通常 `tokenMatcher` は書かない** — 手書きするのは認識が
+`registerPlugin()` が `id` を鍵に完全一致の `tokenMatcher` を導出し（宣言の読み込みは
+初回の `getTokenMatchers()` まで遅延する）、文字数上限は `validation.ts` が `maxCharsForTag()` で
+直接引く。レジストリが返すのは数え方（`getCharCounter()`）だけ。したがって**通常 `tokenMatcher` は書かない** — 手書きするのは認識が
 リテラル1本で表せない場合のみ (numbered-list の `circle|bar` 正規表現が唯一の例)。
 
 **新プラグイン追加**: `ontology.yaml` の `layouts` に宣言 + `plugins/index.ts` に

@@ -24,6 +24,7 @@ import {
   LeanCanvasDimensions,
 } from "../../renderer/layout/types.js"
 import { buildSectionBoxes } from "../../renderer/layout/helpers.js"
+import { getVocabulary, resolveTerm } from "../../ontology/index.js"
 
 // --- LeanCanvas helpers ---
 
@@ -52,44 +53,18 @@ const LEAN_CANVAS_CELLS: readonly LeanCanvasCellSpec[] = [
   { name: "revenue", colStart: 5, colSpan: 5, rowStart: 2, rowSpan: 1 },
 ] as const
 
-// Mapping from heading keywords to cell indices
-const LEAN_CANVAS_HEADING_MAP: Record<string, number> = {
-  problem: 0,
-  "課題": 0,
-  solution: 1,
-  "ソリューション": 1,
-  "解決策": 1,
-  "unique value proposition": 2,
-  uvp: 2,
-  "独自の価値提案": 2,
-  "価値提案": 2,
-  "unfair advantage": 3,
-  advantage: 3,
-  "圧倒的な優位性": 3,
-  "優位性": 3,
-  "customer segments": 4,
-  customer: 4,
-  "顧客セグメント": 4,
-  "顧客": 4,
-  "key metrics": 5,
-  metrics: 5,
-  "主要指標": 5,
-  "指標": 5,
-  channels: 6,
-  "チャネル": 6,
-  "cost structure": 7,
-  cost: 7,
-  "コスト構造": 7,
-  "コスト": 7,
-  "revenue streams": 8,
-  revenue: 8,
-  "収益の流れ": 8,
-  "収益": 8,
-}
-
+/**
+ * 見出しからマスを決める。**語彙の正本は ontology.yaml の `lean-canvas-blocks`** で、
+ * その `key` は上の LEAN_CANVAS_CELLS の `name` と対応する（selfcheck が両者を突き合わせる）。
+ *
+ * かつてはここに 30 行の別名表があり、宣言に別名を足しても描画は変わらなかった
+ * ＝ lint だけが通ってマスが黙って消える、という状態になっていた。
+ */
 function findCellIndex(heading: string): number | undefined {
-  const normalized = heading.toLowerCase().trim()
-  return LEAN_CANVAS_HEADING_MAP[normalized]
+  const term = resolveTerm(getVocabulary("lean-canvas-blocks")!, heading)
+  if (!term) return undefined
+  const index = LEAN_CANVAS_CELLS.findIndex((c) => c.name === term.key)
+  return index >= 0 ? index : undefined
 }
 
 function calculateLeanCanvasDimensions(titleY: number): LeanCanvasDimensions {

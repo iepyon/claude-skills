@@ -287,3 +287,22 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 
 **受け入れ基準**: 変えるものを選び、`ontology.yaml` の宣言・`doc/` のデッキ・
 `__tests__/markdown-spec/` の入力を同時に更新して、`--lint --strict` が通る。
+
+### 併せて残っている「宣言はしたが読んでいない」箇所
+
+オントロジー導入後の整理で、lean-canvas とカスタマージャーニーの語彙はコードから消して
+`resolveTerm` 経由にした（宣言に別名を足せばその場で描画にも効く）。以下は残り:
+
+- **pattern-language の語彙**: 節名は `handler.ts` の約10箇所にリテラルで、`sub-labels` の
+  照合も handler が自前で持つ。600行の状態機械の改修になるため繰り延べた。当面は
+  `ontology.test.ts` が「宣言した節名がハンドラのソースに存在すること」を照合してドリフトを
+  赤くする（内容の一致までは見ていない）
+- **`detectLayout` の完全な宣言駆動化**: `lint.ts` の `CORE_PRECEDENCE` は
+  `parser/slide-converter.ts` の順序を手で写している。宣言側に `directives[].pattern` と
+  `kind: code-fence` があるので、行を宣言のパターンに当てれば表ごと消せる
+  （`pluginId.split(":")[0]` も一緒に消える）
+- **コアディレクティブの正規表現**: `tokenizer.ts` と `ontology.yaml` の両方にある。
+  プラグインのぶんは `registerPlugin` が宣言から導出しているが、コアはまだ手書き
+- **ビルダーへの診断チャネル**: lint がトークン列に対する2つ目のパーサになっている
+  （`lint.ts` 冒頭のコメント参照）。ビルダーが「いま落とした」と報告できれば、
+  入れ子モデルの写しが要らなくなる

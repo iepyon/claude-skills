@@ -6,13 +6,16 @@
  * 突き合わせる場所を1つ置く。__tests__/ontology.test.ts がこれを呼ぶ。
  */
 import "../plugins/index.js" // side-effect: プラグインの自己登録
+import { readFileSync } from "fs"
 import { getPlugins } from "../plugins/registry.js"
+import { CONSUMED_KEYS, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
   getAnnotations,
   getFieldSets,
   getLayouts,
   getLimits,
   getVocabularies,
+  isDynamicCardinality,
   loadOntology,
   parseCardinality,
 } from "./index.js"
@@ -89,11 +92,11 @@ export function selfcheckProblems(): string[] {
         fail(!slot.vocabulary, `${sat}: heading: free なのに vocabulary を持っている`)
       }
     }
-    // rows*cols を使えるのはディレクティブが行数・列数を捕まえるレイアウトだけ
-    const dynamic = layout.slots.some((s) => s.cardinality === "rows*cols")
+    // 件数がディレクティブの引数で決まる宣言は、その引数を実際に捕まえていること
+    const dynamic = layout.slots.some((s) => isDynamicCardinality(s.cardinality))
     fail(
       !dynamic || layout.directives.some((d) => (d.pattern?.match(/\(/g)?.length ?? 0) >= 2),
-      `${at}: cardinality rows*cols だが、件数を決める引数をディレクティブが捕まえていない`
+      `${at}: 件数が引数で決まる宣言だが、その引数をディレクティブが捕まえていない`
     )
 
     if (layout["max-chars"] !== undefined) {
@@ -225,6 +228,20 @@ export function selfcheckProblems(): string[] {
     fail(
       declaredPlugins.has(p.id),
       `plugin '${p.id}' が ontology.yaml の layouts に宣言されていない（ドキュメントにも lint にも現れない）`
+    )
+  }
+
+  // --- 宣言 ⇔ 生成物 ---
+  // 宣言したのにドキュメントへ出ないキーは、生成物どうしを比べる --check では見つからない
+  for (const key of Object.keys(onto)) {
+    fail(
+      CONSUMED_KEYS.has(key),
+      `トップレベルキー '${key}' を gen-ontology-doc.ts が読んでいない（宣言しても ontology.md に出ない）`
+    )
+  }
+  for (const name of staleSkillRegions(readFileSync(SKILL_MD, "utf-8"))) {
+    problems.push(
+      `SKILL.md の生成領域 '${name}' を生成側が作らない（差し替えられず古いまま残る）`
     )
   }
 

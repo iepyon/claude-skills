@@ -3,12 +3,14 @@ import { ContentSlide, Slide } from "../../schema/presentation.js"
 import type { RawSlide } from "../../parser/builder-types.js"
 import { CustomerJourneyLayout, CustomerJourneyRow, CustomerJourneyCell } from "./schema.js"
 import type { RawCustomerJourney } from "./handler.js"
+import { getVocabulary } from "../../ontology/index.js"
 
 export const convertCustomerJourney = (raw: RawSlide): O.Option<Slide[]> => {
   const journey = raw.pluginData?.["customerJourney"] as RawCustomerJourney | undefined
   if (!journey) return O.none()
 
-  const ROW_LABELS = ['タッチ', '行動', '判断', '感情'] as const
+  // 行の並びと表示ラベルは ontology.yaml の `journey-rows` が正本（handler と同じ語彙）
+  const rowTerms = getVocabulary("journey-rows")!.terms
   const allPhases = journey.phases
   const MAX_PHASES_PER_SLIDE = 4
 
@@ -22,13 +24,12 @@ export const convertCustomerJourney = (raw: RawSlide): O.Option<Slide[]> => {
   return O.some(phaseChunks.map((phaseChunk, chunkIndex) => {
     const phases = phaseChunk.map((p) => p.name)
 
-    // Build 4 rows (タッチ/行動/判断/感情)
-    const rows = ROW_LABELS.map((label) => {
-      const cells = phaseChunk.map((phase) => {
-        const items = phase.cells[label] || []
-        return new CustomerJourneyCell({ items })
-      })
-      return new CustomerJourneyRow({ label, cells })
+    // 宣言された行（タッチ/行動/判断/感情）を宣言順に組む
+    const rows = rowTerms.map((term) => {
+      const cells = phaseChunk.map(
+        (phase) => new CustomerJourneyCell({ items: phase.cells[term.key] || [] })
+      )
+      return new CustomerJourneyRow({ label: term.canonical, cells })
     })
 
     // Append page number when spanning multiple slides

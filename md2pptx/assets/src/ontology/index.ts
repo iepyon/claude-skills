@@ -24,7 +24,7 @@ import type {
 export * from "./types.js"
 
 /** src/ontology/ から見て md2pptx/ontology.yaml */
-export const ONTOLOGY_PATH = fileURLToPath(new URL("../../../ontology.yaml", import.meta.url))
+const ONTOLOGY_PATH = fileURLToPath(new URL("../../../ontology.yaml", import.meta.url))
 
 let cached: Ontology | undefined
 
@@ -57,7 +57,7 @@ export function getLayoutByTag(tag: string): Layout | undefined {
 }
 
 /** プラグイン id で引く（registry がディレクティブを導出するのに使う） */
-export function getLayoutByPlugin(pluginId: string): Layout | undefined {
+function getLayoutByPlugin(pluginId: string): Layout | undefined {
   return getLayouts().find((l) => l.plugin === pluginId)
 }
 
@@ -97,10 +97,6 @@ export function getAnnotations(): readonly Annotation[] {
   return loadOntology().annotations
 }
 
-export function getAnnotation(name: string): Annotation | undefined {
-  return getAnnotations().find((a) => a.name === name)
-}
-
 export function getVocabularies(): Readonly<Record<string, Vocabulary>> {
   return loadOntology().vocabularies
 }
@@ -121,46 +117,79 @@ export function getLimits(): Limits {
   return loadOntology().limits
 }
 
+/** 宣言は不変なので、コンパイル済みの正規表現は使い回してよい */
+const patternCache = new Map<string, RegExp>()
+
+const compiled = (pattern: string): RegExp => {
+  let re = patternCache.get(pattern)
+  if (!re) {
+    re = new RegExp(pattern)
+    patternCache.set(pattern, re)
+  }
+  return re
+}
+
 /**
- * 見出しを語彙の項目に解決する。
+ * 見出しを語彙の項目に解決する。**見出しの正規化はここが唯一の正本。**
  *
- * 照合は実装（LEAN_CANVAS_HEADING_MAP・行ラベルのコロン除去）に合わせて、
- * 小文字化・トリム・末尾コロン（半角/全角）の除去をしてから行う。
+ * 小文字化・トリム・末尾コロン（半角/全角の両方）の除去をしてから照合する。
+ * プラグインが自前で正規化すると規則がずれ、lint が「宣言どおり」と言う裏で
+ * 描画だけが落ちる（実際 customer-journey は半角コロンしか剥がしていなかった）。
  */
 export function resolveTerm(vocab: Vocabulary, heading: string): VocabTerm | undefined {
-  const normalized = heading.trim().replace(/[:：]\s*$/, "").toLowerCase()
+  const trimmed = heading.trim()
+  const normalized = trimmed.replace(/[:：]\s*$/, "").toLowerCase()
   for (const term of vocab.terms) {
     if (term.canonical.toLowerCase() === normalized) return term
     if (term.aliases?.some((a) => a.toLowerCase() === normalized)) return term
     // pattern は原文に当てる（小文字化すると全角数字以外の表記を壊しうる）
-    if (term.pattern && new RegExp(term.pattern).test(heading.trim())) return term
+    if (term.pattern && compiled(term.pattern).test(trimmed)) return term
   }
   return undefined
 }
 
-/** cardinality 文字列の解釈。`resolved` は grid のように実行時に決まる件数 */
+/** cardinality 宣言の解釈結果 */
 export interface Cardinality {
   readonly min: number
   /** 上限なしは undefined */
   readonly max?: number
-  /** "rows*cols" のように、ディレクティブの引数から決まる */
-  readonly dynamic: boolean
+  /** 診断メッセージに出す期待値の言い方 */
+  readonly label: string
 }
 
-export function parseCardinality(spec: string): Cardinality {
-  if (spec === "rows*cols") return { min: 0, dynamic: true }
+/** ディレクティブの引数で件数が決まる cardinality（grid の R×C） */
+const DYNAMIC = "rows*cols"
+
+/**
+ * cardinality 宣言を範囲に直す。
+ *
+ * `resolved` は grid のようにディレクティブの引数で件数が決まる宣言に、実行時の値を渡す。
+ * これを引数にしたのは、`rows*cols` という綴りを知っている場所をこの関数1つに閉じるため
+ * （かつては呼ぶ側が文字列を再照合し、返り値の `dynamic` は誰も読まなかった）。
+ */
+export function parseCardinality(spec: string, resolved?: number): Cardinality {
+  if (spec === DYNAMIC) {
+    return resolved === undefined
+      ? { min: 0, label: spec }
+      : { min: resolved, max: resolved, label: `${resolved}件` }
+  }
   const range = spec.match(/^(\d+)\.\.(\d+|n)$/)
   if (range) {
     return {
       min: parseInt(range[1], 10),
       max: range[2] === "n" ? undefined : parseInt(range[2], 10),
-      dynamic: false,
+      label: spec,
     }
   }
   const exact = spec.match(/^(\d+)$/)
   if (exact) {
     const n = parseInt(exact[1], 10)
-    return { min: n, max: n, dynamic: false }
+    return { min: n, max: n, label: spec }
   }
   throw new Error(`ontology.yaml の cardinality '${spec}' を解釈できない`)
+}
+
+/** 件数がディレクティブの引数で決まる宣言か */
+export function isDynamicCardinality(spec: string): boolean {
+  return spec === DYNAMIC
 }

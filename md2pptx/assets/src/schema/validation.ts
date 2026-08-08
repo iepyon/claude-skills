@@ -1,8 +1,8 @@
 import { Effect, pipe } from "effect"
 import { ValidationError } from "../errors.js"
-import { getLimits, isCharCountExcluded, maxCharsForTag } from "../ontology/index.js"
+import { isCharCountExcluded, maxCharsForTag } from "../ontology/index.js"
 import { Presentation, Slide, TextBlock, DefaultLayout, LeftRightLayout, TopBottomLayout, GridLayout } from "./presentation.js"
-import { getValidationConfig } from "../plugins/registry.js"
+import { getCharCounter } from "../plugins/registry.js"
 import { stripInlineFormatting } from "../parser/inline-formatter.js"
 
 // MD記法を除外してプレーンテキスト長を計算。
@@ -64,11 +64,9 @@ function countSlideChars(slide: Slide): number {
     count += l.cells.reduce((sum: number, cell: TextBlock) => sum + countTextBlock(cell), 0)
     if (l.takeaway) count += countPlainTextChars(l.takeaway)
   } else {
-    // Check plugin countChars
-    const pluginConfig = getValidationConfig(layout._tag)
-    if (pluginConfig?.countChars) {
-      count += pluginConfig.countChars(layout)
-    }
+    // プラグインが自分の形に合わせて数える
+    const countChars = getCharCounter(layout._tag)
+    if (countChars) count += countChars(layout)
   }
 
   return count
@@ -87,11 +85,8 @@ export function validatePresentation(pres: Presentation): Effect.Effect<Presenta
         const slide = pres.slides[i]
         const charCount = countSlideChars(slide)
 
-        // タイトルスライドはレイアウトを持たないので、デッキ全体の上限（宣言の既定値）に従う
-        const limit =
-          slide._tag === "ContentSlide"
-            ? maxCharsForTag(slide.layout._tag)
-            : getLimits()["max-chars-per-slide"]
+        // タイトルスライドはレイアウトを持たないので、宣言に無いタグとして既定の上限に落ちる
+        const limit = maxCharsForTag(slide._tag === "ContentSlide" ? slide.layout._tag : slide._tag)
 
         if (charCount > limit) {
           return Effect.fail(
