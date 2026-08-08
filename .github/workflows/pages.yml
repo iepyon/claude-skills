@@ -19,9 +19,14 @@ permissions:
   pages: write
   id-token: write
 
-# 公開は最新の1本だけでよい。走行中の古いデプロイは打ち切る。
+# 同じイベント種別・同じ ref の中でだけ打ち切る。
+#
+# group を単に "pages" にすると、PR が開いている間は1回の push で
+# push 用と pull_request 用の2つの run が起きて同じグループに入り、
+# 後から始まった PR 側（deploy を skip する）が push 側を
+# cancel-in-progress で殺す。結果、ビルドは緑なのに永遠にデプロイされない。
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 defaults:
