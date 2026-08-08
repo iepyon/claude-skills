@@ -14,6 +14,7 @@ import {
   layoutSlide,
   calculateGridSpacing,
   estimateTextHeight,
+  boxPlainText,
 } from "../src/renderer/layout/index.js"
 import { layoutTextOnly } from "../src/plugins/text-only/layout.js"
 import {
@@ -424,7 +425,7 @@ describe("layout-engine baseline snapshots", () => {
       const items = [new TextBlock({ heading: "Item 1", body: "Body 1" })]
       const result = layoutNumberedList("circle", items, 1.0, DEFAULT_THEME, "Key takeaway")
 
-      const takeawayBox = result.textBoxes.find(b => b.text === "Key takeaway")
+      const takeawayBox = result.textBoxes.find(b => boxPlainText(b) === "Key takeaway")
       expect(takeawayBox).toBeDefined()
       expect(takeawayBox!.isBold).toBe(true)
       expect(takeawayBox!.align).toBe("center")
@@ -775,7 +776,7 @@ describe("layout-engine baseline snapshots", () => {
       const sections = [new TextBlock({ heading: "Section 1", body: "Body text" })]
       const result = layoutDefault(sections, 1.0, DEFAULT_THEME, takeawayText)
 
-      const takeawayBox = result.textBoxes.find(b => b.text === takeawayText)
+      const takeawayBox = result.textBoxes.find(b => boxPlainText(b) === takeawayText)
       expect(takeawayBox).toBeDefined()
       expect(takeawayBox!.y).toBeCloseTo(expectedTakeawayY, 4)
       expect(takeawayBox!.isBold).toBe(true)
@@ -798,7 +799,7 @@ describe("layout-engine baseline snapshots", () => {
       const withoutTakeaway = layoutLeftRight(1, 1, leftSections, rightSections, 1.0, DEFAULT_THEME)
 
       // Takeaway text box present
-      const takeawayBox = withTakeaway.textBoxes.find(b => b.text === takeawayText)
+      const takeawayBox = withTakeaway.textBoxes.find(b => boxPlainText(b) === takeawayText)
       expect(takeawayBox).toBeDefined()
       expect(takeawayBox!.y).toBeCloseTo(expectedTakeawayY, 4)
 
@@ -816,7 +817,7 @@ describe("layout-engine baseline snapshots", () => {
       const withoutTakeaway = layoutTopBottom(1, 1, topSections, bottomSections, 1.0, DEFAULT_THEME)
 
       // Takeaway text box present
-      const takeawayBox = withTakeaway.textBoxes.find(b => b.text === takeawayText)
+      const takeawayBox = withTakeaway.textBoxes.find(b => boxPlainText(b) === takeawayText)
       expect(takeawayBox).toBeDefined()
       expect(takeawayBox!.y).toBeCloseTo(expectedTakeawayY, 4)
 
@@ -837,7 +838,7 @@ describe("layout-engine baseline snapshots", () => {
       const withoutTakeaway = layoutGrid(2, 2, cells, 1.0, DEFAULT_THEME)
 
       // Takeaway text box present
-      const takeawayBox = withTakeaway.textBoxes.find(b => b.text === takeawayText)
+      const takeawayBox = withTakeaway.textBoxes.find(b => boxPlainText(b) === takeawayText)
       expect(takeawayBox).toBeDefined()
       expect(takeawayBox!.y).toBeCloseTo(expectedTakeawayY, 4)
 

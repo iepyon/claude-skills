@@ -14,7 +14,8 @@ A shared layout engine computes every coordinate once, and both renderers consum
 ```
 Markdown → AST (parser/) → validated Presentation (schema/) → LayoutResult (renderer/layout/)
                                                             ├→ .pptx  (renderer/pptx/)
-                                                            └→ .html  (renderer/html/)
+                                                            ├→ .html  (renderer/html/)
+                                                            └→ .html  (renderer/wiki/ — many decks, one linked site)
 ```
 
 ## Backlog
@@ -25,11 +26,14 @@ See [../BACKLOG.md](../BACKLOG.md) for the feature backlog (prioritized, with ac
 
 - Effect-TS functional pipeline with typed errors (`ParseError`, `ValidationError`, `RenderError`)
 - Direct pptxgenjs API calls — no browser dependency
-- Two output formats from one source: `.pptx` and a self-contained `.html` deck (arrow-key navigation)
+- Three outputs from one source: `.pptx`, a self-contained `.html` deck (arrow-key navigation), and a linked wiki site (`--wiki`)
+- Wiki mode: several decks in one page, `[[wikilink]]` navigation, hover previews of the target slide, backlinks, hash routing with browser back/forward
 - 3-way verification (`--verify`): AST vs HTML vs PPTX coordinate/text comparison
 - Per-slide character validation (1000 chars by default, excluding Markdown syntax)
 - Bullet and numbered lists rendered as native PPTX bullets / CSS pseudo-elements
 - Inline formatting (`**bold**`, `*italic*`, `` `code` ``) and syntax-highlighted code blocks
+- Links: `[label](url)` (external) and `[[slide-id]]` / `[[slide-id|label]]` (internal, resolving to a slide jump in PPTX too)
+- Stable slide ids via `<!--id:foo-->`, or auto-derived from the slide title
 - Material Icons (SVG) and emoji icons
 - YAML themes (`--theme`)
 - 16 layout types:
@@ -53,6 +57,7 @@ npm install
 npx tsx src/cli.ts input.md output.pptx                  # PPTX
 npx tsx src/cli.ts input.md output.html --html           # HTML deck
 npx tsx src/cli.ts input.md out.html --html --verify     # both + 3-way inventory diff
+npx tsx src/cli.ts --wiki doc/wiki _site/index.html      # linked wiki site from a directory of decks
 npx tsx src/cli.ts input.md output.pptx --theme doc/theme.yaml
 npx tsx src/cli.ts input.md output.pptx --compress
 ```
@@ -61,6 +66,8 @@ npx tsx src/cli.ts input.md output.pptx --compress
 |--------|-------------|
 | `--html` | Generate HTML instead of PPTX |
 | `--verify` | Generate PPTX + HTML, then compare both against the AST inventory |
+| `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory) |
+| `--site-title <text>` | Title of the wiki site (with `--wiki`) |
 | `--theme <path>`, `-t <path>` | YAML theme file (falls back to `DEFAULT_THEME`) |
 | `--compress`, `-c` | Enable ZIP compression in pptxgenjs (default: off) |
 
@@ -161,7 +168,7 @@ Slide 2 exceeds 1000 characters (found 1183)
 ```
 src/
   index.ts            Public API (md2pptx, md2html)
-  cli.ts              CLI wrapper (--html, --verify, --theme, --compress)
+  cli.ts              CLI wrapper (--html, --verify, --wiki, --theme, --compress)
   pipeline.ts         parse → validate → render
   batch-html.ts       drafts/*.md → htmls/*.html + index.html
   constants.ts        Slide dimensions, margins, gaps, MAX_CHARS_PER_SLIDE
@@ -172,7 +179,8 @@ src/
   renderer/
     layout/           Shared layout engine — the single source of coordinates
     pptx/             LayoutResult → pptxgenjs API calls
-    html/             LayoutResult → inline-styled HTML
+    html/             LayoutResult → inline-styled HTML (slide-css.ts is shared with wiki/)
+    wiki/             Many Presentations → one linked site (reuses html/renderSlide)
     syntax-highlighter.ts, icon-resolver.ts, icon-mapping.ts
   plugins/            Self-registering layout plugins (11 registrations)
   tools/              inventory, html-inspector, pptx-inspector, inventory-diff
@@ -195,6 +203,9 @@ npm run test:watch
 
 ```bash
 npx tsx src/cli.ts doc/Spec.md doc/Spec.html --html && open doc/Spec.html
+
+# Linked wiki demo: a cross-referenced pattern deck plus a feature guide
+npx tsx src/cli.ts --wiki --site-title "Slide Wiki" doc/wiki _site/index.html && open _site/index.html
 ```
 
 ## License

@@ -5,7 +5,7 @@ import { getDirectiveHandlers, getModeHandlers } from "../../plugins/registry.js
 
 import { handleBlankLine, handleHorizontalRule, handleH1, handleH2, handleH3 } from "./structural.js"
 import { handleLeftDirective, handleRightDirective, handleTopDirective, handleBottomDirective, handleGridDirective } from "./layout-directives.js"
-import { handleIconDirective, handleTakeawayMarker, handleCodeFenceOpen, handleCodeFenceLine, handleCodeFenceClose } from "./inline.js"
+import { handleIconDirective, handleIdDirective, handleTakeawayMarker, handleCodeFenceOpen, handleCodeFenceLine, handleCodeFenceClose } from "./inline.js"
 import { handleBodyText } from "./body-text.js"
 
 // トークンハンドラーの型
@@ -32,6 +32,9 @@ function buildHandlers(): ReadonlyArray<TokenHandler> {
     handleHorizontalRule,
     handleH1,
     handleH2,
+    // ID はスライド単位の属性なので、プラグインのモードハンドラより先に処理する
+    // （プラグインブロックの中でも <!--id:--> を書けるようにするため）
+    handleIdDirective,
     pluginModeDispatcher,
     handleBlankLine,
     handleH3,

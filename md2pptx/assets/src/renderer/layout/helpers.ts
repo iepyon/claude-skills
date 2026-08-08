@@ -46,7 +46,9 @@ export function buildTakeawayBox(takeaway: string, theme: Theme): TextBox {
     y: takeawayY,
     w: SLIDE_WIDTH - 2 * MARGIN_X,
     h: TAKEAWAY_HEIGHT,
-    text: takeaway,
+    // richText で持つ理由: takeaway は出典・まとめを書く場所で、
+    // ここにリンクを置けないと B-14（参考資料スライドで URL を活かす）が成立しない。
+    richText: parseInlineFormatting(takeaway),
     isBold: true,
     fontSize: theme.contentSlide.takeawaySize,
     color: theme.contentSlide.takeawayColor,

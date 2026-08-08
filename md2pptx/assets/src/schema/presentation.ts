@@ -116,14 +116,21 @@ export class CodeDisplayLayout implements SlideLayout {
   }
 }
 
+// スライド ID。[[wikilink]] の解決先であり、HTML の #hash でもある。
+// props では任意にしておく（既存の new TitleSlide/new ContentSlide 呼び出しを
+// 全て書き換えずに済ませるため）。実際の採番は parser/slide-ids.ts が
+// ast-builder で一括して行うので、パイプラインを通れば必ず空でない値が入る。
+
 // TitleSlide: タイトルスライド
 export class TitleSlide {
   readonly _tag = "TitleSlide" as const
   readonly title: string
   readonly subtitle?: string
-  constructor(props: { title: string; subtitle?: string }) {
+  readonly id: string
+  constructor(props: { title: string; subtitle?: string; id?: string }) {
     this.title = props.title
     this.subtitle = props.subtitle
+    this.id = props.id ?? ""
   }
 }
 
@@ -132,13 +139,26 @@ export class ContentSlide {
   readonly _tag = "ContentSlide" as const
   readonly title: string
   readonly layout: SlideLayout
-  constructor(props: { title: string; layout: SlideLayout }) {
+  readonly id: string
+  constructor(props: { title: string; layout: SlideLayout; id?: string }) {
     this.title = props.title
     this.layout = props.layout
+    this.id = props.id ?? ""
   }
 }
 
 export type Slide = TitleSlide | ContentSlide
+
+/**
+ * ID を差し替えたスライドを作り直す。
+ *
+ * スプレッドでコピーしないのは、これらが素の class で `_tag` がクラスフィールドだから。
+ * スプレッドすると instanceof を失ったただのオブジェクトになる。
+ */
+export const withSlideId = (slide: Slide, id: string): Slide =>
+  slide._tag === "TitleSlide"
+    ? new TitleSlide({ title: slide.title, subtitle: slide.subtitle, id })
+    : new ContentSlide({ title: slide.title, layout: slide.layout, id })
 
 // Presentation: ルート
 export class Presentation {

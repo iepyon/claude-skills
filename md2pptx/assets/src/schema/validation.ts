@@ -3,17 +3,19 @@ import { ValidationError } from "../errors.js"
 import { MAX_CHARS_PER_SLIDE } from "../constants.js"
 import { Presentation, Slide, TextBlock, DefaultLayout, LeftRightLayout, TopBottomLayout, GridLayout } from "./presentation.js"
 import { getValidationConfig } from "../plugins/registry.js"
+import { stripInlineFormatting } from "../parser/inline-formatter.js"
 
-// MD記法を除外してプレーンテキスト長を計算
+// MD記法を除外してプレーンテキスト長を計算。
+// インライン装飾の除去は stripInlineFormatting が正本 — ここで正規表現を
+// 複製すると記法を足すたびに二重管理になり、URL が文字数に混入する。
 function countPlainTextChars(text: string): number {
-  return text
+  const withoutBlockSyntax = text
     .replace(/^#+\s+/gm, "") // # ## ###
     .replace(/^\s*[-*+]\s+/gm, "")    // - item / * item / + item
     .replace(/^\s*\d+\.\s+/gm, "")    // 1. item
     .replace(/<!--.*?-->/gs, "") // HTML comments
-    .replace(/`(.+?)`/g, '$1')        // `code` → code
-    .replace(/\*\*(.+?)\*\*/g, '$1')  // **bold** → bold
-    .replace(/\*(.+?)\*/g, '$1')      // *italic* → italic
+
+  return stripInlineFormatting(withoutBlockSyntax)
     .replace(/^\s*$/gm, "") // 空行
     .trim().length
 }

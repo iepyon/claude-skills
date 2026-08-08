@@ -11,6 +11,16 @@ const hexToColor = (hex: string): string => (hex ? `#${hex}` : "transparent")
 
 export { inchesToPx, hexToColor }
 
+// 属性値のエスケープ。run.text 用のエスケープとは別に必要
+// （href は本文ではないので、シングルクォートまで潰しておく）。
+const escapeAttr = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+
 /**
  * InlineTextRun[] を HTML に変換
  */
@@ -30,6 +40,14 @@ function richTextToHtml(runs: InlineTextRun[]): string {
     }
     if (run.italic) {
       html = `<em>${html}</em>`
+    }
+    // リンクは最も外側で包む（装飾ごとクリック可能にする）。
+    // internal は #<target> のアンカーなので、Wiki ビューアが無い単体 HTML でも
+    // ただのページ内リンクとして無害に落ちる。
+    if (run.link) {
+      html = run.link.kind === "external"
+        ? `<a class="ext-link" href="${escapeAttr(run.link.href)}" target="_blank" rel="noopener noreferrer">${html}</a>`
+        : `<a class="wikilink" href="#${escapeAttr(run.link.target)}" data-wikilink="${escapeAttr(run.link.target)}">${html}</a>`
     }
 
     return html
@@ -63,7 +81,14 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     `text-align: ${textAlign}`,
     `white-space: pre-wrap`,
     `word-wrap: break-word`,
-    `overflow: hidden`,
+    // 文字は絶対に切らない。
+    // 箱の高さはフォント metrics を知らない見積り（estimateTextHeight）と
+    // 固定値（TITLE_HEIGHT 等）で決まるが、ブラウザの line-height: normal は
+    // 実際のフォント依存で 1.33〜1.38 倍になる。閲覧者の環境に Noto Sans JP が
+    // 無ければ比率はさらに変わるので、どんな値に詰めてもどこかで溢れる。
+    // 溢れた数 px がはみ出すのは無害だが、字が切れるのは明確な不具合。
+    // 本当に入り切らない量は validateLayout がビルド時に弾いている。
+    `overflow: visible`,
     box.lineHeight ? `line-height: ${box.lineHeight}` : "",
     box.fontFace ? `font-family: ${box.fontFace}, monospace` : "",
   ].filter(Boolean).join("; ")
@@ -121,10 +146,15 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     return `<div class="text-box" style="${listStyle}" ${dataAttrs}><div class="para-stack">${items}</div></div>`
   }
 
-  // richText がある場合は HTML タグでレンダリング
-  const content = box.richText
-    ? richTextToHtml(box.richText)
-    : box.text
+  // richText は必ず1つの子にまとめてから flex コンテナへ入れる。
+  // <strong>/<em>/<a> をそのまま置くと、display:flex の子として
+  // 1つずつが flex アイテムになり、語の途中で改行される
+  // （paragraphs 側が .para-stack で1つにまとめているのと同じ理由）。
+  if (box.richText) {
+    return `<div class="text-box" style="${style}" ${dataAttrs}><span class="rich-text">${richTextToHtml(box.richText)}</span></div>`
+  }
+
+  const content = box.text
       ? box.text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

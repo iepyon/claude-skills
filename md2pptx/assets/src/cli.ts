@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from "fs"
+import { readFileSync, writeFileSync, statSync, readdirSync, mkdirSync } from "fs"
+import { join, basename, extname, dirname } from "path"
 import { Effect, Exit } from "effect"
-import { md2pptx, md2html, loadThemeFile, parseMarkdown, validatePresentation, DEFAULT_THEME } from "./index.js"
+import { md2pptx, md2html, md2wiki, loadThemeFile, parseMarkdown, validatePresentation, DEFAULT_THEME } from "./index.js"
+import type { WikiSource } from "./index.js"
 import { slidesToInventory } from "./tools/inventory.js"
 import { inspectPptx } from "./tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "./tools/html-inspector.js"
@@ -14,6 +16,8 @@ let compression = false
 let themePath: string | undefined
 let htmlMode = false
 let verifyMode = false
+let wikiMode = false
+let siteTitle: string | undefined
 const nonFlagArgs: string[] = []
 
 for (let i = 0; i < args.length; i++) {
@@ -26,6 +30,10 @@ for (let i = 0; i < args.length; i++) {
     htmlMode = true
   } else if (arg === "--verify") {
     verifyMode = true
+  } else if (arg === "--wiki") {
+    wikiMode = true
+  } else if (arg === "--site-title") {
+    siteTitle = args[++i]
   } else {
     nonFlagArgs.push(arg)
   }
@@ -38,12 +46,62 @@ if (nonFlagArgs.length < 2) {
   console.error("  --theme, -t <path>    Path to YAML theme file (optional)")
   console.error("  --html                Generate HTML output instead of PPTX")
   console.error("  --verify              Generate both PPTX and HTML, compare inventories")
+  console.error("  --wiki                Build one linked wiki site from one or more decks")
+  console.error("  --site-title <text>   Title of the wiki site (with --wiki)")
+  console.error("")
+  console.error("Wiki: tsx src/cli.ts --wiki <input.md|dir> [more...] <output.html>")
   process.exit(1)
 }
 
-const [inputPath, outputPath] = nonFlagArgs
+if (wikiMode && verifyMode) {
+  console.error("--wiki and --verify cannot be combined")
+  process.exit(1)
+}
+
+// --wiki は入力を複数取れる: 末尾が出力先、それ以外が入力
+const wikiInputPaths = nonFlagArgs.slice(0, -1)
+const [inputPath, outputPath] = wikiMode
+  ? [wikiInputPaths[0], nonFlagArgs[nonFlagArgs.length - 1]]
+  : nonFlagArgs
+
+/** ディレクトリなら *.md をソートして展開、ファイルならそれ自身。 */
+function collectWikiSources(paths: readonly string[]): WikiSource[] {
+  const files: string[] = []
+  for (const path of paths) {
+    if (statSync(path).isDirectory()) {
+      readdirSync(path)
+        .filter((f) => f.endsWith(".md"))
+        .sort()
+        .forEach((f) => files.push(join(path, f)))
+    } else {
+      files.push(path)
+    }
+  }
+  // 同じファイルを二度渡されてもデッキが重複しないようにする
+  const seen = new Set<string>()
+  return files
+    .filter((f) => !seen.has(f) && (seen.add(f), true))
+    .map((f) => ({ name: basename(f, extname(f)), markdown: readFileSync(f, "utf-8") }))
+}
 
 const program = Effect.gen(function* () {
+  // --wiki mode: build a single linked site from one or more decks
+  if (wikiMode) {
+    const sources = collectWikiSources(wikiInputPaths)
+    if (sources.length === 0) {
+      console.error("No markdown files found in the given inputs")
+      process.exit(1)
+    }
+    const wikiTheme = themePath ? yield* loadThemeFile(themePath) : DEFAULT_THEME
+    const html = yield* md2wiki(sources, { theme: wikiTheme, siteTitle })
+    // 出力先ディレクトリを作る。CI が _site/index.html のような
+    // まだ存在しない場所へ書き出すため
+    mkdirSync(dirname(outputPath), { recursive: true })
+    writeFileSync(outputPath, html, "utf-8")
+    console.log(`\u2705 Generated wiki: ${outputPath} (${sources.length} decks)`)
+    return
+  }
+
   const markdown = readFileSync(inputPath, "utf-8")
   const theme = themePath ? yield* loadThemeFile(themePath) : DEFAULT_THEME
 

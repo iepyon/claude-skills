@@ -235,3 +235,75 @@ describe("All formats together", () => {
       .toBe("日本語の太字とイタリックとコード")
   })
 })
+
+describe("parseInlineFormatting - links", () => {
+  it("should parse an external markdown link", () => {
+    expect(parseInlineFormatting("See [Anthropic](https://anthropic.com) now")).toEqual([
+      { text: "See " },
+      { text: "Anthropic", link: { kind: "external", href: "https://anthropic.com" } },
+      { text: " now" },
+    ])
+  })
+
+  it("should parse a bare wikilink and display the id", () => {
+    expect(parseInlineFormatting("go to [[intro]]")).toEqual([
+      { text: "go to " },
+      { text: "intro", link: { kind: "internal", target: "intro" } },
+    ])
+  })
+
+  it("should parse a labelled wikilink and display the label", () => {
+    expect(parseInlineFormatting("[[intro|はじめに]] を読む")).toEqual([
+      { text: "はじめに", link: { kind: "internal", target: "intro" } },
+      { text: " を読む" },
+    ])
+  })
+
+  it("should keep a wikilink inside backticks literal", () => {
+    expect(parseInlineFormatting("`[[intro]]` と書く")).toEqual([
+      { text: "[[intro]]", code: true },
+      { text: " と書く" },
+    ])
+  })
+
+  it("should not confuse a wikilink with a markdown link", () => {
+    expect(parseInlineFormatting("[[a]] and [b](c)")).toEqual([
+      { text: "a", link: { kind: "internal", target: "a" } },
+      { text: " and " },
+      { text: "b", link: { kind: "external", href: "c" } },
+    ])
+  })
+
+  it("should leave an unterminated wikilink as plain text", () => {
+    expect(parseInlineFormatting("[[broken")).toEqual([{ text: "[[broken" }])
+  })
+
+  it("should omit the link key entirely on undecorated runs", () => {
+    const [run] = parseInlineFormatting("plain")
+    expect("link" in run).toBe(false)
+  })
+
+  it("should support CJK slide ids", () => {
+    expect(parseInlineFormatting("[[種ノート]]")).toEqual([
+      { text: "種ノート", link: { kind: "internal", target: "種ノート" } },
+    ])
+  })
+})
+
+describe("stripInlineFormatting - links", () => {
+  it("should keep only the label of a markdown link", () => {
+    expect(stripInlineFormatting("See [Anthropic](https://anthropic.com)")).toBe("See Anthropic")
+  })
+
+  it("should keep the id of a bare wikilink", () => {
+    expect(stripInlineFormatting("go to [[intro]]")).toBe("go to intro")
+  })
+
+  it("should keep only the label of a labelled wikilink", () => {
+    expect(stripInlineFormatting("[[intro|はじめに]] を読む")).toBe("はじめに を読む")
+  })
+
+  it("should strip links mixed with other decorations", () => {
+    expect(stripInlineFormatting("**太字**と[[a|リンク]]と`code`")).toBe("太字とリンクとcode")
+  })
+})

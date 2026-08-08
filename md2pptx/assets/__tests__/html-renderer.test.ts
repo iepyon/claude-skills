@@ -528,3 +528,73 @@ describe("html-renderer", () => {
     })
   })
 })
+
+describe("html-renderer - links", () => {
+  const deckWithBody = (body: string) =>
+    new Presentation({
+      slides: [
+        new ContentSlide({
+          title: "リンク",
+          layout: new DefaultLayout({ sections: [new TextBlock({ heading: "H", body })] }),
+        }),
+      ],
+    })
+
+  it("should render an external link as a safe anchor", async () => {
+    const html = await renderHtml(deckWithBody("[Anthropic](https://anthropic.com)"))
+    expect(html).toContain('<a class="ext-link" href="https://anthropic.com"')
+    expect(html).toContain('target="_blank"')
+    expect(html).toContain('rel="noopener noreferrer"')
+    expect(html).toContain(">Anthropic</a>")
+  })
+
+  it("should render an internal link as an in-page anchor carrying its target", async () => {
+    const html = await renderHtml(deckWithBody("[[intro|はじめに]]"))
+    expect(html).toContain('<a class="wikilink" href="#intro" data-wikilink="intro">はじめに</a>')
+  })
+
+  it("should never leak raw link syntax into the rendered slide", async () => {
+    const html = await renderHtml(deckWithBody("[[intro]] と [x](https://e.com)"))
+    const slideMarkup = html.slice(
+      html.indexOf('<div class="slide content-slide"'),
+      html.indexOf('<div class="slide-counter">')
+    )
+    expect(slideMarkup).not.toBe("")
+    expect(slideMarkup).not.toContain("[[")
+    expect(slideMarkup).not.toContain("](")
+  })
+
+  it("should escape quotes in an href instead of breaking out of the attribute", async () => {
+    const html = await renderHtml(deckWithBody('[x](https://e.com/"onmouseover=alert(1))'))
+    expect(html).not.toContain('"onmouseover=alert(1)')
+    expect(html).toContain("&quot;onmouseover=alert(1)")
+  })
+
+  it("should render links inside a takeaway", async () => {
+    const pres = new Presentation({
+      slides: [
+        new ContentSlide({
+          title: "出典",
+          layout: new DefaultLayout({
+            sections: [new TextBlock({ heading: "H", body: "b" })],
+            takeaway: "出典: [調査](https://example.com)",
+          }),
+        }),
+      ],
+    })
+    const html = await renderHtml(pres)
+    expect(html).toContain('href="https://example.com"')
+  })
+
+  it("should emit no id attribute inside slide markup (clone safety for previews)", async () => {
+    // Wiki のホバープレビューはスライド DOM を cloneNode する。
+    // スライド内に id= があると、プレビューを開いた瞬間に id が重複する。
+    const html = await renderHtml(deckWithBody("[[a]] plain body"))
+    const slideMarkup = html.slice(
+      html.indexOf('<div class="slide content-slide"'),
+      html.indexOf('<div class="slide-counter">')
+    )
+    expect(slideMarkup).not.toBe("")
+    expect(slideMarkup).not.toMatch(/\sid="/)
+  })
+})

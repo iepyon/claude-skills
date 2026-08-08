@@ -25,6 +25,7 @@ export type {
   TextBox,
   Paragraph,
   InlineTextRun,
+  InlineLink,
   BorderBox,
   IconBox,
   CodeBox,
@@ -52,7 +53,7 @@ export {
   reservedForTakeaway,
 } from "./helpers.js"
 
-export { detectOverflow } from "./overflow.js"
+export { detectOverflow, boxPlainText } from "./overflow.js"
 export type { Overflow } from "./overflow.js"
 export { validateLayout } from "./validate-layout.js"
 

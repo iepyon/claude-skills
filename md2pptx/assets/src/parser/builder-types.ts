@@ -5,6 +5,9 @@ import { Option as O } from "effect"
 export type RawSlide = {
   type: "title" | "content"
   title: string
+  // <!--id:foo--> で明示された ID。未指定ならタイトルから導出する
+  // （導出とユニーク化は slide-ids.ts の責務）
+  id?: string
   subtitle?: string
   sections?: RawSection[]
   leftRatio?: number

@@ -1,0 +1,85 @@
+name: Build and publish slide wiki
+
+# 公開は main だけ。作業ブランチや PR ではビルドもデプロイもしない。
+# 公開サイトが常に main の内容と一致していることを、トリガの数で保証する。
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "md2pptx/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# トリガが main への push（と手動実行）だけなので、単一グループでよい。
+# 以前ここに PR 用の run が混ざり、後から始まった PR 側が
+# cancel-in-progress で push 側を殺してデプロイが消えていた。
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: md2pptx/assets
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # setup-node の cache: npm は package-lock.json を要求するが、
+      # このリポジトリは lockfile を追跡していない（assets/.gitignore）。
+      # 同じ理由で npm ci も使えないため npm install を使う。
+      # 代わりに ~/.npm を自前でキャッシュする。
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('md2pptx/assets/package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build the slide wiki
+        run: npx tsx src/cli.ts --wiki --site-title "md2pptx Slide Wiki" doc/wiki _site/index.html
+
+      # doc/Spec.md は全レイアウトの見本。Wiki と同じサイトに置いて
+      # 「従来のページめくり」も比較できるようにする。
+      - name: Build the layout reference deck
+        run: npx tsx src/cli.ts doc/Spec.md _site/spec.html --html
+
+      - name: Fail if the wiki has unresolved links
+        run: |
+          if grep -q "未解決リンク" _site/index.html; then
+            echo "::error::The wiki contains unresolved [[links]]. See the sidebar report."
+            grep -o "未解決リンク [0-9]* 件" _site/index.html
+            exit 1
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: md2pptx/assets/_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

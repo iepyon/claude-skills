@@ -14,6 +14,7 @@ export type Token =
   | { type: "BottomDirective"; ratio: number; line: number }
   | { type: "GridDirective"; rows: number; cols: number; line: number }
   | { type: "IconDirective"; icon: string; line: number }
+  | { type: "IdDirective"; id: string; line: number }
   | { type: "TakeawayMarker"; line: number }
   | { type: "PluginDirective"; pluginId: string; line: number }
   | { type: "CodeFenceOpen"; language: string; line: number }
@@ -108,6 +109,20 @@ const matchIconDirective: TokenMatcher = (line, lineNum) =>
     }))
   )
 
+// IdDirective: <!--id:intro--> — スライドに安定した ID を与える。
+// マッチャが無いと未知の HTML コメントは BodyText に落ちて本文として
+// 表示されてしまうので、no-op では済まず必ずトークン化する必要がある。
+const matchIdDirective: TokenMatcher = (line, lineNum) =>
+  pipe(
+    line.match(/^<!--id:(.+?)-->$/),
+    O.fromNullable,
+    O.map(m => ({
+      type: "IdDirective" as const,
+      id: m[1].trim(),
+      line: lineNum
+    }))
+  )
+
 // TakeawayMarker: <!--takeaway--> (text on following lines)
 const matchTakeawayMarker: TokenMatcher = (line, lineNum) =>
   pipe(
@@ -152,6 +167,7 @@ const coreMatchers: ReadonlyArray<TokenMatcher> = [
   matchBottomDirective,
   matchGridDirective,
   matchIconDirective,
+  matchIdDirective,
   matchTakeawayMarker,
 ]
 

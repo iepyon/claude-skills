@@ -3617,7 +3617,11 @@ exports[`layout-engine baseline snapshots > takeaway support > should match defa
       "fontSize": 20,
       "h": 0.9,
       "isBold": true,
-      "text": "Takeaway content",
+      "richText": [
+        {
+          "text": "Takeaway content",
+        },
+      ],
       "valign": "middle",
       "w": 9.2,
       "x": 0.4,
@@ -3778,7 +3782,11 @@ exports[`layout-engine baseline snapshots > takeaway support > should match grid
       "fontSize": 20,
       "h": 0.9,
       "isBold": true,
-      "text": "Takeaway content",
+      "richText": [
+        {
+          "text": "Takeaway content",
+        },
+      ],
       "valign": "middle",
       "w": 9.2,
       "x": 0.4,
@@ -3869,7 +3877,11 @@ exports[`layout-engine baseline snapshots > takeaway support > should match left
       "fontSize": 20,
       "h": 0.9,
       "isBold": true,
-      "text": "Takeaway content",
+      "richText": [
+        {
+          "text": "Takeaway content",
+        },
+      ],
       "valign": "middle",
       "w": 9.2,
       "x": 0.4,
@@ -3960,7 +3972,11 @@ exports[`layout-engine baseline snapshots > takeaway support > should match top-
       "fontSize": 20,
       "h": 0.9,
       "isBold": true,
-      "text": "Takeaway content",
+      "richText": [
+        {
+          "text": "Takeaway content",
+        },
+      ],
       "valign": "middle",
       "w": 9.2,
       "x": 0.4,

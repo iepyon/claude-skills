@@ -45,7 +45,7 @@ function requiredHeight(text: string, fontSize: number, width: number): number {
  * ボックスが保持するテキストを、行区切り付きのプレーンテキストに平坦化する。
  * 高さ見積もりに渡すため、実描画されないインライン記法は除去する。
  */
-function boxPlainText(box: TextBox): string {
+export function boxPlainText(box: TextBox): string {
   if (box.paragraphs) {
     return box.paragraphs.map((para) => para.runs.map((run) => run.text).join("")).join("\n")
   }

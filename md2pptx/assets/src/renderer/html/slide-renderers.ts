@@ -3,6 +3,13 @@ import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
 import { textBoxToHtml, borderBoxToHtml, iconBoxToHtml, codeBoxToHtml, shapeBoxToHtml, hexToColor } from "./element-renderers.js"
 
+// スライド ID を data 属性で持たせる。
+// id= を使わないのは、Wiki のホバープレビューがスライド DOM を cloneNode するため
+// （id= だとプレビューを開くたびに ID が重複する）。
+// data-slide-id="slide-N" は html-inspector が要素を切り出す鍵なので触らない。
+const slideKeyAttr = (slide: Slide): string =>
+  slide.id ? ` data-slide-key="${slide.id.replace(/"/g, "&quot;")}"` : ""
+
 // Slide renderer type - returns Some(html) if it handles this slide tag
 export type SlideRenderer = (slide: Slide, theme: Theme, slideIndex: number) => O.Option<string>
 
@@ -18,7 +25,7 @@ const renderTitleSlide: SlideRenderer = (slide, theme, slideIndex) => {
     .join("\n    ")
 
   const slideHtml = `
-  <div class="slide title-slide" data-slide-id="slide-${slideIndex}" style="background-color: ${backgroundColor}">
+  <div class="slide title-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} style="background-color: ${backgroundColor}">
     ${textBoxesHtml}
   </div>`
 
@@ -53,7 +60,7 @@ const renderContentSlide: SlideRenderer = (slide, theme, slideIndex) => {
     .join("\n    ")
 
   const slideHtml = `
-  <div class="slide content-slide" data-slide-id="slide-${slideIndex}" style="background-color: ${backgroundColor}">
+  <div class="slide content-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} style="background-color: ${backgroundColor}">
     ${borderBoxesHtml}
     ${shapeBoxesHtml}
     ${iconBoxesHtml}
