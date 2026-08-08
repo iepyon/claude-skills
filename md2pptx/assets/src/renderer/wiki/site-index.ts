@@ -40,9 +40,10 @@ export function buildSiteIndex(decks: readonly WikiDeck[]): {
         globalId,
         deckSlug,
         localId,
-        // pattern-language は title:"" のスライドを吐くので、
-        // ここで補わないとサイドバーに空行が並ぶ
-        title: slide.title || deck.title,
+        // agenda と pattern-language は title:"" のスライドを吐く。
+        // その場合は localId を使う — ID は元の見出しから導出されているので、
+        // デッキ名にフォールバックするより実際の中身に近い。
+        title: slide.title || localId || deck.title,
         slide,
         globalIndex,
         deckIndex,

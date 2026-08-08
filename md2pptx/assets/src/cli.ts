@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, statSync, readdirSync } from "fs"
-import { join, basename, extname } from "path"
+import { readFileSync, writeFileSync, statSync, readdirSync, mkdirSync } from "fs"
+import { join, basename, extname, dirname } from "path"
 import { Effect, Exit } from "effect"
 import { md2pptx, md2html, md2wiki, loadThemeFile, parseMarkdown, validatePresentation, DEFAULT_THEME } from "./index.js"
 import type { WikiSource } from "./index.js"
@@ -94,6 +94,9 @@ const program = Effect.gen(function* () {
     }
     const wikiTheme = themePath ? yield* loadThemeFile(themePath) : DEFAULT_THEME
     const html = yield* md2wiki(sources, { theme: wikiTheme, siteTitle })
+    // 出力先ディレクトリを作る。CI が _site/index.html のような
+    // まだ存在しない場所へ書き出すため
+    mkdirSync(dirname(outputPath), { recursive: true })
     writeFileSync(outputPath, html, "utf-8")
     console.log(`\u2705 Generated wiki: ${outputPath} (${sources.length} decks)`)
     return
