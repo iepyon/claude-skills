@@ -75,6 +75,7 @@ export function generateWikiHtml(
   <div class="brand">${escapeHtml(siteTitle)}</div>
 
   <div class="topbar">
+    <button class="menu-btn" id="menu-btn" aria-label="目次" aria-expanded="false">&#9776;</button>
     <span class="crumb" id="crumb"></span>
     <span class="spacer"></span>
     <button class="nav-btn" id="prev-btn">&larr; 前</button>
@@ -86,13 +87,17 @@ export function generateWikiHtml(
 ${renderSidebar(site)}
   </nav>
 
+  <div class="scrim" id="scrim"></div>
+
   <main class="main">
-    <div class="stage-frame">
+    <div class="stage-wrap" id="stage-wrap">
+      <div class="stage-frame" id="stage-frame">
 ${site.entries
   .map(
-    (entry, i) => `      <div class="wiki-slide" data-wiki-id="${escapeAttr(entry.globalId)}" data-deck="${escapeAttr(entry.deckSlug)}">${slidesHtml[i]}</div>`
+    (entry, i) => `        <div class="wiki-slide" data-wiki-id="${escapeAttr(entry.globalId)}" data-deck="${escapeAttr(entry.deckSlug)}">${slidesHtml[i]}</div>`
   )
   .join("\n")}
+      </div>
     </div>
 
     <section class="backlinks">

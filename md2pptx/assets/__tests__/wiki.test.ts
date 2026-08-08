@@ -237,3 +237,48 @@ describe("titles for plugins that blank the slide title", () => {
     expect(site.entries[0].title).toBe("読み方")
   })
 })
+
+describe("viewer layout contract", () => {
+  // ここで守っているのは「実際に見えるか」ではなく、見えるための前提条件。
+  // 幾何そのものはブラウザでしか確かめられないので、崩れやすい箇所を固定する。
+
+  it("should give the scaled stage its own wrapper element", async () => {
+    // transform: scale() は描画しか縮めない。外箱が縮小後の実寸を持たないと
+    // 960px の箱が狭いコンテナからはみ出し、スライドの左が見切れる。
+    const html = await buildHtml()
+    expect(html).toContain('class="stage-wrap" id="stage-wrap"')
+    expect(html).toContain('id="stage-frame"')
+    expect(html).toContain('wrap.style.width')
+    expect(html).toContain('wrap.style.height')
+  })
+
+  it("should fit the stage by height as well as width", async () => {
+    // 横幅だけで倍率を決めると、背の低い画面でスライドの下が切れる。
+    const html = await buildHtml()
+    expect(html).toMatch(/availH\s*\/\s*\d/)
+    expect(html).toContain("CHROME_RESERVE")
+  })
+
+  it("should not hide the table of contents on touch devices", async () => {
+    // 入力デバイスの能力（ホバー可否）でレイアウトを切ると、
+    // タッチ対応のノートPCでも目次ごと消えて到達不能になる。
+    const html = await buildHtml()
+    const hoverBlock = html.slice(
+      html.indexOf("@media (hover: none)"),
+      html.indexOf("@media (hover: none)") + 400
+    )
+    expect(hoverBlock).toContain(".preview-card")
+    expect(hoverBlock).not.toContain(".sidebar")
+  })
+
+  it("should collapse the sidebar into a reachable drawer on narrow screens", async () => {
+    const html = await buildHtml()
+    expect(html).toContain("@media (max-width: 860px)")
+    expect(html).toContain('id="menu-btn"')
+    expect(html).toContain('id="scrim"')
+    expect(html).toContain(".sidebar.open")
+    // 幅で畳むときも display:none にはしない（引き出しとして残す）
+    const narrow = html.slice(html.indexOf("@media (max-width: 860px)"))
+    expect(narrow).not.toMatch(/\.sidebar\s*\{[^}]*display:\s*none/)
+  })
+})

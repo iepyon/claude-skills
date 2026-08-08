@@ -56,11 +56,18 @@ ${slideBaseCss(theme)}
       display: flex; align-items: center; gap: 12px;
       padding: 0 16px;
       border-bottom: 1px solid var(--line);
+      overflow: hidden;
     }
 
-    .crumb { font-size: 12px; color: var(--muted); }
+    /* パンくずは折り返さず省略する。折り返すと 48px のトップバーから
+       はみ出してボタンに重なる。 */
+    .crumb {
+      font-size: 12px; color: var(--muted);
+      min-width: 0; flex: 0 1 auto;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
     .crumb b { color: var(--text); font-weight: 600; }
-    .spacer { flex: 1; }
+    .spacer { flex: 1 0 0; }
 
     .nav-btn {
       background: rgba(255,255,255,.05);
@@ -68,6 +75,7 @@ ${slideBaseCss(theme)}
       color: var(--text);
       font: inherit; font-size: 12px;
       padding: 4px 12px; border-radius: 6px; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
     }
     .nav-btn:hover:not(:disabled) { background: rgba(255,255,255,.12); }
     .nav-btn:disabled { opacity: .3; cursor: default; }
@@ -126,13 +134,20 @@ ${slideBaseCss(theme)}
       display: flex; flex-direction: column; align-items: center;
     }
 
+    /* transform: scale() は描画だけを縮め、レイアウト上の寸法は変えない。
+       この外箱が「縮小後の実寸」を持つことで、狭いコンテナでも
+       はみ出し（＝左が見切れる）が起きない。実寸は scaleStage() が入れる。 */
+    .stage-wrap {
+      width: ${SLIDE_W_PX}px; height: ${SLIDE_H_PX}px;
+      flex-shrink: 0;
+    }
+
     .stage-frame {
       width: ${SLIDE_W_PX}px; height: ${SLIDE_H_PX}px;
       transform-origin: top left;
       border-radius: 10px; overflow: hidden;
       box-shadow: 0 8px 40px rgba(0,0,0,.5);
       position: relative;
-      flex-shrink: 0;
     }
     /* Wiki では表示中の1枚だけを stage に出す。
        .slide.active の規則は slideBaseCss 側と共有している。 */
@@ -211,11 +226,58 @@ ${slideBaseCss(theme)}
     }
     .preview-scale .slide { display: block !important; position: absolute; inset: 0; }
 
-    /* ホバーできない端末ではプレビューを出さない（タップは遷移になる） */
+    /* ホバーできない端末ではプレビューを出さない（タップは遷移になる）。
+       ここで判定するのは *入力デバイスの能力* だけ。レイアウトには手を出さない
+       — タッチ対応のノートPCでも目次が消えてしまうため。 */
     @media (hover: none), (pointer: coarse) {
       .preview-card { display: none; }
-      body { grid-template-columns: 1fr; grid-template-areas: "topbar" "main"; }
-      .brand, .sidebar { display: none; }
+    }
+
+    /* ---------- 画面が狭いとき: サイドバーをドロワーにする ---------- */
+    .menu-btn {
+      display: none;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font: inherit; font-size: 15px; line-height: 1;
+      padding: 6px 10px; border-radius: 6px; cursor: pointer;
+      flex-shrink: 0;
+    }
+    .menu-btn:hover { background: rgba(255,255,255,.12); }
+
+    .scrim { display: none; }
+
+    @media (max-width: 860px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-areas: "topbar" "main";
+      }
+      .brand { display: none; }
+      .menu-btn { display: inline-block; }
+
+      /* 消すのではなく引き出しにする。狭い画面でも目次には必ず到達できる。 */
+      .sidebar {
+        position: fixed;
+        top: 48px; left: 0; bottom: 0;
+        width: 264px;
+        background: var(--panel);
+        z-index: 200;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+      }
+      .sidebar.open { transform: translateX(0); }
+
+      .scrim {
+        display: block;
+        position: fixed; inset: 48px 0 0 0;
+        background: rgba(0,0,0,.5);
+        z-index: 150;
+        opacity: 0; pointer-events: none;
+        transition: opacity .2s ease;
+      }
+      .scrim.open { opacity: 1; pointer-events: auto; }
+
+      .main { padding: 16px; }
     }
 `
 }

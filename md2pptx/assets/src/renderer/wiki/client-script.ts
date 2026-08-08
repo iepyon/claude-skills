@@ -142,7 +142,28 @@ export function wikiScript(): string {
     if (!a) return;
     e.preventDefault();
     go(a.dataset.id);
+    closeDrawer();   // 狭い画面では選んだら引っ込める
   });
+
+  // ------------------------------------------------------------- drawer
+  // 画面が狭いときサイドバーは引き出しになる。以前は入力デバイスが
+  // タッチかどうかで目次ごと消していたが、それではタッチ対応の
+  // ノートPCでも目次に到達できなくなる。
+  var sidebar = document.querySelector(".sidebar");
+  var scrim = document.getElementById("scrim");
+  var menuBtn = document.getElementById("menu-btn");
+
+  function setDrawer(open) {
+    sidebar.classList.toggle("open", open);
+    scrim.classList.toggle("open", open);
+    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function closeDrawer() { setDrawer(false); }
+
+  menuBtn.addEventListener("click", function () {
+    setDrawer(!sidebar.classList.contains("open"));
+  });
+  scrim.addEventListener("click", closeDrawer);
 
   // ---------------------------------------------------------- hover preview
   var OPEN_DELAY = 220, CLOSE_DELAY = 160, MAX_DEPTH = 3;
@@ -249,7 +270,7 @@ export function wikiScript(): string {
 
     if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); step(1, e.shiftKey); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); step(-1, e.shiftKey); }
-    else if (e.key === "Escape") { closeAllPreviews(); }
+    else if (e.key === "Escape") { closeAllPreviews(); closeDrawer(); }
   });
 
   // -------------------------------------------------------- sidebar filter
@@ -267,16 +288,30 @@ export function wikiScript(): string {
   });
 
   // --------------------------------------------------------------- scaling
+  // バックリンク欄とキーヒントのぶん、縦に残しておく余白。
+  // これが無いとスライドが縦いっぱいに広がり、下の情報が常に画面外に出る。
+  var CHROME_RESERVE = 150;
+
   function scaleStage() {
     var main = document.querySelector(".main");
-    var frame = document.querySelector(".stage-frame");
-    if (!main || !frame) return;
-    var availW = main.clientWidth - 48;
-    var scale = Math.min(availW / ${SLIDE_W_PX}, 1);
+    var wrap = document.getElementById("stage-wrap");
+    var frame = document.getElementById("stage-frame");
+    if (!main || !wrap || !frame) return;
+
+    var pad = parseFloat(getComputedStyle(main).paddingLeft) || 0;
+    var availW = main.clientWidth - pad * 2;
+    var availH = Math.max(200, main.clientHeight - pad * 2 - CHROME_RESERVE);
+
+    // 幅と高さの両方に収める。横だけで決めると、背の低い画面で
+    // スライドの下が切れる。
+    var scale = Math.min(availW / ${SLIDE_W_PX}, availH / ${SLIDE_H_PX}, 1);
+
     frame.style.transform = "scale(" + scale + ")";
-    // transform はレイアウト上の寸法を変えないので、下の要素が重ならないよう
-    // 実効高さぶんのマージンを自分で作る
-    frame.style.marginBottom = Math.round(${SLIDE_H_PX} * (scale - 1)) + "px";
+    // 外箱に「縮小後の実寸」を持たせる。transform はレイアウト寸法を
+    // 変えないので、これをやらないと 960px の箱がはみ出して左が見切れる。
+    wrap.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
+    wrap.style.height = Math.round(${SLIDE_H_PX} * scale) + "px";
+
     var bl = document.querySelector(".backlinks");
     if (bl) bl.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
   }
