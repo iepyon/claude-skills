@@ -8,6 +8,20 @@
 
 Markdown → AST → pptxgenjs → PPTX 変換の Claude Code skill。HTML プレビューモードと、複数デッキをリンクで辿れる Wiki モードも備え、共通のレイアウトエンジンで座標を計算して3系統に出力する。
 
+## オントロジー（md の構造の正本）
+
+**このファイルには、ここにしか無い規約だけを書く。** md の構造 — 骨格要素・注釈ディレクティブ・
+16レイアウトとその `###` / `####` の意味・見出しの語彙・`key: value` メタ・文字数制限 — の正本は
+[ontology.yaml](ontology.yaml)（人間可読な生成物は [ontology.md](ontology.md)）。
+**そちらにある内容をここへ写さない**（写した瞬間、四重管理とドリフトが始まる）。
+
+- 実装は `assets/src/ontology/` 経由で宣言を読む。`registry.ts` はプラグインのディレクティブを、
+  `schema/validation.ts` は文字数上限をそこから導出する。**コードに語彙や数値を再定義しない。**
+- `ontology.md` と SKILL.md の生成領域（`<!-- BEGIN GENERATED: … -->`）は
+  `npx tsx src/tools/gen-ontology-doc.ts` で生成する。手編集禁止。
+- 宣言に照らした md の検査は `npx tsx src/cli.ts --lint <deck.md>`。既定は警告、`--strict` でエラー。
+- 宣言そのものの点検は `npx tsx src/ontology/selfcheck.ts`。
+
 ## Commands
 
 ```bash
@@ -17,6 +31,9 @@ npx tsx src/cli.ts input.md output.pptx           # PPTX 生成
 npx tsx src/cli.ts input.md output.html --html    # HTML 生成
 npx tsx src/cli.ts input.md out.html --html --verify  # 検証
 npx tsx src/cli.ts --wiki doc/wiki _site/index.html    # Wiki サイト生成
+npx tsx src/cli.ts --lint [--strict] doc/Spec.md doc/wiki  # 宣言に照らして検査
+npx tsx src/ontology/selfcheck.ts                 # 宣言の自己点検
+npx tsx src/tools/gen-ontology-doc.ts [--check]   # ontology.md / SKILL.md 生成領域
 ```
 
 ## Code Reading Order
@@ -27,15 +44,28 @@ npx tsx src/cli.ts --wiki doc/wiki _site/index.html    # Wiki サイト生成
 
 ```
 src/index.ts        md2pptx(), md2html(), md2wiki() — 公開 API
-src/cli.ts          CLI ラッパー (--html, --verify, --wiki)
-src/pipeline.ts     3段パイプラインの組み立て: parse → validate → render
+src/cli.ts          CLI ラッパー (--html, --verify, --wiki, --lint, --strict)
+src/pipeline.ts     パイプラインの組み立て: prepare()（tokenize → lint → parse → validate）→ render
 ```
+
+### 1.5 Ontology: 宣言の読み取りと検査
+
+```
+src/ontology/
+├── types.ts        ontology.yaml の宣言に対応する型（YAML のキーは kebab-case のまま）
+├── index.ts        ローダ + 導出ルックアップ（registry / validation / lint / 生成器の唯一の入口）
+├── selfcheck.ts    宣言そのものの点検（宣言 ⇔ 実装の両方向を突き合わせる）
+└── lint.ts         書かれた md を宣言に照らして検査（トークン層で見る）
+```
+
+`lint.ts` がトークン層を見るのは、語彙外の `###` や未宣言のメタキーが **AST に変換される時点で
+もう失われている**ため（消えたブロックは AST に痕跡を残さない）。
 
 ### 2. Parsing: Markdown → AST
 
 ```
 src/parser/
-├── index.ts            barrel export (parseMarkdown)
+├── index.ts            barrel export (parseMarkdown / parseTokens)
 ├── tokenizer.ts        行ベースのトークン化 (matchers 配列 → Option パターン)
 ├── ast-builder.ts      トークン列 → 未検証 AST (handlers 配列 → Option パターン)
 ├── builder-types.ts    ビルダーの型定義
@@ -54,7 +84,7 @@ src/schema/
 ├── index.ts            barrel export
 ├── presentation.ts     Plain class 型 (TitleSlide, ContentSlide, コアレイアウト各種)
 ├── theme.ts            Theme 型 + DEFAULT_THEME
-└── validation.ts       文字数制限バリデーション (既定 1000文字・プラグインごとに上書き)
+└── validation.ts       文字数制限バリデーション (上限の正本は ontology.yaml)
 ```
 
 ### 4. Rendering: Validated AST → Output
@@ -152,13 +182,12 @@ pipe(handlers.map(h => h(input)), A.findFirst(O.isSome), O.flatten, O.getOrElse(
 
 ## Key Constraints
 
-- スライド区切り: `---`。`#` = タイトルスライド、`##` = コンテンツスライド、`###` = セクション
-- 箇条書き: `- ` / `* ` / `+ ` (バレット)、`1. ` (番号付き)。`block-formatter.ts` が Paragraph[] に変換し、PPTX はネイティブバレット・HTML は CSS 疑似要素で記号を描く (リテラルの `•` は書かない — 二重表示になる)
-- 文字数制限: 1スライド 1000文字 (`MAX_CHARS_PER_SLIDE`、Markdown 構文を除く本文+見出し)。超過で ValidationError。プラグインは `maxChars` で上書き可 (現状 PatternLanguageOverview のみ 1024)。読みやすさの目安は 240文字程度
-- レイアウト指定: `<!--left:N-->`, `<!--right:M-->`, `<!--grid:RxC-->`, `<!--top:N-->`, `<!--bottom:M-->` 等
-- 新レイアウト追加時: `plugins/` にプラグインフォルダを作成 + `plugins/index.ts` に import 追加
-- リンク: `[text](url)` (外部) と `[[slide-id]]` / `[[slide-id|表示]]` (内部)。文字数は**表示ラベルだけ**数える。効くのは `###` セクションの見出し・本文・takeaway のみ（プラグインが `text:` で直接吐く箇所は対象外）
-- スライド ID: `<!--id:foo-->`、省略時はタイトルの slug、衝突は連番。採番は `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
+md の記法そのもの（区切り・要素・ディレクティブ・語彙・文字数・リンク）は
+[ontology.md](ontology.md) が正本。ここに書くのは**実装側の制約だけ**。
+
+- 箇条書きの描画: `block-formatter.ts` が Paragraph[] に変換し、PPTX はネイティブバレット・HTML は CSS 疑似要素で記号を描く (リテラルの `•` は書かない — 二重表示になる)
+- 新レイアウト追加時: `ontology.yaml` の `layouts` に宣言 → `plugins/` にプラグインフォルダを作成 → `plugins/index.ts` に import 追加 → `gen-ontology-doc.ts` を実行。宣言が無いと最初のトークン化で落ちる（ドキュメントにも lint にも現れないレイアウトを作らせないため）
+- スライド ID の採番: `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
 - HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` は `html-inspector` 用なので触らない
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
 
@@ -198,11 +227,14 @@ src/plugins/
 
 (steps / icon-layout / agenda は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる)
 
-ディレクティブは `docDirective` に1度だけ宣言する。`registerPlugin()` がそこから完全一致の
-`tokenMatcher` を導出するので、**通常 `tokenMatcher` は書かない**。手書きするのは認識が
+ディレクティブと文字数上限は**プラグインには書かない**。正本は `ontology.yaml` の `layouts` で、
+`registerPlugin()` が `id` を鍵に完全一致の `tokenMatcher` を導出し（宣言の読み込みは
+初回の `getTokenMatchers()` まで遅延する）、文字数上限は `validation.ts` が `maxCharsForTag()` で
+直接引く。レジストリが返すのは数え方（`getCharCounter()`）だけ。したがって**通常 `tokenMatcher` は書かない** — 手書きするのは認識が
 リテラル1本で表せない場合のみ (numbered-list の `circle|bar` 正規表現が唯一の例)。
 
-**新プラグイン追加**: `plugins/index.ts` に `import "./my-layout/index.js"` を 1 行追加のみ。
+**新プラグイン追加**: `ontology.yaml` の `layouts` に宣言 + `plugins/index.ts` に
+`import "./my-layout/index.js"` を 1 行追加。宣言が無いと登録時に落ちる。
 
 ## Theme System
 
@@ -219,6 +251,7 @@ src/plugins/
 | `slide-id.test.ts` | parser/slide-ids.ts (slug 生成・ID 採番・衝突の連番) |
 | `wiki.test.ts` | renderer/wiki/ (デッキ合成・リンク解決・バックリンク・自己完結性) |
 | `validation.test.ts` | schema/validation.ts (文字数制限) |
+| `ontology.test.ts` | ontology.yaml + src/ontology/ (宣言の自己整合・宣言⇔実装・lint・生成物の鮮度) |
 | `layout-engine.test.ts` | renderer/layout/ (座標計算・スナップショット) |
 | `overflow.test.ts` | renderer/layout/overflow.ts + validate-layout.ts (はみ出し検出・縮小・失敗) |
 | `html-renderer.test.ts` | renderer/html/ (HTML 生成・data 属性) |

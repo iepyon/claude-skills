@@ -4,7 +4,6 @@ import { handleAgendaDirective, agendaModeHandlers } from "./handler.js"
 import { convertAgenda } from "./converter.js"
 import { handleAgendaLayout } from "./layout.js"
 import { AgendaLayout } from "./schema.js"
-import { MAX_CHARS_AGENDA } from "./constants.js"
 
 function countPlainTextChars(text: string): number {
   return text
@@ -30,13 +29,11 @@ registerPlugin({
   id: "agenda",
   layoutTag: "Agenda",
   mode: "agenda",
-  docDirective: "<!--agenda-->",
   directiveHandler: handleAgendaDirective,
   sectionRoute: { field: "agendaItems" },
   modeHandlers: agendaModeHandlers,
   converterPriority: 35,
   converter: convertAgenda,
-  maxChars: MAX_CHARS_AGENDA,
   countChars: countAgendaChars,
   layoutHandler: handleAgendaLayout,
   titleFontSize: 1,

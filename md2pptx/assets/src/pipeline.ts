@@ -1,14 +1,91 @@
 import "./plugins/index.js"
 import { Effect } from "effect"
-import { Md2PptxError } from "./errors.js"
-import { parseMarkdown } from "./parser/index.js"
-import { validatePresentation, Theme, DEFAULT_THEME } from "./schema/index.js"
+import { Md2PptxError, ValidationError } from "./errors.js"
+import { lintTokens, shouldFail, type Diagnostic } from "./ontology/lint.js"
+import { parseTokens } from "./parser/index.js"
+import { tokenize, type Token } from "./parser/tokenizer.js"
+import { validatePresentation, Presentation, Theme, DEFAULT_THEME } from "./schema/index.js"
 import { renderPresentation, renderToHtml, RenderOptions } from "./renderer/index.js"
 import { renderToWiki, WikiDeck } from "./renderer/wiki/index.js"
 import { validateLayout } from "./renderer/layout/validate-layout.js"
 import { slugify } from "./parser/slide-ids.js"
 
-export interface Md2PptxOptions {
+/** 宣言（ontology.yaml）に照らした検査の受け取り方 */
+export interface LintOptions {
+  /**
+   * 見つかった問題の受け取り先。呼び出し側が表示を決める（パイプラインは出力しない）。
+   * 報告先であって、検査するかどうかの switch ではない — `strict` だけを渡した利用者は
+   * 黙って通す代わりに、報告なしで失敗する。
+   */
+  onDiagnostic?: (diagnostics: readonly Diagnostic[], deck?: string) => void
+  /** true なら warning でも失敗させる（CI 用）。既定は警告のまま続行する */
+  strict?: boolean
+}
+
+/**
+ * 宣言に照らして検査し、strict なら失敗させる。
+ *
+ * 既定を警告に留めるのは、宣言が実装より厳しすぎたときに既存のデッキが一斉に
+ * 作れなくなるのを避けるため。CI は --strict を掛けて新しいドリフトだけを止める。
+ */
+function lintStage(
+  tokens: readonly Token[],
+  options: LintOptions,
+  deck?: string
+): Effect.Effect<void, ValidationError> {
+  return Effect.gen(function* () {
+    if (!options.onDiagnostic && !options.strict) return
+    const diagnostics = lintTokens(tokens)
+    if (diagnostics.length === 0) return
+    options.onDiagnostic?.(diagnostics, deck)
+    if (shouldFail(diagnostics, options.strict ?? false)) {
+      yield* Effect.fail(
+        new ValidationError({
+          message:
+            `${diagnostics.length} 件の宣言違反` +
+            (deck ? ` in ${deck}` : "") +
+            "。ontology.yaml の宣言に合わせて直すか、宣言のほうを直す",
+          slideIndex: 0,
+          charCount: 0,
+        })
+      )
+    }
+  })
+}
+
+/**
+ * レンダリング直前までの共通段。3つの入口が同じ順序を並べていたのを1つにまとめている
+ * （段を1つ足すたびに3箇所を直す形になっていた）。
+ *
+ * トークン化は1回だけ行い、lint と AST 構築が同じ列を共有する。
+ */
+function prepare(
+  markdown: string,
+  theme: Theme,
+  options: LintOptions,
+  deck?: string
+): Effect.Effect<Presentation, Md2PptxError> {
+  return Effect.gen(function* () {
+    // Stage 0: MD → トークン列
+    const tokens = tokenize(markdown)
+
+    // Stage 1: 宣言（ontology.yaml）に照らした構造の検査
+    yield* lintStage(tokens, options, deck)
+
+    // Stage 2: トークン列 → 生AST
+    const raw = yield* parseTokens(tokens)
+
+    // Stage 3: Schema decode + 文字数チェック
+    const pres = yield* validatePresentation(raw)
+
+    // Stage 4: レイアウトを計算してはみ出しを検査
+    yield* validateLayout(pres, theme)
+
+    return pres
+  })
+}
+
+export interface Md2PptxOptions extends LintOptions {
   compression?: boolean
   theme?: Theme
 }
@@ -20,17 +97,9 @@ export function md2pptx(
   return Effect.gen(function* () {
     // レイアウト検証がテーマを必要とするため、ここで確定させる
     const theme = options.theme ?? DEFAULT_THEME
+    const pres = yield* prepare(markdown, theme, options)
 
-    // Stage 1: MD → 生AST
-    const raw = yield* parseMarkdown(markdown)
-
-    // Stage 2: Schema decode + 文字数チェック
-    const pres = yield* validatePresentation(raw)
-
-    // Stage 2.5: レイアウトを計算してはみ出しを検査
-    yield* validateLayout(pres, theme)
-
-    // Stage 3: AST → pptxgenjs → Buffer
+    // AST → pptxgenjs → Buffer
     const renderOpts: RenderOptions = {
       compression: options.compression ?? false,
       theme,
@@ -41,7 +110,7 @@ export function md2pptx(
   })
 }
 
-export interface Md2HtmlOptions {
+export interface Md2HtmlOptions extends LintOptions {
   theme?: Theme
 }
 
@@ -51,17 +120,8 @@ export function md2html(
 ): Effect.Effect<string, Md2PptxError> {
   return Effect.gen(function* () {
     const theme = options.theme ?? DEFAULT_THEME
+    const pres = yield* prepare(markdown, theme, options)
 
-    // Stage 1: MD → 生AST
-    const raw = yield* parseMarkdown(markdown)
-
-    // Stage 2: Schema decode + 文字数チェック
-    const pres = yield* validatePresentation(raw)
-
-    // Stage 2.5: レイアウトを計算してはみ出しを検査
-    yield* validateLayout(pres, theme)
-
-    // Stage 3: AST → HTML
     const html = yield* renderToHtml(pres, theme)
 
     return html
@@ -74,7 +134,7 @@ export interface WikiSource {
   readonly markdown: string
 }
 
-export interface Md2WikiOptions {
+export interface Md2WikiOptions extends LintOptions {
   theme?: Theme
   siteTitle?: string
 }
@@ -95,9 +155,7 @@ export function md2wiki(
 
     const decks: WikiDeck[] = []
     for (const source of sources) {
-      const raw = yield* parseMarkdown(source.markdown)
-      const pres = yield* validatePresentation(raw)
-      yield* validateLayout(pres, theme)
+      const pres = yield* prepare(source.markdown, theme, options, source.name)
 
       // デッキ名は先頭のタイトルスライド優先。無ければ最初のスライドの見出し、
       // それも無ければファイル名。サイドバーの見出しになるので空にしない。

@@ -25,23 +25,19 @@ export interface LayoutPlugin {
   readonly mode: string                  // parser mode value
 
   /**
-   * The directive users actually type, e.g. "<!--lean-canvas-->".
-   *
-   * Single source of truth for the directive: `registerPlugin` derives `tokenMatcher`
-   * from this string, and docs-consistency.test.ts asserts it appears in SKILL.md's
-   * layout table — so parsing and documentation cannot drift apart, and a newly added
-   * plugin cannot stay invisible to the Claude that has to use it.
-   */
-  readonly docDirective: string
-
-  /**
    * Tokenizer: directive recognition. **Omit it** — the registry derives an exact-match
-   * matcher from `docDirective`, which covers every plugin but one.
+   * matcher from the directive declared in ontology.yaml, which covers every plugin but one.
    *
-   * Supply one only when recognition is genuinely richer than a single literal, as with
-   * numbered-list's `<!--numbered-list:(circle|bar)-->`. A hand-written matcher takes
-   * over recognition completely, so `docDirective` then only documents the canonical
-   * spelling.
+   * The directive itself is NOT declared here: ontology.yaml is its single source of
+   * truth, so the string that users type, the string the tokenizer matches and the string
+   * the documentation shows are one and the same. `registerPlugin` looks it up by `id`
+   * and throws when the plugin has no ontology entry — a new plugin cannot stay invisible
+   * to the Claude that has to use it.
+   *
+   * Supply a matcher only when recognition is genuinely richer than a single literal, as
+   * with numbered-list's `<!--numbered-list:(circle|bar)-->`, whose captured variant has
+   * to reach the parser. A hand-written matcher takes over recognition completely, so the
+   * ontology's directive then only documents the canonical spelling.
    */
   readonly tokenMatcher?: TokenMatcher
 
@@ -56,8 +52,10 @@ export interface LayoutPlugin {
   readonly converterPriority: number     // lower = checked first
   readonly converter: (raw: RawSlide) => O.Option<Slide[]>
 
-  // Validation: character limits
-  readonly maxChars: number
+  // Validation: how to count this layout's characters.
+  // The *limit* is not declared here — ontology.yaml's `max-chars` (falling back to
+  // `limits.max-chars-per-slide`) is its single source of truth, keyed by `_tag`, so a
+  // layout that renders as two slides gets the same limit on both.
   readonly countChars?: (layout: SlideLayout) => number
 
   // Layout Engine: _tag → LayoutResult

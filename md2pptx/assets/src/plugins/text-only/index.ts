@@ -4,7 +4,6 @@ import { handleTextOnlyDirective, textOnlyModeHandlers } from "./handler.js"
 import { convertTextOnly } from "./converter.js"
 import { handleTextOnlyLayout } from "./layout.js"
 import { TextOnlyLayout } from "./schema.js"
-import { MAX_CHARS_TEXT_ONLY } from "./constants.js"
 
 function countTextOnlyChars(layout: SlideLayout): number {
   const l = layout as TextOnlyLayout
@@ -15,12 +14,10 @@ registerPlugin({
   id: "text-only",
   layoutTag: "TextOnly",
   mode: "text-only",
-  docDirective: "<!--text-only-->",
   directiveHandler: handleTextOnlyDirective,
   modeHandlers: textOnlyModeHandlers,
   converterPriority: 45,
   converter: convertTextOnly,
-  maxChars: MAX_CHARS_TEXT_ONLY,
   countChars: countTextOnlyChars,
   layoutHandler: handleTextOnlyLayout,
 })

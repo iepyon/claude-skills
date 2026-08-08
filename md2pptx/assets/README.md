@@ -29,7 +29,7 @@ See [../BACKLOG.md](../BACKLOG.md) for the feature backlog (prioritized, with ac
 - Three outputs from one source: `.pptx`, a self-contained `.html` deck (arrow-key navigation), and a linked wiki site (`--wiki`)
 - Wiki mode: several decks in one page, `[[wikilink]]` navigation, hover previews of the target slide, backlinks, hash routing with browser back/forward
 - 3-way verification (`--verify`): AST vs HTML vs PPTX coordinate/text comparison
-- Per-slide character validation (1000 chars by default, excluding Markdown syntax)
+- Per-slide character validation and structural lint, both declared in `../ontology.yaml`
 - Bullet and numbered lists rendered as native PPTX bullets / CSS pseudo-elements
 - Inline formatting (`**bold**`, `*italic*`, `` `code` ``) and syntax-highlighted code blocks
 - Links: `[label](url)` (external) and `[[slide-id]]` / `[[slide-id|label]]` (internal, resolving to a slide jump in PPTX too)
@@ -149,18 +149,27 @@ Material Icon（`<!--icon:mi:home-->`）は SVG 画像として PPTX に埋め�
 
 ## Validation
 
-Each slide is limited to **1000 characters** (`MAX_CHARS_PER_SLIDE` in `src/constants.ts`),
-excluding Markdown syntax such as `#`, `##`, `-`, `1.`, `**bold**`, and `<!--...-->`.
-Individual layouts may raise that limit via a plugin's `maxChars` (currently only
-`PatternLanguageOverview`, at 1024).
+Two layers, both driven by [`../ontology.yaml`](../ontology.yaml) — the single source of
+truth for the structure of the Markdown this tool reads. The numbers and vocabularies are
+not repeated here; see the generated [`../ontology.md`](../ontology.md).
 
-For readability, aim for roughly **240 characters** per slide — that is a design guideline,
-not an enforced limit.
-
-Exceeding the limit throws a `ValidationError`:
+**Character limits** (`schema/validation.ts`) read `limits.max-chars-per-slide` and each
+layout's `max-chars` override. Exceeding one throws a `ValidationError`:
 
 ```
 Slide 2 exceeds 1000 characters (found 1183)
+```
+
+**Structural lint** (`ontology/lint.ts`) checks what the declaration says about each
+layout: how many `###` a layout expects, which heading names it accepts, which `key: value`
+meta keys exist, which annotations take effect, and whether a `<!--…-->` matches any
+declaration at all. These catch the failures that are otherwise silent — an out-of-vocabulary
+lean-canvas heading simply vanishes, and a misspelled directive renders as body text.
+
+```bash
+npx tsx src/cli.ts --lint doc/Spec.md doc/wiki   # warnings, exit 0
+npx tsx src/cli.ts --lint --strict doc/wiki      # warnings become failures
+npx tsx src/ontology/selfcheck.ts                # check the declaration itself
 ```
 
 ## Architecture
@@ -171,11 +180,12 @@ src/
   cli.ts              CLI wrapper (--html, --verify, --wiki, --theme, --compress)
   pipeline.ts         parse → validate → render
   batch-html.ts       drafts/*.md → htmls/*.html + index.html
-  constants.ts        Slide dimensions, margins, gaps, MAX_CHARS_PER_SLIDE
+  constants.ts        Slide dimensions, margins, gaps
   errors.ts           Tagged errors (ParseError, ValidationError, RenderError)
   parser/             Markdown → AST (tokenizer, ast-builder, handlers/,
                       block-formatter, inline-formatter, slide-converter)
   schema/             Validated types (presentation.ts, theme.ts, validation.ts)
+  ontology/           Loader for ../ontology.yaml + selfcheck + structural lint
   renderer/
     layout/           Shared layout engine — the single source of coordinates
     pptx/             LayoutResult → pptxgenjs API calls
@@ -183,7 +193,8 @@ src/
     wiki/             Many Presentations → one linked site (reuses html/renderSlide)
     syntax-highlighter.ts, icon-resolver.ts, icon-mapping.ts
   plugins/            Self-registering layout plugins (11 registrations)
-  tools/              inventory, html-inspector, pptx-inspector, inventory-diff
+  tools/              inventory, html-inspector, pptx-inspector, inventory-diff,
+                      gen-ontology-doc (ontology.yaml → ontology.md + SKILL.md regions)
 ```
 
 See [../CLAUDE.md](../CLAUDE.md) for the annotated reading order and the plugin/theme mechanics.

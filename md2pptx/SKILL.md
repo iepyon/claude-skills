@@ -16,7 +16,15 @@ npx tsx src/cli.ts input.md output.pptx           # PPTX 生成
 npx tsx src/cli.ts input.md output.html --html    # HTML 生成
 npx tsx src/cli.ts input.md out.html --html --verify  # 3者比較検証
 npx tsx src/cli.ts --wiki doc/wiki out/index.html    # リンクで辿る Wiki 生成
+npx tsx src/cli.ts --lint input.md                   # 構造の検査だけ
 ```
+
+## md の構造の正本
+
+このスキルが読む Markdown の構造 — 骨格要素・注釈・16レイアウトが `###` / `####` に何を期待するか・
+見出しの語彙・`key: value` メタ・文字数 — は [ontology.yaml](ontology.yaml) が唯一の正本。
+**書き方の全文リファレンスは [ontology.md](ontology.md)**（生成物）にあり、以下はその要約。
+`--lint` はその宣言に照らして md を検査する。
 
 ### CLI Options
 
@@ -28,6 +36,8 @@ npx tsx src/cli.ts --wiki doc/wiki out/index.html    # リンクで辿る Wiki �
 | `--verify` | PPTX + HTML 生成 + AST との3者比較 |
 | `--wiki` | 複数デッキを1枚のリンク可能な Wiki サイトに出力（入力はファイル・複数ファイル・ディレクトリ） |
 | `--site-title <text>` | Wiki サイトのタイトル（`--wiki` と併用） |
+| `--lint` | 生成せず、md の構造を [ontology.yaml](ontology.yaml) の宣言に照らして検査する |
+| `--strict` | 宣言違反を警告でなくエラーにする（生成時にも使える） |
 
 ## Markdown 記法
 
@@ -47,8 +57,15 @@ npx tsx src/cli.ts --wiki doc/wiki out/index.html    # リンクで辿る Wiki �
 - `#` = タイトルスライド、`##` = コンテンツスライド、`###` = セクション見出し
 - `---` = スライド区切り
 - `- item` / `* item` / `+ item` = 箇条書き、`1. item` = 番号付きリスト（本文中で使用可）
-- 1スライドが **1000文字**を超えると ValidationError（Markdown 構文を除く本文+見出し）。ただし読みやすさのため **240文字程度**に収めることを推奨
-- 上限はレイアウトごとに上書きできる（現状 PatternLanguage の概要ページのみ 1024文字、他は全て 1000文字）
+
+文字数の制限:
+
+<!-- BEGIN GENERATED: limits -->
+- 1スライド **1000文字**を超えると ValidationError。本文と見出し（Markdown 構文を除く）。リンクは表示ラベルだけを数え、URL は数えない。
+- 読みやすさの目安は **240文字程度**（ツールでは強制しない）
+- PatternLanguage だけは **1024文字**まで（レイアウトごとの上書き）
+- `CodeDisplay` は文字数を数えない（タイトルのみ）
+<!-- END GENERATED: limits -->
 
 ### 箇条書き
 
@@ -65,8 +82,9 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 
 ### レイアウト一覧
 
+<!-- BEGIN GENERATED: layouts -->
 | レイアウト | ディレクティブ | 説明 |
-|-----------|--------------|------|
+|---|---|---|
 | Default | (なし) | セクションを縦に並べる |
 | LeftRight | `<!--left:N-->` `<!--right:M-->` | 左右分割（比率指定） |
 | TopBottom | `<!--top:N-->` `<!--bottom:M-->` | 上下分割（比率指定） |
@@ -74,27 +92,46 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | IconColumns | `<!--icon-cols-->` | アイコン付き3カラム |
 | IconCards | `<!--icon-cards-->` | アイコン付きカード |
 | Steps | `<!--steps-->` | 階段状のステップ表示 |
-| NumberedList | `<!--numbered-list:circle-->` or `<!--numbered-list:bar-->` | 番号付きリスト |
-| CodeDisplay | ` ```language ` | シンタックスハイライト付きコード |
+| NumberedList | `<!--numbered-list:circle-->` | 番号付きリスト（意匠は `circle` か `bar`） |
+| CodeDisplay | `` ```<language> `` | シンタックスハイライト付きコード |
 | TextOnly | `<!--text-only-->` | 自由形式テキスト |
-| Table | `<!--table-->` + パイプ区切りテーブル | テーブル表示 |
+| Table | `<!--table-->` | テーブル表示（ディレクティブの後にパイプ区切りの表を置く） |
 | Quote | `<!--quote-->` | 引用・名言スライド |
 | Agenda | `<!--agenda-->` | TOC/アジェンダ |
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
 | PatternLanguage | `<!--pattern-language-a-->` | パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成 |
+<!-- END GENERATED: layouts -->
+
+各レイアウトが `###` / `####` に何を期待するか（件数・見出しの語彙・本文の読まれ方）は
+[ontology.md](ontology.md)「レイアウトごとの構造」が正本。`--lint` がそこに照らして検証する。
+
+### 注釈ディレクティブ
+
+<!-- BEGIN GENERATED: annotations -->
+| 注釈 | 記法 | 効くレイアウト | 説明 |
+|---|---|---|---|
+| `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`[[…]]` の解決先であり HTML の `#hash` でもある。 |
+| `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
+| `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
+<!-- END GENERATED: annotations -->
 
 ### リンク
 
+<!-- BEGIN GENERATED: inline -->
 | 書き方 | 意味 |
 |---|---|
-| `[ラベル](https://example.com)` | 外部リンク。HTML は `<a>`、PPTX はハイパーリンク |
-| `[[slide-id]]` | 内部リンク。表示テキストは ID そのまま |
-| `[[slide-id\|表示テキスト]]` | 内部リンク。表示テキストを指定 |
+| `**text**` | 太字 |
+| `*text*` | 斜体 |
+| `` `text` `` | インラインコード |
+| `[ラベル](https://example.com)` | 外部リンク。HTML は `<a>`、PPTX はハイパーリンク。 |
+| `[[slide-id]]` | 内部リンク。表示テキストは ID そのまま。解決できなければ素のテキストになる。 |
+| `[[slide-id\|表示テキスト]]` | 表示テキストを指定した内部リンク。 |
 
-内部リンクは PPTX では同一ファイル内のスライドジャンプになる。解決できない場合は
-素のテキストとして描かれる。文字数制限には**表示ラベルだけ**が数えられる（URL は数えない）。
-リンクが効くのは `###` セクションの見出しと本文、および takeaway。
+効くのは `section-heading`・`section-body`・`takeaway`。プラグインがテキストを直接描く箇所（テーブルのセル・引用本文・ステップのラベル等）では `[[…]]` はそのままの文字として出る（BACKLOG B-22）。
+<!-- END GENERATED: inline -->
+
+内部リンクは PPTX では同一ファイル内のスライドジャンプになる。
 
 ### スライド ID
 
@@ -120,14 +157,6 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 リンクの解決順は、① `deck/slide` の明示 → ② 自デッキ内 → ③ サイト全体で一意 →
 ④ 未解決（複数一致しても選ばない。サイドバーに一覧が出る）。
 サンプルは `doc/wiki/`（相互リンクしたパターン集＋機能ガイドの2デッキ）。
-
-### Takeaway
-
-任意のレイアウトの末尾に `<!--takeaway-->` で出典・まとめを追加可能。
-
-### アイコン指定
-
-`<!--icon:mi:icon_name-->` (Material Icons) または `<!--icon:🔥-->` (絵文字)
 
 ## 記法サンプル
 

@@ -3,6 +3,20 @@ import { ParseError } from "../../errors.js"
 import type { BuilderState } from "../../parser/builder-types.js"
 import type { Token } from "../../parser/tokenizer.js"
 import { saveSection } from "../../parser/builder-state.js"
+import { getVocabulary, resolveTerm } from "../../ontology/index.js"
+
+/**
+ * 行ラベルの語彙は ontology.yaml の `journey-rows` が正本。
+ *
+ * セルは正書ではなく語彙の `key` で持つ。表記のゆれ（全角/半角コロン、別名）の吸収は
+ * `resolveTerm` ひとつに任せる — かつてここは半角コロンしか剥がさず、`#### タッチ：` と
+ * 書かれた行の項目が黙って消えるのに lint は「宣言どおり」と言っていた。
+ */
+const rowVocabulary = () => getVocabulary("journey-rows")!
+
+/** 語彙の key で初期化した空のセル */
+const emptyCells = (): Record<string, string[]> =>
+  Object.fromEntries(rowVocabulary().terms.map((t) => [t.key, [] as string[]]))
 
 export type RawCustomerJourney = {
   phases: Array<{ name: string; cells: Record<string, string[]> }>
@@ -66,15 +80,7 @@ export const handleH3InCustomerJourney = (state: BuilderState, token: Token): O.
   }
 
   const slide = state.currentSlide.value
-  const newPhase = {
-    name: token.text,
-    cells: {
-      'タッチ': [] as string[],
-      '行動': [] as string[],
-      '判断': [] as string[],
-      '感情': [] as string[],
-    },
-  }
+  const newPhase = { name: token.text, cells: emptyCells() }
 
   return O.some({
     ...state,
@@ -92,12 +98,12 @@ export const handleH3InCustomerJourney = (state: BuilderState, token: Token): O.
 export const handleH4InCustomerJourney = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "H4" || state.mode !== "customer-journey") return O.none()
 
-  // 行ラベルを抽出（コロンを削除）
-  const label = token.text.replace(/:$/, '').trim()
+  // 語彙外のラベルは行を選ばない（以降の箇条書きは捨てられる。lint が slot-vocabulary で報告する）
+  const rowLabel = resolveTerm(rowVocabulary(), token.text)?.key
 
   return O.some({
     ...state,
-    pluginState: setCJState(state, { ...getCJState(state), rowLabel: label }),
+    pluginState: setCJState(state, { ...getCJState(state), rowLabel }),
   })
 }
 

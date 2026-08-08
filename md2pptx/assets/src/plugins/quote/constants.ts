@@ -8,4 +8,3 @@ export const QUOTE_LINE_THICKNESS = 3   // accent line thickness (pt)
 export const QUOTE_LINE_GAP = 0.25      // gap above accent line
 export const QUOTE_AUTHOR_GAP = 0.2     // gap between line and author
 export const QUOTE_AUTHOR_SIZE = 14
-export const MAX_CHARS_QUOTE = 1000

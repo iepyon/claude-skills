@@ -1,8 +1,8 @@
 import { Effect, pipe } from "effect"
 import { ValidationError } from "../errors.js"
-import { MAX_CHARS_PER_SLIDE } from "../constants.js"
+import { isCharCountExcluded, maxCharsForTag } from "../ontology/index.js"
 import { Presentation, Slide, TextBlock, DefaultLayout, LeftRightLayout, TopBottomLayout, GridLayout } from "./presentation.js"
-import { getValidationConfig } from "../plugins/registry.js"
+import { getCharCounter } from "../plugins/registry.js"
 import { stripInlineFormatting } from "../parser/inline-formatter.js"
 
 // MD記法を除外してプレーンテキスト長を計算。
@@ -40,8 +40,8 @@ function countSlideChars(slide: Slide): number {
   let count = countPlainTextChars(slide.title)
   const layout = slide.layout
 
-  // CodeDisplay layout is excluded from character count (only title counted)
-  if (layout._tag === "CodeDisplay") {
+  // 数えないレイアウト（コード表示）は ontology.yaml の limits.excluded-layouts が正本
+  if (isCharCountExcluded(layout._tag)) {
     return count
   }
 
@@ -64,17 +64,20 @@ function countSlideChars(slide: Slide): number {
     count += l.cells.reduce((sum: number, cell: TextBlock) => sum + countTextBlock(cell), 0)
     if (l.takeaway) count += countPlainTextChars(l.takeaway)
   } else {
-    // Check plugin countChars
-    const pluginConfig = getValidationConfig(layout._tag)
-    if (pluginConfig?.countChars) {
-      count += pluginConfig.countChars(layout)
-    }
+    // プラグインが自分の形に合わせて数える
+    const countChars = getCharCounter(layout._tag)
+    if (countChars) count += countChars(layout)
   }
 
   return count
 }
 
-// Presentation全体をバリデート（240文字チェック、LeanCanvasは800文字まで）
+/**
+ * スライドごとの文字数を検証する。
+ *
+ * 上限の正本は ontology.yaml（`limits.max-chars-per-slide` と各レイアウトの `max-chars`）。
+ * ここに数値を書かないので、宣言とドキュメントと検証が同時に動く。
+ */
 export function validatePresentation(pres: Presentation): Effect.Effect<Presentation, ValidationError> {
   return pipe(
     Effect.sync(() => {
@@ -82,14 +85,8 @@ export function validatePresentation(pres: Presentation): Effect.Effect<Presenta
         const slide = pres.slides[i]
         const charCount = countSlideChars(slide)
 
-        // Determine character limit based on layout type
-        let limit = MAX_CHARS_PER_SLIDE
-        if (slide._tag === "ContentSlide") {
-          const pluginConfig = getValidationConfig(slide.layout._tag)
-          if (pluginConfig) {
-            limit = pluginConfig.maxChars
-          }
-        }
+        // タイトルスライドはレイアウトを持たないので、宣言に無いタグとして既定の上限に落ちる
+        const limit = maxCharsForTag(slide._tag === "ContentSlide" ? slide.layout._tag : slide._tag)
 
         if (charCount > limit) {
           return Effect.fail(

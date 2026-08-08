@@ -15,6 +15,3 @@ export const ICON_CARD_PADDING = 0.15
 export const ICON_CARD_INNER_GAP = 0.08
 export const ICON_CARD_TAKEAWAY_HEIGHT = 0.6
 export const ICON_CARD_TAKEAWAY_GAP = 0.2
-
-// Validation
-export const MAX_CHARS_ICON_LAYOUT = 1000

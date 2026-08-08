@@ -6,7 +6,6 @@ import { handleNumberedListDirective } from "./handler.js"
 import { convertNumberedList } from "./converter.js"
 import { handleNumberedListLayout } from "./layout.js"
 import { NumberedListLayout } from "./schema.js"
-import { MAX_CHARS_NUMBERED_LIST } from "./constants.js"
 
 function countPlainTextChars(text: string): number {
   return text
@@ -30,7 +29,6 @@ registerPlugin({
   id: "numbered-list",
   layoutTag: "NumberedList",
   mode: "numbered-list",
-  docDirective: "<!--numbered-list:circle-->",
   tokenMatcher: (line, lineNum) => {
     const m = line.match(/^<!--numbered-list:(circle|bar)-->$/)
     return m
@@ -41,7 +39,6 @@ registerPlugin({
   sectionRoute: { field: "numberedListItems" },
   converterPriority: 40,
   converter: convertNumberedList,
-  maxChars: MAX_CHARS_NUMBERED_LIST,
   countChars: countNumberedListChars,
   layoutHandler: handleNumberedListLayout,
 })
