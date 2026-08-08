@@ -1,14 +1,11 @@
 name: Build and publish slide wiki
 
+# 公開は main だけ。作業ブランチや PR ではビルドもデプロイもしない。
+# 公開サイトが常に main の内容と一致していることを、トリガの数で保証する。
 on:
   push:
     branches:
       - main
-      - claude/skills-slide-expansion-v1ozmd
-    paths:
-      - "md2pptx/**"
-      - ".github/workflows/pages.yml"
-  pull_request:
     paths:
       - "md2pptx/**"
       - ".github/workflows/pages.yml"
@@ -19,14 +16,11 @@ permissions:
   pages: write
   id-token: write
 
-# 同じイベント種別・同じ ref の中でだけ打ち切る。
-#
-# group を単に "pages" にすると、PR が開いている間は1回の push で
-# push 用と pull_request 用の2つの run が起きて同じグループに入り、
-# 後から始まった PR 側（deploy を skip する）が push 側を
-# cancel-in-progress で殺す。結果、ビルドは緑なのに永遠にデプロイされない。
+# トリガが main への push（と手動実行）だけなので、単一グループでよい。
+# 以前ここに PR 用の run が混ざり、後から始まった PR 側が
+# cancel-in-progress で push 側を殺してデプロイが消えていた。
 concurrency:
-  group: pages-${{ github.event_name }}-${{ github.ref }}
+  group: pages
   cancel-in-progress: true
 
 defaults:
@@ -80,10 +74,8 @@ jobs:
         with:
           path: md2pptx/assets/_site
 
-  # Pages へのデプロイは push のときだけ。PR ではビルド検証まで。
   deploy:
     needs: build
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
