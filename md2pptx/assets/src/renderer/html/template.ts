@@ -179,6 +179,29 @@ ${slidesHtml.join("\n")}
     nextBtn.addEventListener('click', nextSlide);
     prevBtn.addEventListener('click', prevSlide);
 
+    // 内部リンク（[[slide-id]]）。data-slide-key から番号を引いてジャンプする。
+    // 解決できないリンクは .broken を付けて見た目で分かるようにするだけで、
+    // 遷移はしない（存在しないスライドへ飛ばすより気づける方がよい）。
+    const slideIndexByKey = new Map();
+    slides.forEach((slide, i) => {
+      const key = slide.dataset.slideKey;
+      if (key && !slideIndexByKey.has(key)) slideIndexByKey.set(key, i);
+    });
+
+    document.querySelectorAll('a.wikilink').forEach((a) => {
+      if (!slideIndexByKey.has(a.dataset.wikilink)) a.classList.add('broken');
+    });
+
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest ? e.target.closest('a.wikilink') : null;
+      if (!a) return;
+      e.preventDefault();
+      const index = slideIndexByKey.get(a.dataset.wikilink);
+      if (index === undefined) return;
+      currentSlide = index;
+      showSlide(currentSlide);
+    });
+
     // Keyboard controls
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {

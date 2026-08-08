@@ -19,9 +19,16 @@ export function renderPresentation(
 
     const theme = options.theme ?? DEFAULT_THEME
 
+    // 内部リンク解決用の索引。PPTX のスライド番号は1始まり。
+    // 全スライドを構築する前に一度だけ作る（前方参照のリンクも解決するため）。
+    const slideNumberById = new Map<string, number>()
+    pres.slides.forEach((slide, index) => {
+      if (slide.id && !slideNumberById.has(slide.id)) slideNumberById.set(slide.id, index + 1)
+    })
+
     // 各スライドを構築
     for (const slide of pres.slides) {
-      yield* buildSlide(pptx, slide, theme)
+      yield* buildSlide(pptx, slide, theme, slideNumberById)
     }
 
     // 書き出し（圧縮オプション対応）

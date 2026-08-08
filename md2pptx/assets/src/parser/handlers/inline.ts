@@ -10,6 +10,21 @@ export const handleIconDirective: TokenHandler = (state, token) => {
   return O.some(state)
 }
 
+// IdDirective: <!--id:intro--> — 現在のスライドに ID を刻む。
+// スライドがまだ始まっていない場合（ファイル先頭など）は黙って捨てる。
+// 例外にしないのは、ID は表示に影響しない付加情報であり、
+// 位置ミスでデッキ全体のビルドを止める価値がないため。
+export const handleIdDirective: TokenHandler = (state, token) => {
+  if (token.type !== "IdDirective") return O.none()
+
+  if (O.isNone(state.currentSlide)) return O.some(state)
+
+  return O.some({
+    ...state,
+    currentSlide: O.some({ ...state.currentSlide.value, id: token.id }),
+  })
+}
+
 // TakeawayMarker: <!--takeaway--> (enters takeaway capture mode)
 export const handleTakeawayMarker: TokenHandler = (state, token) => {
   if (token.type !== "TakeawayMarker") return O.none()

@@ -196,7 +196,8 @@ src/plugins/
 | `e2e.test.ts` | 全パイプライン (markdown → .pptx buffer) |
 | `parser.test.ts` | parser/ (AST 構築) |
 | `block-formatter.test.ts` | parser/block-formatter.ts (リスト → Paragraph 変換) |
-| `inline-formatting.test.ts` | parser/inline-formatter.ts (**bold** / *italic* / `code`) |
+| `inline-formatting.test.ts` | parser/inline-formatter.ts (**bold** / *italic* / `code` / リンク) |
+| `slide-id.test.ts` | parser/slide-ids.ts (slug 生成・ID 採番・衝突の連番) |
 | `validation.test.ts` | schema/validation.ts (文字数制限) |
 | `layout-engine.test.ts` | renderer/layout/ (座標計算・スナップショット) |
 | `overflow.test.ts` | renderer/layout/overflow.ts + validate-layout.ts (はみ出し検出・縮小・失敗) |

@@ -553,10 +553,15 @@ describe("html-renderer - links", () => {
     expect(html).toContain('<a class="wikilink" href="#intro" data-wikilink="intro">はじめに</a>')
   })
 
-  it("should never leak raw link syntax into the output", async () => {
+  it("should never leak raw link syntax into the rendered slide", async () => {
     const html = await renderHtml(deckWithBody("[[intro]] と [x](https://e.com)"))
-    expect(html).not.toContain("[[")
-    expect(html).not.toContain("](")
+    const slideMarkup = html.slice(
+      html.indexOf('<div class="slide content-slide"'),
+      html.indexOf('<div class="slide-counter">')
+    )
+    expect(slideMarkup).not.toBe("")
+    expect(slideMarkup).not.toContain("[[")
+    expect(slideMarkup).not.toContain("](")
   })
 
   it("should escape quotes in an href instead of breaking out of the attribute", async () => {

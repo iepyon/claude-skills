@@ -4,7 +4,7 @@ import { ParseError } from "../errors.js"
 import { Token } from "./tokenizer.js"
 import { initialState } from "./builder-types.js"
 import { saveSlide } from "./builder-state.js"
-import { rawSlideToSlide } from "./slide-converter.js"
+import { assignSlideIds } from "./slide-ids.js"
 import { processToken } from "./handlers/index.js"
 
 export function buildAST(tokens: Token[]): Effect.Effect<Presentation, ParseError> {
@@ -15,7 +15,10 @@ export function buildAST(tokens: Token[]): Effect.Effect<Presentation, ParseErro
       saveSlide
     )
 
-    const slides = finalState.slides.flatMap(rawSlideToSlide)
+    // 変換と ID 採番はまとめて assignSlideIds が行う。
+    // ID 採番には raw.title が要る（converter の出力からは読めない場合がある）ので、
+    // 変換と分離できない。
+    const slides = assignSlideIds(finalState.slides)
     return new Presentation({ slides })
   })
 }
