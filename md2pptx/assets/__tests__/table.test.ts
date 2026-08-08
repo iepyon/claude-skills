@@ -6,6 +6,7 @@ import { md2pptx, md2html } from "../src/index.js"
 import { layoutTable } from "../src/plugins/table/layout.js"
 import { DEFAULT_THEME } from "../src/schema/theme.js"
 import { CONTENT_START_Y } from "../src/constants.js"
+import { boxPlainText } from "../src/renderer/layout/index.js"
 
 const TABLE_MD = `# Table Test
 
@@ -201,7 +202,7 @@ Choose the plan that fits your needs.
 
       // The takeaway textBox should contain the takeaway text
       const takeawayBox = withTakeaway.textBoxes[withTakeaway.textBoxes.length - 1]
-      expect(takeawayBox.text).toBe("Key insight")
+      expect(boxPlainText(takeawayBox)).toBe("Key insight")
     })
   })
 

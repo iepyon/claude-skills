@@ -2,11 +2,19 @@ import { CodeTextRun } from "../syntax-highlighter.js"
 
 // --- Box types (output primitives) ---
 
+// インラインリンク。external は URL、internal はスライド ID を指す。
+// internal の解決先は「サイト内の別スライド」なので、解決はレンダラ側の責務
+// （HTML は #<target>、PPTX は hyperlink:{slide:N}、Wiki はリンクグラフ経由）。
+export type InlineLink =
+  | { kind: "external"; href: string }
+  | { kind: "internal"; target: string }
+
 export interface InlineTextRun {
   text: string
   bold?: boolean
   italic?: boolean
   code?: boolean
+  link?: InlineLink
 }
 
 // 段落。bullet があれば箇条書き項目として描画される。

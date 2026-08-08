@@ -110,4 +110,39 @@ describe("validatePresentation", () => {
     const result = await Effect.runPromiseExit(validatePresentation(pres))
     expect(Exit.isSuccess(result)).toBe(true)
   })
+
+  it("should count only the label of a link, not its URL", async () => {
+    // ラベル1文字 + 極端に長い URL。URL が数えられていれば 1000 を超えて落ちる
+    const longUrl = "https://example.com/" + "x".repeat(1200)
+    const pres = new Presentation({
+      slides: [
+        new ContentSlide({
+          title: "T",
+          layout: new DefaultLayout({
+            sections: [new TextBlock({ heading: "H", body: `[短](${longUrl})` })],
+          }),
+        }),
+      ],
+    })
+
+    const result = await Effect.runPromiseExit(validatePresentation(pres))
+    expect(Exit.isSuccess(result)).toBe(true)
+  })
+
+  it("should count only the label of a wikilink, not its slide id", async () => {
+    const longId = "y".repeat(1200)
+    const pres = new Presentation({
+      slides: [
+        new ContentSlide({
+          title: "T",
+          layout: new DefaultLayout({
+            sections: [new TextBlock({ heading: "H", body: `[[${longId}|短]]` })],
+          }),
+        }),
+      ],
+    })
+
+    const result = await Effect.runPromiseExit(validatePresentation(pres))
+    expect(Exit.isSuccess(result)).toBe(true)
+  })
 })

@@ -118,6 +118,13 @@ export function generateHtml(slidesHtml: string[], theme: Theme): string {
     .para-number { counter-increment: para-num; }
     .para-number::before { content: counter(para-num) ". "; }
 
+    /* リンク。色は継承させ、下線だけで示す（テーマの文字色を壊さないため） */
+    .text-box a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+    .text-box a.wikilink { text-decoration-style: dashed; cursor: pointer; }
+    .text-box a.ext-link { text-decoration-style: solid; }
+    /* 解決できなかった内部リンク。ビューアが実行時に付ける */
+    .text-box a.wikilink.broken { color: #C62828; text-decoration-color: #C62828; }
+
 ${SYNTAX_HIGHLIGHT_CSS}
   </style>
 </head>

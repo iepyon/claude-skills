@@ -35,7 +35,8 @@ function inlineTextRunsToPptxRuns(
   baseColor: string,
   baseFontFace: string,
   baseBold: boolean,
-  baseItalic: boolean
+  baseItalic: boolean,
+  slideNumberById?: ReadonlyMap<string, number>
 ): Array<{ text: string; options: any }> {
   return runs.map(run => {
     const options: any = {
@@ -51,11 +52,30 @@ function inlineTextRunsToPptxRuns(
       options.highlight = "E8E8E8" // 明るい灰色（#E8E8E8 ≈ HTML の #f0f0f0 に近い）
     }
 
+    // 外部リンクは URL、内部リンクは同一 PPTX 内のスライド番号（1始まり）へ。
+    // 解決できない内部リンクは *リンクを付けない* — 存在しないスライドを指す
+    // ハイパーリンクは PowerPoint がファイル破損として扱うことがある。
+    if (run.link) {
+      if (run.link.kind === "external") {
+        options.hyperlink = { url: run.link.href }
+      } else {
+        const slideNumber = slideNumberById?.get(run.link.target)
+        if (slideNumber !== undefined) options.hyperlink = { slide: slideNumber }
+      }
+    }
+
     return { text: run.text, options }
   })
 }
 
-export function buildSlide(pptx: PptxGenJS, slide: Slide, theme: Theme): Effect.Effect<void, RenderError> {
+export function buildSlide(
+  pptx: PptxGenJS,
+  slide: Slide,
+  theme: Theme,
+  // スライド ID → PPTX のスライド番号（1始まり）。内部リンクの解決に使う。
+  // 省略時は内部リンクを素のテキストとして描く。
+  slideNumberById?: ReadonlyMap<string, number>
+): Effect.Effect<void, RenderError> {
   return Effect.sync(() => {
     const pptxSlide = pptx.addSlide()
 
@@ -239,7 +259,8 @@ export function buildSlide(pptx: PptxGenJS, slide: Slide, theme: Theme): Effect.
             box.color || "000000",
             box.fontFace || theme.fonts.body,
             box.isBold || false,
-            box.isItalic || false
+            box.isItalic || false,
+            slideNumberById
           )
           const isLastPara = paraIndex === paras.length - 1
           return runs.map((run, runIndex) => ({
@@ -270,7 +291,8 @@ export function buildSlide(pptx: PptxGenJS, slide: Slide, theme: Theme): Effect.
           box.color || "000000",
           box.fontFace || theme.fonts.body,
           box.isBold || false,
-          box.isItalic || false
+          box.isItalic || false,
+          slideNumberById
         )
         pptxSlide.addText(pptxRuns, {
           x: box.x,

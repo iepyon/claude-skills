@@ -11,6 +11,16 @@ const hexToColor = (hex: string): string => (hex ? `#${hex}` : "transparent")
 
 export { inchesToPx, hexToColor }
 
+// 属性値のエスケープ。run.text 用のエスケープとは別に必要
+// （href は本文ではないので、シングルクォートまで潰しておく）。
+const escapeAttr = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+
 /**
  * InlineTextRun[] を HTML に変換
  */
@@ -30,6 +40,14 @@ function richTextToHtml(runs: InlineTextRun[]): string {
     }
     if (run.italic) {
       html = `<em>${html}</em>`
+    }
+    // リンクは最も外側で包む（装飾ごとクリック可能にする）。
+    // internal は #<target> のアンカーなので、Wiki ビューアが無い単体 HTML でも
+    // ただのページ内リンクとして無害に落ちる。
+    if (run.link) {
+      html = run.link.kind === "external"
+        ? `<a class="ext-link" href="${escapeAttr(run.link.href)}" target="_blank" rel="noopener noreferrer">${html}</a>`
+        : `<a class="wikilink" href="#${escapeAttr(run.link.target)}" data-wikilink="${escapeAttr(run.link.target)}">${html}</a>`
     }
 
     return html
