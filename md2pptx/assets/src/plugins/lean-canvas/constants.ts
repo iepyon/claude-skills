@@ -4,6 +4,3 @@ export const LEAN_CANVAS_ROW_RATIOS = [1, 1, 0.75] as const
 export const LEAN_CANVAS_CELL_PADDING = 0.04
 export const LEAN_CANVAS_HEADING_BODY_GAP = 0.1
 export const LEAN_CANVAS_HEADING_HEIGHT = 0.15
-
-// Validation
-export const MAX_CHARS_LEAN_CANVAS = 1000

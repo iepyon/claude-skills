@@ -4,7 +4,6 @@ import { handleStepsDirective, stepsModeHandlers } from "./handler.js"
 import { convertSteps } from "./converter.js"
 import { handleStepsLayout } from "./layout.js"
 import { StepsLayout } from "./schema.js"
-import { MAX_CHARS_STEPS } from "./constants.js"
 
 function countPlainTextChars(text: string): number {
   return text
@@ -29,13 +28,11 @@ registerPlugin({
   id: "steps",
   layoutTag: "Steps",
   mode: "steps",
-  docDirective: "<!--steps-->",
   directiveHandler: handleStepsDirective,
   sectionRoute: { field: "stepsData" },
   modeHandlers: stepsModeHandlers,
   converterPriority: 30,
   converter: convertSteps,
-  maxChars: MAX_CHARS_STEPS,
   countChars: countStepsChars,
   layoutHandler: handleStepsLayout,
 })

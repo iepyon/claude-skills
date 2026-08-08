@@ -2,15 +2,18 @@ import { describe, it, expect } from "vitest"
 import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
 import { getPlugins } from "../src/plugins/registry.js"
-import { MAX_CHARS_PER_SLIDE } from "../src/constants.js"
 import "../src/plugins/index.js" // side-effect: self-registration
 
 /**
  * md2pptx は「Claude がドキュメントを読んで機械的に使う」スキルなので、ドキュメントの
  * 誤りは実装済み機能の不使用・生成品質の劣化に直結する（BACKLOG B-01）。
  *
- * ここでは人間のレビューに頼らず、レジストリ・定数・ファイル一覧という
- * 「実装側の事実」とドキュメントを機械的に突き合わせる。
+ * md の構造（レイアウト一覧・ディレクティブ・語彙・文字数）については、この照合はもう
+ * 要らない — ontology.yaml が正本になり、SKILL.md と ontology.md は生成物になった。
+ * それらの鮮度は ontology.test.ts が見る。
+ *
+ * ここに残すのは**生成できない事実**だけ: CLAUDE.md / README が数え上げているファイル名や
+ * 件数と、SKILL.md frontmatter の散文（Claude の呼び出し判定に使われるので生成しない）。
  */
 
 const ASSETS_DIR = join(__dirname, "..")
@@ -25,12 +28,11 @@ const read = (path: string): string => readFileSync(path, "utf-8")
 /**
  * SKILL.md の「レイアウト一覧」表の本文行（ヘッダ・区切り行を除く）。
  *
- * 全文 includes ではなく表に限定して照合する。記法サンプル節に同じディレクティブが
- * 残っていると、表から行が消えても全文照合は緑になってしまう（Claude が最初に読むのは表）。
+ * 表そのものは生成物だが、frontmatter の件数はこの表と突き合わせる必要がある。
  */
 const layoutTableRows = (skill: string): string[] => {
-  const table = skill.match(/### レイアウト一覧\n\n([\s\S]*?)\n\n/)
-  if (!table) throw new Error("SKILL.md must have a レイアウト一覧 table")
+  const table = skill.match(/<!-- BEGIN GENERATED: layouts -->\n([\s\S]*?)\n<!-- END GENERATED/)
+  if (!table) throw new Error("SKILL.md must have a generated レイアウト一覧 table")
   return table[1]
     .split("\n")
     .filter((line) => line.startsWith("|") && !/^\|\s*-+/.test(line))
@@ -38,44 +40,6 @@ const layoutTableRows = (skill: string): string[] => {
 }
 
 describe("docs consistency", () => {
-  it("SKILL.md's layout table lists every registered plugin directive", () => {
-    const rows = layoutTableRows(read(SKILL_MD)).join("\n")
-
-    // 登録が0件なら以下の照合は空振りで緑になる（件数そのものは次のテストがドキュメントと突き合わせる）
-    expect(getPlugins().length).toBeGreaterThan(0)
-
-    const undocumented = getPlugins()
-      .filter((p) => !rows.includes(p.docDirective))
-      .map((p) => `${p.id} (${p.docDirective})`)
-
-    expect(undocumented).toEqual([])
-  })
-
-  it("all three docs state the current character limit", () => {
-    const limit = String(MAX_CHARS_PER_SLIDE)
-    for (const path of [SKILL_MD, CLAUDE_MD, ASSETS_README]) {
-      expect(read(path), `${path} must mention the ${limit}-char limit`).toContain(limit)
-    }
-  })
-
-  it("docs name every plugin that overrides the character limit", () => {
-    // 「PatternLanguageOverview のみ 1024、他は全て 1000」という記述は、上書きが
-    // 増減しても上の 1000 チェックでは落ちない。上書きしているプラグインを列挙して突き合わせる。
-    const overrides = getPlugins().filter((p) => p.maxChars !== MAX_CHARS_PER_SLIDE)
-
-    for (const p of overrides) {
-      for (const path of [SKILL_MD, CLAUDE_MD, ASSETS_README]) {
-        expect(read(path), `${path} must mention ${p.id}'s ${p.maxChars}-char limit`).toContain(
-          String(p.maxChars)
-        )
-      }
-      // レイアウト名は日英で表記が揺れる SKILL.md を除き、実タグ名で書かれていること
-      for (const path of [CLAUDE_MD, ASSETS_README]) {
-        expect(read(path), `${path} must name the overriding layout`).toContain(p.layoutTag)
-      }
-    }
-  })
-
   it("CLAUDE.md and README state the current plugin count", () => {
     const pluginDirs = readdirSync(join(ASSETS_DIR, "src", "plugins"), {
       withFileTypes: true,
@@ -123,11 +87,20 @@ describe("docs consistency", () => {
   })
 
   it("the skill description's layout count matches SKILL.md's layout table", () => {
+    // frontmatter の description は Claude がスキルを呼ぶかの判定に使う散文なので生成しない。
+    // その中の数字だけが生成物とずれうるので、ここで突き合わせる。
     const skill = read(SKILL_MD)
 
     const claimed = skill.match(/Supports (\d+) layout types/)
     expect(claimed, "SKILL.md frontmatter must state a layout count").not.toBeNull()
 
     expect(Number(claimed![1])).toBe(layoutTableRows(skill).length)
+  })
+
+  it("the docs point at the ontology instead of restating it", () => {
+    // 語彙や上限をここへ書き戻すと、生成物と手書きが二重管理に戻る
+    for (const path of [SKILL_MD, CLAUDE_MD, ASSETS_README]) {
+      expect(read(path), `${path} must link to the ontology`).toMatch(/ontology\.(md|yaml)/)
+    }
   })
 })

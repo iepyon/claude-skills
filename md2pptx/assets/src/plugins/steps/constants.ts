@@ -12,6 +12,3 @@ export const STEPS_LEVEL_HEIGHT = 0.2
 export const STEPS_NAME_HEIGHT = 0.3
 export const STEPS_BOX_PADDING = 0.08
 export const STEPS_INNER_GAP = 0.05
-
-// Validation
-export const MAX_CHARS_STEPS = 1000

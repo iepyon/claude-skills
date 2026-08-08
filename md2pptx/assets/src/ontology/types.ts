@@ -1,0 +1,157 @@
+/**
+ * ontology.yaml の宣言に対応する型。
+ *
+ * YAML のキーは kebab-case のまま扱う（スネーク変換を挟むと、宣言を読むときに
+ * 「YAML では何と書くのか」を思い出せなくなる）。読み取り側は必ずこの型を通す。
+ */
+
+/** 語彙の1項目。`canonical` か `pattern` のどちらかで見出しを受理する。 */
+export interface VocabTerm {
+  readonly key: string
+  /** 正書。表示にも使う。`pattern` を持つ項目では書式の説明を兼ねる */
+  readonly canonical: string
+  /** 受理する別表記（照合は小文字化・トリムしてから） */
+  readonly aliases?: readonly string[]
+  /** 固定名でなく正規表現で受理する項目（具体例N：… のような連番節） */
+  readonly pattern?: string
+  readonly description?: string
+  /** その節の中で意味を持つ `**ラベル:**` */
+  readonly "sub-labels"?: SubLabels
+}
+
+export interface SubLabels {
+  readonly match: "exact" | "contains-any"
+  readonly terms: readonly SubLabelTerm[]
+}
+
+export interface SubLabelTerm {
+  readonly key: string
+  /** match: exact のとき */
+  readonly canonical?: string
+  /** match: contains-any のとき、いずれかを含めば一致 */
+  readonly contains?: readonly string[]
+  /** match: contains-any のとき、すべて含めば一致 */
+  readonly "contains-all"?: readonly string[]
+}
+
+export interface Vocabulary {
+  readonly label: string
+  /** 語彙外の見出しの扱い */
+  readonly unknown: "warning" | "error" | "ignore"
+  /** 語彙外だと実際に何が起きるか（lint のメッセージに載せる） */
+  readonly "unknown-effect"?: string
+  readonly guidance?: string
+  readonly terms: readonly VocabTerm[]
+}
+
+export interface Slot {
+  readonly name: string
+  readonly marker: "###" | "####"
+  /** "1..n" / "3" / "3..n" / "0..1" / "1..9" / "rows*cols" */
+  readonly cardinality: string
+  readonly heading: "free" | "vocabulary"
+  readonly vocabulary?: string
+  readonly body?: "free" | "lines" | "bullets-only" | "none"
+  readonly description?: string
+}
+
+export interface LayoutDirective {
+  readonly syntax: string
+  /** 正規表現で認識するものだけ持つ。無ければ syntax の完全一致 */
+  readonly pattern?: string
+  /** コメントではない記法（コードフェンス）はトークナイザが特別扱いする */
+  readonly kind?: "code-fence"
+}
+
+export interface Layout {
+  /** SlideLayout の _tag（プラグインの layoutTag）。実装との結合キー */
+  readonly name: string
+  /** ドキュメントの表に出す表示名 */
+  readonly label: string
+  /** 対応するプラグイン id。コアレイアウトは null */
+  readonly plugin: string | null
+  readonly directives: readonly LayoutDirective[]
+  readonly description: string
+  readonly guidance?: string
+  /** このレイアウトで効く注釈の name */
+  readonly annotations: readonly string[]
+  /** 文字数上限の上書き。省略時は limits.max-chars-per-slide */
+  readonly "max-chars"?: number
+  /** ディレクティブと最初の `###` の間に置く本文の意味 */
+  readonly "leading-body"?: string
+  readonly slots: readonly Slot[]
+  /** 1ブロックから複数スライドを作るレイアウトの、生成される _tag の並び */
+  readonly produces?: readonly string[]
+  readonly "field-set"?: string
+  readonly example?: string
+}
+
+export interface Annotation {
+  readonly name: string
+  readonly syntax: string
+  readonly pattern: string
+  readonly "applies-to": readonly string[]
+  readonly cardinality: string
+  readonly position?: string
+  readonly description: string
+  readonly guidance?: string
+  readonly example?: string
+}
+
+export interface FieldKey {
+  readonly name: string
+  readonly required: boolean
+  readonly kind: "text" | "int" | "list"
+  readonly separator?: string
+  readonly description: string
+  readonly example?: string
+}
+
+export interface FieldSet {
+  readonly label: string
+  /** このフィールドセットを持つレイアウトの name */
+  readonly layout: string
+  readonly syntax: string
+  readonly guidance?: string
+  readonly unknown: "warning" | "error" | "ignore"
+  readonly keys: readonly FieldKey[]
+}
+
+export interface Element {
+  readonly marker?: string
+  readonly label: string
+  readonly description: string
+  readonly guidance?: string
+}
+
+export interface InlineSyntax {
+  readonly name: string
+  readonly syntax: string
+  readonly "counts-chars"?: string
+  readonly description: string
+}
+
+export interface Inline {
+  readonly "effective-in": readonly string[]
+  readonly "not-effective-in-note": string
+  readonly syntaxes: readonly InlineSyntax[]
+}
+
+export interface Limits {
+  readonly "max-chars-per-slide": number
+  readonly "recommended-chars-per-slide": number
+  readonly counts: string
+  readonly "excluded-layouts": readonly string[]
+  readonly guidance?: string
+}
+
+export interface Ontology {
+  readonly version: number
+  readonly elements: Readonly<Record<string, Element>>
+  readonly annotations: readonly Annotation[]
+  readonly layouts: readonly Layout[]
+  readonly vocabularies: Readonly<Record<string, Vocabulary>>
+  readonly "field-sets": Readonly<Record<string, FieldSet>>
+  readonly inline: Inline
+  readonly limits: Limits
+}

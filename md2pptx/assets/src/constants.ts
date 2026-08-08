@@ -27,8 +27,8 @@ export const CODE_LABEL_GAP = 0.05
 export const CODE_CAPTION_HEIGHT = 0.4
 export const CODE_CAPTION_GAP = 0.15
 
-// Validation
-export const MAX_CHARS_PER_SLIDE = 1000
+// 文字数上限はここには無い。正本は ../../ontology.yaml の limits / layouts[].max-chars で、
+// src/ontology/ 経由で読む（コードとドキュメントで数字が食い違わないようにするため）。
 
 // Bullet lists
 export const BULLET_INDENT = 0.25   // 箇条書きのぶら下げインデント（インチ）

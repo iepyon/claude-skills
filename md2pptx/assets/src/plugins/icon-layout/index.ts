@@ -4,7 +4,6 @@ import { handleIconColDirective, handleIconCardDirective, iconLayoutModeHandlers
 import { convertIconColumn, convertIconCard } from "./converter.js"
 import { handleIconColumnLayout, handleIconCardLayout } from "./layout.js"
 import { IconColumnLayout, IconCardLayout } from "./schema.js"
-import { MAX_CHARS_ICON_LAYOUT } from "./constants.js"
 
 function countPlainTextChars(text: string): number {
   return text
@@ -30,13 +29,11 @@ registerPlugin({
   id: "icon-cols",
   layoutTag: "IconColumn",
   mode: "icon-cols",
-  docDirective: "<!--icon-cols-->",
   directiveHandler: handleIconColDirective,
   sectionRoute: { field: "iconColumns" },
   modeHandlers: iconLayoutModeHandlers,
   converterPriority: 60,
   converter: convertIconColumn,
-  maxChars: MAX_CHARS_ICON_LAYOUT,
   countChars: countIconLayoutChars,
   layoutHandler: handleIconColumnLayout,
 })
@@ -46,13 +43,11 @@ registerPlugin({
   id: "icon-cards",
   layoutTag: "IconCard",
   mode: "icon-cards",
-  docDirective: "<!--icon-cards-->",
   directiveHandler: handleIconCardDirective,
   sectionRoute: { field: "iconColumns" },
   modeHandlers: iconLayoutModeHandlers,
   converterPriority: 50,
   converter: convertIconCard,
-  maxChars: MAX_CHARS_ICON_LAYOUT,
   countChars: countIconLayoutChars,
   layoutHandler: handleIconCardLayout,
 })

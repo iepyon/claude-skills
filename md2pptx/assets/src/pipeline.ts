@@ -1,6 +1,7 @@
 import "./plugins/index.js"
 import { Effect } from "effect"
-import { Md2PptxError } from "./errors.js"
+import { Md2PptxError, ValidationError } from "./errors.js"
+import { lintSource, type Diagnostic } from "./ontology/lint.js"
 import { parseMarkdown } from "./parser/index.js"
 import { validatePresentation, Theme, DEFAULT_THEME } from "./schema/index.js"
 import { renderPresentation, renderToHtml, RenderOptions } from "./renderer/index.js"
@@ -8,7 +9,50 @@ import { renderToWiki, WikiDeck } from "./renderer/wiki/index.js"
 import { validateLayout } from "./renderer/layout/validate-layout.js"
 import { slugify } from "./parser/slide-ids.js"
 
-export interface Md2PptxOptions {
+/** 宣言（ontology.yaml）に照らした検査の受け取り方 */
+export interface LintOptions {
+  /**
+   * 見つかった問題の受け取り先。呼び出し側が表示を決める（パイプラインは出力しない）。
+   * 渡さなければ検査そのものを走らせない — ライブラリとして使う側に黙って stderr を
+   * 汚させないため。
+   */
+  onDiagnostic?: (diagnostics: readonly Diagnostic[], deck?: string) => void
+  /** true なら warning でも失敗させる（CI 用）。既定は警告のまま続行する */
+  strict?: boolean
+}
+
+/**
+ * 宣言に照らして検査し、strict なら失敗させる。
+ *
+ * 既定を警告に留めるのは、宣言が実装より厳しすぎたときに既存のデッキが一斉に
+ * 作れなくなるのを避けるため。CI は --strict を掛けて新しいドリフトだけを止める。
+ */
+function lintStage(
+  markdown: string,
+  options: LintOptions,
+  deck?: string
+): Effect.Effect<void, ValidationError> {
+  return Effect.gen(function* () {
+    if (!options.onDiagnostic) return
+    const diagnostics = lintSource(markdown)
+    if (diagnostics.length === 0) return
+    options.onDiagnostic(diagnostics, deck)
+    if (options.strict) {
+      yield* Effect.fail(
+        new ValidationError({
+          message:
+            `${diagnostics.length} 件の宣言違反（--strict）` +
+            (deck ? ` in ${deck}` : "") +
+            "。ontology.yaml の宣言に合わせて直すか、宣言のほうを直す",
+          slideIndex: 0,
+          charCount: 0,
+        })
+      )
+    }
+  })
+}
+
+export interface Md2PptxOptions extends LintOptions {
   compression?: boolean
   theme?: Theme
 }
@@ -20,6 +64,9 @@ export function md2pptx(
   return Effect.gen(function* () {
     // レイアウト検証がテーマを必要とするため、ここで確定させる
     const theme = options.theme ?? DEFAULT_THEME
+
+    // Stage 0: 宣言（ontology.yaml）に照らした構造の検査
+    yield* lintStage(markdown, options)
 
     // Stage 1: MD → 生AST
     const raw = yield* parseMarkdown(markdown)
@@ -41,7 +88,7 @@ export function md2pptx(
   })
 }
 
-export interface Md2HtmlOptions {
+export interface Md2HtmlOptions extends LintOptions {
   theme?: Theme
 }
 
@@ -51,6 +98,9 @@ export function md2html(
 ): Effect.Effect<string, Md2PptxError> {
   return Effect.gen(function* () {
     const theme = options.theme ?? DEFAULT_THEME
+
+    // Stage 0: 宣言（ontology.yaml）に照らした構造の検査
+    yield* lintStage(markdown, options)
 
     // Stage 1: MD → 生AST
     const raw = yield* parseMarkdown(markdown)
@@ -74,7 +124,7 @@ export interface WikiSource {
   readonly markdown: string
 }
 
-export interface Md2WikiOptions {
+export interface Md2WikiOptions extends LintOptions {
   theme?: Theme
   siteTitle?: string
 }
@@ -95,6 +145,7 @@ export function md2wiki(
 
     const decks: WikiDeck[] = []
     for (const source of sources) {
+      yield* lintStage(source.markdown, options, source.name)
       const raw = yield* parseMarkdown(source.markdown)
       const pres = yield* validatePresentation(raw)
       yield* validateLayout(pres, theme)

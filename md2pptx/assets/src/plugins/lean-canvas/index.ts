@@ -4,7 +4,6 @@ import { handleLeanCanvasDirective } from "./handler.js"
 import { convertLeanCanvas } from "./converter.js"
 import { handleLeanCanvasLayout } from "./layout.js"
 import { LeanCanvasLayout } from "./schema.js"
-import { MAX_CHARS_LEAN_CANVAS } from "./constants.js"
 
 function countPlainTextChars(text: string): number {
   return text
@@ -28,12 +27,10 @@ registerPlugin({
   id: "lean-canvas",
   layoutTag: "LeanCanvas",
   mode: "lean-canvas",
-  docDirective: "<!--lean-canvas-->",
   directiveHandler: handleLeanCanvasDirective,
   sectionRoute: { field: "leanCanvasBlocks" },
   converterPriority: 80,
   converter: convertLeanCanvas,
-  maxChars: MAX_CHARS_LEAN_CANVAS,
   countChars: countLeanCanvasChars,
   layoutHandler: handleLeanCanvasLayout,
   titleFontSize: 16,

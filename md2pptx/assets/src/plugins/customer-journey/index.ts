@@ -22,12 +22,10 @@ registerPlugin({
   id: "customer-journey",
   layoutTag: "CustomerJourney",
   mode: "customer-journey",
-  docDirective: "<!--カスタマージャーニー:-->",
   directiveHandler: handleCustomerJourneyDirective,
   modeHandlers: journeyModeHandlers,
   converterPriority: 20,
   converter: convertCustomerJourney,
-  maxChars: 1000,
   countChars: countCustomerJourneyChars,
   layoutHandler: handleCustomerJourneyLayout,
 })

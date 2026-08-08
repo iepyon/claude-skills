@@ -1,6 +1,6 @@
 import { Effect, pipe } from "effect"
 import { ValidationError } from "../errors.js"
-import { MAX_CHARS_PER_SLIDE } from "../constants.js"
+import { getLimits, isCharCountExcluded, maxCharsForTag } from "../ontology/index.js"
 import { Presentation, Slide, TextBlock, DefaultLayout, LeftRightLayout, TopBottomLayout, GridLayout } from "./presentation.js"
 import { getValidationConfig } from "../plugins/registry.js"
 import { stripInlineFormatting } from "../parser/inline-formatter.js"
@@ -40,8 +40,8 @@ function countSlideChars(slide: Slide): number {
   let count = countPlainTextChars(slide.title)
   const layout = slide.layout
 
-  // CodeDisplay layout is excluded from character count (only title counted)
-  if (layout._tag === "CodeDisplay") {
+  // 数えないレイアウト（コード表示）は ontology.yaml の limits.excluded-layouts が正本
+  if (isCharCountExcluded(layout._tag)) {
     return count
   }
 
@@ -74,7 +74,12 @@ function countSlideChars(slide: Slide): number {
   return count
 }
 
-// Presentation全体をバリデート（240文字チェック、LeanCanvasは800文字まで）
+/**
+ * スライドごとの文字数を検証する。
+ *
+ * 上限の正本は ontology.yaml（`limits.max-chars-per-slide` と各レイアウトの `max-chars`）。
+ * ここに数値を書かないので、宣言とドキュメントと検証が同時に動く。
+ */
 export function validatePresentation(pres: Presentation): Effect.Effect<Presentation, ValidationError> {
   return pipe(
     Effect.sync(() => {
@@ -82,14 +87,11 @@ export function validatePresentation(pres: Presentation): Effect.Effect<Presenta
         const slide = pres.slides[i]
         const charCount = countSlideChars(slide)
 
-        // Determine character limit based on layout type
-        let limit = MAX_CHARS_PER_SLIDE
-        if (slide._tag === "ContentSlide") {
-          const pluginConfig = getValidationConfig(slide.layout._tag)
-          if (pluginConfig) {
-            limit = pluginConfig.maxChars
-          }
-        }
+        // タイトルスライドはレイアウトを持たないので、デッキ全体の上限（宣言の既定値）に従う
+        const limit =
+          slide._tag === "ContentSlide"
+            ? maxCharsForTag(slide.layout._tag)
+            : getLimits()["max-chars-per-slide"]
 
         if (charCount > limit) {
           return Effect.fail(
