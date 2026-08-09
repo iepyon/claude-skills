@@ -4,6 +4,13 @@ const SLIDE_W_PX = SLIDE_WIDTH * 96
 const SLIDE_H_PX = SLIDE_HEIGHT * 96
 
 /**
+ * ページ送りになるステージ左右端の幅（ステージ幅に対する比）。
+ * 当たり判定はこのスクリプトが座標で持ち、CSS の `.edge-zone` は
+ * 同じ比で目印を描くだけ。だから数値は1つしか置かない。
+ */
+export const EDGE_RATIO = 0.08
+
+/**
  * Wiki ビューアのクライアントスクリプト。
  *
  * 前提: 全スライドが最初から DOM にある（`--html` と同じ構造）。
@@ -55,7 +62,6 @@ export function wikiScript(): string {
     if (active && active.scrollIntoView) active.scrollIntoView({ block: "nearest" });
 
     renderBacklinks(id);
-    updateNavButtons(entry);
     document.querySelector(".main").scrollTop = 0;
     scaleStage();
   }
@@ -84,27 +90,60 @@ export function wikiScript(): string {
   }
 
   // ------------------------------------------------------------ navigation
-  function neighbour(entry, delta, crossDeck) {
+  // 送りはデッキの境界を越える。ENTRIES はサイト全体を order.yaml の順に
+  // 並べたものなので、隣は「次のデッキの1枚目」でよい。境界で止めると、
+  // デッキが変わるたびに目次へ戻ることになる。
+  function neighbour(entry, delta) {
     var target = entry.index + delta;
     if (target < 0 || target >= ENTRIES.length) return null;
-    if (!crossDeck && ENTRIES[target].deck !== entry.deck) return null;
     return ENTRIES[target].id;
   }
 
-  function updateNavButtons(entry) {
-    document.getElementById("prev-btn").disabled = !neighbour(entry, -1, true);
-    document.getElementById("next-btn").disabled = !neighbour(entry, 1, true);
-  }
-
-  document.getElementById("prev-btn").addEventListener("click", function () { step(-1, true); });
-  document.getElementById("next-btn").addEventListener("click", function () { step(1, true); });
-
-  function step(delta, crossDeck) {
+  function step(delta) {
     var entry = byId[current];
     if (!entry) return;
-    var next = neighbour(entry, delta, crossDeck);
+    var next = neighbour(entry, delta);
     if (next) go(next);
   }
+
+  // 戻るはブラウザの履歴そのもの。go() が location.hash に代入して履歴を積むので、
+  // 送り・リンク・目次・プレビューのどれで来ても「来た道」を1つ戻れる。
+  document.getElementById("back-btn").addEventListener("click", function () { history.back(); });
+
+  // ---------------------------------------------------- スライドの端で送る
+  // 前/次ボタンの代わり。判定は座標で行い、目印の帯には当たり判定を持たせない
+  // （帯にクリックを受けさせると、端まで届いているリンクが押せなくなる）。
+  // ステージ自身に載せるので、#preview-layer（.main の兄弟）に浮いている
+  // プレビューカードの上のクリックはここへ入ってこない。
+  var EDGE_RATIO = ${EDGE_RATIO};
+  var stageWrap = document.getElementById("stage-wrap");
+
+  function edgeAt(e) {
+    var r = stageWrap.getBoundingClientRect();
+    var zone = r.width * EDGE_RATIO;
+    if (e.clientX < r.left + zone) return -1;
+    if (e.clientX > r.right - zone) return 1;
+    return 0;
+  }
+
+  stageWrap.addEventListener("mousemove", function (e) {
+    // タップは mousemove を合成するが mouseleave を寄こさない。目印が点いたまま
+    // 残るので、ホバーできる入力のときだけ出す（判定は下の canHover に相乗り。
+    // 宣言は後ろだが、ハンドラが走る頃には代入済み）。
+    if (!canHover.matches) return;
+    var d = edgeAt(e);
+    var v = d < 0 ? "left" : (d > 0 ? "right" : "");
+    if (stageWrap.dataset.edge !== v) stageWrap.dataset.edge = v;   // 動くたびに書かない
+  });
+  stageWrap.addEventListener("mouseleave", function () { stageWrap.dataset.edge = ""; });
+
+  stageWrap.addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("a.wikilink")) return;   // リンクが優先
+    // 文字を選択しただけで送られると、スライドから引用できない
+    if (window.getSelection && String(window.getSelection()).length) return;
+    var d = edgeAt(e);
+    if (d) step(d);
+  });
 
   // --------------------------------------------------------- link handling
   // リンク先の解決はビルド時に済ませてある（RESOLVE）。
@@ -308,8 +347,8 @@ export function wikiScript(): string {
     if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); step(1, e.shiftKey); }
-    else if (e.key === "ArrowLeft") { e.preventDefault(); step(-1, e.shiftKey); }
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); step(1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
     else if (e.key === "Escape") { closeAllPreviews(); closeDrawer(); }
   });
 

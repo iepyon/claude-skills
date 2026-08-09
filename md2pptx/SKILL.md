@@ -163,7 +163,7 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 パターンのカタログ。対になるので `order.yaml` では隣り合わせに置く。
 
 **デッキの並び順**は、ディレクトリ直下の `order.yaml` で宣言する（サイドバーの並びと
-`Shift + ← →` で送る順）。無ければファイル名順。
+`← →` で送る順。送りはデッキの境界を越える）。無ければファイル名順。
 
 ```yaml
 decks: # 拡張子を除いたファイル名
