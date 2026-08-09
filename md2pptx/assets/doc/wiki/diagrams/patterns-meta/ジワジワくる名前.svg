@@ -1,18 +1,14 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <path d="M54 200 C120 201.5 200 198.6 300 200.4" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M54.6 200 C53.2 160 55.2 118 54 70" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M302 200 l-9 -5 l0 10 z" fill="#4B5563"/>
-  <path d="M54 68 l-5 9 l10 0 z" fill="#4B5563"/>
-
-  <path d="M72 116 C130 112.5 200 118 292 122.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
-  <text x="120" y="104" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">説明そのもの</text>
-
-  <path d="M72 188 C132 181 190 152 292 84" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round"/>
-  <text x="236" y="70" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">ジワジワくる名前</text>
-
-  <text x="78" y="60" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">伝わる量</text>
-  <text x="186" y="222" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">使った回数</text>
-
-  <text x="170" y="252" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">使った回数だけ、像が溜まる</text>
-  <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">一度で伝わる名前は、そこで満杯</text>
+  <path d="M124.4 152 C118.9 162.1 107.4 165.9 97.3 168.4 C87.2 171 76.2 170.4 67.1 164.6 C58.1 158.9 48.3 151.4 46.1 139.8 C44 128.2 48.4 116.9 55.1 107.7 C61.8 98.6 73.4 96.2 83.6 95 C93.9 93.8 105.1 94.8 113.4 101.8 C121.8 108.9 130.1 118 130.7 129.8 C131.3 141.6 124.7 151.9 116.9 159.9" fill="#EEF0F3" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="88" y="196" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">説明そのもの</text>
+  <text x="88" y="216" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">初めから満杯</text>
+  <path d="M234 54 q-5 8 -1 12 q5 4 8 -2 q2 -5 -7 -10" fill="none" stroke="#1E40AF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M234 72 C233.4 76 234.6 80 234 84" fill="none" stroke="#C6CBD2" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="3 4"/>
+  <path d="M201.3 159 C193.7 149.7 183 138.7 185 124.8 C187 111 197.5 101 208.3 93.7 C219.1 86.4 232.6 88 244.2 90.9 C255.8 93.8 271 96.3 277.6 108.6 C284.2 120.9 281.9 135.2 277.6 147.5 C273.2 159.8 261.3 166.5 250.2 171 C239.2 175.6 225.5 182.7 212.9 176.7 C200.3 170.8 193.5 158 189.7 145.5" fill="#F4F6FA" stroke="#C6CBD2" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M246 100.7 C254.8 104 257.9 113.9 260.8 121.4 C263.8 128.9 265.1 137.7 261.4 145.3 C257.7 153 252.7 161.6 243.6 164.2 C234.6 166.9 226.1 161 219.1 156.9 C212.2 152.7 206.1 146.4 204.3 138.1 C202.6 129.8 201.1 120 206.6 112.3 C212.2 104.6 222.5 104.1 230.6 103.1 C238.7 102.1 247.2 103.7 253.6 109.2" fill="#E6EBF5" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M229.5 146.4 C225.4 145.1 221.9 142.3 220.1 138.4 C218.3 134.5 215.9 129.7 217.8 125.1 C219.8 120.5 225 119.1 229 117.7 C233.1 116.3 237.5 116.6 241.3 118.6 C245.1 120.7 250 123.1 251.1 127.9 C252.3 132.7 249 137 246.5 140.6 C244.1 144.1 240.3 146.5 236.1 147.1 C231.8 147.6 226.5 148.7 222.7 145.5" fill="#C9D5EE" stroke="#1E40AF" stroke-width="2" stroke-linecap="round"/>
+  <text x="234" y="196" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">ジワジワくる名前</text>
+  <text x="234" y="216" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">使うたびに広がる</text>
+  <text x="170" y="252" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">口にして、しっくりくるほうを採る</text>
+  <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">理屈で選んだ名前は、使ううちに薄れる</text>
 </svg>
