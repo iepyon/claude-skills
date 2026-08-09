@@ -3,11 +3,11 @@ import { ParseError } from "../../errors.js"
 import type { BuilderState } from "../../parser/builder-types.js"
 import type { Token } from "../../parser/tokenizer.js"
 import { saveSection } from "../../parser/builder-state.js"
-import { imageExtensionForLayout } from "../../ontology/index.js"
-import { readImageAsset } from "../../assets.js"
+import { imageExtensionForLayout, markerForSlot } from "../../ontology/index.js"
+import { readSvgAsset } from "../../assets.js"
 
 /**
- * 図解のファイルが名乗るべき拡張子。**綴りは宣言から導く。**
+ * 図解の枠の綴り。**どちらも宣言から導く。**
  *
  * 手で書き写すと、ontology.yaml の marker を変えたときに lint は新しい綴りを数え、
  * 実装は古い綴りを受理する — lint は緑のまま図解だけが入らなくなる。
@@ -18,6 +18,10 @@ import { readImageAsset } from "../../assets.js"
 let diagramExtension: string | undefined
 export const diagramFileExtension = (): string =>
   (diagramExtension ??= imageExtensionForLayout("WikiPattern", "diagram"))
+
+/** 書き手に見せる記法。宣言の marker をそのまま出す（組み立て直すと宣言と食い違う） */
+export const diagramMarker = (): string =>
+  markerForSlot("WikiPattern", "diagram") ?? "![…](….svg)"
 
 /** `###` を集める先。registerPlugin の sectionRoute と同じ名前 */
 export const SECTIONS_FIELD = "wikiPatternSections"
@@ -66,14 +70,14 @@ export const handleImageInWikiPattern = (
   token: Token
 ): O.Option<BuilderState> => {
   if (token.type !== "Image" || state.mode !== "wiki-pattern") return O.none()
-  if (O.isNone(state.currentSlide)) return O.some(state)
 
-  // 直前の `###` を確定させてから読む（図解は節に属さない）
+  // 直前の `###` を確定させてから読む（図解は節に属さない）。
+  // saveSection は currentSlide の有無を変えないので、確かめるのは1度でよい
   const afterSection = saveSection(state)
   if (O.isNone(afterSection.currentSlide)) return O.some(afterSection)
   const slide = afterSection.currentSlide.value
 
-  const svg = readImageAsset({
+  const svg = readSvgAsset({
     src: token.src,
     baseDir: state.options.baseDir,
     extension: diagramFileExtension(),
@@ -100,16 +104,16 @@ export const handleImageInWikiPattern = (
  * コアに届くと `mode` が "default" に戻って、以降の `<!--takeaway-->` や `###` が
  * 別のレイアウトの規則で読まれてしまう。
  */
+const FENCE_TOKENS: ReadonlyArray<Token["type"]> = [
+  "CodeFenceOpen",
+  "CodeFenceLine",
+  "CodeFenceClose",
+]
+
 export const handleCodeFenceInWikiPattern = (
   state: BuilderState,
   token: Token
-): O.Option<BuilderState> => {
-  if (state.mode !== "wiki-pattern") return O.none()
-  const isFence =
-    token.type === "CodeFenceOpen" ||
-    token.type === "CodeFenceLine" ||
-    token.type === "CodeFenceClose"
-  return isFence ? O.some(state) : O.none()
-}
+): O.Option<BuilderState> =>
+  state.mode === "wiki-pattern" && FENCE_TOKENS.includes(token.type) ? O.some(state) : O.none()
 
 export const wikiPatternModeHandlers = [handleImageInWikiPattern, handleCodeFenceInWikiPattern]

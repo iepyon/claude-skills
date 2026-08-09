@@ -284,9 +284,7 @@ describe("配布しているデッキの図解", () => {
     }
   })
 
-  it.each(diagrams.map((d) => d.name))("%s は DOM を壊す書き方をしていない", (name) => {
-    const svg = diagrams.find((d) => d.name === name)!.svg
-
+  it.each(diagrams)("$name は DOM を壊す書き方をしていない", ({ name, svg }) => {
     for (const [pattern, why] of FORBIDDEN) {
       expect(svg, `${name}: ${why}`).not.toMatch(pattern)
     }
@@ -294,15 +292,13 @@ describe("配布しているデッキの図解", () => {
     expect(svg, `${name}: xmlns が要る`).toMatch(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)
   })
 
-  it.each(diagrams.map((d) => d.name))("%s は実寸を名乗る", (name) => {
+  it.each(diagrams)("$name は実寸を名乗る", ({ name, svg }) => {
     // md から `<img>` として読まれるときの表示サイズになる。実寸が無い SVG は
-    // 既定の 300×320 に押し込められて字が潰れる（埋め込み側では 100% に読み替わる）
-    const svg = diagrams.find((d) => d.name === name)!.svg
+    // 既定の大きさに押し込められて字が潰れる（埋め込み側では 100% に読み替わる）
     const open = svg.match(/<svg\b[^>]*>/)![0]
-    const size = (attr: string): number => Number(open.match(new RegExp(`\\s${attr}="(\\d+)"`))?.[1])
     const [, , vw, vh] = open.match(/viewBox="([^"]+)"/)![1].trim().split(/[\s,]+/).map(Number)
 
-    expect(size("width"), `${name}: width が viewBox と食い違う`).toBe(vw)
-    expect(size("height"), `${name}: height が viewBox と食い違う`).toBe(vh)
+    expect(Number(open.match(/\swidth="(\d+)"/)?.[1]), `${name}: width が viewBox と食い違う`).toBe(vw)
+    expect(Number(open.match(/\sheight="(\d+)"/)?.[1]), `${name}: height が viewBox と食い違う`).toBe(vh)
   })
 })

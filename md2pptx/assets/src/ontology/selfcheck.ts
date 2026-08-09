@@ -10,15 +10,14 @@ import { readFileSync } from "fs"
 import { getPlugins } from "../plugins/registry.js"
 import { CONSUMED_KEYS, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
-  codeFenceLanguage,
   getAnnotations,
   getFieldSets,
   getLayouts,
   getLimits,
   getVocabularies,
-  imageExtension,
   isDynamicCardinality,
   loadOntology,
+  markerKind,
   parseCardinality,
 } from "./index.js"
 
@@ -78,16 +77,15 @@ export function selfcheckProblems(): string[] {
 
     for (const slot of layout.slots) {
       const sat = `${at}.slots.${slot.name}`
-      const fence = codeFenceLanguage(slot.marker)
-      const image = imageExtension(slot.marker)
+      const kind = markerKind(slot.marker)
       fail(
-        slot.marker === "###" || slot.marker === "####" || fence !== undefined || image !== undefined,
+        kind.kind !== "unknown",
         `${sat}: marker が ### / #### / \`\`\`<lang> / ![…](….<ext>) のいずれでもない`
       )
       // 行そのものが枠になるスロット（フェンス・画像）は見出しを持たない。
       // 語彙を宣言しても照合される見出しが無い
       fail(
-        (fence === undefined && image === undefined) || slot.heading === "free",
+        kind.kind === "heading" || kind.kind === "unknown" || slot.heading === "free",
         `${sat}: 行そのものが枠のスロットは見出しを持たないので heading: free でなければならない`
       )
       try {

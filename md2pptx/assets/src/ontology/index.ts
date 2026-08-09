@@ -209,23 +209,7 @@ export function codeFenceLanguage(marker: string): string | undefined {
   return match ? match[1] : undefined
 }
 
-/**
- * そのレイアウトのフェンス枠が使う言語名。宣言から導くので、プラグインが
- * 綴りを持たなくてよい（`registerPlugin` がディレクティブを宣言から導くのと同じ理由 —
- * 書き手が打つ文字列・lint が数える文字列・実装が集める文字列を1つにする）。
- */
-export function fenceLanguageForLayout(tag: string, slotName: string): string {
-  const marker = getLayoutByTag(tag)?.slots.find((s) => s.name === slotName)?.marker
-  const language = marker ? codeFenceLanguage(marker) : undefined
-  if (!language) {
-    throw new Error(
-      `ontology.yaml: ${tag}.slots.${slotName} がコードフェンスの枠として宣言されていない`
-    )
-  }
-  return language
-}
-
-const IMAGE_MARKER = /^!\[.*\]\((.*)\)$/
+const IMAGE_MARKER = /^!\[.*\]\(.*(\.[A-Za-z0-9]+)\)$/
 
 /**
  * スロットの marker が画像参照を指すなら、受理する拡張子（`.svg` 等）を返す。
@@ -236,18 +220,57 @@ const IMAGE_MARKER = /^!\[.*\]\((.*)\)$/
  * 読める種類が変わらない）。拡張子を名乗らない marker は画像枠と認めない。
  */
 export function imageExtension(marker: string): string | undefined {
-  const path = marker.match(IMAGE_MARKER)?.[1]
-  return path?.match(/\.[A-Za-z0-9]+$/)?.[0].toLowerCase()
+  return marker.match(IMAGE_MARKER)?.[1].toLowerCase()
 }
 
-/** そのレイアウトの画像枠が受理する拡張子。宣言から導く（fenceLanguageForLayout と同じ理由） */
-export function imageExtensionForLayout(tag: string, slotName: string): string {
-  const marker = getLayoutByTag(tag)?.slots.find((s) => s.name === slotName)?.marker
-  const extension = marker ? imageExtension(marker) : undefined
-  if (!extension) {
-    throw new Error(
-      `ontology.yaml: ${tag}.slots.${slotName} が画像の枠として宣言されていない`
-    )
+/** 宣言されたスロットの marker。書き手が打つ形の正本で、診断にもそのまま出す */
+export function markerForSlot(tag: string, slotName: string): string | undefined {
+  return getLayoutByTag(tag)?.slots.find((s) => s.name === slotName)?.marker
+}
+
+/**
+ * marker を「その枠をどう数えるか」に読み替える。**許される形の解釈はここだけ。**
+ *
+ * `###` / `####` は見出しを数える枠、フェンスと画像は行そのものが1つの枠。
+ * 数える側（lint）・宣言を検める側（selfcheck）・中身を集める側（プラグイン）が
+ * 同じ規則で動くように、判定を1箇所に閉じる。
+ */
+export type MarkerKind =
+  | { readonly kind: "heading" }
+  | { readonly kind: "code-fence"; readonly language: string }
+  | { readonly kind: "image"; readonly extension: string }
+  | { readonly kind: "unknown" }
+
+export function markerKind(marker: string): MarkerKind {
+  if (marker === "###" || marker === "####") return { kind: "heading" }
+  const language = codeFenceLanguage(marker)
+  if (language !== undefined) return { kind: "code-fence", language }
+  const extension = imageExtension(marker)
+  if (extension !== undefined) return { kind: "image", extension }
+  return { kind: "unknown" }
+}
+
+/**
+ * そのレイアウトの枠が名乗る綴り。宣言から導くので、プラグインが綴りを持たなくてよい
+ * （`registerPlugin` がディレクティブを宣言から導くのと同じ理由 — 書き手が打つ文字列・
+ * lint が数える文字列・実装が集める文字列を1つにする）。
+ *
+ * どちらも**期待した種類でなければ落とす** — 宣言を書き替えたのに実装が古い種類を
+ * 集め続ける、という緑のままの食い違いを作らせない。
+ */
+export function fenceLanguageForLayout(tag: string, slotName: string): string {
+  const kind = markerKind(markerForSlot(tag, slotName) ?? "")
+  if (kind.kind !== "code-fence") {
+    throw new Error(`ontology.yaml: ${tag}.slots.${slotName} がコードフェンスの枠として宣言されていない`)
   }
-  return extension
+  return kind.language
+}
+
+/** そのレイアウトの画像枠が受理する拡張子 */
+export function imageExtensionForLayout(tag: string, slotName: string): string {
+  const kind = markerKind(markerForSlot(tag, slotName) ?? "")
+  if (kind.kind !== "image") {
+    throw new Error(`ontology.yaml: ${tag}.slots.${slotName} が画像の枠として宣言されていない`)
+  }
+  return kind.extension
 }

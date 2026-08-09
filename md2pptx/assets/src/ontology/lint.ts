@@ -16,14 +16,14 @@
 import "../plugins/index.js" // side-effect: 登録が済んでいないとプラグインのディレクティブが本文に落ちる
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
-  codeFenceLanguage,
   getFieldSet,
   getLayouts,
   getVocabulary,
-  imageExtension,
   isDynamicCardinality,
+  markerKind,
   parseCardinality,
   resolveTerm,
+  type MarkerKind,
 } from "./index.js"
 import type { Layout, Slot } from "./types.js"
 
@@ -160,10 +160,6 @@ function collectHeadings(tokens: readonly Token[]): Headings {
   return { h3, h4, h4Groups: groups.filter((g) => g.length > 0) }
 }
 
-/** 見出し（`###` / `####`）で数える枠か。フェンスと画像は行そのものが枠になる */
-const isHeadingSlot = (slot: Slot): boolean =>
-  codeFenceLanguage(slot.marker) === undefined && imageExtension(slot.marker) === undefined
-
 /** `resolved` は grid のようにディレクティブの引数で件数が決まる宣言に渡す */
 function checkCardinality(
   slot: Slot,
@@ -187,12 +183,12 @@ function checkCardinality(
   ]
 }
 
-function checkVocabulary(slot: Slot, headings: Headings): Diagnostic[] {
+function checkVocabulary(slot: Slot, kind: MarkerKind, headings: Headings): Diagnostic[] {
   // フェンス・画像の枠は見出しを持たない。ここで抜けないと `####` の側に落ち、
   // そのスライドの `####` を図解の語彙で照合してしまう（selfcheck が
   // 「行そのものが枠なら heading: free」を強制しているが、lint の正しさが
   // 別ファイルの規則に依存する形になる）
-  if (!isHeadingSlot(slot)) return []
+  if (kind.kind !== "heading") return []
   if (slot.heading !== "vocabulary" || !slot.vocabulary) return []
   const vocab = getVocabulary(slot.vocabulary)
   if (!vocab || vocab.unknown === "ignore") return []
@@ -329,14 +325,16 @@ export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
     const headings = collectHeadings(slide.tokens)
     const h4Slot = layout.slots.find((s) => s.marker === "####")
 
+    let readsImages = false
     for (const slot of layout.slots) {
-      out.push(...checkVocabulary(slot, headings))
-      const fence = codeFenceLanguage(slot.marker)
-      const image = imageExtension(slot.marker)
-      if (fence !== undefined) {
-        out.push(...checkCardinality(slot, countCodeFences(slide.tokens, fence), slide.line))
-      } else if (image !== undefined) {
-        out.push(...checkCardinality(slot, countImages(slide.tokens, image), slide.line))
+      const kind = markerKind(slot.marker)
+      out.push(...checkVocabulary(slot, kind, headings))
+
+      if (kind.kind === "code-fence") {
+        out.push(...checkCardinality(slot, countCodeFences(slide.tokens, kind.language), slide.line))
+      } else if (kind.kind === "image") {
+        readsImages = true
+        out.push(...checkCardinality(slot, countImages(slide.tokens, kind.extension), slide.line))
       } else if (slot.marker === "###") {
         const resolved = isDynamicCardinality(slot.cardinality)
           ? gridCellCount(slide.tokens)
@@ -361,7 +359,7 @@ export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
 
     // 画像の枠を持たないレイアウトに置かれた `![…](…)` は、どこにも描かれず消える
     // （`####` と同じ「黙って落ちる」種類の間違い）
-    if (!layout.slots.some((s) => imageExtension(s.marker) !== undefined)) {
+    if (!readsImages) {
       for (const token of slide.tokens) {
         if (token.type !== "Image") continue
         out.push({

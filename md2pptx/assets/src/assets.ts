@@ -1,5 +1,7 @@
 /**
- * md が `![…](….svg)` で参照した図の読み込み。**ファイルを読むのはここだけ。**
+ * md が `![…](….svg)` で参照した図の読み込み。**デッキからの相対パスを読むのはここだけ。**
+ * （`icon-resolver.ts` は Material Icon の同梱 SVG を、`ontology/index.ts` は宣言を読む。
+ * どちらも場所が固定で、書き手の書いたパスには触れない。）
  *
  * 図を md の外に置くのは、md をそのまま GitHub で開いたときに絵として表示させるため。
  * そのぶん「どこから見た相対パスか」を誰かが知っていなければならず、それが `baseDir`
@@ -10,8 +12,9 @@ import { readFileSync } from "fs"
 import { isAbsolute, resolve } from "path"
 import { ParseError } from "./errors.js"
 
-/** `<svg …>` 開始タグの width / height 属性 */
+/** `<svg …>` 開始タグと、その中の width / height 属性 */
 const SVG_OPEN_TAG = /<svg\b[^>]*>/i
+const SVG_TAG_HEAD = /^<svg\b/i
 const SIZE_ATTRIBUTE = /\s(width|height)\s*=\s*("[^"]*"|'[^']*')/gi
 
 /**
@@ -25,7 +28,7 @@ const SIZE_ATTRIBUTE = /\s(width|height)\s*=\s*("[^"]*"|'[^']*')/gi
  */
 export function fitSvgToBox(svg: string): string {
   return svg.replace(SVG_OPEN_TAG, (tag) =>
-    tag.replace(SIZE_ATTRIBUTE, "").replace(/^<svg\b/i, '<svg width="100%" height="100%"')
+    tag.replace(SIZE_ATTRIBUTE, "").replace(SVG_TAG_HEAD, '<svg width="100%" height="100%"')
   )
 }
 
@@ -34,8 +37,11 @@ export function fitSvgToBox(svg: string): string {
  *
  * 見つからない・拡張子が違うは **その場で落とす**。図解は WikiPattern の必須スロットで、
  * 空のまま通すと右半分が白いスライドが公開される（converter が空を弾くのと同じ考え）。
+ *
+ * `extension` を引数に取るのは汎用のためではない — 返すのは常に SVG で、
+ * 受理する種類の**正本を宣言側に置く**ため（呼ぶ側が ontology.yaml から引いて渡す）。
  */
-export function readImageAsset(options: {
+export function readSvgAsset(options: {
   readonly src: string
   readonly baseDir: string | undefined
   readonly extension: string

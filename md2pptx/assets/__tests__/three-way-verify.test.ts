@@ -10,7 +10,7 @@ import { inspectPptx } from "../src/tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "../src/tools/html-inspector.js"
 import { Mismatch } from "../src/tools/inventory-diff.js"
 import { verifyInventories, VerifyReport, mismatchBreakdown } from "../src/tools/verify.js"
-import { DEFAULT_THEME } from "../src/schema/theme.js"
+import { DEFAULT_THEME, type Theme } from "../src/schema/theme.js"
 
 /**
  * 3者比較（AST / HTML / PPTX）を **実在する全デッキ** に流す。
@@ -59,7 +59,13 @@ const describeMismatches = (mismatches: readonly Mismatch[]): string =>
 
 // 3脚のインベントリを作る。比較そのものは verify.ts の判定を通す
 // （テストだけが別の突き合わせ方を持つと、CI と手元で結論が変わりうる）。
-const threeWay = async (markdown: string, theme = DEFAULT_THEME, baseDir?: string) => {
+interface DeckOptions {
+  readonly theme?: Theme
+  /** 図解の `![…](….svg)` を解く起点。省いた版は cwd から解く */
+  readonly baseDir?: string
+}
+
+const threeWay = async (markdown: string, { theme = DEFAULT_THEME, baseDir }: DeckOptions = {}) => {
   const ast = await Effect.runPromise(parseMarkdown(markdown, { baseDir }))
   const presentation = await Effect.runPromise(validatePresentation(ast))
   const expected = await Effect.runPromise(slidesToInventory(presentation.slides, theme))
@@ -78,19 +84,15 @@ const expectAgreement = (label: string, report: VerifyReport): void => {
   }
 }
 
-const verifyDeck = async (
-  markdown: string,
-  theme = DEFAULT_THEME,
-  baseDir?: string
-): Promise<VerifyReport> => {
-  const { expected, pptx, html } = await threeWay(markdown, theme, baseDir)
+const verifyDeck = async (markdown: string, options: DeckOptions = {}): Promise<VerifyReport> => {
+  const { expected, pptx, html } = await threeWay(markdown, options)
   return verifyInventories(expected, pptx, html)
 }
 
 describe("3-way verification over every deck we ship", () => {
   for (const deck of decks) {
     it(`${deck.name} — AST / HTML / PPTX agree`, async () => {
-      const report = await verifyDeck(readFileSync(deck.path, "utf-8"), DEFAULT_THEME, deck.baseDir)
+      const report = await verifyDeck(readFileSync(deck.path, "utf-8"), { baseDir: deck.baseDir })
       expectAgreement(deck.name, report)
 
       // 「0 件」だけでは、全部落として一致したのか本当に合っているのか分からない
@@ -102,7 +104,10 @@ describe("3-way verification over every deck we ship", () => {
   // リテラルで持っていて、この脚だけ食い違っていた経路。
   it("holds under a theme with a different body font", async () => {
     const theme = { ...DEFAULT_THEME, fonts: { ...DEFAULT_THEME.fonts, body: "Verdana" } }
-    const report = await verifyDeck(readFileSync(join(SPEC_DIR, "02-complex-layouts.md"), "utf-8"), theme)
+    const report = await verifyDeck(readFileSync(join(SPEC_DIR, "02-complex-layouts.md"), "utf-8"), {
+      theme,
+      baseDir: SPEC_DIR,
+    })
     expectAgreement("themed", report)
   })
 })
