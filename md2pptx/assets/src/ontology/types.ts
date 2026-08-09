@@ -46,7 +46,14 @@ export interface Vocabulary {
 
 export interface Slot {
   readonly name: string
-  readonly marker: "###" | "####"
+  /**
+   * その枠を認識する行頭記号。`###` / `####` のほか、コードフェンスを1枠として
+   * 数えるスロットは ```` ```<lang> ```` を名乗る（例 ```` ```pattern-diagram ````）。
+   *
+   * リテラル union にせず string にしてあるのは、許される形の判定を selfcheck.ts に
+   * 一本化するため。型と検査の両方に同じ集合を書くと、増やすときに片方だけ直る。
+   */
+  readonly marker: string
   /** "1..n" / "3" / "3..n" / "0..1" / "1..9" / "rows*cols" */
   readonly cardinality: string
   readonly heading: "free" | "vocabulary"

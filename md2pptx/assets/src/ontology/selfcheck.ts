@@ -10,6 +10,7 @@ import { readFileSync } from "fs"
 import { getPlugins } from "../plugins/registry.js"
 import { CONSUMED_KEYS, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
+  codeFenceLanguage,
   getAnnotations,
   getFieldSets,
   getLayouts,
@@ -76,7 +77,16 @@ export function selfcheckProblems(): string[] {
 
     for (const slot of layout.slots) {
       const sat = `${at}.slots.${slot.name}`
-      fail(slot.marker === "###" || slot.marker === "####", `${sat}: marker が ### / #### でない`)
+      const fence = codeFenceLanguage(slot.marker)
+      fail(
+        slot.marker === "###" || slot.marker === "####" || fence !== undefined,
+        `${sat}: marker が ### / #### / \`\`\`<lang> のいずれでもない`
+      )
+      // フェンスの枠は見出しを持たない。語彙を宣言しても照合される見出しが無い
+      fail(
+        fence === undefined || slot.heading === "free",
+        `${sat}: コードフェンスの枠は見出しを持たないので heading: free でなければならない`
+      )
       try {
         parseCardinality(slot.cardinality)
       } catch (e) {

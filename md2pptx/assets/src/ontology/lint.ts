@@ -16,6 +16,7 @@
 import "../plugins/index.js" // side-effect: 登録が済んでいないとプラグインのディレクティブが本文に落ちる
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
+  codeFenceLanguage,
   getFieldSet,
   getLayouts,
   getVocabulary,
@@ -101,6 +102,17 @@ export function detectLayout(tokens: readonly Token[]): Layout | undefined {
   return byName("Default")
 }
 
+/**
+ * その言語で開かれたコードフェンスの数。
+ *
+ * 図解のように「フェンスそのものが1つの枠」であるスロットを数える。見出しと違って
+ * トークン列に痕跡が残るので、`###` と同じ cardinality の検査に載せられる
+ * （各プラグインの handler.ts は language を見てフェンスの中身を振り分けている）。
+ */
+function countCodeFences(tokens: readonly Token[], language: string): number {
+  return tokens.filter((t) => t.type === "CodeFenceOpen" && t.language === language).length
+}
+
 /** グリッドの `###` 件数はディレクティブの引数で決まる */
 function gridCellCount(tokens: readonly Token[]): number | undefined {
   const grid = tokens.find((t) => t.type === "GridDirective")
@@ -161,6 +173,11 @@ function checkCardinality(
 }
 
 function checkVocabulary(slot: Slot, headings: Headings): Diagnostic[] {
+  // フェンスの枠は見出しを持たない。ここで抜けないと `####` の側に落ち、
+  // そのスライドの `####` を図解の語彙で照合してしまう（selfcheck が
+  // 「フェンスの枠は heading: free」を強制しているが、lint の正しさが
+  // 別ファイルの規則に依存する形になる）
+  if (codeFenceLanguage(slot.marker) !== undefined) return []
   if (slot.heading !== "vocabulary" || !slot.vocabulary) return []
   const vocab = getVocabulary(slot.vocabulary)
   if (!vocab || vocab.unknown === "ignore") return []
@@ -299,7 +316,10 @@ export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
 
     for (const slot of layout.slots) {
       out.push(...checkVocabulary(slot, headings))
-      if (slot.marker === "###") {
+      const fence = codeFenceLanguage(slot.marker)
+      if (fence !== undefined) {
+        out.push(...checkCardinality(slot, countCodeFences(slide.tokens, fence), slide.line))
+      } else if (slot.marker === "###") {
         const resolved = isDynamicCardinality(slot.cardinality)
           ? gridCellCount(slide.tokens)
           : undefined

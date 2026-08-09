@@ -193,3 +193,34 @@ export function parseCardinality(spec: string, resolved?: number): Cardinality {
 export function isDynamicCardinality(spec: string): boolean {
   return spec === DYNAMIC
 }
+
+const FENCE_MARKER = /^```(\S+)$/
+
+/**
+ * スロットの marker がコードフェンスを指すなら、その言語名を返す。
+ *
+ * `###` / `####` は「見出しを数える」枠だが、図解のようにフェンスそのものが1枠に
+ * なるスロットもある（```pattern-diagram）。綴りの解釈をここ1箇所に閉じておくと、
+ * 数える側（lint）・宣言を検める側（selfcheck）・中身を集める側（プラグイン）が
+ * 同じ規則で動く。
+ */
+export function codeFenceLanguage(marker: string): string | undefined {
+  const match = marker.match(FENCE_MARKER)
+  return match ? match[1] : undefined
+}
+
+/**
+ * そのレイアウトのフェンス枠が使う言語名。宣言から導くので、プラグインが
+ * 綴りを持たなくてよい（`registerPlugin` がディレクティブを宣言から導くのと同じ理由 —
+ * 書き手が打つ文字列・lint が数える文字列・実装が集める文字列を1つにする）。
+ */
+export function fenceLanguageForLayout(tag: string, slotName: string): string {
+  const marker = getLayoutByTag(tag)?.slots.find((s) => s.name === slotName)?.marker
+  const language = marker ? codeFenceLanguage(marker) : undefined
+  if (!language) {
+    throw new Error(
+      `ontology.yaml: ${tag}.slots.${slotName} がコードフェンスの枠として宣言されていない`
+    )
+  }
+  return language
+}

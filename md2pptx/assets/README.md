@@ -36,10 +36,10 @@ See [../BACKLOG.md](../BACKLOG.md) for the feature backlog (prioritized, with ac
 - Stable slide ids via `<!--id:foo-->`, or auto-derived from the slide title
 - Material Icons (SVG) and emoji icons
 - YAML themes (`--theme`)
-- 16 layout types:
+- 17 layout types:
   - Core: `TitleSlide`, `Default`, `LeftRight`, `TopBottom`, `Grid`, `CodeDisplay`
   - Plugins: `IconColumns`, `IconCards`, `Steps`, `NumberedList`, `TextOnly`, `Table`,
-    `Quote`, `Agenda`, `LeanCanvas`, `CustomerJourney`, `PatternLanguage`
+    `Quote`, `Agenda`, `LeanCanvas`, `CustomerJourney`, `PatternLanguage`, `WikiPattern`
 
 See [../SKILL.md](../SKILL.md) for the full Markdown syntax table with directives and examples.
 
@@ -192,7 +192,7 @@ src/
     html/             LayoutResult → inline-styled HTML (slide-css.ts is shared with wiki/)
     wiki/             Many Presentations → one linked site (reuses html/renderSlide)
     syntax-highlighter.ts, icon-resolver.ts, icon-mapping.ts
-  plugins/            Self-registering layout plugins (11 registrations)
+  plugins/            Self-registering layout plugins (12 registrations)
   tools/              inventory, html-inspector, pptx-inspector, inventory-diff,
                       gen-ontology-doc (ontology.yaml → ontology.md + SKILL.md regions)
 ```
