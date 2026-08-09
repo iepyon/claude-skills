@@ -95,6 +95,67 @@ describe("3-way verification over every deck we ship", () => {
   })
 })
 
+// 配っているデッキが通っていない書き方は、走査では拾えない。
+// ここで拾ったものは実際に3脚がずれていた入力なので、fixture として残す。
+const EDGE_CASES: Record<string, string> = {
+  // アイコン注釈の無い Steps。プラグインは空の IconBox を作るので、
+  // インベントリだけが「文字の無い図形」を出していた
+  // （既存の steps デッキは4件とも全セクションにアイコンが付いている）
+  "steps without icon annotations": `# T
+---
+## 手順
+<!--steps-->
+### 準備
+入力を読む
+
+### 変換
+AST に落とす
+
+### 出力
+書き出す`,
+
+  // 空行を含むコードブロック。行数の数え方が3脚でずれやすい
+  "code with blank lines": `# T
+---
+## コード
+\`\`\`python
+def a():
+    pass
+
+def b():
+    pass
+\`\`\``,
+
+  // 実体参照になる文字。PPTX 側はデコードしないと =&gt; のまま読み出す
+  "code with xml entities": `# T
+---
+## コード
+\`\`\`typescript
+const f = (a: number) => a < 1 && a > 0
+\`\`\``,
+
+  // 本文の途中に改行があり、そのあとにリンクが来る。
+  // pptxgenjs が共有 options に breakLine を立てる癖を踏む
+  "body with a link after a newline": `# T
+---
+## 本文
+### セクション
+1行目の説明。
+実例は [Anthropic](https://anthropic.com) から辿れる。
+3行目。`,
+}
+
+describe("edge cases the shipped decks do not cover", () => {
+  for (const [name, markdown] of Object.entries(EDGE_CASES)) {
+    it(`${name} — AST / HTML / PPTX agree`, async () => {
+      const legs = await threeWay(markdown)
+      for (const [label, diff] of Object.entries(legs)) {
+        expect(diff.mismatches.length, `${name} — ${label}\n${describeMismatches(diff.mismatches)}`).toBe(0)
+      }
+    })
+  }
+})
+
 describe("the verdict itself", () => {
   // 3脚が一致するのを確かめるだけでは足りない。「食い違ったときに
   // 失敗と呼ぶか」を表明しないと、B-24（mismatch を印字して exit 0）に戻る。

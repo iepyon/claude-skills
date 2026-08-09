@@ -54,6 +54,13 @@ export function verifyInventories(
   }
 }
 
+// どのスライドのどの図形か。`property` だけでは `shape.exists` や
+// `paragraphs.length` の行が場所を持たず、デッキが大きいと探せない。
+export const locate = (mismatch: Mismatch): string =>
+  mismatch.property.startsWith(`${mismatch.slide}.`)
+    ? mismatch.property
+    : `${mismatch.slide}.${mismatch.shape}.${mismatch.property}`
+
 // どの種類の食い違いが何件あるか。原因に辿り着くのは、
 // 個々の行より「alignment:27」のような分布のほうが早い。
 export function mismatchBreakdown(mismatches: readonly Mismatch[]): string {
@@ -82,7 +89,7 @@ export function printVerifyReport(report: VerifyReport): void {
     for (const mismatch of leg.mismatches.slice(0, VERIFY_MAX_SHOWN)) {
       const deltaStr = mismatch.delta !== undefined ? ` (Δ ${mismatch.delta.toFixed(4)})` : ""
       console.log(
-        `  - ${mismatch.property}: ${leg.leftName}=${mismatch.expected}, ${leg.rightName}=${mismatch.actual}${deltaStr}`
+        `  - ${locate(mismatch)}: ${leg.leftName}=${mismatch.expected}, ${leg.rightName}=${mismatch.actual}${deltaStr}`
       )
     }
 

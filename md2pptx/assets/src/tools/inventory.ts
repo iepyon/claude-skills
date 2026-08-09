@@ -176,11 +176,17 @@ function layoutResultToSlideInventory(
   const fontName = theme.fonts.body
   const inventory: SlideInventory = {}
 
+  // 文字が1つも無い図形は、どちらのレンダラも残さない
+  // （pptxgenjs は run の無い txBody、HTML は空要素で、両インスペクタが落とす）。
+  // ボックスの種類ごとに書くと必ずどれかを書き忘れるので、置く直前に1箇所で弾く。
+  // 実例: アイコン注釈の無い Steps は空の IconBox を作り、AST にだけ現れていた。
+  const put = (key: string, shape: ShapeInventory): void => {
+    if (shape.paragraphs.every((para) => para.text === "")) return
+    inventory[key] = shape
+  }
+
   result.textBoxes.forEach((box, index) => {
-    // 文字が1つも無いボックスは、どちらのレンダラも図形として残さない
-    // （pptxgenjs は空の txBody、HTML は空の div）ので、AST でも出さない
-    if (boxToLines(box).length === 0) return
-    inventory[textKey(index)] = textBoxToShape(box, fontName, isTitleSlide)
+    put(textKey(index), textBoxToShape(box, fontName, isTitleSlide))
   })
 
   // アイコンは emoji に解決できたものだけ。Material Icon は両レンダラとも
@@ -188,18 +194,18 @@ function layoutResultToSlideInventory(
   result.iconBoxes?.forEach((box, index) => {
     const resolved = resolveIconOrFallback(box.icon, box.color ?? "000000")
     if (resolved._tag !== "emoji") return
-    inventory[iconKey(index)] = iconBoxToShape(box, resolved.text, fontName)
+    put(iconKey(index), iconBoxToShape(box, resolved.text, fontName))
   })
 
   result.codeBoxes?.forEach((box, index) => {
-    inventory[codeKey(index)] = codeBoxToShape(box)
+    put(codeKey(index), codeBoxToShape(box))
   })
 
   // テキストを持つシェイプだけ。PPTX では塗りとテキストが別図形になるが、
   // キーを取るのはテキスト側（HTML は1つの div で両方を描く）
   result.shapeBoxes?.forEach((box, index) => {
     if (!box.text) return
-    inventory[shapeBoxKey(index)] = shapeBoxToShape(box, box.text, fontName)
+    put(shapeBoxKey(index), shapeBoxToShape(box, box.text, fontName))
   })
 
   return inventory
