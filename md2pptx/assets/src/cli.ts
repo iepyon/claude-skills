@@ -7,7 +7,7 @@ import type { WikiSource } from "./index.js"
 import { slidesToInventory } from "./tools/inventory.js"
 import { inspectPptx } from "./tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "./tools/html-inspector.js"
-import { diffInventory } from "./tools/inventory-diff.js"
+import { verifyInventories, printVerifyReport } from "./tools/verify.js"
 import { formatDiagnostic, lintSource, shouldFail, type Diagnostic } from "./ontology/lint.js"
 
 const args = process.argv.slice(2)
@@ -151,7 +151,7 @@ const program = Effect.gen(function* () {
     mkdirSync(dirname(outputPath), { recursive: true })
     writeFileSync(outputPath, html, "utf-8")
     console.log(`\u2705 Generated wiki: ${outputPath} (${sources.length} decks)`)
-    return
+    return 0
   }
 
   const markdown = readFileSync(inputPath, "utf-8")
@@ -162,7 +162,7 @@ const program = Effect.gen(function* () {
     const html = yield* md2html(markdown, { theme, ...lintOpts })
     writeFileSync(outputPath, html, "utf-8")
     console.log(`✅ Generated HTML: ${outputPath}`)
-    return
+    return 0
   }
 
   // --verify mode: Generate both PPTX and HTML, compare inventories
@@ -193,52 +193,19 @@ const program = Effect.gen(function* () {
     // Extract actual inventory from HTML
     const htmlInventory = yield* extractInventoryFromHtml(html)
 
-    // Compare PPTX vs expected
-    console.log("\n📊 PPTX vs Expected:")
-    const pptxDiff = diffInventory(expectedInventory, pptxInventory)
-    if (pptxDiff.mismatches.length === 0) {
-      console.log(`✅ All ${pptxDiff.matches} shapes match!`)
-    } else {
-      console.log(`⚠️  ${pptxDiff.matches} shapes match, ${pptxDiff.mismatches.length} mismatches:`)
-      for (const mismatch of pptxDiff.mismatches) {
-        const deltaStr = mismatch.delta !== undefined ? ` (Δ ${mismatch.delta.toFixed(4)})` : ""
-        console.log(`  - ${mismatch.property}: expected ${mismatch.expected}, got ${mismatch.actual}${deltaStr}`)
-      }
-    }
+    const report = verifyInventories(expectedInventory, pptxInventory, htmlInventory)
+    printVerifyReport(report)
 
-    // Compare HTML vs expected
-    console.log("\n📊 HTML vs Expected:")
-    const htmlDiff = diffInventory(expectedInventory, htmlInventory)
-    if (htmlDiff.mismatches.length === 0) {
-      console.log(`✅ All ${htmlDiff.matches} shapes match!`)
-    } else {
-      console.log(`⚠️  ${htmlDiff.matches} shapes match, ${htmlDiff.mismatches.length} mismatches:`)
-      for (const mismatch of htmlDiff.mismatches) {
-        const deltaStr = mismatch.delta !== undefined ? ` (Δ ${mismatch.delta.toFixed(4)})` : ""
-        console.log(`  - ${mismatch.property}: expected ${mismatch.expected}, got ${mismatch.actual}${deltaStr}`)
-      }
-    }
-
-    // Compare PPTX vs HTML
-    console.log("\n📊 PPTX vs HTML:")
-    const crossDiff = diffInventory(pptxInventory, htmlInventory)
-    if (crossDiff.mismatches.length === 0) {
-      console.log(`✅ PPTX and HTML are identical (${crossDiff.matches} shapes)`)
-    } else {
-      console.log(`⚠️  ${crossDiff.matches} shapes match, ${crossDiff.mismatches.length} mismatches:`)
-      for (const mismatch of crossDiff.mismatches) {
-        const deltaStr = mismatch.delta !== undefined ? ` (Δ ${mismatch.delta.toFixed(4)})` : ""
-        console.log(`  - ${mismatch.property}: PPTX=${mismatch.expected}, HTML=${mismatch.actual}${deltaStr}`)
-      }
-    }
-
-    return
+    // 食い違いを見つけたら非ゼロで終わる。検出したのに 0 を返すのでは、
+    // CI に置いても何も守れない（BACKLOG B-24）。
+    return report.totalMismatches > 0 ? 1 : 0
   }
 
   // Default mode: Generate PPTX
   const buffer = yield* md2pptx(markdown, { compression, theme, ...lintOpts })
   writeFileSync(outputPath, buffer)
   console.log(`✅ Generated PPTX: ${outputPath} ${compression ? "(compressed)" : "(uncompressed)"}`)
+  return 0
 })
 
 const exit = await Effect.runPromiseExit(program)
@@ -246,4 +213,10 @@ const exit = await Effect.runPromiseExit(program)
 if (Exit.isFailure(exit)) {
   console.error("❌ Error:", exit.cause)
   process.exit(1)
+}
+
+// --verify は食い違いを見つけたら非ゼロで終わる。
+// 検出したのに 0 を返すのでは、CI に置いても何も守れない。
+if (exit.value !== 0) {
+  process.exit(exit.value)
 }

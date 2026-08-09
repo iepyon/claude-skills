@@ -214,11 +214,12 @@ describe("rich text layout", () => {
   it("should wrap rich text in a single child so flex does not split it", async () => {
     // display:flex の直下に <strong>/<a> を並べると1つずつが flex アイテムになり、
     // 語の途中で改行される。子を1つに保つことでインラインフローに戻す。
+    // 本文は行ごとの <p> にまとめる（PPTX が改行ごとに段落を出すのに合わせる）。
     const html = await Effect.runPromise(
       md2html("## T\n### H\nこれは**強調**と[[a]]を含む文", {})
     )
-    expect(html).toContain('<span class="rich-text">')
-    expect(html).toMatch(/<span class="rich-text">[^<]*<strong>/)
+    expect(html).toContain('<div class="para-stack">')
+    expect(html).toMatch(/<div class="para-stack"><p class="para-plain"[^>]*>[^<]*<strong>/)
   })
 })
 

@@ -14,7 +14,7 @@ export const convertSteps = (raw: RawSlide): O.Option<Slide[]> => {
     const body = bodyLines.slice(1).join('\n') || undefined
     return new StepItem({
       heading: col.heading || "",
-      icon: col.icon || "",
+      icon: col.icon,
       name,
       body,
     })

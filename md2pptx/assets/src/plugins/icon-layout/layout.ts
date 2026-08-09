@@ -44,7 +44,7 @@ function calculateIconColumnDimensions(titleY: number): IconColumnDimensions {
 
 // IconColumnLayoutのレイアウト
 export function layoutIconColumns(
-  columns: readonly [{ heading: string; icon: string; body?: string }, { heading: string; icon: string; body?: string }, { heading: string; icon: string; body?: string }],
+  columns: readonly [{ heading: string; icon?: string; body?: string }, { heading: string; icon?: string; body?: string }, { heading: string; icon?: string; body?: string }],
   takeaway: string | undefined,
   titleY: number,
   theme: Theme
@@ -78,15 +78,19 @@ export function layoutIconColumns(
     })
     currentY += ICON_COL_HEADING_HEIGHT + ICON_COL_INNER_GAP
 
-    // Icon
-    iconBoxes.push({
-      x: colX + padding,
-      y: currentY,
-      w: dims.colWidth - 2 * padding,
-      h: ICON_COL_ICON_HEIGHT,
-      icon: col.icon,
-      color: theme.contentSlide.iconColor,
-    })
+    // Icon。アイコンが無い列には箱を作らない（空の IconBox は PPTX に
+    // addText("") の見えない図形を残す。縦位置は下の currentY 加算で
+    // 確保済みなので、出さなくても座標は動かない）
+    if (col.icon) {
+      iconBoxes.push({
+        x: colX + padding,
+        y: currentY,
+        w: dims.colWidth - 2 * padding,
+        h: ICON_COL_ICON_HEIGHT,
+        icon: col.icon,
+        color: theme.contentSlide.iconColor,
+      })
+    }
     currentY += ICON_COL_ICON_HEIGHT + ICON_COL_INNER_GAP
 
     // Body
@@ -128,7 +132,7 @@ export function layoutIconColumns(
 
 // IconCardLayoutのレイアウト（カード背景 + アクセントバー + アイコン → 見出し → 本文）
 export function layoutIconCards(
-  columns: readonly [{ heading: string; icon: string; body?: string }, { heading: string; icon: string; body?: string }, { heading: string; icon: string; body?: string }],
+  columns: readonly [{ heading: string; icon?: string; body?: string }, { heading: string; icon?: string; body?: string }, { heading: string; icon?: string; body?: string }],
   takeaway: string | undefined,
   titleY: number,
   theme: Theme
@@ -165,15 +169,17 @@ export function layoutIconCards(
     // Move past accent bar
     currentY += ICON_CARD_ACCENT_HEIGHT + padding
 
-    // Icon (colored to match accent)
-    iconBoxes.push({
-      x: colX + padding,
-      y: currentY,
-      w: colWidth - 2 * padding,
-      h: ICON_CARD_ICON_HEIGHT,
-      icon: col.icon,
-      color: accentColors[i % accentColors.length],
-    })
+    // Icon (colored to match accent)。理由は上の IconColumns と同じ
+    if (col.icon) {
+      iconBoxes.push({
+        x: colX + padding,
+        y: currentY,
+        w: colWidth - 2 * padding,
+        h: ICON_CARD_ICON_HEIGHT,
+        icon: col.icon,
+        color: accentColors[i % accentColors.length],
+      })
+    }
     currentY += ICON_CARD_ICON_HEIGHT + ICON_CARD_INNER_GAP
 
     // Heading (bold, centered)

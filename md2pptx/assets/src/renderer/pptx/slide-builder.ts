@@ -2,6 +2,9 @@ import PptxGenJS from "pptxgenjs"
 import { Effect } from "effect"
 import { RenderError } from "../../errors.js"
 import { PARA_SPACE_AFTER } from "../../constants.js"
+import { textKey, iconKey, codeKey, shapeBoxKey, borderKey, deco } from "../../shape-keys.js"
+import { splitTextIntoLines } from "../../text-lines.js"
+import { isCentered, runFontFace } from "../../text-style.js"
 import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
 import { resolveIconOrFallback } from "../icon-resolver.js"
@@ -26,6 +29,27 @@ function bulletToPptxOption(bullet: NonNullable<Paragraph["bullet"]>): unknown {
 }
 
 /**
+ * 行を pptxgenjs の TextRun[] にする。最後の行以外に breakLine を立てる。
+ *
+ * 素の文字列を渡してはならない。pptxgenjs の STEP 4-C
+ * (dist/pptxgen.cjs.js:6165) は **共有の options オブジェクト** に
+ * breakLine=true を立ててから全断片を push するため、
+ * (1) 最後の断片にも改行が付いて続く run が1行余計に下がり、
+ * (2) 末尾が改行の文字列は `match(/\n$/g) === null` ガードでそもそも分割されない。
+ */
+export function withBreakLines(
+  texts: readonly string[],
+  options: PptxGenJS.TextPropsOptions
+): Array<{ text: string; options: PptxGenJS.TextPropsOptions }> {
+  // 断片ごとに options を複製する。pptxgenjs が共有オブジェクトを書き換える
+  // のが上の問題の原因なので、「どの断片も自分の options を持つ」を保つ
+  return texts.map((text, i) => ({
+    text,
+    options: i < texts.length - 1 ? { ...options, breakLine: true } : { ...options },
+  }))
+}
+
+/**
  * InlineTextRun[] → pptxgenjs TextRun[] への変換
  * codeTextRunsToPptxRuns() のパターンを再利用
  */
@@ -38,11 +62,13 @@ function inlineTextRunsToPptxRuns(
   baseItalic: boolean,
   slideNumberById?: ReadonlyMap<string, number>
 ): Array<{ text: string; options: any }> {
-  return runs.map(run => {
+  return runs.flatMap(run => {
     const options: any = {
       fontSize: baseFontSize,
       color: baseColor,
-      fontFace: run.code ? "Courier New" : baseFontFace,
+      // 等幅に落とす規則は text-style.ts が持つ。baseFontFace は呼び出し側で
+      // box.fontFace || theme.fonts.body に解決済みなので、fallback に渡せば足りる
+      fontFace: runFontFace({ fontFace: undefined }, run, baseFontFace),
       bold: run.bold || baseBold,
       italic: run.italic || baseItalic,
     }
@@ -64,7 +90,8 @@ function inlineTextRunsToPptxRuns(
       }
     }
 
-    return { text: run.text, options }
+    // 改行を含む run は自分で分割する（理由は withBreakLines の説明）
+    return withBreakLines(run.text.split("\n"), options)
   })
 }
 
@@ -95,10 +122,13 @@ export function buildSlide(
     const { textBoxes, borderBoxes, iconBoxes, codeBoxes, shapeBoxes } = layoutSlide(slide, theme)
 
     // 境界ボックスを描画（角丸の四角形）
-    // コードボックスがある場合はスキップ（背景はcodeBox側で描画）
+    // コードボックスがある場合はスキップ（背景はcodeBox側で描画）。
+    // これは HTML 側との実在の乖離 — HTML は常に境界ボックスを描く。
+    // 装飾（deco:）なので3者比較には出てこない。BACKLOG B-33 で追う。
     if (borderBoxes && !codeBoxes) {
-      for (const border of borderBoxes) {
+      borderBoxes.forEach((border, index) => {
         pptxSlide.addShape(pptx.ShapeType.roundRect, {
+          objectName: deco(borderKey(index)),
           x: border.x,
           y: border.y,
           w: border.w,
@@ -113,6 +143,7 @@ export function buildSlide(
         // アクセントバー描画（IconCardLayout用）
         if (border.accentColor) {
           pptxSlide.addShape(pptx.ShapeType.rect, {
+            objectName: deco(borderKey(index), "accent"),
             x: border.x,
             y: border.y,
             w: border.w,
@@ -121,12 +152,12 @@ export function buildSlide(
             line: { type: "none" },
           })
         }
-      }
+      })
     }
 
     // アイコンボックスを描画
     if (iconBoxes) {
-      for (const iconBox of iconBoxes) {
+      iconBoxes.forEach((iconBox, index) => {
         const hexColor = iconBox.color || "000000"
         const resolved = resolveIconOrFallback(iconBox.icon, hexColor)
         const fontSize = iconBox.fontSize || 48
@@ -134,19 +165,25 @@ export function buildSlide(
         if (resolved._tag === "emoji") {
           // Emoji: render as text
           pptxSlide.addText(resolved.text, {
+            objectName: iconKey(index),
             x: iconBox.x,
             y: iconBox.y,
             w: iconBox.w,
             h: iconBox.h,
             fontSize,
             color: hexColor,
+            // 明示しないと pptxgenjs のテーマ既定（Calibri Light）になり、
+            // 絵文字だけデッキの他の文字と違うフォントで描かれる
+            fontFace: theme.fonts.body,
             align: "center",
             valign: "middle",
           })
         } else {
           // Material Icon: SVG を画像として埋め込む（アスペクト比維持）
+          // テキストを運ばないので比較対象外（HTML 側も inline SVG でテキストが無い）
           const size = Math.min(iconBox.w, iconBox.h)
           pptxSlide.addImage({
+            objectName: deco(iconKey(index)),
             data: resolved.base64Data.replace(/^data:/, ""),
             x: iconBox.x + (iconBox.w - size) / 2,
             y: iconBox.y + (iconBox.h - size) / 2,
@@ -154,14 +191,15 @@ export function buildSlide(
             h: size,
           })
         }
-      }
+      })
     }
 
     // コードボックスを描画（シンプル版：ダーク背景 + プレーンテキスト）
     if (codeBoxes) {
-      for (const codeBox of codeBoxes) {
+      codeBoxes.forEach((codeBox, index) => {
         // 1. ダーク背景を描画
         pptxSlide.addShape(pptx.ShapeType.roundRect, {
+          objectName: deco(codeKey(index), "bg"),
           x: codeBox.x,
           y: codeBox.y,
           w: codeBox.w,
@@ -171,27 +209,33 @@ export function buildSlide(
           rectRadius: theme.codeDisplay.borderRadius,
         })
 
-        // 2. シンタックスハイライト付きリッチテキストとして描画
+        // 2. シンタックスハイライト付きリッチテキストとして描画。
+        //    余白は座標から引かずに margin（pt）で入れる。座標を内側にずらすと
+        //    HTML（外枠 + CSS padding）と報告する矩形が食い違い、3者比較が
+        //    「見た目は同じなのに座標が違う」で落ちる
         const pptxRuns = codeTextRunsToPptxRuns(codeBox.textRuns, codeBox.fontFace, codeBox.fontSize)
         pptxSlide.addText(pptxRuns, {
-          x: codeBox.x + theme.codeDisplay.padding,
-          y: codeBox.y + theme.codeDisplay.padding,
-          w: codeBox.w - 2 * theme.codeDisplay.padding,
-          h: codeBox.h - 2 * theme.codeDisplay.padding,
+          objectName: codeKey(index),
+          x: codeBox.x,
+          y: codeBox.y,
+          w: codeBox.w,
+          h: codeBox.h,
+          margin: theme.codeDisplay.padding * 72, // インチ → ポイント
           align: "left",
           valign: "top",
           lineSpacing: codeBox.lineHeight * codeBox.fontSize,
           paraSpaceBefore: 0,
           paraSpaceAfter: 0,
         })
-      }
+      })
     }
 
     // シェイプボックスを描画（NumberedList用）
     if (shapeBoxes) {
-      for (const shape of shapeBoxes) {
+      shapeBoxes.forEach((shape, index) => {
         if (shape.shapeType === "line") {
           pptxSlide.addShape(pptx.ShapeType.line, {
+            objectName: deco(shapeBoxKey(index)),
             x: shape.x,
             y: shape.y,
             w: shape.w,
@@ -202,6 +246,7 @@ export function buildSlide(
           // SVG を data URI として埋め込み
           const svgDataUri = `data:image/svg+xml;base64,${Buffer.from(shape.svgContent).toString("base64")}`
           pptxSlide.addImage({
+            objectName: deco(shapeBoxKey(index)),
             data: svgDataUri,
             x: shape.x,
             y: shape.y,
@@ -213,7 +258,11 @@ export function buildSlide(
             ? pptx.ShapeType.ellipse
             : pptx.ShapeType.rect
 
+          // キーを取るのはテキストを運ぶオーバーレイのほう。HTML はこの2つを
+          // 1つの div で描くので、テキスト側が対応物になる。塗りは常に "fill"
+          // ——テキストの有無で名前を変えると、同じ役割の図形が2つの名前を持つ
           pptxSlide.addShape(shapeType, {
+            objectName: deco(shapeBoxKey(index), "fill"),
             x: shape.x,
             y: shape.y,
             w: shape.w,
@@ -225,9 +274,9 @@ export function buildSlide(
             rectRadius: shape.rectRadius || 0,
           })
 
-          // テキストがある場合はオーバーレイ
           if (shape.text) {
             pptxSlide.addText(shape.text, {
+              objectName: shapeBoxKey(index),
               x: shape.x,
               y: shape.y,
               w: shape.w,
@@ -241,13 +290,28 @@ export function buildSlide(
             })
           }
         }
-      }
+      })
     }
 
     // テキストボックスを描画
-    for (const box of textBoxes) {
-      const align = box.align === "center" ? "center" : (slide._tag === "TitleSlide" ? "center" : "left")
-      const valign = box.valign || (box.align === "center" ? "middle" : (slide._tag === "TitleSlide" ? "middle" : "top"))
+    textBoxes.forEach((box, boxIndex) => {
+      const centered = isCentered(box, slide._tag === "TitleSlide")
+      // リテラル型を保つ。object literal に入れると string に広がり、
+      // pptxgenjs の TextPropsOptions が受け付けなくなる
+      const align: "center" | "left" = centered ? "center" : "left"
+      const valign = box.valign || (centered ? "middle" : "top")
+
+      // 3分岐が共有する箱の指定。ここに1つ足すと3箇所に散るのを防ぐ
+      const boxOpts = {
+        objectName: textKey(boxIndex),
+        x: box.x,
+        y: box.y,
+        w: box.w,
+        h: box.h,
+        align,
+        valign,
+        ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
+      }
 
       // paragraphs がある場合は段落ごとに bullet/breakLine を付けて描画
       if (box.paragraphs) {
@@ -274,16 +338,7 @@ export function buildSlide(
             },
           }))
         })
-        pptxSlide.addText(pptxRuns, {
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
-          align,
-          valign,
-          paraSpaceAfter: PARA_SPACE_AFTER,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-        })
+        pptxSlide.addText(pptxRuns, { ...boxOpts, paraSpaceAfter: PARA_SPACE_AFTER })
       } else if (box.richText) {
         const pptxRuns = inlineTextRunsToPptxRuns(
           box.richText,
@@ -294,32 +349,21 @@ export function buildSlide(
           box.isItalic || false,
           slideNumberById
         )
-        pptxSlide.addText(pptxRuns, {
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
-          align,
-          valign,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-        })
+        pptxSlide.addText(pptxRuns, boxOpts)
       } else {
         // 既存のシンプルテキストパス（後方互換性）
-        pptxSlide.addText(box.text, {
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
+        const runOptions = {
           fontSize: box.fontSize || 14,
           bold: box.isBold || false,
           italic: box.isItalic || false,
           color: box.color,
           fontFace: box.fontFace || theme.fonts.body,
-          align,
-          valign,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
+        }
+        pptxSlide.addText(withBreakLines(splitTextIntoLines(box.text ?? ""), runOptions), {
+          ...boxOpts,
+          ...runOptions,
         })
       }
-    }
+    })
   })
 }

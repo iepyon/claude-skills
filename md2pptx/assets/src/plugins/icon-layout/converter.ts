@@ -12,7 +12,7 @@ export const convertIconCard = (raw: RawSlide): O.Option<Slide[]> => {
   const columns = iconColumns.slice(0, 3).map((col) =>
     new IconColumn({
       heading: col.heading || "",
-      icon: col.icon || "",
+      icon: col.icon,
       body: col.body,
     })
   )
@@ -32,7 +32,7 @@ export const convertIconColumn = (raw: RawSlide): O.Option<Slide[]> => {
   const columns = iconColumns.slice(0, 3).map((col) =>
     new IconColumn({
       heading: col.heading || "",
-      icon: col.icon || "",
+      icon: col.icon,
       body: col.body,
     })
   )

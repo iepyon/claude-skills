@@ -2,6 +2,10 @@ import { Effect as E, pipe } from "effect"
 import * as A from "effect/Array"
 import * as O from "effect/Option"
 import { ParseError } from "../errors.js"
+import { decodeEntities } from "../entities.js"
+import { splitTextIntoLines } from "../text-lines.js"
+import { isDecoKey } from "../shape-keys.js"
+import { FOREIGN_ARTIFACT_FONT } from "../text-style.js"
 
 /**
  * Paragraph data extracted from HTML
@@ -79,14 +83,6 @@ const parseInchesAttributes = (element: string): O.Option<{
   )
 }
 
-// &amp; must be decoded last so that "&amp;lt;" yields "&lt;" and not "<".
-const decodeEntities = (text: string): string =>
-  text
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&")
 
 /**
  * Extracts text content from an HTML element.
@@ -103,7 +99,15 @@ const extractTextContent = (element: string): string => {
 /**
  * Parses paragraph styling attributes
  */
-const parseParagraphStyle = (element: string): Partial<ParagraphData> => {
+type ParagraphStyle = {
+  fontSize?: number
+  fontName?: string
+  color?: string
+  bold?: boolean
+  alignment?: "LEFT" | "CENTER" | "RIGHT"
+}
+
+const parseParagraphStyle = (element: string): ParagraphStyle => {
   const fontSize = pipe(
     extractAttribute(element, "data-font-size"),
     O.flatMap((v) => O.fromNullable(parseFloat(v))),
@@ -130,13 +134,18 @@ const parseParagraphStyle = (element: string): Partial<ParagraphData> => {
     O.getOrUndefined
   )
 
-  return { fontSize, color, bold, alignment }
+  const fontName = pipe(
+    extractAttribute(element, "data-font-name"),
+    O.getOrUndefined
+  )
+
+  return { fontSize, fontName, color, bold, alignment }
 }
 
 /**
  * Parses a paragraph from HTML element
  */
-const parseParagraph = (element: string): O.Option<ParagraphData> => {
+const parseParagraph = (element: string, defaultFontName: string): O.Option<ParagraphData> => {
   const text = extractTextContent(element)
   if (!text) return O.none()
 
@@ -144,7 +153,7 @@ const parseParagraph = (element: string): O.Option<ParagraphData> => {
 
   return O.some({
     text,
-    font_name: "Arial",
+    font_name: style.fontName ?? defaultFontName,
     font_size: style.fontSize ?? 16,
     color: style.color ?? "000000",
     ...(style.bold !== undefined && { bold: style.bold }),
@@ -155,7 +164,7 @@ const parseParagraph = (element: string): O.Option<ParagraphData> => {
 /**
  * Parses a shape from HTML element
  */
-const parseShape = (element: string): O.Option<ShapeData> =>
+const parseShape = (element: string, defaultFontName: string): O.Option<ShapeData> =>
   pipe(
     parseInchesAttributes(element),
     O.flatMap((dimensions) => {
@@ -166,23 +175,28 @@ const parseShape = (element: string): O.Option<ShapeData> =>
 
       const paragraphs = pipe(
         paragraphMatches.map((match) => match[0]),
-        A.filterMap(parseParagraph)
+        A.filterMap((para) => parseParagraph(para, defaultFontName))
       )
 
-      // If no paragraphs found, try extracting text directly from the shape element
+      // If no paragraphs found, try extracting text directly from the shape element.
+      // 改行は行ごとに分ける — PPTX は改行ごとに <a:p> を出すので、
+      // 段落数を合わせないと3者比較が「1 vs N」で落ちる
       if (paragraphs.length === 0) {
         const directText = extractTextContent(element)
         if (directText) {
           const style = parseParagraphStyle(element)
-          const paragraph: ParagraphData = {
-            text: directText,
-            font_name: "Arial",
-            font_size: style.fontSize ?? 16,
-            color: style.color ?? "000000",
-            ...(style.bold !== undefined && { bold: style.bold }),
-            ...(style.alignment !== undefined && { alignment: style.alignment })
-          }
-          return O.some({ ...dimensions, paragraphs: [paragraph] })
+          const lines = splitTextIntoLines(directText)
+          return O.some({
+            ...dimensions,
+            paragraphs: lines.map((text) => ({
+              text,
+              font_name: style.fontName ?? defaultFontName,
+              font_size: style.fontSize ?? 16,
+              color: style.color ?? "000000",
+              ...(style.bold !== undefined && { bold: style.bold }),
+              ...(style.alignment !== undefined && { alignment: style.alignment })
+            })),
+          })
         }
         return O.none()
       }
@@ -276,11 +290,22 @@ export const extractInventoryFromHtml = (html: string): E.Effect<SlideInventory,
     const inventory: Record<string, Record<string, ShapeData>> = {}
 
     for (const slide of slides) {
+      // data-font-name の無い段落の落とし先。生成物が自分で名乗るので読む側は
+      // 決め打たない（pptx-inspector が theme1.xml を読むのと同じ）。
+      // 名乗っていないのは他所が作った HTML — そのときだけ定数に落ちる
+      const defaultFontName =
+        slide.content.match(/data-default-font-name="([^"]*)"/)?.[1] ?? FOREIGN_ARTIFACT_FONT
+
       const shapes = extractElements(slide.content, "data-shape-id")
       const shapeData: Record<string, ShapeData> = {}
 
       for (const shape of shapes) {
-        const parsed = parseShape(shape.content)
+        // 装飾は3者比較の対象外（pptx-inspector と同じ規則）。
+        // どのみちテキストが無くて落ちるが、規則を両インスペクタに持たせて
+        // おかないと deco: が「付いているだけで誰も見ない印」になる
+        if (isDecoKey(shape.id)) continue
+
+        const parsed = parseShape(shape.content, defaultFontName)
         if (O.isSome(parsed)) {
           shapeData[shape.id] = parsed.value
         }

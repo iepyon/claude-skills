@@ -47,7 +47,7 @@ import { StepsLayout } from "./schema.js"
  * 4. Labels and icons float above each box, positioned relative to the box top.
  */
 export function layoutSteps(
-  steps: ReadonlyArray<{ heading: string; icon: string; name: string; body?: string }>,
+  steps: ReadonlyArray<{ heading: string; icon?: string; name: string; body?: string }>,
   takeaway: string | undefined,
   titleY: number,
   theme: Theme
@@ -110,17 +110,22 @@ export function layoutSteps(
     const boxY = boxBottom - boxH
     const stepColor = stepsColors[i % stepsColors.length]
 
-    // Icon (just above the box top)
+    // Icon (just above the box top).
+    // アイコンが無いステップには箱を作らない。空の IconBox は PPTX に
+    // addText("") の見えない図形を、HTML に空の span を残す（縦の余白は
+    // 上の計算で既に確保済みなので、出さなくても座標は動かない）
     const iconY = boxY - STEPS_ICON_HEIGHT - STEPS_ICON_GAP
-    iconBoxes.push({
-      x: stepX,
-      y: iconY,
-      w: stepWidth,
-      h: STEPS_ICON_HEIGHT,
-      icon: step.icon,
-      color: stepColor,
-      fontSize: 24,
-    })
+    if (step.icon) {
+      iconBoxes.push({
+        x: stepX,
+        y: iconY,
+        w: stepWidth,
+        h: STEPS_ICON_HEIGHT,
+        icon: step.icon,
+        color: stepColor,
+        fontSize: 24,
+      })
+    }
 
     // Label (above icon with gap, accent color)
     const labelY = iconY - STEPS_LABEL_HEIGHT - STEPS_LABEL_ICON_GAP

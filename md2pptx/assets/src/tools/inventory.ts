@@ -1,7 +1,12 @@
 import { Effect } from "effect"
-import { layoutSlide, LayoutResult, TextBox, IconBox, CodeBox } from "../renderer/layout/index.js"
+import { layoutSlide, LayoutResult, TextBox, IconBox, CodeBox, ShapeBox } from "../renderer/layout/index.js"
+import { resolveIconOrFallback } from "../renderer/icon-resolver.js"
 import { Slide } from "../schema/index.js"
 import { Theme } from "../schema/theme.js"
+import { textKey, iconKey, codeKey, shapeBoxKey } from "../shape-keys.js"
+import { splitRunsIntoLines, splitTextIntoLines, runsToText } from "../text-lines.js"
+import { isCentered, runFontFace } from "../text-style.js"
+import type { InlineTextRun } from "../renderer/layout/types.js"
 
 // Inventory types matching test-inventory.json structure
 export interface ParagraphInventory {
@@ -29,29 +34,45 @@ export interface PresentationInventory {
   [slideKey: string]: SlideInventory
 }
 
-// Flatten whichever text representation this box carries into one string per paragraph.
-// Runs are joined without a separator to match pptx-inspector's extractText().
-export function boxToParagraphTexts(box: TextBox): string[] {
+// このボックスが描く「行」を、レンダラと同じ数え方で取り出す。
+// 1行 = PPTX の <a:p> 1つ = HTML の <p> 1つ。runs は区切り無しで連結する
+// （pptx-inspector の extractText() と同じ）。
+type InventoryLine = { text: string; firstRun?: InlineTextRun }
+
+function boxToLines(box: TextBox): InventoryLine[] {
   if (box.paragraphs) {
-    return box.paragraphs.map((para) => para.runs.map((run) => run.text).join("").trim())
+    // Paragraph 自体が1行。その中にさらに改行があればさらに割れる
+    return box.paragraphs.flatMap((para) =>
+      splitRunsIntoLines(para.runs).map((line) => ({ text: runsToText(line), firstRun: line[0] }))
+    )
   }
-  if (box.richText) return [box.richText.map((run) => run.text).join("").trim()]
-  return [(box.text ?? "").trim()]
+  if (box.richText) {
+    return splitRunsIntoLines(box.richText).map((line) => ({
+      text: runsToText(line),
+      firstRun: line[0],
+    }))
+  }
+  return splitTextIntoLines(box.text ?? "").map((text) => ({ text }))
 }
 
 // Convert one paragraph of a TextBox to ParagraphInventory
 function textBoxToParagraph(
   box: TextBox,
-  text: string,
+  line: InventoryLine,
   fontName: string,
   isTitleSlide: boolean
 ): ParagraphInventory {
+  const { text, firstRun } = line
+  // 太字だけはここで決める（先頭 run と箱のどちらかが太字なら太字）。
+  // 中央寄せとフォントは text-style.ts の共有規則を使う。
+  const bold = firstRun?.bold || box.isBold
+
   const paragraph: ParagraphInventory = {
     text,
-    ...(isTitleSlide ? { alignment: "CENTER" as const } : {}),
-    font_name: fontName,
+    ...(isCentered(box, isTitleSlide) ? { alignment: "CENTER" as const } : {}),
+    font_name: runFontFace(box, firstRun, fontName),
     font_size: box.fontSize ?? 16,
-    ...(box.isBold ? { bold: true } : {}),
+    ...(bold ? { bold: true } : {}),
     color: box.color ?? "000000",
   }
 
@@ -69,14 +90,15 @@ function textBoxToShape(
     top: box.y,
     width: box.w,
     height: box.h,
-    paragraphs: boxToParagraphTexts(box).map((text) =>
-      textBoxToParagraph(box, text, fontName, isTitleSlide)
+    paragraphs: boxToLines(box).map((line) =>
+      textBoxToParagraph(box, line, fontName, isTitleSlide)
     ),
   }
 }
 
-// Convert IconBox to ShapeInventory
-function iconBoxToShape(box: IconBox, fontName: string): ShapeInventory {
+// Convert IconBox to ShapeInventory.
+// 渡すのは解決後の emoji — アイコン名ではない。レンダラが描くのは名前ではなく字。
+function iconBoxToShape(box: IconBox, emoji: string, fontName: string): ShapeInventory {
   return {
     left: box.x,
     top: box.y,
@@ -84,17 +106,18 @@ function iconBoxToShape(box: IconBox, fontName: string): ShapeInventory {
     height: box.h,
     paragraphs: [
       {
-        text: box.icon,
+        text: emoji,
+        alignment: "CENTER" as const,
         font_name: fontName,
-        font_size: 48,
+        font_size: box.fontSize ?? 48,
         color: box.color ?? "000000",
       },
     ],
   }
 }
 
-// Convert CodeBox to ShapeInventory
-function codeBoxToShape(box: CodeBox): ShapeInventory {
+// Convert ShapeBox to ShapeInventory (テキストを持つものだけが対象)
+function shapeBoxToShape(box: ShapeBox, text: string, fontName: string): ShapeInventory {
   return {
     left: box.x,
     top: box.y,
@@ -102,43 +125,81 @@ function codeBoxToShape(box: CodeBox): ShapeInventory {
     height: box.h,
     paragraphs: [
       {
-        text: box.code,
-        font_name: box.fontFace,
-        font_size: box.fontSize,
-        color: box.backgroundColor,
+        text,
+        alignment: "CENTER" as const,
+        font_name: fontName,
+        font_size: box.fontSize ?? 12,
+        ...(box.isBold ? { bold: true } : {}),
+        color: box.textColor ?? "000000",
       },
     ],
   }
 }
 
+// Convert CodeBox to ShapeInventory.
+// コードは1行 = 1段落。色はその行の先頭 run のハイライト色 — レンダラに渡すのと
+// 同じ textRuns から読むので、ハイライトの規則をここに写さない。
+function codeBoxToShape(box: CodeBox): ShapeInventory {
+  const lines = splitRunsIntoLines(box.textRuns)
+
+  return {
+    left: box.x,
+    top: box.y,
+    width: box.w,
+    height: box.h,
+    paragraphs: lines.map((line) => ({
+      text: runsToText(line),
+      font_name: box.fontFace,
+      font_size: box.fontSize,
+      color: line[0].color,
+    })),
+  }
+}
+
 // Convert LayoutResult to SlideInventory
+// 比較の対象は「テキストを運ぶ図形」。境界ボックス・塗り・コード背景・SVG は
+// どちらのレンダラでもテキストを持たず、インベントリに入らない（src/shape-keys.ts）。
 function layoutResultToSlideInventory(
   result: LayoutResult,
-  fontName: string,
+  theme: Theme,
   isTitleSlide: boolean
 ): SlideInventory {
+  const fontName = theme.fonts.body
   const inventory: SlideInventory = {}
 
+  // 文字が1つも無い図形は、どちらのレンダラも残さない
+  // （pptxgenjs は run の無い txBody、HTML は空要素で、両インスペクタが落とす）。
+  // ボックスの種類ごとに書くと必ずどれかを書き忘れるので、置く直前に1箇所で弾く。
+  // 実例: アイコン注釈の無い Steps は空の IconBox を作り、AST にだけ現れていた。
+  const put = (key: string, shape: ShapeInventory): void => {
+    if (shape.paragraphs.every((para) => para.text === "")) return
+    inventory[key] = shape
+  }
+
   result.textBoxes.forEach((box, index) => {
-    const shapeKey = `shape-${index}`
-    inventory[shapeKey] = textBoxToShape(box, fontName, isTitleSlide)
+    put(textKey(index), textBoxToShape(box, fontName, isTitleSlide))
   })
 
-  // Add iconBoxes to inventory
-  if (result.iconBoxes) {
-    result.iconBoxes.forEach((box, index) => {
-      const shapeKey = `icon-${index}`
-      inventory[shapeKey] = iconBoxToShape(box, fontName)
-    })
-  }
+  // アイコンは emoji に解決できたものだけ。Material Icon は両レンダラとも
+  // 画像 / inline SVG で描くのでテキストが無い
+  result.iconBoxes?.forEach((box, index) => {
+    const resolved = resolveIconOrFallback(box.icon, box.color ?? "000000")
+    if (resolved._tag !== "emoji") return
+    put(iconKey(index), iconBoxToShape(box, resolved.text, fontName))
+  })
 
-  // Add codeBoxes to inventory
-  if (result.codeBoxes) {
-    result.codeBoxes.forEach((box, index) => {
-      const shapeKey = `code-${index}`
-      inventory[shapeKey] = codeBoxToShape(box)
-    })
-  }
+  result.codeBoxes?.forEach((box, index) => {
+    put(codeKey(index), codeBoxToShape(box))
+  })
+
+  // テキストを持つシェイプだけ。PPTX では塗りとテキストが別図形になるが、
+  // キーを取るのはテキスト側（HTML は1つの div で両方を描く）
+  result.shapeBoxes?.forEach((box, index) => {
+    // テキストの無いシェイプは塗りだけ = 装飾。put() の空判定に任せると
+    // 「なぜ出ないか」がレンダラ側の deco: と別の理由になってしまう
+    if (!box.text) return
+    put(shapeBoxKey(index), shapeBoxToShape(box, box.text, fontName))
+  })
 
   return inventory
 }
@@ -151,7 +212,7 @@ export function slideToInventory(
   return Effect.gen(function* () {
     const layoutResult = layoutSlide(slide, theme)
     const isTitleSlide = slide._tag === "TitleSlide"
-    return layoutResultToSlideInventory(layoutResult, theme.fonts.body, isTitleSlide)
+    return layoutResultToSlideInventory(layoutResult, theme, isTitleSlide)
   })
 }
 
