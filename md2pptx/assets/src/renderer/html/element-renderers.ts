@@ -1,7 +1,7 @@
 import { Theme } from "../../schema/index.js"
 import { TextBox, BorderBox, IconBox, CodeBox, ShapeBox, InlineTextRun } from "../layout/index.js"
 import { resolveIconOrFallback } from "../icon-resolver.js"
-import { highlightForHtml } from "../syntax-highlighter.js"
+import { splitRunsIntoLines, splitTextIntoLines } from "../../text-lines.js"
 
 // Convert inches to pixels for CSS (96 DPI standard)
 const inchesToPx = (inches: number): number => inches * 96
@@ -13,6 +13,14 @@ export { inchesToPx, hexToColor }
 
 // 属性値のエスケープ。run.text 用のエスケープとは別に必要
 // （href は本文ではないので、シングルクォートまで潰しておく）。
+// 本文用のエスケープ。richTextToHtml と同じ規則（属性用の escapeAttr とは別物）
+const escapeText = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+
 const escapeAttr = (value: string): string =>
   value
     .replace(/&/g, "&amp;")
@@ -111,58 +119,68 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
   // paragraphs がある場合は段落ごとに <p> を出す。
   // バレット記号は CSS の ::before で描画するため DOM テキストには含まれない
   // （PPTX のネイティブバレットと抽出結果を一致させるため）。
-  if (box.paragraphs) {
-    // 段落には html-inspector の parseParagraphStyle が読む属性だけを付ける。
-    // data-shape-id / data-inches-* を付けてはならない: extractElements は
-    // 開始タグの直後から走査を再開するため、内側の <p> も同じ shape id で
-    // マッチしてシェイプを上書きし、段落数が N ではなく 1 になる。
-    const paraDataAttrs = [
+  // 段落には html-inspector の parseParagraphStyle が読む属性だけを付ける。
+  // data-shape-id / data-inches-* を付けてはならない: extractElements は
+  // 開始タグの直後から走査を再開するため、内側の <p> も同じ shape id で
+  // マッチしてシェイプを上書きし、段落数が N ではなく 1 になる。
+  //
+  // 太字とフォントは行の **先頭 run** から取る。PPTX は段落の最初の <a:rPr>
+  // しか持ち出せず（pptx-inspector）、AST インベントリも同じ規則で数える。
+  const paraDataAttrs = (firstRun?: InlineTextRun): string =>
+    [
       box.fontSize ? `data-font-size="${box.fontSize}"` : "",
       box.color ? `data-color="${box.color}"` : "",
-      box.isBold ? `data-bold="true"` : "",
+      firstRun?.bold || box.isBold ? `data-bold="true"` : "",
       isTitleSlide || box.align === "center" ? `data-alignment="CENTER"` : "",
+      // 分かるときだけ出す。無ければ html-inspector がテーマの本文フォントに落とす
+      firstRun?.code ? `data-font-name="Courier New"` : box.fontFace ? `data-font-name="${escapeAttr(box.fontFace)}"` : "",
     ]
       .filter(Boolean)
       .join(" ")
 
-    const items = box.paragraphs
-      .map(para => {
-        if (!para.bullet) {
-          return `<p class="para-plain" ${paraDataAttrs}>${richTextToHtml(para.runs)}</p>`
-        }
-        if (para.bullet.type === "bullet") {
-          return `<p class="para-bullet" ${paraDataAttrs}>${richTextToHtml(para.runs)}</p>`
-        }
-        // 番号付き: この項目自身の番号を counter-reset で宣言し、
-        // .para-number の counter-increment がそれを +1 して確定させる。
-        const startAt = para.bullet.startAt ?? 1
-        return `<p class="para-number" style="counter-reset: para-num ${startAt - 1}" ${paraDataAttrs}>${richTextToHtml(para.runs)}</p>`
-      })
-      .join("")
-
-    // display: flex の子は1つに保つ。段落は stack 側で縦に積む。
-    // 段落が個別の <p> になったので改行の保持は不要（<p> 間の余白の可視化も防ぐ）。
+  // display: flex の子は1つに保つ。段落は stack 側で縦に積む。
+  // 段落が個別の <p> になったので改行の保持は不要（<p> 間の余白の可視化も防ぐ）。
+  const stack = (items: string): string => {
     const listStyle = style.replace("white-space: pre-wrap", "white-space: normal")
     return `<div class="text-box" style="${listStyle}" ${dataAttrs}><div class="para-stack">${items}</div></div>`
   }
 
-  // richText は必ず1つの子にまとめてから flex コンテナへ入れる。
-  // <strong>/<em>/<a> をそのまま置くと、display:flex の子として
-  // 1つずつが flex アイテムになり、語の途中で改行される
-  // （paragraphs 側が .para-stack で1つにまとめているのと同じ理由）。
-  if (box.richText) {
-    return `<div class="text-box" style="${style}" ${dataAttrs}><span class="rich-text">${richTextToHtml(box.richText)}</span></div>`
+  if (box.paragraphs) {
+    const items = box.paragraphs
+      .flatMap(para => {
+        // run の途中の改行も1行 = 1段落として割る（PPTX の breakLine と同じ）
+        const lines = splitRunsIntoLines(para.runs)
+        return lines.map(runs => {
+          const attrs = paraDataAttrs(runs[0])
+          if (!para.bullet) {
+            return `<p class="para-plain" ${attrs}>${richTextToHtml(runs)}</p>`
+          }
+          if (para.bullet.type === "bullet") {
+            return `<p class="para-bullet" ${attrs}>${richTextToHtml(runs)}</p>`
+          }
+          // 番号付き: この項目自身の番号を counter-reset で宣言し、
+          // .para-number の counter-increment がそれを +1 して確定させる。
+          const startAt = para.bullet.startAt ?? 1
+          return `<p class="para-number" style="counter-reset: para-num ${startAt - 1}" ${attrs}>${richTextToHtml(runs)}</p>`
+        })
+      })
+      .join("")
+
+    return stack(items)
   }
 
-  const content = box.text
-      ? box.text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-      : ""
+  if (box.richText) {
+    const items = splitRunsIntoLines(box.richText)
+      .map(runs => `<p class="para-plain" ${paraDataAttrs(runs[0])}>${richTextToHtml(runs)}</p>`)
+      .join("")
+    return stack(items)
+  }
 
-  return `<div class="text-box" style="${style}" ${dataAttrs}>${content}</div>`
+  const items = splitTextIntoLines(box.text ?? "")
+    .map(line => `<p class="para-plain" ${paraDataAttrs()}>${escapeText(line)}</p>`)
+    .join("")
+
+  return stack(items)
 }
 
 // Generate CSS for a BorderBox
@@ -225,6 +243,10 @@ export function iconBoxToHtml(box: IconBox, shapeId?: string): string {
       `data-inches-y="${box.y}"`,
       `data-inches-w="${box.w}"`,
       `data-inches-h="${box.h}"`,
+      // 3者比較が読む書式。style 属性の中身は html-inspector が見ない
+      `data-font-size="${fontSize}"`,
+      `data-color="${hexColor}"`,
+      `data-alignment="CENTER"`,
     ]
       .filter(Boolean)
       .join(" ")
@@ -270,8 +292,6 @@ export function iconBoxToHtml(box: IconBox, shapeId?: string): string {
 
 // Generate HTML for a CodeBox
 export function codeBoxToHtml(box: CodeBox, theme: Theme, shapeId?: string): string {
-  const highlightedHtml = highlightForHtml(box.code, box.language)
-
   const containerStyle = [
     `position: absolute`,
     `left: ${box.x}in`,
@@ -305,7 +325,28 @@ export function codeBoxToHtml(box: CodeBox, theme: Theme, shapeId?: string): str
     .filter(Boolean)
     .join(" ")
 
-  return `<div class="code-box" style="${containerStyle}" ${dataAttrs}><pre style="${codeStyle}"><code class="language-${box.language}">${highlightedHtml}</code></pre></div>`
+  // 1行 = 1つの <p>。PPTX が改行ごとに <a:p> を出すので、HTML も同じ数え方に
+  // する（3者比較が段落数を突き合わせる）。色は PPTX に渡すのと同じ textRuns
+  // から引く — ハイライトの正本を2つ持たない。
+  const lines = splitRunsIntoLines(box.textRuns, { keepBlank: true })
+    .map((runs) => {
+      // 空行は高さだけ取る。文字が無いので html-inspector は段落として拾わず、
+      // PPTX 側の空 <a:p> と AST の空行スキップに揃う
+      if (runs.length === 0) return `<p class="code-line"></p>`
+
+      const lineDataAttrs = [
+        `data-font-size="${box.fontSize}"`,
+        `data-color="${runs[0].color}"`,
+        `data-font-name="${box.fontFace}"`,
+      ].join(" ")
+      const spans = runs
+        .map((run) => `<span style="color: ${hexToColor(run.color)}">${escapeText(run.text)}</span>`)
+        .join("")
+      return `<p class="code-line" ${lineDataAttrs}>${spans}</p>`
+    })
+    .join("")
+
+  return `<div class="code-box" style="${containerStyle}" ${dataAttrs}><pre style="${codeStyle}">${lines}</pre></div>`
 }
 
 // Generate HTML for a ShapeBox
@@ -394,6 +435,12 @@ export function shapeBoxToHtml(box: ShapeBox, shapeId?: string): string {
     `data-inches-w="${box.w}"`,
     `data-inches-h="${box.h}"`,
     `data-fill-color="${box.fillColor}"`,
+    // テキストを持つシェイプは3者比較の対象。書式は data 属性で報告する
+    // (中央寄せは flex で描いているので data-alignment でしか見えない)
+    box.text ? `data-font-size="${box.fontSize || 12}"` : "",
+    box.text ? `data-color="${box.textColor || "000000"}"` : "",
+    box.text && box.isBold ? `data-bold="true"` : "",
+    box.text ? `data-alignment="CENTER"` : "",
   ]
     .filter(Boolean)
     .join(" ")

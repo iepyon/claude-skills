@@ -51,6 +51,12 @@ export function slideBaseCss(theme: Theme): string {
     .para-number { counter-increment: para-num; }
     .para-number::before { content: counter(para-num) ". "; }
 
+    /* コードは1行 = 1つの <p>。PPTX が改行ごとに段落を作るのに合わせてある。
+       色は run ごとの inline style で付く（PPTX に渡す textRuns と同じ正本）。 */
+    .code-line { margin: 0; }
+    /* 空行も1行ぶんの高さを保つ（文字が無いので抽出には現れない） */
+    .code-line:empty::before { content: "\\200b"; }
+
     /* リンク。色は継承させ、下線だけで示す（テーマの文字色を壊さないため） */
     .text-box a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
     .text-box a.wikilink { text-decoration-style: dashed; cursor: pointer; }
