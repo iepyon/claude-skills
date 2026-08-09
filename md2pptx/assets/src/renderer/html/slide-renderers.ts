@@ -2,6 +2,7 @@ import { Option as O } from "effect"
 import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
 import { textBoxToHtml, borderBoxToHtml, iconBoxToHtml, codeBoxToHtml, shapeBoxToHtml, hexToColor } from "./element-renderers.js"
+import { textKey, iconKey, codeKey, shapeBoxKey } from "../../shape-keys.js"
 
 // スライド ID を data 属性で持たせる。
 // id= を使わないのは、Wiki のホバープレビューがスライド DOM を cloneNode するため
@@ -21,7 +22,7 @@ const renderTitleSlide: SlideRenderer = (slide, theme, slideIndex) => {
   const backgroundColor = hexToColor(theme.titleSlide.background)
 
   const textBoxesHtml = layout.textBoxes
-    .map((box, index) => textBoxToHtml(box, `shape-${index}`, true))
+    .map((box, index) => textBoxToHtml(box, textKey(index), true))
     .join("\n    ")
 
   const slideHtml = `
@@ -44,19 +45,19 @@ const renderContentSlide: SlideRenderer = (slide, theme, slideIndex) => {
     : ""
 
   const iconBoxesHtml = layout.iconBoxes
-    ? layout.iconBoxes.map((box, index) => iconBoxToHtml(box, `icon-${index}`)).join("\n    ")
+    ? layout.iconBoxes.map((box, index) => iconBoxToHtml(box, iconKey(index))).join("\n    ")
     : ""
 
   const codeBoxesHtml = layout.codeBoxes
-    ? layout.codeBoxes.map((box, index) => codeBoxToHtml(box, theme, `code-${index}`)).join("\n    ")
+    ? layout.codeBoxes.map((box, index) => codeBoxToHtml(box, theme, codeKey(index))).join("\n    ")
     : ""
 
   const shapeBoxesHtml = layout.shapeBoxes
-    ? layout.shapeBoxes.map((box, index) => shapeBoxToHtml(box, `shape-box-${index}`)).join("\n    ")
+    ? layout.shapeBoxes.map((box, index) => shapeBoxToHtml(box, shapeBoxKey(index))).join("\n    ")
     : ""
 
   const textBoxesHtml = layout.textBoxes
-    .map((box, index) => textBoxToHtml(box, `shape-${index}`))
+    .map((box, index) => textBoxToHtml(box, textKey(index)))
     .join("\n    ")
 
   const slideHtml = `
