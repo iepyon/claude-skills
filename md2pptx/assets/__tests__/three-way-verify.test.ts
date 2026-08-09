@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, beforeAll } from "vitest"
 import { Effect } from "effect"
 import { readdirSync, readFileSync } from "fs"
 import { join } from "path"
@@ -8,9 +8,9 @@ import { validatePresentation } from "../src/schema/validation.js"
 import { slidesToInventory } from "../src/tools/inventory.js"
 import { inspectPptx } from "../src/tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "../src/tools/html-inspector.js"
-import { diffInventory, Mismatch } from "../src/tools/inventory-diff.js"
-import { verifyInventories, mismatchBreakdown } from "../src/tools/verify.js"
-import { DEFAULT_THEME, loadThemeFile } from "../src/schema/theme.js"
+import { Mismatch } from "../src/tools/inventory-diff.js"
+import { verifyInventories, VerifyReport, mismatchBreakdown } from "../src/tools/verify.js"
+import { DEFAULT_THEME } from "../src/schema/theme.js"
 
 /**
  * 3者比較（AST / HTML / PPTX）を **実在する全デッキ** に流す。
@@ -52,54 +52,55 @@ const describeMismatches = (mismatches: readonly Mismatch[]): string =>
     ...(mismatches.length > 8 ? [`  … 他 ${mismatches.length - 8} 件`] : []),
   ].join("\n")
 
+// 3脚のインベントリを作る。比較そのものは verify.ts の判定を通す
+// （テストだけが別の突き合わせ方を持つと、CI と手元で結論が変わりうる）。
 const threeWay = async (markdown: string, theme = DEFAULT_THEME) => {
   const ast = await Effect.runPromise(parseMarkdown(markdown))
   const presentation = await Effect.runPromise(validatePresentation(ast))
   const expected = await Effect.runPromise(slidesToInventory(presentation.slides, theme))
-
   const pptx = await Effect.runPromise(inspectPptx(await Effect.runPromise(md2pptx(markdown, { theme }))))
   const html = await Effect.runPromise(
-    extractInventoryFromHtml(await Effect.runPromise(md2html(markdown, { theme })), theme.fonts.body)
+    extractInventoryFromHtml(await Effect.runPromise(md2html(markdown, { theme })))
   )
+  return { expected, pptx, html }
+}
 
-  return {
-    "AST vs PPTX": diffInventory(expected, pptx),
-    "AST vs HTML": diffInventory(expected, html),
-    "PPTX vs HTML": diffInventory(pptx, html),
+const expectAgreement = (label: string, report: VerifyReport): void => {
+  for (const leg of report.legs) {
+    expect(leg.mismatches.length, `${label} — ${leg.label}\n${describeMismatches(leg.mismatches)}`).toBe(0)
   }
+}
+
+const verifyDeck = async (markdown: string, theme = DEFAULT_THEME): Promise<VerifyReport> => {
+  const { expected, pptx, html } = await threeWay(markdown, theme)
+  return verifyInventories(expected, pptx, html)
 }
 
 describe("3-way verification over every deck we ship", () => {
   for (const deck of decks) {
     it(`${deck.name} — AST / HTML / PPTX agree`, async () => {
-      const legs = await threeWay(readFileSync(deck.path, "utf-8"))
-
-      for (const [label, diff] of Object.entries(legs)) {
-        expect(diff.mismatches.length, `${deck.name} — ${label}\n${describeMismatches(diff.mismatches)}`).toBe(0)
-      }
+      const report = await verifyDeck(readFileSync(deck.path, "utf-8"))
+      expectAgreement(deck.name, report)
 
       // 「0 件」だけでは、全部落として一致したのか本当に合っているのか分からない
-      expect(legs["AST vs PPTX"].matches).toBeGreaterThan(0)
+      expect(report.legs[0].matches).toBeGreaterThan(0)
     })
   }
 
-  // フォントを既定以外にすると、インスペクタ側の決め打ちが露見する
-  // （html-inspector の font_name は以前 "Arial" のリテラルだった）。
-  it("holds under a non-default theme", async () => {
-    const theme = await Effect.runPromise(loadThemeFile(join(DOC_DIR, "theme.yaml")))
-    const legs = await threeWay(readFileSync(join(SPEC_DIR, "02-complex-layouts.md"), "utf-8"), theme)
-
-    for (const [label, diff] of Object.entries(legs)) {
-      expect(diff.mismatches.length, `${label}\n${describeMismatches(diff.mismatches)}`).toBe(0)
-    }
+  // 本文フォントを既定から変える。以前 html-inspector が "Arial" を
+  // リテラルで持っていて、この脚だけ食い違っていた経路。
+  it("holds under a theme with a different body font", async () => {
+    const theme = { ...DEFAULT_THEME, fonts: { ...DEFAULT_THEME.fonts, body: "Verdana" } }
+    const report = await verifyDeck(readFileSync(join(SPEC_DIR, "02-complex-layouts.md"), "utf-8"), theme)
+    expectAgreement("themed", report)
   })
 })
 
 // 配っているデッキが通っていない書き方は、走査では拾えない。
 // ここで拾ったものは実際に3脚がずれていた入力なので、fixture として残す。
 const EDGE_CASES: Record<string, string> = {
-  // アイコン注釈の無い Steps。プラグインは空の IconBox を作るので、
-  // インベントリだけが「文字の無い図形」を出していた
+  // アイコン注釈の無い Steps。以前はプラグインが空の IconBox を作り、
+  // PPTX には addText("") の見えない図形が入っていた
   // （既存の steps デッキは4件とも全セクションにアイコンが付いている）
   "steps without icon annotations": `# T
 ---
@@ -113,6 +114,20 @@ AST に落とす
 
 ### 出力
 書き出す`,
+
+  // アイコン注釈の無い icon-cols。steps と同じく空の IconBox の発生源
+  "icon columns without icon annotations": `# T
+---
+## 三本柱
+<!--icon-cols-->
+### 速い
+説明A
+
+### 賢い
+説明B
+
+### 安全
+説明C`,
 
   // 空行を含むコードブロック。行数の数え方が3脚でずれやすい
   "code with blank lines": `# T
@@ -148,10 +163,7 @@ const f = (a: number) => a < 1 && a > 0
 describe("edge cases the shipped decks do not cover", () => {
   for (const [name, markdown] of Object.entries(EDGE_CASES)) {
     it(`${name} — AST / HTML / PPTX agree`, async () => {
-      const legs = await threeWay(markdown)
-      for (const [label, diff] of Object.entries(legs)) {
-        expect(diff.mismatches.length, `${name} — ${label}\n${describeMismatches(diff.mismatches)}`).toBe(0)
-      }
+      expectAgreement(name, await verifyDeck(markdown))
     })
   }
 })
@@ -159,22 +171,14 @@ describe("edge cases the shipped decks do not cover", () => {
 describe("the verdict itself", () => {
   // 3脚が一致するのを確かめるだけでは足りない。「食い違ったときに
   // 失敗と呼ぶか」を表明しないと、B-24（mismatch を印字して exit 0）に戻る。
-  const markdown = readFileSync(join(SPEC_DIR, "01-basic-title.md"), "utf-8")
+  let inventories: Awaited<ReturnType<typeof threeWay>>
 
-  const inventories = async () => {
-    const ast = await Effect.runPromise(parseMarkdown(markdown))
-    const presentation = await Effect.runPromise(validatePresentation(ast))
-    const expected = await Effect.runPromise(slidesToInventory(presentation.slides, DEFAULT_THEME))
-    const pptxBuffer = await Effect.runPromise(md2pptx(markdown))
-    const pptx = await Effect.runPromise(inspectPptx(pptxBuffer))
-    const html = await Effect.runPromise(
-      extractInventoryFromHtml(await Effect.runPromise(md2html(markdown)), DEFAULT_THEME.fonts.body)
-    )
-    return { expected, pptx, html }
-  }
+  beforeAll(async () => {
+    inventories = await threeWay(readFileSync(join(SPEC_DIR, "01-basic-title.md"), "utf-8"))
+  })
 
-  it("reports zero mismatches when the three agree", async () => {
-    const { expected, pptx, html } = await inventories()
+  it("reports zero mismatches when the three agree", () => {
+    const { expected, pptx, html } = inventories
     const report = verifyInventories(expected, pptx, html)
 
     expect(report.totalMismatches).toBe(0)
@@ -182,8 +186,8 @@ describe("the verdict itself", () => {
     expect(report.legs.every((leg) => leg.matches > 0)).toBe(true)
   })
 
-  it("reports a nonzero total when one leg drifts", async () => {
-    const { expected, pptx, html } = await inventories()
+  it("reports a nonzero total when one leg drifts", () => {
+    const { expected, pptx, html } = inventories
 
     // AST 側のシェイプを1インチずらす（レンダラは触らない）
     const key = Object.keys(expected["slide-0"])[0]
