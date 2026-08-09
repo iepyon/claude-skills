@@ -213,7 +213,7 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 - HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` と `data-default-font-name` は `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
 - Wiki のデッキの並び順: ディレクトリ直下の `order.yaml` の `decks:`（拡張子なしのファイル名）が正本。無ければファイル名順。**並び替えのために md をリネームしない** — ファイル名はデッキの slug、つまり `[[deck/slide]]` のリンク先でもあるので、リネームするとサイト中のリンクが折れる。宣言に無いデッキは末尾に付き（追記忘れで消さないため）、宣言にあって存在しないデッキ名はビルドを止める
-- 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）
+- 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）。**枠のほうを図の縦横比に合わせる** — `svgAspectRatio()` が `viewBox` から比を返し、wiki-pattern はその比で下敷きを組んで縦中央に置く。枠を図と違う比で置くと、HTML は `preserveAspectRatio` で図を縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に崩れるので、生成物を見比べても気づきにくい）
 
 ## Plugin System
 
@@ -267,6 +267,13 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 ## Theme System
 
 `schema/theme.ts` に `Theme` 型と `DEFAULT_THEME` を定義。CLI の `--theme <path>` で YAML テーマファイルを指定可能。テーマは色・フォントサイズ・マージン等をカスタマイズする。未指定時は DEFAULT_THEME がフォールバック。
+
+**`contentSlide` のフォントサイズは、はみ出したスライドで縮む。** `dispatchLayout` が
+`contentSlide.{heading,body,gridHeading,gridBody}Size` を 0.9 → 0.6 と段階的に下げて再レイアウトする
+(`renderer/layout/index.ts`)。これは1枚を収めるための仕組みなので、**並べて読ませるレイアウトが
+使うと本文の長さでページごとに文字が変わる**。そういうレイアウトはサイズをテーマの別の節に置く
+（`wikiPattern` がそれ。`numberedList` / `table` / `agenda` も `contentSlide` の外にある）。
+別の節に置いたぶん縮小は空回りし、収まらなければ `validateLayout` がビルドを止める。
 
 ## Test → Module 対応表
 

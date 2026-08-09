@@ -33,19 +33,29 @@ import {
  * Calculate the vertical space reserved at the bottom of a slide for the takeaway box.
  * Returns TAKEAWAY_HEIGHT + TAKEAWAY_GAP when a takeaway is present, 0 otherwise.
  */
-export const reservedForTakeaway = (takeaway: string | undefined): number =>
-  takeaway ? TAKEAWAY_HEIGHT + TAKEAWAY_GAP : 0
+export const reservedForTakeaway = (
+  takeaway: string | undefined,
+  height: number = TAKEAWAY_HEIGHT
+): number => (takeaway ? height + TAKEAWAY_GAP : 0)
 
 /**
  * Build a takeaway TextBox positioned at the bottom of the slide.
+ *
+ * `height` は既定の `TAKEAWAY_HEIGHT`（20pt が2〜3行入る高さ）を狭められる口。
+ * 1行しか置かないレイアウトが 0.9in を確保すると、その差が本文の取り分から消える。
+ * 渡すときは `reservedForTakeaway` にも同じ値を渡すこと（確保と実物が食い違う）。
  */
-export function buildTakeawayBox(takeaway: string, theme: Theme): TextBox {
-  const takeawayY = SLIDE_HEIGHT - MARGIN_Y - TAKEAWAY_HEIGHT
+export function buildTakeawayBox(
+  takeaway: string,
+  theme: Theme,
+  height: number = TAKEAWAY_HEIGHT
+): TextBox {
+  const takeawayY = SLIDE_HEIGHT - MARGIN_Y - height
   return {
     x: MARGIN_X,
     y: takeawayY,
     w: SLIDE_WIDTH - 2 * MARGIN_X,
-    h: TAKEAWAY_HEIGHT,
+    h: height,
     // richText で持つ理由: takeaway は出典・まとめを書く場所で、
     // ここにリンクを置けないと B-14（参考資料スライドで URL を活かす）が成立しない。
     richText: parseInlineFormatting(takeaway),
@@ -64,12 +74,13 @@ export function buildTakeawayBox(takeaway: string, theme: Theme): TextBox {
 export function withTakeaway(
   result: LayoutResult,
   takeaway: string | undefined,
-  theme: Theme
+  theme: Theme,
+  height: number = TAKEAWAY_HEIGHT
 ): LayoutResult {
   if (!takeaway) return result
   return {
     ...result,
-    textBoxes: [...result.textBoxes, buildTakeawayBox(takeaway, theme)],
+    textBoxes: [...result.textBoxes, buildTakeawayBox(takeaway, theme, height)],
   }
 }
 
@@ -261,6 +272,13 @@ export function buildSectionBoxes(
   const boxes: TextBox[] = []
   let currentY = context.baseY + context.padding
 
+  // 文字サイズは3箇所（高さの見積もり・見出し・本文）で必ず同じものを見る。
+  // 見積もりだけ別のサイズを見ると、描かれる文字は揃うのにボックスの高さと
+  // 縦位置だけがページごとにずれる
+  const headingSize = context.headingSize ?? context.theme.contentSlide.headingSize
+  const bodySize = context.bodySize ?? context.theme.contentSlide.bodySize
+  const sectionGap = context.sectionGap ?? SECTION_GAP
+
   // Calculate per-section body heights if availableHeight is set
   let dynamicBodyHeights: number[] = []
   const FIXED_HEADING_HEIGHT = 0.3
@@ -271,7 +289,7 @@ export function buildSectionBoxes(
 
     // Calculate fixed overhead (padding + gaps)
     const paddingOverhead = 2 * context.padding
-    const sectionGapOverhead = Math.max(0, sections.length - 1) * SECTION_GAP
+    const sectionGapOverhead = Math.max(0, sections.length - 1) * sectionGap
 
     // Count heading-body gaps (only where both heading and body exist)
     let gapCount = 0
@@ -281,13 +299,14 @@ export function buildSectionBoxes(
       }
     })
     const gapOverhead = gapCount * defaultHeadingBodyGap
-    const headingOverhead = headingCount * FIXED_HEADING_HEIGHT
+    // 見出しの高さは下の描画と同じ値を使う。ここだけ固定値のままだと、
+    // headingHeight を渡したレイアウトで確保と実物が食い違う
+    const headingOverhead = headingCount * (context.headingHeight ?? FIXED_HEADING_HEIGHT)
 
     const fixedOverhead = paddingOverhead + sectionGapOverhead + gapOverhead + headingOverhead
     const availableForBodyContent = context.availableHeight - fixedOverhead
 
     // Calculate natural body heights for each section
-    const bodyFontSize = context.theme.contentSlide.bodySize
     const textWidth = context.contentWidth - 2 * context.padding - context.theme.indent.body
 
     const naturalBodyHeights: number[] = sections.map(section => {
@@ -298,13 +317,13 @@ export function buildSectionBoxes(
         // 箇条書きはぶら下げインデントのぶん実効幅が狭く、折返しが増える
         return estimateTextHeight(
           stripInlineFormatting(stripListMarkers(section.body)),
-          bodyFontSize,
+          bodySize,
           textWidth - BULLET_INDENT
         )
       }
       return estimateTextHeight(
         stripInlineFormatting(section.body),
-        bodyFontSize,
+        bodySize,
         textWidth
       )
     })
@@ -324,7 +343,7 @@ export function buildSectionBoxes(
   sections.forEach((section, i) => {
     // Section gap (except first)
     if (i > 0) {
-      currentY += SECTION_GAP
+      currentY += sectionGap
     }
 
     // Heading
@@ -337,7 +356,7 @@ export function buildSectionBoxes(
         h: headingHeight,
         richText: parseInlineFormatting(section.heading),
         isBold: true,
-        fontSize: context.theme.contentSlide.headingSize,
+        fontSize: headingSize,
         color: context.theme.contentSlide.headingColor,
         valign: "top",
       })
@@ -357,7 +376,7 @@ export function buildSectionBoxes(
         ...(hasListMarker(section.body)
           ? { paragraphs: parseBlockToParagraphs(section.body) }
           : { richText: parseInlineFormatting(section.body) }),
-        fontSize: context.theme.contentSlide.bodySize,
+        fontSize: bodySize,
         color: context.theme.contentSlide.textColor,
         valign: "top",
       })

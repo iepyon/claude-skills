@@ -16,6 +16,29 @@ import { ParseError } from "./errors.js"
 const SVG_OPEN_TAG = /<svg\b[^>]*>/i
 const SVG_TAG_HEAD = /^<svg\b/i
 const SIZE_ATTRIBUTE = /\s(width|height)\s*=\s*("[^"]*"|'[^']*')/gi
+const VIEW_BOX = /\sviewBox\s*=\s*(?:"([^"]*)"|'([^']*)')/i
+
+/**
+ * 図の縦横比（幅 ÷ 高さ）を `viewBox` から返す。名乗っていなければ `undefined`。
+ *
+ * `fitSvgToBox` が外すのは width / height だけなので、埋め込んだ後の文字列にも
+ * `viewBox` は残っている。読む側（レイアウト）が枠を図の形に合わせられるように、
+ * ここで**唯一の解釈**を与える。SVG の既定の `preserveAspectRatio` は
+ * `xMidYMid meet` — 枠の比が図と違えば、図は縮んで余白（レターボックス）が出る。
+ * その余白を出さないための値。
+ */
+export function svgAspectRatio(svg: string): number | undefined {
+  const tag = svg.match(SVG_OPEN_TAG)?.[0]
+  if (!tag) return undefined
+  const box = tag.match(VIEW_BOX)
+  const value = box?.[1] ?? box?.[2]
+  if (!value) return undefined
+  const parts = value.trim().split(/[\s,]+/).map(Number)
+  if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return undefined
+  const [, , width, height] = parts
+  if (width <= 0 || height <= 0) return undefined
+  return width / height
+}
 
 /**
  * 埋め込む前に、ルート `<svg>` の width / height を 100% に読み替える。

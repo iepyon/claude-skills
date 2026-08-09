@@ -120,7 +120,18 @@ export interface SectionContext {
   readonly headingBodyGap?: number // Optional gap between heading and body (defaults to HEADING_BODY_GAP)
   readonly headingHeight?: number // Optional heading height (defaults to HEADING_HEIGHT)
   readonly bodyHeight?: number // Optional body height (defaults to BODY_HEIGHT)
+  readonly sectionGap?: number // Optional gap between sections (defaults to SECTION_GAP)
   readonly availableHeight?: number // Optional total container height for dynamic body sizing
+  /**
+   * 文字サイズの上書き。既定は `theme.contentSlide.{heading,body}Size`。
+   *
+   * 渡す側が「テーマのどこから採るか」を決められるようにするための口で、
+   * `dispatchLayout` の段階的な縮小を受けないサイズ（`theme.wikiPattern` など）を
+   * 使いたいレイアウトが指定する。**片方だけ渡してはいけない** — 高さの見積もりと
+   * 実際の描画が別のサイズを見ると、文字は揃うのにボックスの高さだけがずれる。
+   */
+  readonly headingSize?: number
+  readonly bodySize?: number
 }
 
 // Result of building section boxes

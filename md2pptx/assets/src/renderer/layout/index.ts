@@ -150,6 +150,14 @@ function buildLayoutHandlers(): ReadonlyArray<LayoutHandler> {
 const FONT_SCALE_STEPS = [0.9, 0.8, 0.7, 0.6] as const
 const MIN_FONT_SIZE = 6
 
+/**
+ * 縮めるのは `contentSlide` のサイズだけ。**他の節を足してはいけない。**
+ *
+ * `numberedList` / `table` / `agenda` / `wikiPattern` が `contentSlide` の外に
+ * 自分のサイズを持っているのは、ここで縮まないことが要るから。特に `wikiPattern` は
+ * 隣り合わせで読ませるページなので、本文の長さでページごとに文字が変わってはいけない
+ * （`schema/theme.ts` の説明を見よ）。ここに足すと、その保証が黙って外れる。
+ */
 function scaleThemeFonts(theme: Theme, scale: number): Theme {
   const scaled = (size: number) => Math.max(MIN_FONT_SIZE, Math.round(size * scale))
   return {

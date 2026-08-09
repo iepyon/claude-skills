@@ -5,11 +5,13 @@ import { join } from "path"
 import { parseMarkdown } from "../src/parser/index.js"
 import { validatePresentation } from "../src/schema/validation.js"
 import { layoutSlide } from "../src/renderer/layout/index.js"
+import { detectOverflow } from "../src/renderer/layout/overflow.js"
+import { validateLayout } from "../src/renderer/layout/validate-layout.js"
 import type { LayoutResult, ShapeBox } from "../src/renderer/layout/types.js"
 import { collectRefs } from "../src/renderer/wiki/link-graph.js"
 import { lintSource } from "../src/ontology/lint.js"
 import { DEFAULT_THEME } from "../src/schema/theme.js"
-import { SLIDE_WIDTH, MARGIN_X } from "../src/constants.js"
+import { SLIDE_WIDTH, SLIDE_HEIGHT, MARGIN_X, MARGIN_Y, CONTENT_START_Y } from "../src/constants.js"
 import { isDecoKey } from "../src/shape-keys.js"
 import { slidesToInventory } from "../src/tools/inventory.js"
 import type { ContentSlide } from "../src/schema/presentation.js"
@@ -164,6 +166,28 @@ describe("WikiPattern — 座標", () => {
     expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X, 5)
   })
 
+  it("下敷きは図解の縦横比で組まれ、列の中で縦中央に置かれる", async () => {
+    // 列いっぱいに伸ばすと、HTML は preserveAspectRatio で図を縮めて上下に帯を作り、
+    // PPTX は addImage が枠に引き伸ばして図を歪ませる。原因は同じ「枠と図の比の食い違い」
+    const result = await layoutFor(deck())
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    const svg = svgBox(result)
+    const aspect = 340 / 320 // fixtures/diagrams/sample.svg の viewBox
+    expect(svg.w / svg.h).toBeCloseTo(aspect, 5)
+
+    // 上下の余りが等しい ＝ 縦中央（takeaway が無いので列の下端はスライドの下マージン）
+    const columnBottom = SLIDE_HEIGHT - MARGIN_Y
+    expect(panel.y - CONTENT_START_Y).toBeCloseTo(columnBottom - (panel.y + panel.h), 5)
+  })
+
+  it("viewBox の無い図解では下敷きが列いっぱいのままになる", async () => {
+    // 形が分からない図を勝手な比の枠に入れると、かえって余白が増える
+    const result = await layoutFor(deck({ diagram: "diagrams/no-viewbox.svg" }))
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    expect(panel.y).toBeCloseTo(CONTENT_START_Y, 5)
+    expect(panel.y + panel.h).toBeCloseTo(SLIDE_HEIGHT - MARGIN_Y, 5)
+  })
+
   it("どのテキストも図解の矩形に食い込まない", async () => {
     // タイトルと takeaway は全幅なので「左半分に収まる」では言えない。
     // 言いたいのは重ならないこと — 縦か横のどちらかで必ず離れている
@@ -300,5 +324,75 @@ describe("配布しているデッキの図解", () => {
 
     expect(Number(open.match(/\swidth="(\d+)"/)?.[1]), `${name}: width が viewBox と食い違う`).toBe(vw)
     expect(Number(open.match(/\sheight="(\d+)"/)?.[1]), `${name}: height が viewBox と食い違う`).toBe(vh)
+  })
+
+  /**
+   * Wiki のパターンは隣り合わせで読まれるので、**ページごとに文字の大きさが違ってはいけない。**
+   *
+   * 破れ方はいつも同じ形をしている: `dispatchLayout` は収まらないスライドのテーマ文字サイズを
+   * 段階的に縮めるので、左段の取り分が細ると本文の長いページだけが小さく描かれる。
+   * 実際そうなっていた（同じデッキの中に 16/14pt と 11/10pt が混在していた）。
+   * だから見るのは配布中の実デッキで、固定の入力ではない — 本文を書き足したときに気づけるように。
+   */
+  describe("パターンの文字の大きさ", () => {
+    const patternDecks = deckNames.map((deck) => ({
+      deck,
+      md: readFileSync(join(WIKI_DIR, `${deck}.md`), "utf-8"),
+    }))
+
+    const layoutsOfDeck = async (md: string) => {
+      const pres = await Effect.runPromise(
+        parseMarkdown(md, { baseDir: WIKI_DIR }).pipe(Effect.flatMap(validatePresentation))
+      )
+      return pres.slides
+        .filter((s) => s._tag === "ContentSlide" && (s as ContentSlide).layout._tag === "WikiPattern")
+        .map((s) => ({ title: (s as ContentSlide).title, result: layoutSlide(s, DEFAULT_THEME) }))
+    }
+
+    it("どのデッキのどのパターンも theme.wikiPattern の大きさで描かれる", async () => {
+      // 「どのページも同じ」だけでは足りない — 全ページが一様に縮んでも通ってしまう。
+      // 宣言した絶対値で見ることで、揃っていることと縮んでいないことを同時に押さえる
+      let pages = 0
+      for (const { deck, md } of patternDecks) {
+        for (const { title, result } of await layoutsOfDeck(md)) {
+          pages++
+          const where = `${deck}/${title}`
+          const sizes = result.textBoxes.map((b) => b.fontSize)
+          expect(sizes, `${where}: 見出しが ${DEFAULT_THEME.wikiPattern.headingSize}pt でない`).toContain(
+            DEFAULT_THEME.wikiPattern.headingSize
+          )
+          expect(sizes, `${where}: 本文が ${DEFAULT_THEME.wikiPattern.bodySize}pt でない`).toContain(
+            DEFAULT_THEME.wikiPattern.bodySize
+          )
+          // 3節ぶんの見出しと本文が、どれも縮んでいないこと
+          // （タイトルと takeaway は全幅なので、幅で左段だけを取り出せる）
+          const fullWidth = SLIDE_WIDTH - 2 * MARGIN_X
+          const left = result.textBoxes.filter((b) => b.w < fullWidth - 0.01)
+          expect(left.length, `${where}: 左段が3節ぶん無い`).toBe(6)
+          expect(new Set(left.map((b) => b.fontSize)), `${where}: 左段に想定外の文字サイズがある`).toEqual(
+            new Set([DEFAULT_THEME.wikiPattern.headingSize, DEFAULT_THEME.wikiPattern.bodySize])
+          )
+          expect(detectOverflow(result), `${where} がはみ出している`).toEqual([])
+        }
+      }
+      expect(pages).toBeGreaterThan(1)
+    })
+  })
+})
+
+describe("WikiPattern — 収まらない本文", () => {
+  it("縮めずにビルドを止める", async () => {
+    // 「静かに小さくして出す」をやめたのがこの変更の本題。長すぎるパターンは
+    // ページの見た目を崩す代わりに、スライド番号つきで書き手に返る
+    const long = (label: string) =>
+      `### ${label}\n` + `長い本文をここに置いて枠を溢れさせる。`.repeat(12)
+    const sections = [long("状況"), long("問題"), long("解決")].join("\n")
+    await expect(
+      Effect.runPromise(
+        parseMarkdown(deck({ sections }), { baseDir: FIXTURE_DIR })
+          .pipe(Effect.flatMap(validatePresentation))
+          .pipe(Effect.flatMap((pres) => validateLayout(pres, DEFAULT_THEME)))
+      )
+    ).rejects.toThrow()
   })
 })
