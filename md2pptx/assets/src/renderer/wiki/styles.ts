@@ -1,6 +1,7 @@
 import { Theme } from "../../schema/index.js"
 import { SLIDE_WIDTH, SLIDE_HEIGHT } from "../../constants.js"
 import { slideBaseCss } from "../html/slide-css.js"
+import { EDGE_RATIO } from "./client-script.js"
 
 const SLIDE_W_PX = SLIDE_WIDTH * 96
 const SLIDE_H_PX = SLIDE_HEIGHT * 96
@@ -70,7 +71,6 @@ ${slideBaseCss(theme)}
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .crumb b { color: var(--text); font-weight: 600; }
-    .spacer { flex: 1 0 0; }
 
     .nav-btn {
       background: rgba(255,255,255,.05);
@@ -80,8 +80,7 @@ ${slideBaseCss(theme)}
       padding: 4px 12px; border-radius: 6px; cursor: pointer;
       white-space: nowrap; flex-shrink: 0;
     }
-    .nav-btn:hover:not(:disabled) { background: rgba(255,255,255,.12); }
-    .nav-btn:disabled { opacity: .3; cursor: default; }
+    .nav-btn:hover { background: rgba(255,255,255,.12); }
 
     /* ---------- sidebar ---------- */
     .sidebar {
@@ -148,7 +147,51 @@ ${slideBaseCss(theme)}
     .stage-wrap {
       width: ${SLIDE_W_PX}px; height: ${SLIDE_H_PX}px;
       flex-shrink: 0;
+      position: relative;   /* 送りの目印の足場 */
     }
+
+    /* 前/次ボタンの代わりに、スライドの左右端そのものを送りの当たり判定にする。
+       ただし判定は client-script が EDGE_RATIO と座標で持ち、この帯は
+       pointer-events: none の目印にとどめる。帯にクリックを受けさせると、
+       端まで届いているリンク（箇条書きの行頭や図の中の参照）が押せなくなる。 */
+    .edge-zone {
+      position: absolute; top: 0; bottom: 0; width: ${(EDGE_RATIO * 100).toFixed(2)}%;
+      pointer-events: none;
+      z-index: 5;
+      display: flex; align-items: center;
+      opacity: 0; transition: opacity .15s ease;
+    }
+    /* 山括弧は自前の丸い座布団に載せる。スライドの地色は白にも濃色にもなるので、
+       字の色をどう選んでも「地に近い一方」では沈む。座布団ごと置けば地に依らない。 */
+    .edge-zone::after {
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(12,18,30,.66);
+      border: 1px solid rgba(255,255,255,.45);
+      box-shadow: 0 2px 8px rgba(0,0,0,.4);
+      color: #fff; font-size: 19px; line-height: 1;
+      /* 山括弧は字面が上寄りなので、光学的な中心に落とす */
+      padding-bottom: 3px;
+    }
+    /* 角丸はステージ枠に合わせる。帯は枠の外側に居るので、揃えないと角が四角く出る。
+       座布団は帯の中央ではなく外端に寄せる（送りの手がかりは縁にあるほうが探しやすい）。 */
+    .edge-zone.left {
+      left: 0; justify-content: flex-start; padding-left: 6px;
+      border-radius: 10px 0 0 10px;
+      background: linear-gradient(to right, rgba(0,0,0,.15), transparent);
+    }
+    .edge-zone.right {
+      right: 0; justify-content: flex-end; padding-right: 6px;
+      border-radius: 0 10px 10px 0;
+      background: linear-gradient(to left, rgba(0,0,0,.15), transparent);
+    }
+    .edge-zone.left::after  { content: "\\2039"; padding-right: 2px; }
+    .edge-zone.right::after { content: "\\203A"; padding-left: 2px; }
+    /* data-edge は mousemove が入れる。touch では付かないので目印も出ないが、
+       タップは click として同じ判定を通る。 */
+    .stage-wrap[data-edge="left"], .stage-wrap[data-edge="right"] { cursor: pointer; }
+    .stage-wrap[data-edge="left"] .edge-zone.left,
+    .stage-wrap[data-edge="right"] .edge-zone.right { opacity: 1; }
 
     .stage-frame {
       width: ${SLIDE_W_PX}px; height: ${SLIDE_H_PX}px;
@@ -190,7 +233,11 @@ ${slideBaseCss(theme)}
     .backlinks a:hover { background: rgba(122,162,247,.18); border-color: var(--accent); }
     .backlinks .none { color: var(--muted); }
 
-    .hint { margin-top: 18px; font-size: 11px; color: var(--muted); text-align: center; }
+    /* ステージの上に置く。読み方の説明は、読み始める前に目に入らないと意味がない。 */
+    .hint {
+      margin-bottom: 12px; flex-shrink: 0;
+      font-size: 11px; color: var(--muted); text-align: center;
+    }
     .hint kbd {
       display: inline-block; padding: 1px 6px; margin: 0 1px;
       border: 1px solid #3a4560; border-radius: 3px;

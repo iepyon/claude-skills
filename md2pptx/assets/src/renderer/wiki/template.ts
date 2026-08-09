@@ -76,10 +76,8 @@ export function generateWikiHtml(
 
   <div class="topbar">
     <button class="menu-btn" id="menu-btn" aria-label="目次" aria-expanded="false">&#9776;</button>
+    <button class="nav-btn" id="back-btn" aria-label="戻る">&larr; 戻る</button>
     <span class="crumb" id="crumb"></span>
-    <span class="spacer"></span>
-    <button class="nav-btn" id="prev-btn">&larr; 前</button>
-    <button class="nav-btn" id="next-btn">次 &rarr;</button>
   </div>
 
   <nav class="sidebar">
@@ -90,6 +88,11 @@ ${renderSidebar(site)}
   <div class="scrim" id="scrim"></div>
 
   <main class="main">
+    <!-- 1行に収める。折り返すと scaleStage() の CHROME_RESERVE の見積りが崩れる。 -->
+    <div class="hint">
+      <kbd>&larr;</kbd><kbd>&rarr;</kbd> またはスライドの左右端をクリックで送る（デッキの境界も越える）　リンクはホバーでプレビュー／クリックで移動　<kbd>Esc</kbd> 閉じる
+    </div>
+
     <div class="stage-wrap" id="stage-wrap">
       <div class="stage-frame" id="stage-frame">
 ${site.entries
@@ -98,19 +101,16 @@ ${site.entries
   )
   .join("\n")}
       </div>
+      <!-- 送りの目印。山括弧は CSS の ::after が描く（左右で字が違うため）。
+           当たり判定は client-script が座標で持つ (pointer-events: none)。 -->
+      <div class="edge-zone left" aria-hidden="true"></div>
+      <div class="edge-zone right" aria-hidden="true"></div>
     </div>
 
     <section class="backlinks">
       <h2>このスライドへのリンク</h2>
       <div id="backlinks-body"></div>
     </section>
-
-    <!-- 1行に収める。折り返すと scaleStage() の CHROME_RESERVE の見積りが崩れる。 -->
-    <div class="hint">
-      <kbd>&larr;</kbd><kbd>&rarr;</kbd> 移動
-      <kbd>Shift</kbd>+<kbd>&larr;</kbd><kbd>&rarr;</kbd> デッキをまたぐ
-      リンクにホバーでプレビュー／クリックで移動　<kbd>Esc</kbd> 閉じる
-    </div>
   </main>
 
   <div id="preview-layer"></div>

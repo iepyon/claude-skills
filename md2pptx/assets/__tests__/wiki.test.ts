@@ -331,6 +331,49 @@ describe("viewer layout contract", () => {
     expect(hoverBlock).not.toContain(".sidebar")
   })
 
+  it("should send the arrow keys across deck boundaries without a modifier", async () => {
+    // デッキ内で止まると、境界のたびに目次へ戻ることになる。
+    // Shift の有無で行き先が変わる仕掛けはもう無い。
+    const html = await buildHtml()
+    expect(html).not.toContain("shiftKey")
+    expect(html).toMatch(/ArrowRight[\s\S]{0,80}step\(1\)/)
+    expect(html).toMatch(/ArrowLeft[\s\S]{0,80}step\(-1\)/)
+  })
+
+  it("should page by clicking the left or right edge of the stage", async () => {
+    // 当たり判定はステージ自身に載せる。#preview-layer は .main の兄弟なので、
+    // カードの上のクリックはここへ入ってこない（onPreviewClick と二重に走らない）。
+    const html = await buildHtml()
+    expect(html).toContain("EDGE_RATIO")
+    expect(html).toMatch(/stageWrap\.addEventListener\("click"/)
+    const i = html.indexOf('stageWrap.addEventListener("click"')
+    const fn = html.slice(i, i + 400)
+    expect(fn).toContain("a.wikilink") // 端に置かれたリンクはリンクとして働く
+    expect(fn).toContain("getSelection") // 文字を選んだだけでは送らない
+  })
+
+  it("should keep the edge markers out of the way of clicks", async () => {
+    // 帯そのものにクリックを受けさせると、端に届いているリンクが押せなくなる。
+    const html = await buildHtml()
+    const block = html.slice(html.indexOf(".edge-zone {"), html.indexOf(".edge-zone.left"))
+    expect(block).toMatch(/pointer-events:\s*none/)
+  })
+
+  it("should replace the prev/next buttons with a browser back button", async () => {
+    const html = await buildHtml()
+    expect(html).not.toContain('id="prev-btn"')
+    expect(html).not.toContain('id="next-btn"')
+    expect(html).toContain('id="back-btn"')
+    expect(html).toContain("history.back()")
+  })
+
+  it("should put the key hint above the stage", async () => {
+    const html = await buildHtml()
+    const hint = html.indexOf('class="hint"')
+    expect(hint).toBeGreaterThan(-1)
+    expect(hint).toBeLessThan(html.indexOf('id="stage-wrap"'))
+  })
+
   it("should collapse the sidebar into a reachable drawer on narrow screens", async () => {
     const html = await buildHtml()
     expect(html).toContain("@media (max-width: 860px)")
