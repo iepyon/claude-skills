@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest"
 import { Effect } from "effect"
 import { inspectPptx } from "../src/tools/pptx-inspector.js"
 import { md2pptx } from "../src/index.js"
+import JSZip from "jszip"
 
 const TEST_MARKDOWN = `# スライドタイトル
 ---
@@ -72,6 +73,55 @@ describe("pptx-inspector", () => {
     // parseParagraph は段落内の最初の <a:rPr> だけを読むため、本文は
     // インライン強調を後方に置いて先頭 run が素であることを確かめる。
     expect(inventory["slide-1"]["shape-2"].paragraphs[0].bold).toBeUndefined()
+  })
+
+  it("should key shapes by the name the renderer declared, not by drawing order", async () => {
+    // 位置で数えていたときは、境界ボックスやアイコンを描くレイアウトで
+    // 全キーがずれた（BACKLOG B-24）。レンダラが objectName で宣言した名前を
+    // 読むので、テキストボックスは描画順の最後でも shape-0 から始まる。
+    const md = `# T
+---
+## アイコン付き
+<!--icon-cols-->
+### 速い
+<!--icon:🚀-->
+説明A
+
+### 賢い
+<!--icon:💡-->
+説明B
+
+### 安全
+<!--icon:🛡️-->
+説明C`
+    const inventory = await Effect.runPromise(inspectPptx(await Effect.runPromise(md2pptx(md))))
+    const keys = Object.keys(inventory["slide-1"])
+
+    // アイコンは icon-N、テキストは shape-N。連番の1本の空間に潰れていない
+    expect(keys).toContain("shape-0")
+    expect(keys.some((k) => k.startsWith("icon-"))).toBe(true)
+    expect(inventory["slide-1"]["shape-0"].paragraphs[0].text).toBe("アイコン付き")
+  })
+
+  it("should drop decorative shapes from the inventory", async () => {
+    // 境界ボックス・塗り・コード背景はテキストを運ばない。deco: を付けて
+    // 比較対象から外してある — 外し方が生成物に書かれていることが要点。
+    const md = `# T
+---
+## コード
+\`\`\`ts
+const x = 1
+\`\`\``
+    const buffer = await Effect.runPromise(md2pptx(md))
+    const xml = await (await JSZip.loadAsync(buffer)).file("ppt/slides/slide2.xml")!.async("string")
+
+    // 生成物には deco: の図形が実在する
+    expect(xml).toContain('name="deco:code-0-bg"')
+
+    // インベントリには入らない
+    const inventory = await Effect.runPromise(inspectPptx(buffer))
+    expect(Object.keys(inventory["slide-1"]).some((k) => k.startsWith("deco:"))).toBe(false)
+    expect(inventory["slide-1"]["code-0"]).toBeDefined()
   })
 
   it("should handle PPTX with multiple slides", async () => {
