@@ -101,7 +101,7 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
 | PatternLanguage | `<!--pattern-language-a-->` | パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成 |
-| WikiPattern | `<!--pattern-->` | Wiki のパターン1件。左に 状況/問題/解決、右に SVG の図解 |
+| WikiPattern | `<!--pattern-->` | Wiki のパターン1件。左に いつ・なにが困るか／そこで、右に SVG の図解 |
 <!-- END GENERATED: layouts -->
 
 各レイアウトが `###` / `####` に何を期待するか（件数・見出しの語彙・本文の読まれ方）は

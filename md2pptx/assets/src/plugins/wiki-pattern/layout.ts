@@ -47,7 +47,7 @@ export function layoutWikiPattern(
   const reserved = reservedForTakeaway(layout.takeaway, WP_TAKEAWAY_HEIGHT)
   const dims = calculateColumnDimensions(WP_LEFT_RATIO, WP_RIGHT_RATIO, titleY, reserved)
 
-  // 左段: 状況/問題/解決。**必ず buildSectionBoxes を通す。**
+  // 左段: いつ・なにが困るか／そこで（と、その中の段落）。**必ず buildSectionBoxes を通す。**
   // `[[…]]` を拾うのは link-graph.ts の collectRefs で、それが見るのは
   // textBoxes の richText / paragraphs だけ。自前で TextBox を組むと
   // 描画は同じに見えたまま Wiki のリンクだけが静かに消える。

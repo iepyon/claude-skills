@@ -1,10 +1,12 @@
 import type { SlideLayout, TextBlock } from "../../schema/presentation.js"
 
 /**
- * Wiki のパターン1件。左に 状況/問題/解決、右に SVG の図解。
+ * Wiki のパターン1件。左に いつ・なにが困るか／そこで、右に SVG の図解。
  *
- * 3節は `TextBlock[]` のまま持つ。見出し名の解決（語彙・別名・末尾コロン）は
- * converter が `ontology` の `resolveTerm` に任せ、ここには順番だけが残る
+ * 節は `TextBlock[]` のまま持つ。**見出しの数（2つ）と要素の数は一致しない** —
+ * converter が本文の空行で段落に割り、2段落目からは `heading` の無い `TextBlock` に
+ * するため。見出し名の解決（語彙・別名・末尾コロン）も converter が `ontology` の
+ * `resolveTerm` に任せ、ここには順番だけが残る
  * ＝レイアウトは「上から順に積む」以上のことを知らない。
  */
 export class WikiPatternLayout implements SlideLayout {

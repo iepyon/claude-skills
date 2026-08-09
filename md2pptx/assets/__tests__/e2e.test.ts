@@ -4,6 +4,7 @@ import { md2pptx, md2html } from "../src/index.js"
 import { readdirSync, readFileSync } from "fs"
 import { join } from "path"
 import JSZip from "jszip"
+import { stripInlineFormatting } from "../src/parser/inline-formatter.js"
 
 const MARKDOWN_SPEC_DIR = join(__dirname, "markdown-spec")
 
@@ -67,11 +68,14 @@ const extractTextFromMarkdown = (markdown: string): string[] => {
       // List markers never survive into the output: customer-journey strips "- " and
       // re-adds a literal "• " in its layout, while every other layout renders native
       // PPTX bullets / CSS glyphs, neither of which appears in the extracted text.
+      // 装飾の記法は出力に残らない（`**強調**` は太字の書式になって記号は消える）。
+      // レンダラと同じ関数で剥がすので、期待するのは「見える文字が出ていること」になる
       const listMatch = trimmed.match(/^(?:[-*+]|\d+\.)\s+(.*)$/)
       if (listMatch) {
-        texts.push(inCustomerJourney ? `• ${listMatch[1]}` : listMatch[1])
+        const item = stripInlineFormatting(listMatch[1])
+        texts.push(inCustomerJourney ? `• ${item}` : item)
       } else {
-        texts.push(trimmed)
+        texts.push(stripInlineFormatting(trimmed))
       }
     }
   }

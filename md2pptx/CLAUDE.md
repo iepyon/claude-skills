@@ -242,7 +242,7 @@ src/plugins/
 ├── quote/                `<!--quote-->`
 ├── agenda/               `<!--agenda-->`
 ├── pattern-language/     `<!--pattern-language-a-->` (1ブロック → Overview + Detail の2スライド)
-└── wiki-pattern/         `<!--pattern-->` (左に3節、右に `![…](….svg)` が指す外部 SVG)
+└── wiki-pattern/         `<!--pattern-->` (左に2節、右に `![…](….svg)` が指す外部 SVG)
 ```
 
 11ディレクトリ・**12プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
@@ -299,7 +299,7 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
-| `wiki-pattern.test.ts` | WikiPattern レイアウト (3節の並べ替え・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査) |
+| `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |
 | `icon-resolver.test.ts` | renderer/icon-resolver.ts |
