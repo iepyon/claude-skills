@@ -7,6 +7,8 @@ import {
   ShapeInventory,
   SlideInventory,
 } from "./inventory.js"
+import { isDecoKey } from "../shape-keys.js"
+import { decodeEntities } from "./entities.js"
 
 // EMU (English Metric Units) to inches conversion
 // 1 inch = 914400 EMU
@@ -20,7 +22,7 @@ const SZ_TO_POINTS = 100
  */
 function extractText(xml: string): string {
   const textMatches = xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)
-  return Array.from(textMatches, (m) => m[1]).join("").trim()
+  return decodeEntities(Array.from(textMatches, (m) => m[1]).join("")).trim()
 }
 
 /**
@@ -79,7 +81,9 @@ function parseParagraph(
   const pPrMatch = paragraphXml.match(/<a:pPr[^>]*>.*?<\/a:pPr>/s)
   const alignment = pPrMatch ? extractAlignment(pPrMatch[0]) : undefined
 
-  // Extract <a:rPr> for font properties
+  // Extract <a:rPr> for font properties.
+  // 段落の **最初の** run しか見ていない。同一段落内で書式が変わるデッキ
+  // （太字の途中挿入など）では2番目以降の run の書式を取りこぼす。BACKLOG B-33。
   const rPrMatch = paragraphXml.match(/<a:rPr[^>]*>.*?<\/a:rPr>/s)
   const fontSize = rPrMatch ? extractFontSize(rPrMatch[0]) : undefined
   const bold = rPrMatch ? extractBold(rPrMatch[0]) : undefined
@@ -137,11 +141,13 @@ function parseShape(
 
   const txBody = txBodyMatch[0]
 
-  // Extract all <a:p> paragraphs
+  // Extract all <a:p> paragraphs.
+  // 空段落は落とす。pptxgenjs は空行や 1pt のスペーサに run の無い <a:p> を出すが、
+  // HTML 側は同じものを段落として数えない（html-inspector の parseParagraph）
   const paragraphMatches = txBody.matchAll(/<a:p>.*?<\/a:p>/gs)
   const paragraphs = Array.from(paragraphMatches, (m) =>
     parseParagraph(m[0], defaultFontName)
-  )
+  ).filter((para) => para.text !== "")
 
   if (paragraphs.length === 0) return null
 
@@ -169,11 +175,18 @@ function parseSlide(
 
   for (const match of shapeMatches) {
     const shape = parseShape(match[0], defaultFontName)
-    if (shape) {
-      const shapeKey = `shape-${shapeIndex}`
-      inventory[shapeKey] = shape
-      shapeIndex++
-    }
+    if (!shape) continue
+
+    // キーは数えずに読む。レンダラが objectName で宣言したものが
+    // <p:cNvPr name="…"> に載っている（src/shape-keys.ts）
+    const name = match[0].match(/<p:cNvPr[^>]*\sname="([^"]*)"/)?.[1]
+
+    // 装飾（境界ボックス・塗り・コード背景）は3者比較の対象外
+    if (name && isDecoKey(name)) continue
+
+    // 名前が無いのは md2pptx 以外が作った pptx。位置で数える従来の挙動に落とす
+    inventory[name ?? `shape-${shapeIndex}`] = shape
+    shapeIndex++
   }
 
   return inventory
