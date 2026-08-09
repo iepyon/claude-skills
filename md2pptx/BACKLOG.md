@@ -48,6 +48,7 @@ B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュ�
 | [B-31](#b-31) | P2 | `LayoutPlugin` に足りないモデル | オントロジー |
 | [B-32](#b-32) | P2 | 存在しない保証を主張しているコメント・数え上げ | ツール品質 |
 | [B-33](#b-33) | P2 | 3者比較が見ていない残り | ツール品質 |
+| [B-34](#b-34) | P3 | 整理で見送った重複 | ツール品質 |
 
 ---
 
@@ -432,6 +433,31 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 `__tests__/three-way-verify.test.ts` が全デッキ + 非既定テーマ + 判定そのものを見る（25件、0.7秒）。
 `npm test` は 22 files / 444 tests → 23 files / 471 tests。
 
+**整理（4観点のレビュー後）**: 差分は「同じものを同じ名前で呼ぶ」と言いながら、
+自分でも写経を残していた。書式の判定（中央寄せ・コードのフォント）を
+`src/text-style.ts` に、実体参照のデコードを `src/entities.ts` に、本文の
+エスケープを `escapeText` 1本に寄せ、`deco:` の役割名を `shape-keys.ts` に入れた。
+併せて3つ:
+
+- **HTML と PPTX が同じ要素に違う名前を書いていた**（Material アイコンは
+  HTML が `icon-N`、PPTX が `deco:icon-N`）。どちらもテキストが無いため
+  誰も気付かなかった。HTML 側も `deco()` を使い、`html-inspector` にも
+  `isDecoKey` を効かせて、`deco:` を照合される規則にした
+- **空の IconBox を根元で止めた**。アイコン注釈の無い Steps / IconColumns /
+  IconCards は `icon: ""` の箱を作り、PPTX に `addText("")` の見えない図形を
+  出荷していた。`inventory.ts` の空判定で握り潰していたのを、
+  レイアウト側で出さないように直した（参照モデルを黙らせるのは向きが逆）
+- **HTML の脚を自己記述にした**。`extractInventoryFromHtml` の
+  `defaultFontName = "Arial"` は本番の唯一の呼び出し元（`cli.ts`）が
+  渡しておらず、`--theme` 付きの `--verify` はこの脚だけ決め打ちに戻っていた。
+  PPTX が `theme1.xml` を読むのと同じく、スライド div の
+  `data-default-font-name` を読むようにして引数ごと消した
+
+**共有すると比較では守れなくなる**点は明示しておく: 3脚が同じ関数を呼ぶので、
+その関数が間違えば3脚とも揃って間違い、`--verify` は緑のまま通る
+（実際、中央寄せの規則を壊しても three-way-verify は全件通った）。
+消した冗長性のぶんの検査は `text-style.test.ts` に置き直した。
+
 **副産物**: `src/tools/index.ts` の壊れた再輸出（存在しない `inspectHtml`）も直した。
 このバレルは CLAUDE.md が検証ユーティリティの入口として案内している当のもので、
 import するだけで実行時に throw していた。B-25 の8件のうち5件（これと
@@ -686,3 +712,30 @@ BodyText を warning）。
 
 **受け入れ基準**: 上の3点それぞれについて、直すか「直さない理由」を持つ。
 少なくとも幾何のみの図形が比較に入る。
+
+<a id="b-34"></a>
+### B-34: 整理で見送った重複
+
+**背景**: B-24 の差分を再利用・単純化・効率・深さの4観点でレビューし、写経は潰した。
+残りは「指摘は正しいが、直すと差分の外が主体になる」もの。まとめて1項目にしておく。
+
+- **改行 → `breakLine` の細工が4箇所**。`slide-builder.ts` の2箇所は
+  `withBreakLines` に寄せたが、`syntax-highlighter.ts` の `codeTextRunsToPptxRuns` は
+  独立したまま。空行の扱いが両者で違い、**段落数が一致しているのは
+  `pptx-inspector` の空段落フィルタが吸収しているから**で、構造的な保証ではない。
+  `splitRunsIntoLines` を土台にした1本にまとめれば、一致が偶然でなくなる
+- **デッキ一覧が3つのテストに独立して書かれている**（`e2e.test.ts:11`、
+  `ontology.test.ts:313`、`three-way-verify.test.ts:31`）。
+  デッキを足す・除外を変えるたびに3箇所を探すことになる
+- **`snapshot-comparison.test.ts` は同じ6手順を18回書き写している**。
+  `three-way-verify.test.ts` の `threeWay` と同じ形なので、共有ヘルパにして
+  fixture のループにできる
+- **`resolveIconOrFallback` にメモが無い**。`mi:` アイコン1つにつき SVG の
+  読み込みと base64 化が走り、3脚 + スライドの再利用で何度も繰り返す。
+  実測で1回 ~71µs・全デッキ ~2ms なので実害は小さいが、
+  `icon-resolver.ts` 側にメモを置けば3脚すべてが得をする
+- **`inventory-diff.ts` の `property` が2通り**（段落系は完全修飾、図形系は素の
+  `left` / `shape.exists`）。`verify.ts` の `locate` がその不揃いを吸収している。
+  `inventory-diff` 側で常に完全修飾にすれば `locate` が消える
+
+**受け入れ基準**: 各項目を直すか、直さない理由を持つ。

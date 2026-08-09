@@ -150,8 +150,7 @@ src/tools/
 ├── html-inspector.ts  HTML data-* 属性 → JSON 抽出
 ├── pptx-inspector.ts  PPTX XML → JSON 抽出
 ├── inventory-diff.ts  2つのインベントリの差分
-├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
-└── entities.ts        実体参照のデコード (両インスペクタで共有)
+└── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
 ```
 
 **図形の名前は数えずに宣言する。** `--verify` が突き合わせる図形のキーは
@@ -161,9 +160,13 @@ src/tools/
 境界ボックス・塗り・コード背景・SVG は `deco:` を付けて除外する
 （除外が生成物の中に書かれている状態を保つ）。
 
-**段落の数え方も1箇所** (`src/text-lines.ts`)。PPTX は改行ごとに `<a:p>` を出すので、
-HTML も AST インベントリも「1行 = 1段落」で数える。3脚が別々の規則を持つと、
-見た目が同じでも段落数が食い違って比較が落ちる。
+**段落の数え方**（`src/text-lines.ts`）と**書式の決め方**（`src/text-style.ts`）も1箇所。
+PPTX は改行ごとに `<a:p>` を出すので、HTML も AST インベントリも「1行 = 1段落」で数える。
+中央寄せとコードのフォントも同様。3脚が別々の規則を持つと、見た目が同じでも比較が落ちる。
+
+**ただし、共有した規則は3者比較では守れない。** 3脚が同じ関数を呼ぶので、その関数が
+間違っていれば3脚とも揃って間違う（比較は緑のまま）。冗長性を消したぶんの検査は
+`text-style.test.ts` が明示的に置き直している。共有モジュールを増やすときは同じ手当てが要る。
 
 ### 6. Batch: 複数 Markdown の一括 HTML 化
 
@@ -179,6 +182,8 @@ src/constants.ts    スライド寸法・マージン・GAP 等のレイアウ�
 src/errors.ts       ParseError, ValidationError, RenderError (Tagged errors)
 src/shape-keys.ts   3者比較で図形を指す名前 (レンダラとツールが共有)
 src/text-lines.ts   「1行 = 1段落」の切り出し (レンダラとツールが共有)
+src/text-style.ts   中央寄せ・コードのフォントの判定 (レンダラとツールが共有)
+src/entities.ts     実体参照のデコード (レンダラとツールが共有)
 ```
 
 `constants.ts` は layout/ 内の全ファイルが参照する。座標調整や新レイアウト追加時に必ず確認。
@@ -203,7 +208,7 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 - 箇条書きの描画: `block-formatter.ts` が Paragraph[] に変換し、PPTX はネイティブバレット・HTML は CSS 疑似要素で記号を描く (リテラルの `•` は書かない — 二重表示になる)
 - 新レイアウト追加時: `ontology.yaml` の `layouts` に宣言 → `plugins/` にプラグインフォルダを作成 → `plugins/index.ts` に import 追加 → `gen-ontology-doc.ts` を実行。宣言が無いと最初のトークン化で落ちる（ドキュメントにも lint にも現れないレイアウトを作らせないため）
 - スライド ID の採番: `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
-- HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` は `html-inspector` 用なので触らない
+- HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` と `data-default-font-name` は `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
 
 ## Plugin System
@@ -273,6 +278,7 @@ src/plugins/
 | `theme.test.ts` | schema/theme.ts (YAML テーマ読み込み) |
 | `snapshot-comparison.test.ts` | tools/ (コアレイアウト6種のインベントリ比較) |
 | `three-way-verify.test.ts` | tools/ (実在する全デッキの3者比較 + 食い違いの判定) |
+| `text-style.test.ts` | text-style.ts (3脚が共有する書式規則 — 共有したぶん比較では守れない) |
 | `cli.test.ts` | cli.ts (CLI 引数・ファイル出力) |
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
