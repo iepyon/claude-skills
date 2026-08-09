@@ -1,0 +1,18 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <path d="M54 200 C120 201.5 200 198.6 300 200.4" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M54.6 200 C53.2 160 55.2 118 54 70" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M302 200 l-9 -5 l0 10 z" fill="#4B5563"/>
+  <path d="M54 68 l-5 9 l10 0 z" fill="#4B5563"/>
+
+  <path d="M72 116 C130 112.5 200 118 292 122.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="120" y="104" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">説明そのもの</text>
+
+  <path d="M72 188 C132 181 190 152 292 84" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round"/>
+  <text x="236" y="70" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">ジワジワくる名前</text>
+
+  <text x="78" y="60" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">伝わる量</text>
+  <text x="186" y="222" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">使った回数</text>
+
+  <text x="170" y="252" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">使った回数だけ、像が溜まる</text>
+  <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">一度で伝わる名前は、そこで満杯</text>
+</svg>
