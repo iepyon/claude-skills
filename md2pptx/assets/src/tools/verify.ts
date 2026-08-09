@@ -31,22 +31,20 @@ export function verifyInventories(
   pptx: SlideInventory,
   html: SlideInventory
 ): VerifyReport {
-  const pairs = [
-    { label: "PPTX vs Expected", leftName: "expected", rightName: "PPTX", left: ast, right: pptx },
-    { label: "HTML vs Expected", leftName: "expected", rightName: "HTML", left: ast, right: html },
-    { label: "PPTX vs HTML", leftName: "PPTX", rightName: "HTML", left: pptx, right: html },
-  ]
+  // DiffResult がちょうど { matches, mismatches } なので、脚の名前だけ足せば足りる
+  const leg = (
+    label: string,
+    leftName: string,
+    rightName: string,
+    left: SlideInventory,
+    right: SlideInventory
+  ): VerifyLeg => ({ label, leftName, rightName, ...diffInventory(left, right) })
 
-  const legs = pairs.map((pair) => {
-    const diff = diffInventory(pair.left, pair.right)
-    return {
-      label: pair.label,
-      leftName: pair.leftName,
-      rightName: pair.rightName,
-      matches: diff.matches,
-      mismatches: diff.mismatches,
-    }
-  })
+  const legs = [
+    leg("PPTX vs Expected", "expected", "PPTX", ast, pptx),
+    leg("HTML vs Expected", "expected", "HTML", ast, html),
+    leg("PPTX vs HTML", "PPTX", "HTML", pptx, html),
+  ]
 
   return {
     legs,

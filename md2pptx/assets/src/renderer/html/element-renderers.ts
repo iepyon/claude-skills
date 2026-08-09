@@ -1,7 +1,9 @@
 import { Theme } from "../../schema/index.js"
-import { TextBox, BorderBox, IconBox, CodeBox, ShapeBox, InlineTextRun } from "../layout/index.js"
+import { TextBox, BorderBox, IconBox, CodeBox, ShapeBox, InlineTextRun, Paragraph } from "../layout/index.js"
 import { resolveIconOrFallback } from "../icon-resolver.js"
 import { splitRunsIntoLines, splitTextIntoLines } from "../../text-lines.js"
+import { isCentered, runFontFace } from "../../text-style.js"
+import { deco } from "../../shape-keys.js"
 
 // Convert inches to pixels for CSS (96 DPI standard)
 const inchesToPx = (inches: number): number => inches * 96
@@ -11,9 +13,7 @@ const hexToColor = (hex: string): string => (hex ? `#${hex}` : "transparent")
 
 export { inchesToPx, hexToColor }
 
-// 属性値のエスケープ。run.text 用のエスケープとは別に必要
-// （href は本文ではないので、シングルクォートまで潰しておく）。
-// 本文用のエスケープ。richTextToHtml と同じ規則（属性用の escapeAttr とは別物）
+// 本文のエスケープ。テキストを DOM に出す箇所はすべてここを通す。
 const escapeText = (value: string): string =>
   value
     .replace(/&/g, "&amp;")
@@ -21,24 +21,16 @@ const escapeText = (value: string): string =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
 
-const escapeAttr = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
+// 属性値のエスケープ。本文用とは別に必要
+// （href は本文ではないので、シングルクォートまで潰しておく）。
+const escapeAttr = (value: string): string => escapeText(value).replace(/'/g, "&#39;")
 
 /**
  * InlineTextRun[] を HTML に変換
  */
 function richTextToHtml(runs: InlineTextRun[]): string {
   return runs.map(run => {
-    let html = run.text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+    let html = escapeText(run.text)
 
     if (run.code) {
       html = `<code style="background: #f0f0f0; padding: 2px 4px; border-radius: 3px; font-family: Courier New, monospace;">${html}</code>`
@@ -131,12 +123,28 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
       box.fontSize ? `data-font-size="${box.fontSize}"` : "",
       box.color ? `data-color="${box.color}"` : "",
       firstRun?.bold || box.isBold ? `data-bold="true"` : "",
-      isTitleSlide || box.align === "center" ? `data-alignment="CENTER"` : "",
-      // 分かるときだけ出す。無ければ html-inspector がテーマの本文フォントに落とす
-      firstRun?.code ? `data-font-name="Courier New"` : box.fontFace ? `data-font-name="${escapeAttr(box.fontFace)}"` : "",
+      isCentered(box, isTitleSlide) ? `data-alignment="CENTER"` : "",
+      // 分かるときだけ出す。無ければ html-inspector が生成物の既定フォントに落とす
+      firstRun?.code || box.fontFace
+        ? `data-font-name="${escapeAttr(runFontFace(box, firstRun, ""))}"`
+        : "",
     ]
       .filter(Boolean)
       .join(" ")
+
+  const renderParagraph = (para: Paragraph, runs: InlineTextRun[]): string => {
+    const attrs = paraDataAttrs(runs[0])
+    if (!para.bullet) {
+      return `<p class="para-plain" ${attrs}>${richTextToHtml(runs)}</p>`
+    }
+    if (para.bullet.type === "bullet") {
+      return `<p class="para-bullet" ${attrs}>${richTextToHtml(runs)}</p>`
+    }
+    // 番号付き: この項目自身の番号を counter-reset で宣言し、
+    // .para-number の counter-increment がそれを +1 して確定させる。
+    const startAt = para.bullet.startAt ?? 1
+    return `<p class="para-number" style="counter-reset: para-num ${startAt - 1}" ${attrs}>${richTextToHtml(runs)}</p>`
+  }
 
   // display: flex の子は1つに保つ。段落は stack 側で縦に積む。
   // 段落が個別の <p> になったので改行の保持は不要（<p> 間の余白の可視化も防ぐ）。
@@ -145,39 +153,18 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     return `<div class="text-box" style="${listStyle}" ${dataAttrs}><div class="para-stack">${items}</div></div>`
   }
 
-  if (box.paragraphs) {
-    const items = box.paragraphs
-      .flatMap(para => {
-        // run の途中の改行も1行 = 1段落として割る（PPTX の breakLine と同じ）
-        const lines = splitRunsIntoLines(para.runs)
-        return lines.map(runs => {
-          const attrs = paraDataAttrs(runs[0])
-          if (!para.bullet) {
-            return `<p class="para-plain" ${attrs}>${richTextToHtml(runs)}</p>`
-          }
-          if (para.bullet.type === "bullet") {
-            return `<p class="para-bullet" ${attrs}>${richTextToHtml(runs)}</p>`
-          }
-          // 番号付き: この項目自身の番号を counter-reset で宣言し、
-          // .para-number の counter-increment がそれを +1 して確定させる。
-          const startAt = para.bullet.startAt ?? 1
-          return `<p class="para-number" style="counter-reset: para-num ${startAt - 1}" ${attrs}>${richTextToHtml(runs)}</p>`
-        })
-      })
-      .join("")
+  // 3つの表現（paragraphs / richText / 素のテキスト）を Paragraph[] に正規化して
+  // から1経路で描く。分岐ごとに書くと、html-inspector が読む data-* の契約が
+  // 3箇所に散る。
+  const paragraphs: Paragraph[] =
+    box.paragraphs ??
+    (box.richText
+      ? [{ runs: box.richText }]
+      : splitTextIntoLines(box.text ?? "").map((text) => ({ runs: [{ text }] })))
 
-    return stack(items)
-  }
-
-  if (box.richText) {
-    const items = splitRunsIntoLines(box.richText)
-      .map(runs => `<p class="para-plain" ${paraDataAttrs(runs[0])}>${richTextToHtml(runs)}</p>`)
-      .join("")
-    return stack(items)
-  }
-
-  const items = splitTextIntoLines(box.text ?? "")
-    .map(line => `<p class="para-plain" ${paraDataAttrs()}>${escapeText(line)}</p>`)
+  const items = paragraphs
+    // run の途中の改行も1行 = 1段落として割る（PPTX の breakLine と同じ）
+    .flatMap((para) => splitRunsIntoLines(para.runs).map((runs) => renderParagraph(para, runs)))
     .join("")
 
   return stack(items)
@@ -270,7 +257,9 @@ export function iconBoxToHtml(box: IconBox, shapeId?: string): string {
     ].join("; ")
 
     const dataAttrs = [
-      shapeId ? `data-shape-id="${shapeId}"` : "",
+      // PPTX は addImage で描くのでテキストが無い。HTML も同じく無いので、
+      // 両方とも deco: を付けて「同じ要素に同じ名前」を保つ
+      shapeId ? `data-shape-id="${deco(shapeId)}"` : "",
       `data-icon-type="svg"`,
       `data-inches-x="${box.x}"`,
       `data-inches-y="${box.y}"`,
@@ -361,7 +350,7 @@ export function shapeBoxToHtml(box: ShapeBox, shapeId?: string): string {
     ].join("; ")
 
     const dataAttrs = [
-      shapeId ? `data-shape-id="${shapeId}"` : "",
+      shapeId ? `data-shape-id="${deco(shapeId)}"` : "",
       `data-shape-type="svg"`,
       `data-inches-x="${box.x}"`,
       `data-inches-y="${box.y}"`,
@@ -388,7 +377,7 @@ export function shapeBoxToHtml(box: ShapeBox, shapeId?: string): string {
     ].join("; ")
 
     const dataAttrs = [
-      shapeId ? `data-shape-id="${shapeId}"` : "",
+      shapeId ? `data-shape-id="${deco(shapeId)}"` : "",
       `data-shape-type="line"`,
       `data-inches-x="${box.x}"`,
       `data-inches-y="${box.y}"`,
@@ -428,7 +417,9 @@ export function shapeBoxToHtml(box: ShapeBox, shapeId?: string): string {
     .join("; ")
 
   const dataAttrs = [
-    shapeId ? `data-shape-id="${shapeId}"` : "",
+    // テキストがあれば PPTX のテキストオーバーレイと同じキー、無ければ
+    // 塗りしか無いので PPTX の塗りと同じ deco 名になる
+    shapeId ? `data-shape-id="${box.text ? shapeId : deco(shapeId, "fill")}"` : "",
     `data-shape-type="${box.shapeType}"`,
     `data-inches-x="${box.x}"`,
     `data-inches-y="${box.y}"`,
@@ -445,9 +436,7 @@ export function shapeBoxToHtml(box: ShapeBox, shapeId?: string): string {
     .filter(Boolean)
     .join(" ")
 
-  const content = box.text
-    ? box.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    : ""
+  const content = box.text ? escapeText(box.text) : ""
 
   return `<div class="shape-box" style="${style}" ${dataAttrs}>${content}</div>`
 }

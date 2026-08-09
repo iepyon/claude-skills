@@ -33,13 +33,13 @@ export function splitRunsIntoLines<T extends { text: string }>(
   }
   lines.push(current)
 
-  if (options.keepBlank) {
-    // 末尾の空行だけは落とす（"a\n" は1行であって2行ではない）
-    while (lines.length > 0 && lines[lines.length - 1].length === 0) lines.pop()
-    return lines
-  }
+  // 末尾の空行は落とす（"a\n" は1行であって2行ではない）。
+  // これは両モード共通 — keepBlank でも末尾だけは行として数えない
+  while (lines.length > 0 && lines[lines.length - 1].length === 0) lines.pop()
 
-  return lines.filter((line) => line.some((run) => run.text.trim() !== ""))
+  return options.keepBlank
+    ? lines
+    : lines.filter((line) => line.some((run) => run.text.trim() !== ""))
 }
 
 export const runsToText = (runs: readonly { text: string }[]): string =>

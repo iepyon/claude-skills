@@ -2,8 +2,9 @@ import PptxGenJS from "pptxgenjs"
 import { Effect } from "effect"
 import { RenderError } from "../../errors.js"
 import { PARA_SPACE_AFTER } from "../../constants.js"
-import { textKey, iconKey, codeKey, shapeBoxKey, deco } from "../../shape-keys.js"
+import { textKey, iconKey, codeKey, shapeBoxKey, borderKey, deco } from "../../shape-keys.js"
 import { splitTextIntoLines } from "../../text-lines.js"
+import { isCentered } from "../../text-style.js"
 import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
 import { resolveIconOrFallback } from "../icon-resolver.js"
@@ -25,6 +26,25 @@ function bulletToPptxOption(bullet: NonNullable<Paragraph["bullet"]>): unknown {
     type: "number",
     ...(bullet.startAt !== undefined ? { numberStartAt: bullet.startAt } : {}),
   }
+}
+
+/**
+ * 行を pptxgenjs の TextRun[] にする。最後の行以外に breakLine を立てる。
+ *
+ * 素の文字列を渡してはならない。pptxgenjs の STEP 4-C
+ * (dist/pptxgen.cjs.js:6165) は **共有の options オブジェクト** に
+ * breakLine=true を立ててから全断片を push するため、
+ * (1) 最後の断片にも改行が付いて続く run が1行余計に下がり、
+ * (2) 末尾が改行の文字列は `match(/\n$/g) === null` ガードでそもそも分割されない。
+ */
+function withBreakLines<T extends object>(
+  texts: readonly string[],
+  options: T
+): Array<{ text: string; options: T & { breakLine?: true } }> {
+  return texts.map((text, i) => ({
+    text,
+    options: i < texts.length - 1 ? { ...options, breakLine: true as const } : options,
+  }))
 }
 
 /**
@@ -66,15 +86,8 @@ function inlineTextRunsToPptxRuns(
       }
     }
 
-    // 改行を含む run は自分で分割する。pptxgenjs に渡すと STEP 4-C
-    // (dist/pptxgen.cjs.js:6165) が **共有の options オブジェクト** に
-    // breakLine=true を立ててから全断片を push するため、最後の断片にも
-    // 改行が付き、続く run が余計に1行下がる（リンクだけ次行に落ちる等）。
-    const fragments = run.text.split("\n")
-    return fragments.map((text, i) => ({
-      text,
-      options: i < fragments.length - 1 ? { ...options, breakLine: true } : { ...options },
-    }))
+    // 改行を含む run は自分で分割する（理由は withBreakLines の説明）
+    return withBreakLines(run.text.split("\n"), options)
   })
 }
 
@@ -111,7 +124,7 @@ export function buildSlide(
     if (borderBoxes && !codeBoxes) {
       borderBoxes.forEach((border, index) => {
         pptxSlide.addShape(pptx.ShapeType.roundRect, {
-          objectName: deco(`border-${index}`),
+          objectName: deco(borderKey(index)),
           x: border.x,
           y: border.y,
           w: border.w,
@@ -126,7 +139,7 @@ export function buildSlide(
         // アクセントバー描画（IconCardLayout用）
         if (border.accentColor) {
           pptxSlide.addShape(pptx.ShapeType.rect, {
-            objectName: deco(`border-${index}-accent`),
+            objectName: deco(borderKey(index), "accent"),
             x: border.x,
             y: border.y,
             w: border.w,
@@ -182,7 +195,7 @@ export function buildSlide(
       codeBoxes.forEach((codeBox, index) => {
         // 1. ダーク背景を描画
         pptxSlide.addShape(pptx.ShapeType.roundRect, {
-          objectName: deco(`${codeKey(index)}-bg`),
+          objectName: deco(codeKey(index), "bg"),
           x: codeBox.x,
           y: codeBox.y,
           w: codeBox.w,
@@ -241,10 +254,11 @@ export function buildSlide(
             ? pptx.ShapeType.ellipse
             : pptx.ShapeType.rect
 
-          // テキストがあるときは、キーを取るのはテキストを運ぶオーバーレイのほう。
-          // HTML はこの2つを1つの div で描くので、テキスト側が対応物になる
+          // キーを取るのはテキストを運ぶオーバーレイのほう。HTML はこの2つを
+          // 1つの div で描くので、テキスト側が対応物になる。塗りは常に "fill"
+          // ——テキストの有無で名前を変えると、同じ役割の図形が2つの名前を持つ
           pptxSlide.addShape(shapeType, {
-            objectName: deco(shape.text ? `${shapeBoxKey(index)}-fill` : shapeBoxKey(index)),
+            objectName: deco(shapeBoxKey(index), "fill"),
             x: shape.x,
             y: shape.y,
             w: shape.w,
@@ -277,8 +291,23 @@ export function buildSlide(
 
     // テキストボックスを描画
     textBoxes.forEach((box, boxIndex) => {
-      const align = box.align === "center" ? "center" : (slide._tag === "TitleSlide" ? "center" : "left")
-      const valign = box.valign || (box.align === "center" ? "middle" : (slide._tag === "TitleSlide" ? "middle" : "top"))
+      const centered = isCentered(box, slide._tag === "TitleSlide")
+      // リテラル型を保つ。object literal に入れると string に広がり、
+      // pptxgenjs の TextPropsOptions が受け付けなくなる
+      const align: "center" | "left" = centered ? "center" : "left"
+      const valign = box.valign || (centered ? "middle" : "top")
+
+      // 3分岐が共有する箱の指定。ここに1つ足すと3箇所に散るのを防ぐ
+      const boxOpts = {
+        objectName: textKey(boxIndex),
+        x: box.x,
+        y: box.y,
+        w: box.w,
+        h: box.h,
+        align,
+        valign,
+        ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
+      }
 
       // paragraphs がある場合は段落ごとに bullet/breakLine を付けて描画
       if (box.paragraphs) {
@@ -305,17 +334,7 @@ export function buildSlide(
             },
           }))
         })
-        pptxSlide.addText(pptxRuns, {
-          objectName: textKey(boxIndex),
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
-          align,
-          valign,
-          paraSpaceAfter: PARA_SPACE_AFTER,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-        })
+        pptxSlide.addText(pptxRuns, { ...boxOpts, paraSpaceAfter: PARA_SPACE_AFTER })
       } else if (box.richText) {
         const pptxRuns = inlineTextRunsToPptxRuns(
           box.richText,
@@ -326,22 +345,9 @@ export function buildSlide(
           box.isItalic || false,
           slideNumberById
         )
-        pptxSlide.addText(pptxRuns, {
-          objectName: textKey(boxIndex),
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
-          align,
-          valign,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-        })
+        pptxSlide.addText(pptxRuns, boxOpts)
       } else {
-        // 既存のシンプルテキストパス（後方互換性）。
-        // 改行は自分で行に割って breakLine を立てる。素の文字列を渡すと
-        // pptxgenjs の STEP 4-C が **末尾が改行の文字列をまったく分割せず**
-        // (dist/pptxgen.cjs.js:6165 の `match(/\n$/g) === null` ガード)、
-        // 生の改行を含む1つの <a:p> になって段落数が HTML と食い違う。
+        // 既存のシンプルテキストパス（後方互換性）
         const runOptions = {
           fontSize: box.fontSize || 14,
           bold: box.isBold || false,
@@ -349,24 +355,10 @@ export function buildSlide(
           color: box.color,
           fontFace: box.fontFace || theme.fonts.body,
         }
-        const lines = splitTextIntoLines(box.text ?? "")
-        pptxSlide.addText(
-          lines.map((text, i) => ({
-            text,
-            options: i < lines.length - 1 ? { ...runOptions, breakLine: true } : { ...runOptions },
-          })),
-          {
-            objectName: textKey(boxIndex),
-            x: box.x,
-            y: box.y,
-            w: box.w,
-            h: box.h,
-            ...runOptions,
-            align,
-            valign,
-            ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-          }
-        )
+        pptxSlide.addText(withBreakLines(splitTextIntoLines(box.text ?? ""), runOptions), {
+          ...boxOpts,
+          ...runOptions,
+        })
       }
     })
   })

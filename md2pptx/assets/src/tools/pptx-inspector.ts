@@ -7,8 +7,8 @@ import {
   ShapeInventory,
   SlideInventory,
 } from "./inventory.js"
-import { isDecoKey } from "../shape-keys.js"
-import { decodeEntities } from "./entities.js"
+import { isDecoKey, textKey } from "../shape-keys.js"
+import { decodeEntities } from "../entities.js"
 
 // EMU (English Metric Units) to inches conversion
 // 1 inch = 914400 EMU
@@ -174,19 +174,19 @@ function parseSlide(
   let shapeIndex = 0
 
   for (const match of shapeMatches) {
-    const shape = parseShape(match[0], defaultFontName)
-    if (!shape) continue
-
     // キーは数えずに読む。レンダラが objectName で宣言したものが
     // <p:cNvPr name="…"> に載っている（src/shape-keys.ts）
     const name = match[0].match(/<p:cNvPr[^>]*\sname="([^"]*)"/)?.[1]
 
-    // 装飾（境界ボックス・塗り・コード背景）は3者比較の対象外
+    // 装飾（境界ボックス・塗り・コード背景）は3者比較の対象外。
+    // パースより先に判定する — 捨てるものを組み立てる必要はない
     if (name && isDecoKey(name)) continue
 
+    const shape = parseShape(match[0], defaultFontName)
+    if (!shape) continue
+
     // 名前が無いのは md2pptx 以外が作った pptx。位置で数える従来の挙動に落とす
-    inventory[name ?? `shape-${shapeIndex}`] = shape
-    shapeIndex++
+    inventory[name ?? textKey(shapeIndex++)] = shape
   }
 
   return inventory

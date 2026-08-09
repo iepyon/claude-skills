@@ -2,8 +2,9 @@ import { Effect as E, pipe } from "effect"
 import * as A from "effect/Array"
 import * as O from "effect/Option"
 import { ParseError } from "../errors.js"
-import { decodeEntities } from "./entities.js"
+import { decodeEntities } from "../entities.js"
 import { splitTextIntoLines } from "../text-lines.js"
+import { isDecoKey } from "../shape-keys.js"
 
 /**
  * Paragraph data extracted from HTML
@@ -275,12 +276,7 @@ const extractElements = (html: string, dataAttr: string): Array<{ id: string; co
  * @param html - HTML string with data-inches-* attributes
  * @returns Effect that yields SlideInventory or ParseError
  */
-export const extractInventoryFromHtml = (
-  html: string,
-  // 既定は DEFAULT_THEME の本文フォント。data-font-name が無い要素の落とし先で、
-  // ここを定数にしておくと --theme 付きのデッキで PPTX 側とだけ食い違う
-  defaultFontName: string = "Arial"
-): E.Effect<SlideInventory, ParseError> =>
+export const extractInventoryFromHtml = (html: string): E.Effect<SlideInventory, ParseError> =>
   E.gen(function* () {
     const slides = extractElements(html, "data-slide-id")
 
@@ -293,10 +289,20 @@ export const extractInventoryFromHtml = (
     const inventory: Record<string, Record<string, ShapeData>> = {}
 
     for (const slide of slides) {
+      // data-font-name の無い段落の落とし先。生成物が自分で名乗るので、
+      // 読む側は定数を持たない（pptx-inspector が theme1.xml を読むのと同じ）
+      const defaultFontName =
+        slide.content.match(/data-default-font-name="([^"]*)"/)?.[1] ?? "Arial"
+
       const shapes = extractElements(slide.content, "data-shape-id")
       const shapeData: Record<string, ShapeData> = {}
 
       for (const shape of shapes) {
+        // 装飾は3者比較の対象外（pptx-inspector と同じ規則）。
+        // どのみちテキストが無くて落ちるが、規則を両インスペクタに持たせて
+        // おかないと deco: が「付いているだけで誰も見ない印」になる
+        if (isDecoKey(shape.id)) continue
+
         const parsed = parseShape(shape.content, defaultFontName)
         if (O.isSome(parsed)) {
           shapeData[shape.id] = parsed.value

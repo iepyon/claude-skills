@@ -1,4 +1,5 @@
 import hljs from "highlight.js"
+import { decodeEntities } from "../entities.js"
 
 // CodeTextRun: テキストラン（色付き）
 export interface CodeTextRun {
@@ -29,16 +30,6 @@ const TOKEN_COLORS: Record<string, string> = {
   "hljs-name": "4EC9B0", // HTML tag name
 }
 
-// HTMLエンティティをデコード
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-}
-
 // クラス名からトークン色を解決（マルチクラス対応）
 function resolveTokenColor(className: string, defaultColor: string): string {
   if (TOKEN_COLORS[className]) return TOKEN_COLORS[className]
@@ -56,7 +47,7 @@ export function parseHljsHtml(html: string, defaultColor: string): CodeTextRun[]
   while (i < html.length) {
     if (html[i] === "<") {
       if (currentText) {
-        runs.push({ text: decodeHtmlEntities(currentText), color: colorStack[colorStack.length - 1] })
+        runs.push({ text: decodeEntities(currentText), color: colorStack[colorStack.length - 1] })
         currentText = ""
       }
       if (html.startsWith("</span>", i)) {
@@ -78,7 +69,7 @@ export function parseHljsHtml(html: string, defaultColor: string): CodeTextRun[]
     }
   }
   if (currentText) {
-    runs.push({ text: decodeHtmlEntities(currentText), color: colorStack[colorStack.length - 1] })
+    runs.push({ text: decodeEntities(currentText), color: colorStack[colorStack.length - 1] })
   }
   return runs
 }
@@ -118,17 +109,6 @@ export function codeTextRunsToPptxRuns(textRuns: CodeTextRun[], fontFace: string
     }
   }
   return pptxRuns
-}
-
-// HTML用: コードをハイライトしてHTMLを返す
-export function highlightForHtml(code: string, language: string): string {
-  try {
-    const result = hljs.highlight(code, { language, ignoreIllegals: true })
-    return result.value
-  } catch (error) {
-    // 言語が未対応の場合はHTMLエスケープして返す
-    return code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-  }
 }
 
 // HTML用: シンタックスハイライトCSS

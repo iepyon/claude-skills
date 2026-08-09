@@ -8,6 +8,9 @@ import { textKey, iconKey, codeKey, shapeBoxKey } from "../../shape-keys.js"
 // id= を使わないのは、Wiki のホバープレビューがスライド DOM を cloneNode するため
 // （id= だとプレビューを開くたびに ID が重複する）。
 // data-slide-id="slide-N" は html-inspector が要素を切り出す鍵なので触らない。
+// data-default-font-name も同じく html-inspector 用。PPTX が theme1.xml に
+// 既定フォントを持っているのと同じで、HTML も自分で名乗る — 読む側が
+// 定数を持つと --theme を使ったときにその脚だけ食い違う。
 const slideKeyAttr = (slide: Slide): string =>
   slide.id ? ` data-slide-key="${slide.id.replace(/"/g, "&quot;")}"` : ""
 
@@ -26,7 +29,7 @@ const renderTitleSlide: SlideRenderer = (slide, theme, slideIndex) => {
     .join("\n    ")
 
   const slideHtml = `
-  <div class="slide title-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} style="background-color: ${backgroundColor}">
+  <div class="slide title-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} data-default-font-name="${theme.fonts.body}" style="background-color: ${backgroundColor}">
     ${textBoxesHtml}
   </div>`
 
@@ -61,7 +64,7 @@ const renderContentSlide: SlideRenderer = (slide, theme, slideIndex) => {
     .join("\n    ")
 
   const slideHtml = `
-  <div class="slide content-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} style="background-color: ${backgroundColor}">
+  <div class="slide content-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} data-default-font-name="${theme.fonts.body}" style="background-color: ${backgroundColor}">
     ${borderBoxesHtml}
     ${shapeBoxesHtml}
     ${iconBoxesHtml}

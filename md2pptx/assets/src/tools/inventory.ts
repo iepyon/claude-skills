@@ -5,6 +5,7 @@ import { Slide } from "../schema/index.js"
 import { Theme } from "../schema/theme.js"
 import { textKey, iconKey, codeKey, shapeBoxKey } from "../shape-keys.js"
 import { splitRunsIntoLines, splitTextIntoLines, runsToText } from "../text-lines.js"
+import { isCentered, runFontFace } from "../text-style.js"
 import type { InlineTextRun } from "../renderer/layout/types.js"
 
 // Inventory types matching test-inventory.json structure
@@ -54,11 +55,6 @@ export function boxToLines(box: TextBox): InventoryLine[] {
   return splitTextIntoLines(box.text ?? "").map((text) => ({ text }))
 }
 
-// 後方互換: テキストだけが要る呼び出し向け
-export function boxToParagraphTexts(box: TextBox): string[] {
-  return boxToLines(box).map((line) => line.text)
-}
-
 // Convert one paragraph of a TextBox to ParagraphInventory
 function textBoxToParagraph(
   box: TextBox,
@@ -67,19 +63,14 @@ function textBoxToParagraph(
   isTitleSlide: boolean
 ): ParagraphInventory {
   const { text, firstRun } = line
-  // 中央寄せの判定は両レンダラと同じ式にする
-  // (pptx/slide-builder.ts の align、html/element-renderers.ts の isTitleSlide || box.align)
-  const centered = box.align === "center" || isTitleSlide
-
-  // 書式は行の **先頭 run** から取る。PPTX は段落の最初の <a:rPr> しか
-  // 持ち出せず（pptx-inspector）、レンダラも run ごとに決めているため。
+  // 太字だけはここで決める（先頭 run と箱のどちらかが太字なら太字）。
+  // 中央寄せとフォントは text-style.ts の共有規則を使う。
   const bold = firstRun?.bold || box.isBold
-  const fontFace = firstRun?.code ? "Courier New" : (box.fontFace ?? fontName)
 
   const paragraph: ParagraphInventory = {
     text,
-    ...(centered ? { alignment: "CENTER" as const } : {}),
-    font_name: fontFace,
+    ...(isCentered(box, isTitleSlide) ? { alignment: "CENTER" as const } : {}),
+    font_name: runFontFace(box, firstRun, fontName),
     font_size: box.fontSize ?? 16,
     ...(bold ? { bold: true } : {}),
     color: box.color ?? "000000",
@@ -204,8 +195,7 @@ function layoutResultToSlideInventory(
   // テキストを持つシェイプだけ。PPTX では塗りとテキストが別図形になるが、
   // キーを取るのはテキスト側（HTML は1つの div で両方を描く）
   result.shapeBoxes?.forEach((box, index) => {
-    if (!box.text) return
-    put(shapeBoxKey(index), shapeBoxToShape(box, box.text, fontName))
+    put(shapeBoxKey(index), shapeBoxToShape(box, box.text ?? "", fontName))
   })
 
   return inventory
