@@ -66,7 +66,7 @@ npx tsx src/cli.ts input.md output.pptx --compress
 |--------|-------------|
 | `--html` | Generate HTML instead of PPTX |
 | `--verify` | Generate PPTX + HTML, then compare both against the AST inventory. Exits non-zero if the three disagree |
-| `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory) |
+| `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory). A directory's deck order comes from its `order.yaml` (`decks:` — file names without the extension); without it, decks are ordered by file name. Renaming a deck to reorder it would break `[[deck/slide]]` links, so declare the order instead |
 | `--site-title <text>` | Title of the wiki site (with `--wiki`) |
 | `--theme <path>`, `-t <path>` | YAML theme file (falls back to `DEFAULT_THEME`) |
 | `--compress`, `-c` | Enable ZIP compression in pptxgenjs (default: off) |
@@ -181,6 +181,7 @@ src/
   pipeline.ts         parse → validate → render
   batch-html.ts       drafts/*.md → htmls/*.html + index.html
   constants.ts        Slide dimensions, margins, gaps
+  deck-order.ts       Deck order for a directory of decks (doc/wiki/order.yaml)
   errors.ts           Tagged errors (ParseError, ValidationError, RenderError)
   parser/             Markdown → AST (tokenizer, ast-builder, handlers/,
                       block-formatter, inline-formatter, slide-converter)
