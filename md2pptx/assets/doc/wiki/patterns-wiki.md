@@ -17,7 +17,7 @@
 ### 手入れ: [[剪定]]
 ### 束ねる: [[収穫]]
 ### AI: [[patterns-llm-wiki/LLM-Wiki|LLM Wiki]]
-### 探索: [[patterns-scrum/探し方|ゴールは後から決まる]]
+### 探索: [[patterns-goal-search/探し方|ゴールは後から決まる]]
 ### 背景: [[intro-wiki/育てる理由|第1部 なぜ育てるのか]]
 
 ---
