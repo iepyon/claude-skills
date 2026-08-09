@@ -157,8 +157,10 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 
 リンクの解決順は、① `deck/slide` の明示 → ② 自デッキ内 → ③ サイト全体で一意 →
 ④ 未解決（複数一致しても選ばない。サイドバーに一覧が出る）。
-サンプルは `doc/wiki/`（機能ガイド + 人が育てる Wiki / LLM が手入れする Wiki / 自律エージェント /
-スクラムのパターンの5デッキ。パターンは互いにデッキをまたいで参照し合う）。
+サンプルは `doc/wiki/`（機能ガイド + パターンの4主題 × 2デッキの9デッキ。パターンは互いに
+デッキをまたいで参照し合う）。パターンの主題は**2部構成**で、第1部（`intro-*`）が背景・目的と
+語彙を使ったショートストーリー（始める → 続ける → 繋げる → 新しい種を撒く）、第2部（`patterns-*`）が
+パターンのカタログ。対になるので `order.yaml` では隣り合わせに置く。
 
 **デッキの並び順**は、ディレクトリ直下の `order.yaml` で宣言する（サイドバーの並びと
 `Shift + ← →` で送る順）。無ければファイル名順。
@@ -166,6 +168,7 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 ```yaml
 decks: # 拡張子を除いたファイル名
   - guide
+  - intro-human
   - patterns-human
 ```
 
