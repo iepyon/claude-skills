@@ -9,6 +9,7 @@ import { inspectPptx } from "./tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "./tools/html-inspector.js"
 import { verifyInventories, printVerifyReport } from "./tools/verify.js"
 import { formatDiagnostic, lintSource, shouldFail, type Diagnostic } from "./ontology/lint.js"
+import { orderDeckFiles, DECK_ORDER_FILE } from "./deck-order.js"
 
 const args = process.argv.slice(2)
 
@@ -46,15 +47,26 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-/** ディレクトリなら *.md をソートして展開、ファイルならそれ自身。重複は落とす */
+/**
+ * ディレクトリなら *.md をソートして展開、ファイルならそれ自身。重複は落とす。
+ * ディレクトリに `order.yaml` があれば、その宣言がファイル名順より優先する
+ * （Wiki のデッキの並びは、リンク先を兼ねるファイル名ではなく宣言で決める）。
+ */
 function collectMarkdownFiles(paths: readonly string[]): string[] {
   const files: string[] = []
   for (const path of paths) {
     if (statSync(path).isDirectory()) {
-      readdirSync(path)
+      const found = readdirSync(path)
         .filter((f) => f.endsWith(".md"))
         .sort()
-        .forEach((f) => files.push(join(path, f)))
+        .map((f) => join(path, f))
+
+      const { files: ordered, errors } = orderDeckFiles(found, path)
+      if (errors.length > 0) {
+        for (const e of errors) console.error(`${join(path, DECK_ORDER_FILE)}: ${e}`)
+        process.exit(1)
+      }
+      ordered.forEach((f) => files.push(f))
     } else {
       files.push(path)
     }
