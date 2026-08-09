@@ -2,6 +2,8 @@ import PptxGenJS from "pptxgenjs"
 import { Effect } from "effect"
 import { RenderError } from "../../errors.js"
 import { PARA_SPACE_AFTER } from "../../constants.js"
+import { textKey, iconKey, codeKey, shapeBoxKey, deco } from "../../shape-keys.js"
+import { splitTextIntoLines } from "../../text-lines.js"
 import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
 import { resolveIconOrFallback } from "../icon-resolver.js"
@@ -38,7 +40,7 @@ function inlineTextRunsToPptxRuns(
   baseItalic: boolean,
   slideNumberById?: ReadonlyMap<string, number>
 ): Array<{ text: string; options: any }> {
-  return runs.map(run => {
+  return runs.flatMap(run => {
     const options: any = {
       fontSize: baseFontSize,
       color: baseColor,
@@ -64,7 +66,15 @@ function inlineTextRunsToPptxRuns(
       }
     }
 
-    return { text: run.text, options }
+    // 改行を含む run は自分で分割する。pptxgenjs に渡すと STEP 4-C
+    // (dist/pptxgen.cjs.js:6165) が **共有の options オブジェクト** に
+    // breakLine=true を立ててから全断片を push するため、最後の断片にも
+    // 改行が付き、続く run が余計に1行下がる（リンクだけ次行に落ちる等）。
+    const fragments = run.text.split("\n")
+    return fragments.map((text, i) => ({
+      text,
+      options: i < fragments.length - 1 ? { ...options, breakLine: true } : { ...options },
+    }))
   })
 }
 
@@ -95,10 +105,13 @@ export function buildSlide(
     const { textBoxes, borderBoxes, iconBoxes, codeBoxes, shapeBoxes } = layoutSlide(slide, theme)
 
     // 境界ボックスを描画（角丸の四角形）
-    // コードボックスがある場合はスキップ（背景はcodeBox側で描画）
+    // コードボックスがある場合はスキップ（背景はcodeBox側で描画）。
+    // これは HTML 側との実在の乖離 — HTML は常に境界ボックスを描く。
+    // 装飾（deco:）なので3者比較には出てこない。BACKLOG B-33 で追う。
     if (borderBoxes && !codeBoxes) {
-      for (const border of borderBoxes) {
+      borderBoxes.forEach((border, index) => {
         pptxSlide.addShape(pptx.ShapeType.roundRect, {
+          objectName: deco(`border-${index}`),
           x: border.x,
           y: border.y,
           w: border.w,
@@ -113,6 +126,7 @@ export function buildSlide(
         // アクセントバー描画（IconCardLayout用）
         if (border.accentColor) {
           pptxSlide.addShape(pptx.ShapeType.rect, {
+            objectName: deco(`border-${index}-accent`),
             x: border.x,
             y: border.y,
             w: border.w,
@@ -121,12 +135,12 @@ export function buildSlide(
             line: { type: "none" },
           })
         }
-      }
+      })
     }
 
     // アイコンボックスを描画
     if (iconBoxes) {
-      for (const iconBox of iconBoxes) {
+      iconBoxes.forEach((iconBox, index) => {
         const hexColor = iconBox.color || "000000"
         const resolved = resolveIconOrFallback(iconBox.icon, hexColor)
         const fontSize = iconBox.fontSize || 48
@@ -134,19 +148,25 @@ export function buildSlide(
         if (resolved._tag === "emoji") {
           // Emoji: render as text
           pptxSlide.addText(resolved.text, {
+            objectName: iconKey(index),
             x: iconBox.x,
             y: iconBox.y,
             w: iconBox.w,
             h: iconBox.h,
             fontSize,
             color: hexColor,
+            // 明示しないと pptxgenjs のテーマ既定（Calibri Light）になり、
+            // 絵文字だけデッキの他の文字と違うフォントで描かれる
+            fontFace: theme.fonts.body,
             align: "center",
             valign: "middle",
           })
         } else {
           // Material Icon: SVG を画像として埋め込む（アスペクト比維持）
+          // テキストを運ばないので比較対象外（HTML 側も inline SVG でテキストが無い）
           const size = Math.min(iconBox.w, iconBox.h)
           pptxSlide.addImage({
+            objectName: deco(iconKey(index)),
             data: resolved.base64Data.replace(/^data:/, ""),
             x: iconBox.x + (iconBox.w - size) / 2,
             y: iconBox.y + (iconBox.h - size) / 2,
@@ -154,14 +174,15 @@ export function buildSlide(
             h: size,
           })
         }
-      }
+      })
     }
 
     // コードボックスを描画（シンプル版：ダーク背景 + プレーンテキスト）
     if (codeBoxes) {
-      for (const codeBox of codeBoxes) {
+      codeBoxes.forEach((codeBox, index) => {
         // 1. ダーク背景を描画
         pptxSlide.addShape(pptx.ShapeType.roundRect, {
+          objectName: deco(`${codeKey(index)}-bg`),
           x: codeBox.x,
           y: codeBox.y,
           w: codeBox.w,
@@ -171,27 +192,33 @@ export function buildSlide(
           rectRadius: theme.codeDisplay.borderRadius,
         })
 
-        // 2. シンタックスハイライト付きリッチテキストとして描画
+        // 2. シンタックスハイライト付きリッチテキストとして描画。
+        //    余白は座標から引かずに margin（pt）で入れる。座標を内側にずらすと
+        //    HTML（外枠 + CSS padding）と報告する矩形が食い違い、3者比較が
+        //    「見た目は同じなのに座標が違う」で落ちる
         const pptxRuns = codeTextRunsToPptxRuns(codeBox.textRuns, codeBox.fontFace, codeBox.fontSize)
         pptxSlide.addText(pptxRuns, {
-          x: codeBox.x + theme.codeDisplay.padding,
-          y: codeBox.y + theme.codeDisplay.padding,
-          w: codeBox.w - 2 * theme.codeDisplay.padding,
-          h: codeBox.h - 2 * theme.codeDisplay.padding,
+          objectName: codeKey(index),
+          x: codeBox.x,
+          y: codeBox.y,
+          w: codeBox.w,
+          h: codeBox.h,
+          margin: theme.codeDisplay.padding * 72, // インチ → ポイント
           align: "left",
           valign: "top",
           lineSpacing: codeBox.lineHeight * codeBox.fontSize,
           paraSpaceBefore: 0,
           paraSpaceAfter: 0,
         })
-      }
+      })
     }
 
     // シェイプボックスを描画（NumberedList用）
     if (shapeBoxes) {
-      for (const shape of shapeBoxes) {
+      shapeBoxes.forEach((shape, index) => {
         if (shape.shapeType === "line") {
           pptxSlide.addShape(pptx.ShapeType.line, {
+            objectName: deco(shapeBoxKey(index)),
             x: shape.x,
             y: shape.y,
             w: shape.w,
@@ -202,6 +229,7 @@ export function buildSlide(
           // SVG を data URI として埋め込み
           const svgDataUri = `data:image/svg+xml;base64,${Buffer.from(shape.svgContent).toString("base64")}`
           pptxSlide.addImage({
+            objectName: deco(shapeBoxKey(index)),
             data: svgDataUri,
             x: shape.x,
             y: shape.y,
@@ -213,7 +241,10 @@ export function buildSlide(
             ? pptx.ShapeType.ellipse
             : pptx.ShapeType.rect
 
+          // テキストがあるときは、キーを取るのはテキストを運ぶオーバーレイのほう。
+          // HTML はこの2つを1つの div で描くので、テキスト側が対応物になる
           pptxSlide.addShape(shapeType, {
+            objectName: deco(shape.text ? `${shapeBoxKey(index)}-fill` : shapeBoxKey(index)),
             x: shape.x,
             y: shape.y,
             w: shape.w,
@@ -225,9 +256,9 @@ export function buildSlide(
             rectRadius: shape.rectRadius || 0,
           })
 
-          // テキストがある場合はオーバーレイ
           if (shape.text) {
             pptxSlide.addText(shape.text, {
+              objectName: shapeBoxKey(index),
               x: shape.x,
               y: shape.y,
               w: shape.w,
@@ -241,11 +272,11 @@ export function buildSlide(
             })
           }
         }
-      }
+      })
     }
 
     // テキストボックスを描画
-    for (const box of textBoxes) {
+    textBoxes.forEach((box, boxIndex) => {
       const align = box.align === "center" ? "center" : (slide._tag === "TitleSlide" ? "center" : "left")
       const valign = box.valign || (box.align === "center" ? "middle" : (slide._tag === "TitleSlide" ? "middle" : "top"))
 
@@ -275,6 +306,7 @@ export function buildSlide(
           }))
         })
         pptxSlide.addText(pptxRuns, {
+          objectName: textKey(boxIndex),
           x: box.x,
           y: box.y,
           w: box.w,
@@ -295,6 +327,7 @@ export function buildSlide(
           slideNumberById
         )
         pptxSlide.addText(pptxRuns, {
+          objectName: textKey(boxIndex),
           x: box.x,
           y: box.y,
           w: box.w,
@@ -304,22 +337,37 @@ export function buildSlide(
           ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
         })
       } else {
-        // 既存のシンプルテキストパス（後方互換性）
-        pptxSlide.addText(box.text, {
-          x: box.x,
-          y: box.y,
-          w: box.w,
-          h: box.h,
+        // 既存のシンプルテキストパス（後方互換性）。
+        // 改行は自分で行に割って breakLine を立てる。素の文字列を渡すと
+        // pptxgenjs の STEP 4-C が **末尾が改行の文字列をまったく分割せず**
+        // (dist/pptxgen.cjs.js:6165 の `match(/\n$/g) === null` ガード)、
+        // 生の改行を含む1つの <a:p> になって段落数が HTML と食い違う。
+        const runOptions = {
           fontSize: box.fontSize || 14,
           bold: box.isBold || false,
           italic: box.isItalic || false,
           color: box.color,
           fontFace: box.fontFace || theme.fonts.body,
-          align,
-          valign,
-          ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
-        })
+        }
+        const lines = splitTextIntoLines(box.text ?? "")
+        pptxSlide.addText(
+          lines.map((text, i) => ({
+            text,
+            options: i < lines.length - 1 ? { ...runOptions, breakLine: true } : { ...runOptions },
+          })),
+          {
+            objectName: textKey(boxIndex),
+            x: box.x,
+            y: box.y,
+            w: box.w,
+            h: box.h,
+            ...runOptions,
+            align,
+            valign,
+            ...(box.lineHeight ? { lineSpacing: box.lineHeight * (box.fontSize || 14) } : {}),
+          }
+        )
       }
-    }
+    })
   })
 }
