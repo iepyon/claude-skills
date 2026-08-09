@@ -16,9 +16,9 @@
 ### 索引: [[索引は後から]]
 ### 手入れ: [[剪定]]
 ### 束ねる: [[収穫]]
-### AI: [[patterns-llm/LLM-Wiki|LLM Wiki]]
+### AI: [[patterns-llm-wiki/LLM-Wiki|LLM Wiki]]
 ### 探索: [[patterns-scrum/探し方|ゴールは後から決まる]]
-### 背景: [[intro-human/育てる理由|第1部 なぜ育てるのか]]
+### 背景: [[intro-wiki/育てる理由|第1部 なぜ育てるのか]]
 
 ---
 
@@ -36,7 +36,7 @@
 **一文でよいから置く。** 見出しだけでもよい。
 育てるのは後の自分に任せる。育て方は [[育つ見出し]]。
 
-![種ノート](diagrams/patterns-human/種ノート.svg)
+![種ノート](diagrams/patterns-wiki/種ノート.svg)
 
 <!--takeaway-->
 関連: [[一枚一義]] / [[つなぎ直し]]
@@ -57,7 +57,7 @@
 **本文より先に見出しを増やす。** 見出しは「ここに何を書くか」の宣言で、
 書く前に構造だけ育てられる。見出しが3つを超えたら [[一枚一義]] の出番。
 
-![育つ見出し](diagrams/patterns-human/育つ見出し.svg)
+![育つ見出し](diagrams/patterns-wiki/育つ見出し.svg)
 
 <!--takeaway-->
 関連: [[種ノート]] / [[一枚一義]]
@@ -78,7 +78,7 @@
 **1枚には1つのことだけ書く。** 混ざったら割る。
 割ったノート同士は必ず [[つなぎ直し]] で繋ぐ。
 
-![一枚一義](diagrams/patterns-human/一枚一義.svg)
+![一枚一義](diagrams/patterns-wiki/一枚一義.svg)
 
 <!--takeaway-->
 関連: [[育つ見出し]] / [[つなぎ直し]]
@@ -99,7 +99,7 @@
 **新しいノートは、必ず既存の1枚に繋いでから閉じる。**
 繋ぎ先が思いつかないなら、それはまだ [[一枚一義]] になっていない兆候。
 
-![つなぎ直し](diagrams/patterns-human/つなぎ直し.svg)
+![つなぎ直し](diagrams/patterns-wiki/つなぎ直し.svg)
 
 <!--takeaway-->
 関連: [[索引は後から]] / [[剪定]]
@@ -121,7 +121,7 @@
 どこへ繋がるかは [[つなぎ直し]] の結果が教えてくれる。
 実際によく通る道だけを索引にする。
 
-![索引は後から](diagrams/patterns-human/索引は後から.svg)
+![索引は後から](diagrams/patterns-wiki/索引は後から.svg)
 
 <!--takeaway-->
 関連: [[つなぎ直し]] / [[収穫]]
@@ -142,7 +142,7 @@
 **間違っていたノートは消さず、間違っていたと書き足す。**
 消すのは重複だけ。判断の履歴は [[収穫]] の材料になる。
 
-![剪定](diagrams/patterns-human/剪定.svg)
+![剪定](diagrams/patterns-wiki/剪定.svg)
 
 <!--takeaway-->
 関連: [[つなぎ直し]] / [[収穫]]
@@ -164,7 +164,7 @@ Wiki は育ったが、他人に見せられる形になっていない。
 それがこのスライドの形。網から道を切り出すのが収穫で、
 網そのものは [[索引は後から]] のまま残しておく。
 
-![収穫](diagrams/patterns-human/収穫.svg)
+![収穫](diagrams/patterns-wiki/収穫.svg)
 
 <!--takeaway-->
-関連: [[剪定]] / [[patterns-llm/LLM-Wiki|LLM Wiki]]
+関連: [[剪定]] / [[patterns-llm-wiki/LLM-Wiki|LLM Wiki]]
