@@ -17,6 +17,7 @@
 ### 手入れ: [[剪定]]
 ### 束ねる: [[収穫]]
 ### AI: [[patterns-llm/LLM-Wiki|LLM Wiki]]
+### 探索: [[patterns-scrum/探し方|ゴールは後から決まる]]
 
 ---
 
