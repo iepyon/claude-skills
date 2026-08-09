@@ -1,0 +1,20 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <path d="M160.3 97.8 C166.1 95.2 173.1 93.3 179.3 96.1 C185.7 98.7 191.7 103.2 194 110.1 C192.8 117.1 193.9 123.9 190.7 129.8 C188 136.2 183 141.7 176 143.4 C169 145.2 162.2 142 156.6 138.3 C151.1 134.6 148.8 128.1 147.8 121.9 C146.8 115.7 146.4 108.5 150.7 103.1 C154.2 96.7 160.9 93.2 168.1 92.7" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="170" y="123" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#4B5563">状況</text>
+
+  <path d="M139.6 117.6 C113.3 116.5 86.7 118.9 59.7 118.5" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M58 118 l9 -5 l0 10 z" fill="#4B5563"/>
+  <text x="98" y="102" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">賛成する力</text>
+
+  <path d="M200 117.6 C226.7 116.7 253.3 118.9 280.3 118.4" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M282 118 l-9 -5 l0 10 z" fill="#9CA3AF"/>
+  <text x="242" y="102" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">反対する力</text>
+
+  <path d="M169.6 142 C169.4 153.3 170.2 164.7 169.8 176.5" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M170 178 l-5 -9 l10 0 z" fill="#1E40AF"/>
+  <path d="M106.6 178.7 Q170.5 179.7 234.5 177.7 Q234.4 201.3 233.2 224.8 Q169.7 225.8 106.3 223.7 Q105.9 201.2 108.2 178.7" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="170" y="207" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1E40AF">解決</text>
+
+  <text x="170" y="252" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">両方書いて、はじめて選択になる</text>
+  <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">片側だけなら、それは手順書</text>
+</svg>

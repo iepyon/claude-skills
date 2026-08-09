@@ -1,0 +1,23 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <rect x="22" y="76" width="122" height="110" rx="3" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <rect x="38" y="92" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <rect x="90" y="92" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <rect x="38" y="138" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <rect x="90" y="138" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="80" y1="107" x2="90" y2="107" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="59" y1="122" x2="59" y2="138" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="83" y="210" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">描き込んだ図</text>
+  <text x="83" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">唯一の実装に読める</text>
+
+  <path d="M198 80 q60 -6 120 2 q-5 54 2 106 q-62 6 -122 -2 q6 -52 0 -106 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M212 96 q22 -4 42 1 q-3 14 1 28 q-22 4 -43 -1 q3 -14 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M264 94 q22 -3 42 2 q-4 14 1 28 q-22 3 -43 -2 q3 -13 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M212 142 q22 -4 42 1 q-3 14 1 28 q-22 4 -43 -1 q3 -14 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M264 140 q22 -3 42 2 q-4 14 1 28 q-22 3 -43 -2 q3 -13 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M255 110 q5 3 9 -1" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M233 125 q-3 9 1 17" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="248" y="210" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">下書きのまま</text>
+  <text x="248" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">置き換えて読める</text>
+
+  <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">粗さが「決めていない」の合図になる</text>
+</svg>

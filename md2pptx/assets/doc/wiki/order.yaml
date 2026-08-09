@@ -14,4 +14,5 @@ decks:
   - patterns-wiki # 第2部: 人が育てる Wiki のパターン
   - intro-llm-wiki # 第1部: なぜ AI に手入れを任せるのか
   - patterns-llm-wiki # 第2部: LLM が手入れする Wiki のパターン
+  - patterns-meta # パターンを書くパターン。第1部はまだ無い（対の intro-meta を書いたら隣へ）
   - index # 索引。送りはここで止まるので、最後の1枚から先頭へ戻す

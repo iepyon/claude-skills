@@ -1,0 +1,20 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <path d="M89.6 85 C97.4 89.9 101.5 98.7 103.1 107.4 C104.6 116.1 104.9 126.1 99.1 133.7 C93.3 141.3 83.7 143.7 74.9 144.4 C65.4 148.8 57.1 143 50.4 136.8 C43.7 130.7 40.5 121.9 40.6 113 C40.6 104 41.6 93.8 48.9 87.1 C56.3 80.5 66.2 77.8 75.9 78.8 C85.6 79.7 92.8 87 98.2 94.1" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="72" y="117" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#4B5563">剪定</text>
+  <text x="72" y="170" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">誰もが知る言葉</text>
+
+  <path d="M115.9 112.4 C132 112.9 148 111.4 164.1 111.9" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M166 112 l-9 -5 l0 10 z" fill="#4B5563"/>
+  <text x="140" y="98" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">借りる</text>
+
+  <path d="M178.1 86 Q247.1 84.3 316 86 Q315.2 111.9 315.6 137.9 Q246.4 139.8 177.3 138.4 Q178.3 112.2 179.4 86" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="247" y="117" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1E40AF">パターンの名前</text>
+
+  <path d="M246.7 138 C247.7 150.7 246.6 163.3 247.4 175.9" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4" fill="none" stroke-linecap="round"/>
+  <path d="M186.2 176.3 Q247.3 174.6 308.4 175.8 Q308 196.7 308.6 217.5 Q247.5 219.6 186.4 218.8 Q186.8 197.6 187.5 176.3" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="247" y="202" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">要らない意味</text>
+  <path d="M195.9 216.4 C230.8 206.3 263.6 190.9 298.3 180.1" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="247" y="240" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">本文の最初で打ち消す</text>
+
+  <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">比喩は余計な意味も運んでくる</text>
+</svg>
