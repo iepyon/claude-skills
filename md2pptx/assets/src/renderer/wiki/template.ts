@@ -105,10 +105,11 @@ ${site.entries
       <div id="backlinks-body"></div>
     </section>
 
+    <!-- 1行に収める。折り返すと scaleStage() の CHROME_RESERVE の見積りが崩れる。 -->
     <div class="hint">
-      <kbd>&larr;</kbd><kbd>&rarr;</kbd> デッキ内を移動
+      <kbd>&larr;</kbd><kbd>&rarr;</kbd> 移動
       <kbd>Shift</kbd>+<kbd>&larr;</kbd><kbd>&rarr;</kbd> デッキをまたぐ
-      リンクにホバーでプレビュー　<kbd>Esc</kbd> プレビューを閉じる
+      リンクにホバーでプレビュー／クリックで移動　<kbd>Esc</kbd> 閉じる
     </div>
   </main>
 

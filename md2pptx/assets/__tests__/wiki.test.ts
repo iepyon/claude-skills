@@ -260,6 +260,65 @@ describe("viewer layout contract", () => {
     expect(html).toContain("CHROME_RESERVE")
   })
 
+  it("should let the stage grow past 1:1 on wide screens", async () => {
+    // 1倍で頭打ちにすると、1920幅でも 960px のまま = 本文領域の 59% しか使えない。
+    // 守りたいのは「1より大きい」ことではなく「上限が contain より先に効かない」こと。
+    // 3200x1800 の論理解像度では contain 側が 2.99 になるので、そこを越えて取る。
+    const html = await buildHtml()
+    const m = html.match(/MAX_STAGE_SCALE\s*=\s*([\d.]+)/)
+    expect(m).not.toBeNull()
+    expect(Number(m![1])).toBeGreaterThanOrEqual(3)
+  })
+
+  it("should reserve only a little room for the chrome below the stage", async () => {
+    // 下の情報のために縦を空けすぎると、そのぶんスライドが縮む。
+    // 0 にはしない（高さフィットそのものは捨てない）。
+    const html = await buildHtml()
+    const m = html.match(/CHROME_RESERVE\s*=\s*(\d+)/)
+    expect(m).not.toBeNull()
+    expect(Number(m![1])).toBeGreaterThan(0)
+    expect(Number(m![1])).toBeLessThanOrEqual(80)
+  })
+
+  it("should let the backlink strip follow the scaled stage width", async () => {
+    // scaleStage() が bl.style.width を入れても max-width が勝つので、
+    // 拡大するとステージだけ広がって帯が 960px に取り残される。
+    const html = await buildHtml()
+    const block = html.slice(html.indexOf(".backlinks {"), html.indexOf(".backlinks h2"))
+    expect(block).not.toMatch(/max-width:\s*960px/)
+  })
+
+  it("should size the hover preview at runtime instead of baking in one ratio", async () => {
+    // 0.5 固定では 480x270 で中身が読めない。画面サイズと入れ子の深さで決める。
+    const html = await buildHtml()
+    expect(html).toMatch(/transform:\s*scale\(var\(--preview-scale\)\)/)
+    expect(html).toMatch(/\.preview-viewport\s*\{[^}]*var\(--preview-scale\)/)
+    const m = html.match(/PREVIEW_MAX_SCALE\s*=\s*([\d.]+)/)
+    expect(m).not.toBeNull()
+    expect(Number(m![1])).toBeGreaterThan(0.5)
+  })
+
+  it("should resolve short refs inside a preview card", async () => {
+    // カードは .slide だけを clone するので、data-deck を持つ .wiki-slide が祖先に居ない。
+    // カードが deck を名乗り直さないと RESOLVE を引けず、入れ子プレビューも
+    // カード内リンクのクリックも短い参照では動かない。
+    const html = await buildHtml()
+    expect(html).toContain("card.dataset.deck")
+    expect(html).toMatch(/closest\("\.wiki-slide"\)\s*\|\|[\s\S]{0,80}closest\("\.preview-card"\)/)
+  })
+
+  it("should navigate on preview click without double-firing the link handler", async () => {
+    // カード全体が入口。ただしカード内のリンクは既存ハンドラの担当で、
+    // 両方が走ると go() が2回呼ばれてリンク先が上書きされる。
+    const html = await buildHtml()
+    const i = html.indexOf("function onPreviewClick")
+    expect(i).toBeGreaterThan(-1)
+    const fn = html.slice(i, i + 600)
+    expect(fn).toContain("a.wikilink")
+    expect(fn).toContain("closeAllPreviews")
+    expect(fn).toContain("dataset.target")
+  })
+
   it("should not hide the table of contents on touch devices", async () => {
     // 入力デバイスの能力（ホバー可否）でレイアウトを切ると、
     // タッチ対応のノートPCでも目次ごと消えて到達不能になる。
