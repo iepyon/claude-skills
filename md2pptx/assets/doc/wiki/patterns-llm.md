@@ -15,6 +15,7 @@ AI が保守者として入ってくる Wiki のパターン
 ### 履歴: [[追記で残す]]
 ### 承認: [[人が承認する]]
 ### 根拠: [[出典まで辿れる]]
+### 実務: [[日々の実務]]
 ### 戻る: [[patterns-human/読み方|読み方]]
 
 ---
@@ -61,7 +62,7 @@ AI が保守者として入ってくる Wiki のパターン
 ```
 
 <!--takeaway-->
-関連: [[AIは保守者]] / [[人が承認する]]
+関連: [[AIは保守者]] / [[人が承認する]] / [[差分だけ渡す]]
 
 ---
 
@@ -110,7 +111,7 @@ AI に全部書かせたくなる。実際それらしい文章は出てくる�
 ```
 
 <!--takeaway-->
-関連: [[人が承認する]] / [[夜間の手入れ]]
+関連: [[人が承認する]] / [[夜間の手入れ]] / [[書き手を残す]]
 
 ---
 
@@ -204,7 +205,7 @@ AI は指示すれば平気で上書きするので、放っておくと履歴�
 ```
 
 <!--takeaway-->
-関連: [[不変の生データ]] / [[剪定]]
+関連: [[不変の生データ]] / [[剪定]] / [[生成物は直さない]]
 
 ---
 
@@ -248,7 +249,7 @@ AI が自動で判断を書き換え、いつのまにか結論が変わって�
 ```
 
 <!--takeaway-->
-関連: [[AIは保守者]] / [[夜間の手入れ]]
+関連: [[AIは保守者]] / [[夜間の手入れ]] / [[語彙を寄せる]]
 
 ---
 
@@ -297,3 +298,350 @@ Wiki の主張が、どの記録に基づくのか分からなくなる。
 
 <!--takeaway-->
 関連: [[不変の生データ]] / [[つなぎ直し]] / [[収穫]]
+
+---
+
+## 日々の実務
+<!--id:日々の実務-->
+<!--agenda-->
+役割と境界を決めたあと、毎日の手入れで効いてくること
+
+### 語彙: [[語彙を寄せる]]
+### 検査: [[規約は走らせる]]
+### 導出: [[生成物は直さない]]
+### 未解決: [[問いを置く]]
+### 分量: [[差分だけ渡す]]
+### 署名: [[書き手を残す]]
+### 戻る: [[LLM-Wiki|原則]]
+
+---
+
+## 語彙を寄せる
+<!--id:語彙を寄せる-->
+<!--pattern-->
+### 状況
+同じものを指す言葉が、ノートごとに少しずつ違う。
+
+### 問題
+人は文脈で読み替えるが、その読み替えは残らない。
+言い方が割れると、検索もリンクも当たらなくなる。
+
+### 解決
+**正の言い方を1つ決め、別名はそこへ向ける。**
+決めるのは人、寄せるのは AI。語彙表は残す。
+変えるときは [[人が承認する]] を通す。
+
+```pattern-diagram
+<svg width="100%" height="100%" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">ばらけた言い方</text>
+
+  <rect x="26" y="48" width="104" height="28" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="78" y="67" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">ユーザー</text>
+  <rect x="26" y="88" width="104" height="28" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="78" y="107" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">利用者</text>
+  <rect x="26" y="128" width="104" height="28" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="78" y="147" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">お客さま</text>
+
+  <line x1="136" y1="62" x2="184" y2="100" stroke="#4B5563" stroke-width="1"/>
+  <line x1="136" y1="102" x2="184" y2="102" stroke="#4B5563" stroke-width="1"/>
+  <line x1="136" y1="142" x2="184" y2="104" stroke="#4B5563" stroke-width="1"/>
+  <path d="M186 102 l-9 -5 l0 10 z" fill="#4B5563"/>
+
+  <rect x="196" y="82" width="112" height="42" rx="4" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="252" y="102" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">顧客</text>
+  <text x="252" y="118" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">正の言い方</text>
+
+  <line x1="30" y1="182" x2="310" y2="182" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="30" y="212" font-family="sans-serif" font-size="12" fill="#4B5563">どれを正にするか</text>
+  <rect x="140" y="196" width="48" height="24" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="164" y="213" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">人</text>
+
+  <text x="204" y="212" font-family="sans-serif" font-size="12" fill="#1E40AF">寄せる</text>
+  <rect x="256" y="196" width="48" height="24" rx="4" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="280" y="213" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">AI</text>
+
+  <text x="170" y="264" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">言い方が1つなら、リンクが当たる</text>
+  <text x="170" y="290" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">別名は消さず、正へ向けておく</text>
+</svg>
+```
+
+<!--takeaway-->
+関連: [[規約は走らせる]] / [[つなぎ直し]]
+
+---
+
+## 規約は走らせる
+<!--id:規約は走らせる-->
+<!--pattern-->
+### 状況
+決まりを文書にしたが、守られたか誰も確かめない。
+
+### 問題
+読ませる規約は破られる。破れたと気づくのは後。
+AI は言われた規約を、次の会話では持っていない。
+
+### 解決
+**規約を検査として書き、毎回走らせる。**
+散文は入口の説明にとどめ、判定はコードに置く。
+落ちた検査は、そのまま [[問いを置く]] の材料。
+
+```pattern-diagram
+<svg width="100%" height="100%" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">読ませる規約</text>
+
+  <rect x="26" y="46" width="104" height="58" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="40" y1="66" x2="116" y2="66" stroke="#9CA3AF" stroke-width="1"/>
+  <line x1="40" y1="80" x2="104" y2="80" stroke="#9CA3AF" stroke-width="1"/>
+  <line x1="40" y1="94" x2="112" y2="94" stroke="#9CA3AF" stroke-width="1"/>
+
+  <line x1="140" y1="75" x2="180" y2="75" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <text x="190" y="80" font-family="sans-serif" font-size="12" fill="#9CA3AF">守られたか不明</text>
+
+  <line x1="30" y1="126" x2="310" y2="126" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="30" y="154" font-family="sans-serif" font-size="13" fill="#1E40AF">走らせる規約</text>
+
+  <rect x="26" y="166" width="104" height="58" rx="4" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="78" y="190" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">検査</text>
+  <text x="78" y="208" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">毎回走る</text>
+
+  <line x1="140" y1="195" x2="178" y2="195" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M180 195 l-9 -5 l0 10 z" fill="#1E40AF"/>
+
+  <polyline points="190,176 198,184 214,164" fill="none" stroke="#4B5563" stroke-width="2"/>
+  <text x="226" y="182" font-family="sans-serif" font-size="12" fill="#4B5563">通った</text>
+
+  <line x1="190" y1="204" x2="210" y2="224" stroke="#1E40AF" stroke-width="2"/>
+  <line x1="210" y1="204" x2="190" y2="224" stroke="#1E40AF" stroke-width="2"/>
+  <text x="226" y="220" font-family="sans-serif" font-size="12" fill="#1E40AF">落ちた</text>
+
+  <text x="170" y="266" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">判定を人の記憶に置かない</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">落ちた検査が、次の手入れになる</text>
+</svg>
+```
+
+<!--takeaway-->
+関連: [[AIは保守者]] / [[語彙を寄せる]]
+
+---
+
+## 生成物は直さない
+<!--id:生成物は直さない-->
+<!--pattern-->
+### 状況
+AI が作った索引や要約に誤りを見つけ、その場で直したくなる。
+
+### 問題
+直した先は次の生成で消える。消えたことに気づかないまま、
+同じ誤りを何度も直し続ける。直した労力だけが記録に残らない。
+
+### 解決
+**導出されたものは直さず、導いた側を直す。**
+索引が変なら [[索引は後から]] の作り方を直す。
+要約が変なら元のノートを。生成物にはそう書き添える。
+
+```pattern-diagram
+<svg width="100%" height="100%" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">流れ</text>
+
+  <rect x="26" y="46" width="76" height="44" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="64" y="73" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">元</text>
+
+  <line x1="106" y1="68" x2="130" y2="68" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M132 68 l-9 -5 l0 10 z" fill="#4B5563"/>
+
+  <rect x="136" y="46" width="76" height="44" rx="4" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="174" y="73" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">生成</text>
+
+  <line x1="216" y1="68" x2="240" y2="68" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M242 68 l-9 -5 l0 10 z" fill="#4B5563"/>
+
+  <rect x="246" y="46" width="68" height="44" rx="4" fill="#F1F5F9" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="280" y="65" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4B5563">索引</text>
+  <text x="280" y="81" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4B5563">要約</text>
+
+  <line x1="30" y1="112" x2="310" y2="112" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="30" y="140" font-family="sans-serif" font-size="12" fill="#9CA3AF">生成物を直すと</text>
+  <rect x="26" y="150" width="146" height="30" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="99" y="170" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">手直し</text>
+  <line x1="182" y1="165" x2="210" y2="165" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="222" y1="153" x2="244" y2="177" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="244" y1="153" x2="222" y2="177" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="256" y="170" font-family="sans-serif" font-size="11" fill="#9CA3AF">消える</text>
+
+  <text x="30" y="212" font-family="sans-serif" font-size="12" fill="#1E40AF">元を直すと</text>
+  <rect x="26" y="222" width="146" height="30" rx="4" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="99" y="242" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">手直し</text>
+  <line x1="182" y1="237" x2="210" y2="237" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M212 237 l-9 -5 l0 10 z" fill="#1E40AF"/>
+  <polyline points="222,236 230,244 246,224" fill="none" stroke="#1E40AF" stroke-width="2"/>
+  <text x="256" y="242" font-family="sans-serif" font-size="11" fill="#1E40AF">残る</text>
+
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">直すのは、生成物ではなく生成の元</text>
+</svg>
+```
+
+<!--takeaway-->
+関連: [[索引は後から]] / [[追記で残す]]
+
+---
+
+## 問いを置く
+<!--id:問いを置く-->
+<!--pattern-->
+### 状況
+分からないことを、答えが出るまで書かないでいる。
+
+### 問題
+頭の中にある問いは、他人にも AI にも見えない。
+見えない作業は、誰にも引き取れないまま忘れられる。
+
+### 解決
+**問いを問いのまま1枚にする。**
+答えの無いノートがあってよい。AI は答えない。
+材料を集めて繋ぐだけ。答えが出たら [[追記で残す]]。
+
+```pattern-diagram
+<svg width="100%" height="100%" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="34" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">書かない問い</text>
+  <text x="248" y="34" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">置いた問い</text>
+  <line x1="166" y1="48" x2="166" y2="234" stroke="#E2E8F0" stroke-width="1"/>
+
+  <circle cx="82" cy="118" r="26" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="82" y="126" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#9CA3AF">?</text>
+  <text x="82" y="176" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">頭の中にある</text>
+  <text x="82" y="196" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">誰にも見えない</text>
+
+  <line x1="248" y1="140" x2="204" y2="182" stroke="#4B5563" stroke-width="1.5"/>
+  <line x1="248" y1="140" x2="248" y2="192" stroke="#4B5563" stroke-width="1.5"/>
+  <line x1="248" y1="140" x2="292" y2="182" stroke="#4B5563" stroke-width="1.5"/>
+
+  <circle cx="248" cy="114" r="26" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="248" y="122" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#1E40AF">?</text>
+
+  <circle cx="202" cy="190" r="11" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="248" cy="202" r="11" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="294" cy="190" r="11" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="248" y="234" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">AI が集めた材料</text>
+
+  <text x="170" y="274" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">答えの無い1枚が、作業の入口になる</text>
+  <text x="170" y="298" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">見えている問いだけが、引き取れる</text>
+</svg>
+```
+
+<!--takeaway-->
+関連: [[規約は走らせる]] / [[出典まで辿れる]]
+
+---
+
+## 差分だけ渡す
+<!--id:差分だけ渡す-->
+<!--pattern-->
+### 状況
+手入れのたびに、Wiki 全体を AI に読ませている。
+
+### 問題
+量が増えるほど費用は上がり、注意は薄くなる。
+気づくのは、見落としが増えてからになる。
+
+### 解決
+**変わったところと、その周りだけを渡す。**
+何が変わったかは履歴が知っている。
+全体を見るのは [[索引は後から]] を作り直すときだけ。
+
+```pattern-diagram
+<svg width="100%" height="100%" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">Wiki 全体</text>
+
+  <line x1="56" y1="70" x2="110" y2="56" stroke="#E2E8F0" stroke-width="1.5"/>
+  <line x1="110" y1="56" x2="150" y2="96" stroke="#E2E8F0" stroke-width="1.5"/>
+  <line x1="56" y1="70" x2="74" y2="128" stroke="#E2E8F0" stroke-width="1.5"/>
+  <line x1="74" y1="128" x2="60" y2="190" stroke="#E2E8F0" stroke-width="1.5"/>
+  <line x1="126" y1="148" x2="150" y2="190" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <line x1="74" y1="128" x2="126" y2="148" stroke="#1E40AF" stroke-width="2"/>
+  <line x1="126" y1="148" x2="150" y2="96" stroke="#1E40AF" stroke-width="2"/>
+
+  <rect x="62" y="84" width="112" height="84" rx="6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-dasharray="5 4"/>
+
+  <circle cx="56" cy="70" r="9" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <circle cx="110" cy="56" r="9" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <circle cx="60" cy="190" r="9" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <circle cx="150" cy="190" r="9" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+
+  <circle cx="74" cy="128" r="10" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.5"/>
+  <circle cx="150" cy="96" r="10" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.5"/>
+  <circle cx="126" cy="148" r="11" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2.5"/>
+  <text x="105" y="216" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">変わった1枚</text>
+
+  <line x1="180" y1="126" x2="222" y2="126" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M224 126 l-9 -5 l0 10 z" fill="#1E40AF"/>
+
+  <rect x="230" y="104" width="82" height="44" rx="4" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="271" y="131" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">AI</text>
+  <text x="271" y="168" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">読むのはここだけ</text>
+
+  <text x="170" y="264" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">変わった所と、その周りだけ渡す</text>
+  <text x="170" y="290" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">全部読ませるほど、注意は薄くなる</text>
+</svg>
+```
+
+<!--takeaway-->
+関連: [[夜間の手入れ]] / [[一枚一義]]
+
+---
+
+## 書き手を残す
+<!--id:書き手を残す-->
+<!--pattern-->
+### 状況
+ノートの一行が、人の判断なのか AI の整形なのか分からない。
+
+### 問題
+疑うべき場所が分からないと、全部を等しく疑うことになる。
+等しく疑われる Wiki は、結局どこも読まれない。
+
+### 解決
+**書いた主体を行に残す。** 人の判断には手を触れない。
+AI が足したぶんは、後から一括で剥がせるようにする。
+何に基づくかは [[出典まで辿れる]] が受け持つ。
+
+```pattern-diagram
+<svg width="100%" height="100%" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">1枚のノート</text>
+
+  <rect x="26" y="46" width="172" height="118" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+
+  <circle cx="42" cy="70" r="3.5" fill="#4B5563"/>
+  <line x1="54" y1="70" x2="182" y2="70" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="42" cy="94" r="3.5" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <line x1="54" y1="94" x2="166" y2="94" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <circle cx="42" cy="118" r="3.5" fill="#4B5563"/>
+  <line x1="54" y1="118" x2="174" y2="118" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="42" cy="142" r="3.5" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <line x1="54" y1="142" x2="158" y2="142" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="5 3"/>
+
+  <circle cx="222" cy="66" r="3.5" fill="#4B5563"/>
+  <text x="234" y="71" font-family="sans-serif" font-size="12" fill="#4B5563">人の判断</text>
+  <circle cx="222" cy="94" r="3.5" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="234" y="99" font-family="sans-serif" font-size="12" fill="#1E40AF">AI の整形</text>
+
+  <line x1="112" y1="172" x2="112" y2="198" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M112 200 l-5 -9 l10 0 z" fill="#1E40AF"/>
+  <text x="128" y="192" font-family="sans-serif" font-size="12" fill="#1E40AF">AI の分だけ剥がす</text>
+
+  <rect x="26" y="208" width="172" height="56" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="42" cy="228" r="3.5" fill="#4B5563"/>
+  <line x1="54" y1="228" x2="182" y2="228" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="42" cy="248" r="3.5" fill="#4B5563"/>
+  <line x1="54" y1="248" x2="174" y2="248" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="212" y="241" font-family="sans-serif" font-size="12" fill="#4B5563">判断は残る</text>
+
+  <text x="170" y="296" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">誰が書いたかが、疑いどころを教える</text>
+</svg>
+```
+
+<!--takeaway-->
+関連: [[AIは保守者]] / [[剪定]]
