@@ -40,7 +40,7 @@
 ![仮のゴール](diagrams/patterns-scrum/仮のゴール.svg)
 
 <!--takeaway-->
-関連: [[期限で問い直す]] / [[外れを棚に残す]] / [[patterns-agent/ゴールを立てさせる|ゴールを立てさせる]]
+関連: [[期限で問い直す]] / [[外れを棚に残す]]
 
 ---
 
@@ -63,7 +63,7 @@
 ![動くものが問う](diagrams/patterns-scrum/動くものが問う.svg)
 
 <!--takeaway-->
-関連: [[仮のゴール]] / [[分からない順に取る]] / [[patterns-agent/実行が判定する|実行が判定する]]
+関連: [[仮のゴール]] / [[分からない順に取る]]
 
 ---
 
@@ -84,7 +84,7 @@
 ![完成を先に決める](diagrams/patterns-scrum/完成を先に決める.svg)
 
 <!--takeaway-->
-関連: [[動くものが問う]] / [[patterns-agent/検査を先に書く|検査を先に書く]]
+関連: [[動くものが問う]]
 
 ---
 
@@ -106,7 +106,7 @@
 ![期限で問い直す](diagrams/patterns-scrum/期限で問い直す.svg)
 
 <!--takeaway-->
-関連: [[仮のゴール]] / [[patterns-agent/予算で問い直す|予算で問い直す]]
+関連: [[仮のゴール]]
 
 ---
 
@@ -128,7 +128,7 @@
 ![外れを棚に残す](diagrams/patterns-scrum/外れを棚に残す.svg)
 
 <!--takeaway-->
-関連: [[仮のゴール]] / [[patterns-agent/失敗も残す|失敗も残す]] / [[patterns-llm/追記で残す|追記で残す]]
+関連: [[仮のゴール]] / [[patterns-llm-wiki/追記で残す|追記で残す]]
 
 ---
 
@@ -150,7 +150,7 @@
 ![分からない順に取る](diagrams/patterns-scrum/分からない順に取る.svg)
 
 <!--takeaway-->
-関連: [[動くものが問う]] / [[patterns-agent/伸びしろで選ぶ|伸びしろで選ぶ]]
+関連: [[動くものが問う]]
 
 ---
 
@@ -172,4 +172,4 @@
 ![やり方を型にする](diagrams/patterns-scrum/やり方を型にする.svg)
 
 <!--takeaway-->
-関連: [[分からない順に取る]] / [[patterns-agent/できたことを部品に|できたことを部品に]]
+関連: [[分からない順に取る]]

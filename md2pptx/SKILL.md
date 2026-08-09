@@ -168,8 +168,8 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 ```yaml
 decks: # 拡張子を除いたファイル名
   - guide
-  - intro-human
-  - patterns-human
+  - intro-wiki
+  - patterns-wiki
 ```
 
 ファイル名は `[[deck/slide]]` のリンク先（デッキの slug）でもあるので、

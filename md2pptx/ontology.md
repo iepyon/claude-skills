@@ -491,7 +491,7 @@ SVG 側は `viewBox` と、それに合った `width` / `height` を**実寸で*
 ### 解決
 **一文でよいから置く。** 育てるのは後の自分に任せる。
 
-![種ノート](diagrams/patterns-human/種ノート.svg)
+![種ノート](diagrams/patterns-wiki/種ノート.svg)
 
 <!--takeaway-->
 関連: [[一枚一義]]
