@@ -18,6 +18,7 @@
 ### 束ねる: [[収穫]]
 ### AI: [[patterns-llm/LLM-Wiki|LLM Wiki]]
 ### 探索: [[patterns-scrum/探し方|ゴールは後から決まる]]
+### 背景: [[intro-human/育てる理由|第1部 なぜ育てるのか]]
 
 ---
 
