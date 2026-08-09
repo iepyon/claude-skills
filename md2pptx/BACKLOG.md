@@ -738,4 +738,28 @@ BodyText を warning）。
   `left` / `shape.exists`）。`verify.ts` の `locate` がその不揃いを吸収している。
   `inventory-diff` 側で常に完全修飾にすれば `locate` が消える
 
+**2回目の整理で足したもの**（同じ4観点をもう一度回した結果）:
+
+- **`withBreakLines` は export したが、`codeTextRunsToPptxRuns` はまだ別実装**。
+  違いは末尾の空断片の扱いだけ（`"a\n"` が前者は2断片、後者は1断片）。
+  import 1行で寄せられる状態にはなった
+- **PPTX の `addText` は5箇所あり、2箇所が `withBreakLines` を通らない**
+  （絵文字アイコンとシェイプのテキスト）。いまは改行を含まないので実害は無いが、
+  「素の文字列を渡さない」が private 関数の doc コメントでしか表明されていない。
+  `renderer/pptx/text-runs.ts` に寄せて、型で迂回できなくするのが深い直し
+- **「このアイコンは装飾か」の判断が3脚に散っている**。`deco:` の綴りは
+  `shape-keys.ts` に寄せたが、`resolveIconOrFallback(...)._tag === "emoji"` は
+  各脚が独立に書いている（判別共用体の絞り込みにも使っているため、
+  述語だけ切り出すと型が緩む）。B-24 で実際に食い違ったのはこの判断のほう
+- **`iconKey(index)` の index が疎になった**。アイコン注釈の無い列を飛ばすように
+  したので、1列目にアイコンが無ければ2列目のアイコンが `icon-0` になる。
+  3脚が同じ `LayoutResult` を見るので比較は通るが、名前が出所を指さなくなった。
+  `IconBox` にキーを持たせてレイアウト時に採番するのが筋
+- **`put()` は filter のままで assertion にしていない**。空 TextBox が実在する
+  （`Spec.md` / `patterns.md`）ので、いま throw にすると落ちる。発生源を潰してから
+- **絶対値を見るテストが `text-style.test.ts` しか無い**。`snapshot-comparison.test.ts`
+  は18回とも「3脚が一致する」しか見ておらず、インベントリの中身を承認した
+  スナップショットが1つも無い。golden inventory を1つ置けば、共有規則を足すたびに
+  手書きテストを足す義務（CLAUDE.md が課している）が1回で済む
+
 **受け入れ基準**: 各項目を直すか、直さない理由を持つ。

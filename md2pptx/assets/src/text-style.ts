@@ -19,3 +19,9 @@ export const runFontFace = (
   firstRun: Pick<InlineTextRun, "code"> | undefined,
   fallback: string
 ): string => (firstRun?.code ? "Courier New" : (box.fontFace ?? fallback))
+
+// 生成物が既定フォントを名乗っていないときの落とし先。
+// md2pptx が作ったものは必ず名乗る（HTML は data-default-font-name、
+// PPTX は theme1.xml）ので、ここに落ちるのは他所で作られた成果物だけ。
+// 両インスペクタが同じ名前を使うことで、対であることが grep で分かる。
+export const FOREIGN_ARTIFACT_FONT = "Arial"

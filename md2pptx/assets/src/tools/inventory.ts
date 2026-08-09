@@ -39,7 +39,7 @@ export interface PresentationInventory {
 // （pptx-inspector の extractText() と同じ）。
 type InventoryLine = { text: string; firstRun?: InlineTextRun }
 
-export function boxToLines(box: TextBox): InventoryLine[] {
+function boxToLines(box: TextBox): InventoryLine[] {
   if (box.paragraphs) {
     // Paragraph 自体が1行。その中にさらに改行があればさらに割れる
     return box.paragraphs.flatMap((para) =>
@@ -195,7 +195,10 @@ function layoutResultToSlideInventory(
   // テキストを持つシェイプだけ。PPTX では塗りとテキストが別図形になるが、
   // キーを取るのはテキスト側（HTML は1つの div で両方を描く）
   result.shapeBoxes?.forEach((box, index) => {
-    put(shapeBoxKey(index), shapeBoxToShape(box, box.text ?? "", fontName))
+    // テキストの無いシェイプは塗りだけ = 装飾。put() の空判定に任せると
+    // 「なぜ出ないか」がレンダラ側の deco: と別の理由になってしまう
+    if (!box.text) return
+    put(shapeBoxKey(index), shapeBoxToShape(box, box.text, fontName))
   })
 
   return inventory

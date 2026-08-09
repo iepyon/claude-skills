@@ -8,6 +8,7 @@ import {
   SlideInventory,
 } from "./inventory.js"
 import { isDecoKey, textKey } from "../shape-keys.js"
+import { FOREIGN_ARTIFACT_FONT } from "../text-style.js"
 import { decodeEntities } from "../entities.js"
 
 // EMU (English Metric Units) to inches conversion
@@ -196,9 +197,10 @@ function parseSlide(
  * Extract default font name from theme XML
  */
 function extractDefaultFontName(themeXml: string): string {
-  // Try to extract <a:latin typeface="..."> from majorFont or minorFont
+  // Try to extract <a:latin typeface="..."> from majorFont or minorFont.
+  // theme1.xml が無い / 読めないのは他所が作った pptx（html-inspector と対）
   const match = themeXml.match(/<a:latin typeface="([^"]+)"/)
-  return match ? match[1] : "Arial"
+  return match ? match[1] : FOREIGN_ARTIFACT_FONT
 }
 
 /**

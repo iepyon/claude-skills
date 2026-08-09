@@ -118,3 +118,4 @@ export function resolveIconOrFallback(icon: string, hexColor: string): ResolvedI
     text: icon,
   }
 }
+

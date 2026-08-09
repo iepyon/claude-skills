@@ -5,6 +5,7 @@ import { ParseError } from "../errors.js"
 import { decodeEntities } from "../entities.js"
 import { splitTextIntoLines } from "../text-lines.js"
 import { isDecoKey } from "../shape-keys.js"
+import { FOREIGN_ARTIFACT_FONT } from "../text-style.js"
 
 /**
  * Paragraph data extracted from HTML
@@ -289,10 +290,11 @@ export const extractInventoryFromHtml = (html: string): E.Effect<SlideInventory,
     const inventory: Record<string, Record<string, ShapeData>> = {}
 
     for (const slide of slides) {
-      // data-font-name の無い段落の落とし先。生成物が自分で名乗るので、
-      // 読む側は定数を持たない（pptx-inspector が theme1.xml を読むのと同じ）
+      // data-font-name の無い段落の落とし先。生成物が自分で名乗るので読む側は
+      // 決め打たない（pptx-inspector が theme1.xml を読むのと同じ）。
+      // 名乗っていないのは他所が作った HTML — そのときだけ定数に落ちる
       const defaultFontName =
-        slide.content.match(/data-default-font-name="([^"]*)"/)?.[1] ?? "Arial"
+        slide.content.match(/data-default-font-name="([^"]*)"/)?.[1] ?? FOREIGN_ARTIFACT_FONT
 
       const shapes = extractElements(slide.content, "data-shape-id")
       const shapeData: Record<string, ShapeData> = {}

@@ -1,8 +1,8 @@
 import { Option as O } from "effect"
 import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
-import { textBoxToHtml, borderBoxToHtml, iconBoxToHtml, codeBoxToHtml, shapeBoxToHtml, hexToColor } from "./element-renderers.js"
-import { textKey, iconKey, codeKey, shapeBoxKey } from "../../shape-keys.js"
+import { textBoxToHtml, borderBoxToHtml, iconBoxToHtml, codeBoxToHtml, shapeBoxToHtml, hexToColor, escapeAttr } from "./element-renderers.js"
+import { textKey, iconKey, codeKey, shapeBoxKey, borderKey } from "../../shape-keys.js"
 
 // スライド ID を data 属性で持たせる。
 // id= を使わないのは、Wiki のホバープレビューがスライド DOM を cloneNode するため
@@ -12,7 +12,7 @@ import { textKey, iconKey, codeKey, shapeBoxKey } from "../../shape-keys.js"
 // 既定フォントを持っているのと同じで、HTML も自分で名乗る — 読む側が
 // 定数を持つと --theme を使ったときにその脚だけ食い違う。
 const slideKeyAttr = (slide: Slide): string =>
-  slide.id ? ` data-slide-key="${slide.id.replace(/"/g, "&quot;")}"` : ""
+  slide.id ? ` data-slide-key="${escapeAttr(slide.id)}"` : ""
 
 // Slide renderer type - returns Some(html) if it handles this slide tag
 export type SlideRenderer = (slide: Slide, theme: Theme, slideIndex: number) => O.Option<string>
@@ -29,7 +29,7 @@ const renderTitleSlide: SlideRenderer = (slide, theme, slideIndex) => {
     .join("\n    ")
 
   const slideHtml = `
-  <div class="slide title-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} data-default-font-name="${theme.fonts.body}" style="background-color: ${backgroundColor}">
+  <div class="slide title-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} data-default-font-name="${escapeAttr(theme.fonts.body)}" style="background-color: ${backgroundColor}">
     ${textBoxesHtml}
   </div>`
 
@@ -44,7 +44,7 @@ const renderContentSlide: SlideRenderer = (slide, theme, slideIndex) => {
   const backgroundColor = hexToColor(theme.contentSlide.background || "FFFFFF")
 
   const borderBoxesHtml = layout.borderBoxes
-    ? layout.borderBoxes.map((box) => borderBoxToHtml(box, theme)).join("\n    ")
+    ? layout.borderBoxes.map((box, index) => borderBoxToHtml(box, theme, borderKey(index))).join("\n    ")
     : ""
 
   const iconBoxesHtml = layout.iconBoxes
@@ -64,7 +64,7 @@ const renderContentSlide: SlideRenderer = (slide, theme, slideIndex) => {
     .join("\n    ")
 
   const slideHtml = `
-  <div class="slide content-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} data-default-font-name="${theme.fonts.body}" style="background-color: ${backgroundColor}">
+  <div class="slide content-slide" data-slide-id="slide-${slideIndex}"${slideKeyAttr(slide)} data-default-font-name="${escapeAttr(theme.fonts.body)}" style="background-color: ${backgroundColor}">
     ${borderBoxesHtml}
     ${shapeBoxesHtml}
     ${iconBoxesHtml}

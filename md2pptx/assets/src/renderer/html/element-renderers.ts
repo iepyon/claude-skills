@@ -23,7 +23,7 @@ const escapeText = (value: string): string =>
 
 // 属性値のエスケープ。本文用とは別に必要
 // （href は本文ではないので、シングルクォートまで潰しておく）。
-const escapeAttr = (value: string): string => escapeText(value).replace(/'/g, "&#39;")
+export const escapeAttr = (value: string): string => escapeText(value).replace(/'/g, "&#39;")
 
 /**
  * InlineTextRun[] を HTML に変換
@@ -79,7 +79,10 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     `align-items: ${alignItems}`,
     `justify-content: ${justifyContent}`,
     `text-align: ${textAlign}`,
-    `white-space: pre-wrap`,
+    // 本文は必ず <p> に入るので、改行の保持は要らない（<p> 間の余白の
+    // 可視化も防ぐ）。以前はここで pre-wrap を書いて後段で normal に
+    // 置換していたが、置換元の文字列に依存する脆い作りだった
+    `white-space: normal`,
     `word-wrap: break-word`,
     // 文字は絶対に切らない。
     // 箱の高さはフォント metrics を知らない見積り（estimateTextHeight）と
@@ -102,7 +105,7 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     box.fontSize ? `data-font-size="${box.fontSize}"` : "",
     box.color ? `data-color="${box.color}"` : "",
     box.isBold ? `data-bold="true"` : "",
-    isTitleSlide || box.align === "center" ? `data-alignment="CENTER"` : "",
+    isCentered(box, isTitleSlide) ? `data-alignment="CENTER"` : "",
     box.valign ? `data-valign="${box.valign.toUpperCase()}"` : "",
   ]
     .filter(Boolean)
@@ -118,19 +121,20 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
   //
   // 太字とフォントは行の **先頭 run** から取る。PPTX は段落の最初の <a:rPr>
   // しか持ち出せず（pptx-inspector）、AST インベントリも同じ規則で数える。
-  const paraDataAttrs = (firstRun?: InlineTextRun): string =>
-    [
+  const paraDataAttrs = (firstRun?: InlineTextRun): string => {
+    const fontName = runFontFace(box, firstRun, "")
+    return [
       box.fontSize ? `data-font-size="${box.fontSize}"` : "",
       box.color ? `data-color="${box.color}"` : "",
       firstRun?.bold || box.isBold ? `data-bold="true"` : "",
       isCentered(box, isTitleSlide) ? `data-alignment="CENTER"` : "",
-      // 分かるときだけ出す。無ければ html-inspector が生成物の既定フォントに落とす
-      firstRun?.code || box.fontFace
-        ? `data-font-name="${escapeAttr(runFontFace(box, firstRun, ""))}"`
-        : "",
+      // 分かるときだけ出す。無ければ html-inspector が生成物の既定フォントに落とす。
+      // 「分かるか」は runFontFace が空を返すかで決まる — 条件を書き写さない
+      fontName ? `data-font-name="${escapeAttr(fontName)}"` : "",
     ]
       .filter(Boolean)
       .join(" ")
+  }
 
   const renderParagraph = (para: Paragraph, runs: InlineTextRun[]): string => {
     const attrs = paraDataAttrs(runs[0])
@@ -144,13 +148,6 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     // .para-number の counter-increment がそれを +1 して確定させる。
     const startAt = para.bullet.startAt ?? 1
     return `<p class="para-number" style="counter-reset: para-num ${startAt - 1}" ${attrs}>${richTextToHtml(runs)}</p>`
-  }
-
-  // display: flex の子は1つに保つ。段落は stack 側で縦に積む。
-  // 段落が個別の <p> になったので改行の保持は不要（<p> 間の余白の可視化も防ぐ）。
-  const stack = (items: string): string => {
-    const listStyle = style.replace("white-space: pre-wrap", "white-space: normal")
-    return `<div class="text-box" style="${listStyle}" ${dataAttrs}><div class="para-stack">${items}</div></div>`
   }
 
   // 3つの表現（paragraphs / richText / 素のテキスト）を Paragraph[] に正規化して
@@ -167,11 +164,12 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
     .flatMap((para) => splitRunsIntoLines(para.runs).map((runs) => renderParagraph(para, runs)))
     .join("")
 
-  return stack(items)
+  // display: flex の子は1つに保つ。段落は .para-stack が縦に積む
+  return `<div class="text-box" style="${style}" ${dataAttrs}><div class="para-stack">${items}</div></div>`
 }
 
 // Generate CSS for a BorderBox
-export function borderBoxToHtml(box: BorderBox, theme: Theme): string {
+export function borderBoxToHtml(box: BorderBox, theme: Theme, shapeId?: string): string {
   const style = [
     `position: absolute`,
     `left: ${box.x}in`,
@@ -188,6 +186,9 @@ export function borderBoxToHtml(box: BorderBox, theme: Theme): string {
     .join("; ")
 
   const dataAttrs = [
+    // 境界ボックスはテキストを持たない装飾。PPTX が deco:border-N を出すので
+    // HTML も同じ名前を出す — 「描いた図形はすべて名前を名乗る」を全体で保つ
+    shapeId ? `data-shape-id="${deco(shapeId)}"` : "",
     `data-inches-x="${box.x}"`,
     `data-inches-y="${box.y}"`,
     `data-inches-w="${box.w}"`,
@@ -416,10 +417,12 @@ export function shapeBoxToHtml(box: ShapeBox, shapeId?: string): string {
     .filter(Boolean)
     .join("; ")
 
+  // テキストがあれば PPTX のテキストオーバーレイと同じキー、無ければ
+  // 塗りしか無いので PPTX の塗りと同じ deco 名になる
+  const key = shapeId && (box.text ? shapeId : deco(shapeId, "fill"))
+
   const dataAttrs = [
-    // テキストがあれば PPTX のテキストオーバーレイと同じキー、無ければ
-    // 塗りしか無いので PPTX の塗りと同じ deco 名になる
-    shapeId ? `data-shape-id="${box.text ? shapeId : deco(shapeId, "fill")}"` : "",
+    key ? `data-shape-id="${key}"` : "",
     `data-shape-type="${box.shapeType}"`,
     `data-inches-x="${box.x}"`,
     `data-inches-y="${box.y}"`,

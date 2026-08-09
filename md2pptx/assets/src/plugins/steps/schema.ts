@@ -3,10 +3,12 @@ import type { SlideLayout } from "../../schema/presentation.js"
 // StepItem: 段階的成長図の1ステップ
 export class StepItem {
   readonly heading: string
-  readonly icon: string
+  // アイコン注釈は任意。"" に潰すと「無い」が型から消え、
+  // 空の IconBox を作る経路が復活する（BACKLOG B-24 の実バグ）
+  readonly icon?: string
   readonly name: string
   readonly body?: string
-  constructor(props: { heading: string; icon: string; name: string; body?: string }) {
+  constructor(props: { heading: string; icon?: string; name: string; body?: string }) {
     this.heading = props.heading
     this.icon = props.icon
     this.name = props.name

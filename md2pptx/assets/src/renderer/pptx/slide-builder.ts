@@ -4,7 +4,7 @@ import { RenderError } from "../../errors.js"
 import { PARA_SPACE_AFTER } from "../../constants.js"
 import { textKey, iconKey, codeKey, shapeBoxKey, borderKey, deco } from "../../shape-keys.js"
 import { splitTextIntoLines } from "../../text-lines.js"
-import { isCentered } from "../../text-style.js"
+import { isCentered, runFontFace } from "../../text-style.js"
 import { Slide, Theme } from "../../schema/index.js"
 import { layoutSlide } from "../layout/index.js"
 import { resolveIconOrFallback } from "../icon-resolver.js"
@@ -37,13 +37,15 @@ function bulletToPptxOption(bullet: NonNullable<Paragraph["bullet"]>): unknown {
  * (1) 最後の断片にも改行が付いて続く run が1行余計に下がり、
  * (2) 末尾が改行の文字列は `match(/\n$/g) === null` ガードでそもそも分割されない。
  */
-function withBreakLines<T extends object>(
+export function withBreakLines(
   texts: readonly string[],
-  options: T
-): Array<{ text: string; options: T & { breakLine?: true } }> {
+  options: PptxGenJS.TextPropsOptions
+): Array<{ text: string; options: PptxGenJS.TextPropsOptions }> {
+  // 断片ごとに options を複製する。pptxgenjs が共有オブジェクトを書き換える
+  // のが上の問題の原因なので、「どの断片も自分の options を持つ」を保つ
   return texts.map((text, i) => ({
     text,
-    options: i < texts.length - 1 ? { ...options, breakLine: true as const } : options,
+    options: i < texts.length - 1 ? { ...options, breakLine: true } : { ...options },
   }))
 }
 
@@ -64,7 +66,9 @@ function inlineTextRunsToPptxRuns(
     const options: any = {
       fontSize: baseFontSize,
       color: baseColor,
-      fontFace: run.code ? "Courier New" : baseFontFace,
+      // 等幅に落とす規則は text-style.ts が持つ。baseFontFace は呼び出し側で
+      // box.fontFace || theme.fonts.body に解決済みなので、fallback に渡せば足りる
+      fontFace: runFontFace({ fontFace: undefined }, run, baseFontFace),
       bold: run.bold || baseBold,
       italic: run.italic || baseItalic,
     }
