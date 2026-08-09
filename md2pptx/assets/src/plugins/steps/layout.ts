@@ -110,9 +110,12 @@ export function layoutSteps(
     const boxY = boxBottom - boxH
     const stepColor = stepsColors[i % stepsColors.length]
 
-    // Icon (just above the box top)
+    // Icon (just above the box top).
+    // アイコンが無いステップには箱を作らない。空の IconBox は PPTX に
+    // addText("") の見えない図形を、HTML に空の span を残す（縦の余白は
+    // 上の計算で既に確保済みなので、出さなくても座標は動かない）
     const iconY = boxY - STEPS_ICON_HEIGHT - STEPS_ICON_GAP
-    iconBoxes.push({
+    if (step.icon) iconBoxes.push({
       x: stepX,
       y: iconY,
       w: stepWidth,
