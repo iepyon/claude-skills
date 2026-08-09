@@ -1,0 +1,24 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#4B5563">出来事（追記だけ）</text>
+
+  <rect x="30" y="48" width="240" height="26" rx="3" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="42" y="66" font-family="sans-serif" font-size="12" fill="#4B5563">A だと考えた</text>
+  <rect x="30" y="82" width="240" height="26" rx="3" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="42" y="100" font-family="sans-serif" font-size="12" fill="#4B5563">反例が出た</text>
+  <rect x="30" y="116" width="240" height="26" rx="3" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="42" y="134" font-family="sans-serif" font-size="12" fill="#4B5563">B に変えた</text>
+
+  <line x1="290" y1="48" x2="290" y2="152" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M290 154 l-4 -9 l8 0 z" fill="#9CA3AF"/>
+  <text x="298" y="106" font-family="sans-serif" font-size="12" fill="#9CA3AF">時間</text>
+
+  <line x1="150" y1="152" x2="150" y2="188" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M150 190 l-5 -9 l10 0 z" fill="#1E40AF"/>
+  <text x="164" y="176" font-family="sans-serif" font-size="12" fill="#1E40AF">射影</text>
+
+  <rect x="60" y="198" width="180" height="42" rx="4" fill="none" stroke="#1E40AF" stroke-width="2"/>
+  <text x="150" y="218" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">いまの結論: B</text>
+  <text x="150" y="234" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">導かれるもの・書き換えない</text>
+
+  <text x="170" y="278" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">上書きしないから、理由が残る</text>
+</svg>

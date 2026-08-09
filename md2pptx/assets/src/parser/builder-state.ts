@@ -74,7 +74,11 @@ export const saveSlide = (state: BuilderState): BuilderState => {
     afterSection.currentSlide,
     O.match({
       onNone: () => afterSection,
+      // 数え上げずに広げる。スライドを跨いでも変わらない情報（`options` など）を
+      // field ごとに書き写す形だと、足すたびにここへ1行足す必要があり、
+      // 忘れても黙って通る（2枚目以降だけ壊れる）
       onSome: (slide) => ({
+        ...afterSection,
         slides: [...afterSection.slides, slide],
         currentSlide: O.none(),
         currentSection: O.none(),

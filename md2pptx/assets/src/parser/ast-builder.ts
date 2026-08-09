@@ -2,16 +2,19 @@ import { pipe, Effect, Array as A } from "effect"
 import { Presentation } from "../schema/index.js"
 import { ParseError } from "../errors.js"
 import { Token } from "./tokenizer.js"
-import { initialState } from "./builder-types.js"
+import { initialState, type ParseOptions } from "./builder-types.js"
 import { saveSlide } from "./builder-state.js"
 import { assignSlideIds } from "./slide-ids.js"
 import { processToken } from "./handlers/index.js"
 
-export function buildAST(tokens: Token[]): Effect.Effect<Presentation, ParseError> {
+export function buildAST(
+  tokens: Token[],
+  options: ParseOptions = {}
+): Effect.Effect<Presentation, ParseError> {
   return Effect.sync(() => {
     const finalState = pipe(
       tokens,
-      A.reduce(initialState, processToken),
+      A.reduce(initialState(options), processToken),
       saveSlide
     )
 

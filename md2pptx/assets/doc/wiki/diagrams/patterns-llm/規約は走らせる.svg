@@ -1,0 +1,32 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">読ませる規約</text>
+
+  <rect x="26" y="46" width="104" height="58" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="40" y1="66" x2="116" y2="66" stroke="#9CA3AF" stroke-width="1"/>
+  <line x1="40" y1="80" x2="104" y2="80" stroke="#9CA3AF" stroke-width="1"/>
+  <line x1="40" y1="94" x2="112" y2="94" stroke="#9CA3AF" stroke-width="1"/>
+
+  <line x1="140" y1="75" x2="180" y2="75" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <text x="190" y="80" font-family="sans-serif" font-size="12" fill="#9CA3AF">守られたか不明</text>
+
+  <line x1="30" y1="126" x2="310" y2="126" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="30" y="154" font-family="sans-serif" font-size="13" fill="#1E40AF">走らせる規約</text>
+
+  <rect x="26" y="166" width="104" height="58" rx="4" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="78" y="190" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">検査</text>
+  <text x="78" y="208" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">毎回走る</text>
+
+  <line x1="140" y1="195" x2="178" y2="195" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M180 195 l-9 -5 l0 10 z" fill="#1E40AF"/>
+
+  <polyline points="190,176 198,184 214,164" fill="none" stroke="#4B5563" stroke-width="2"/>
+  <text x="226" y="182" font-family="sans-serif" font-size="12" fill="#4B5563">通った</text>
+
+  <line x1="190" y1="204" x2="210" y2="224" stroke="#1E40AF" stroke-width="2"/>
+  <line x1="210" y1="204" x2="190" y2="224" stroke="#1E40AF" stroke-width="2"/>
+  <text x="226" y="220" font-family="sans-serif" font-size="12" fill="#1E40AF">落ちた</text>
+
+  <text x="170" y="266" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">判定を人の記憶に置かない</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">落ちた検査が、次の手入れになる</text>
+</svg>

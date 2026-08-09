@@ -25,7 +25,9 @@
 #
 # スキーマ版。生成物のヘッダに ontology-version として刻む（どの版で射影したか追えるように）。
 # 1: 初版（md の要素・注釈・16レイアウト・語彙・メタキー・制限を宣言）
-version: 1
+# 2: 図解を外部ファイルにする。image 要素を足し、枠を数える marker に画像参照を加えた
+#    （WikiPattern の図解は ```pattern-diagram フェンスから `![…](….svg)` へ移した）
+version: 2
 
 # ── md の骨格要素 ───────────────────────────────────────────────────
 # 行頭記号で認識される構造。ここに無い記法はすべて body（＝本文テキスト）に落ちる。
@@ -57,6 +59,15 @@ elements:
     marker: "####"
     label: サブセクション
     description: 区画の中の行ラベル。CustomerJourney と PatternLanguage だけが使う。
+  image:
+    marker: "![alt](src)"
+    label: 画像
+    description: 行まるごとの画像参照。中身は生成時に読み込んで埋め込む。
+    guidance: |
+      パスは**その md ファイルからの相対**。図解の枠を持つレイアウト（WikiPattern）だけが読み、
+      他のレイアウトでは描かれない（lint が報告する）。外部ファイルにしてあるのは、
+      **md をそのまま GitHub で開いても図が絵として表示される**ようにするため
+      — 図の中身を md に書き込むと、読み手には SVG のソースが見えるだけになる。
   body:
     label: 本文
     description: 見出しに属する本文行。`- ` `* ` `+ ` の箇条書きと `1. ` の番号付きリストを含む。
@@ -106,7 +117,8 @@ annotations:
 # max-chars     = 文字数上限の上書き。省略時は limits.max-chars-per-slide
 # leading-body  = ディレクティブと最初の `###` の間に置く本文の意味（無いレイアウトは省略）
 # slots         = `###` / `####` の意味。marker に ```<lang> を書くと、その言語で開かれた
-#                 コードフェンスを1つの枠として数える（図解のようにフェンス自体が枠のもの）。
+#                 コードフェンスを1つの枠として数える。marker に `![…](….svg)` の形を書くと
+#                 画像参照の行を1つの枠として数え、末尾の拡張子が受理する種類になる。
 #                 cardinality は "1..n" / "3" / "3..n" / "0..1" /
 #                 "rows*cols"（ディレクティブの引数から解決）。
 #                 heading: free（名前は自由）| vocabulary（vocabularies の語彙に従う）
@@ -563,11 +575,13 @@ layouts:
       - syntax: "<!--pattern-->"
     description: Wiki のパターン1件。左に 状況/問題/解決、右に SVG の図解
     guidance: |
-      **図解は必須。** ```pattern-diagram フェンスの中に SVG をそのまま書く。
-      パターン・ランゲージは構造を一目で掴ませる形式なので、絵の無いパターンを
-      置けないようにしてある（フェンスを書き忘れたスライドは lint が報告する）。
-      SVG は自分で `width="100%" height="100%" viewBox="…"` を名乗ること
-      （HTML はフェンスの中身をそのまま吐き、大きさを外から与えない）。
+      **図解は必須。** SVG は md に書き込まず、**別ファイルに置いて `![…](….svg)` で参照する**
+      （書き忘れたスライドは lint が報告し、変換でも止まる）。パターン・ランゲージは構造を
+      一目で掴ませる形式なので、絵の無いパターンを置けないようにしてある。
+      ファイルにするのは、md をそのまま GitHub で開いたときに図が絵として表示されるため。
+      SVG 側は `viewBox` と、それに合った `width` / `height` を**実寸で**名乗ること
+      （md での表示サイズになる）。埋め込むときは 100% に読み替えるので、
+      スライド上では枠いっぱいに伸びる。
     annotations: [id, takeaway]
     slots:
       - name: sections
@@ -578,11 +592,11 @@ layouts:
         body: free
         description: 状況・問題・解決の3枠。左カラムに上から積まれる。
       - name: diagram
-        marker: "```pattern-diagram"
+        marker: "![…](….svg)"
         cardinality: "1"
         heading: free
         body: none
-        description: 右カラムに置く SVG。1スライドにつき必ず1つ。
+        description: 右カラムに置く SVG ファイルへの参照。1スライドにつき必ず1つ。
     example: |
       ## 種ノート
       <!--pattern-->
@@ -592,9 +606,8 @@ layouts:
       「ちゃんと書ける状態」を待つと、永遠にその状態は来ない。
       ### 解決
       **一文でよいから置く。** 育てるのは後の自分に任せる。
-      ```pattern-diagram
-      <svg width="100%" height="100%" viewBox="0 0 360 340"><title>種ノート</title></svg>
-      ```
+
+      ![種ノート](diagrams/patterns-human/種ノート.svg)
 
       <!--takeaway-->
       関連: [[一枚一義]]

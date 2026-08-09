@@ -3,42 +3,31 @@ import { ParseError } from "../../errors.js"
 import type { BuilderState } from "../../parser/builder-types.js"
 import type { Token } from "../../parser/tokenizer.js"
 import { saveSection } from "../../parser/builder-state.js"
-import { fenceLanguageForLayout } from "../../ontology/index.js"
+import { imageExtensionForLayout, markerForSlot } from "../../ontology/index.js"
+import { readSvgAsset } from "../../assets.js"
 
 /**
- * 図解を運ぶフェンスの言語名。**綴りは宣言から導く。**
+ * 図解の枠の綴り。**どちらも宣言から導く。**
  *
  * 手で書き写すと、ontology.yaml の marker を変えたときに lint は新しい綴りを数え、
- * 実装は古い綴りを集める — lint は緑のまま図解だけが入らなくなる。
+ * 実装は古い綴りを受理する — lint は緑のまま図解だけが入らなくなる。
  * 読み込みは初回まで遅らせる（registry がディレクティブの導出を
  * `getTokenMatchers()` まで遅らせているのと同じ理由で、import しただけで
  * ontology.yaml を読みに行かせない）。
  */
-let diagramFence: string | undefined
-export const diagramFenceLanguage = (): string =>
-  (diagramFence ??= fenceLanguageForLayout("WikiPattern", "diagram"))
+let diagramExtension: string | undefined
+export const diagramFileExtension = (): string =>
+  (diagramExtension ??= imageExtensionForLayout("WikiPattern", "diagram"))
+
+/** 書き手に見せる記法。宣言の marker をそのまま出す（組み立て直すと宣言と食い違う） */
+export const diagramMarker = (): string =>
+  markerForSlot("WikiPattern", "diagram") ?? "![…](….svg)"
 
 /** `###` を集める先。registerPlugin の sectionRoute と同じ名前 */
 export const SECTIONS_FIELD = "wikiPatternSections"
 
-/** フェンスの中身を積む先 */
+/** 参照先から読み込んだ SVG を積む先 */
 export const DIAGRAM_FIELD = "wikiPatternDiagram"
-
-/**
- * いま図解のフェンスを読んでいるか。スライドを跨がない一時状態。
- *
- * 「フェンスの中か」と「その言語は何か」を別々に持つ必要はない。積む先が1つしか
- * 無いので、開いた時点で「積むかどうか」を決めてしまえばよい
- * （pattern-language が両方持つのは、フェンスの中身を4つの宛先に振り分けるため）。
- */
-const FENCE_KEY = "wikiPatternCollectingDiagram"
-
-const isCollecting = (state: BuilderState): boolean => state.pluginState[FENCE_KEY] === true
-
-const setCollecting = (state: BuilderState, on: boolean): Record<string, unknown> => ({
-  ...state.pluginState,
-  [FENCE_KEY]: on,
-})
 
 // PluginDirective: <!--pattern--> — パターンモード開始
 export const handleWikiPatternDirective = (
@@ -70,65 +59,61 @@ export const handleWikiPatternDirective = (
 }
 
 /**
- * CodeFenceOpen: フェンスに入る。開いた時点で「積むかどうか」を決める。
+ * Image: `![…](….svg)` — 参照先を**その場で読んで**中身を積む。
  *
- * ここで捕まえないとコアの `handleCodeFenceOpen` が走り、`mode` を "code" に、
- * `codeLanguage` をスライドに書き込む。そうなるとセクションのルート先が消え、
- * スライドは CodeDisplay として変換される（`slide-converter.ts` の優先順）。
+ * 遅らせて後段で解く手もあるが、そうすると「読めなかった」が報告される場所から
+ * 行番号が消える。ここで落とせば `deck.md:57` の形で書き手に返せる。
+ * 読むのは assets.ts の1関数だけで、プラグインはパスの解き方を知らない。
  */
-export const handleCodeFenceOpenInWikiPattern = (
+export const handleImageInWikiPattern = (
   state: BuilderState,
   token: Token
 ): O.Option<BuilderState> => {
-  if (token.type !== "CodeFenceOpen" || state.mode !== "wiki-pattern") return O.none()
+  if (token.type !== "Image" || state.mode !== "wiki-pattern") return O.none()
 
-  // 直前の `###` を確定させてからフェンスに入る（フェンスは節に属さない）
+  // 直前の `###` を確定させてから読む（図解は節に属さない）。
+  // saveSection は currentSlide の有無を変えないので、確かめるのは1度でよい
   const afterSection = saveSection(state)
+  if (O.isNone(afterSection.currentSlide)) return O.some(afterSection)
+  const slide = afterSection.currentSlide.value
+
+  const svg = readSvgAsset({
+    src: token.src,
+    baseDir: state.options.baseDir,
+    extension: diagramFileExtension(),
+    line: token.line,
+    what: `パターン「${slide.title}」の図解`,
+  })
+
   return O.some({
     ...afterSection,
-    pluginState: setCollecting(afterSection, token.language === diagramFenceLanguage()),
-  })
-}
-
-// CodeFenceLine: 図解のフェンスなら1行ずつ原文のまま積む（別言語のフェンスは読み捨てる）
-export const handleCodeFenceLineInWikiPattern = (
-  state: BuilderState,
-  token: Token
-): O.Option<BuilderState> => {
-  if (token.type !== "CodeFenceLine" || state.mode !== "wiki-pattern") return O.none()
-
-  if (!isCollecting(state) || O.isNone(state.currentSlide)) return O.some(state)
-
-  const slide = state.currentSlide.value
-  const existing = (slide.pluginData?.[DIAGRAM_FIELD] as string | undefined) ?? ""
-  const separator = existing ? "\n" : ""
-  return O.some({
-    ...state,
     currentSlide: O.some({
       ...slide,
-      pluginData: { ...slide.pluginData, [DIAGRAM_FIELD]: existing + separator + token.text },
+      pluginData: { ...slide.pluginData, [DIAGRAM_FIELD]: svg },
     }),
   })
 }
 
 /**
- * CodeFenceClose: フェンスを出る。
+ * コードフェンスを飲む。**中身は読まない。**
  *
- * このハンドラの仕事は**トークンを飲むこと**で、コアの `handleCodeFenceClose` に
- * 届かせないこと。コアは `mode` を "default" に戻すので、そのあとの
- * `<!--takeaway-->` や `###` が別のレイアウトの規則で読まれてしまう。
+ * WikiPattern はコードフェンスを1つも読まないが、素通しにするとコアの
+ * `handleCodeFenceOpen` が走り、`mode` を "code" に、`codeLanguage` をスライドに
+ * 書き込む。そうなるとセクションのルート先が消え、スライドは CodeDisplay として
+ * 変換される（`slide-converter.ts` の優先順）。閉じる側も同様に飲む必要があり、
+ * コアに届くと `mode` が "default" に戻って、以降の `<!--takeaway-->` や `###` が
+ * 別のレイアウトの規則で読まれてしまう。
  */
-export const handleCodeFenceCloseInWikiPattern = (
+const FENCE_TOKENS: ReadonlyArray<Token["type"]> = [
+  "CodeFenceOpen",
+  "CodeFenceLine",
+  "CodeFenceClose",
+]
+
+export const handleCodeFenceInWikiPattern = (
   state: BuilderState,
   token: Token
-): O.Option<BuilderState> => {
-  if (token.type !== "CodeFenceClose" || state.mode !== "wiki-pattern") return O.none()
+): O.Option<BuilderState> =>
+  state.mode === "wiki-pattern" && FENCE_TOKENS.includes(token.type) ? O.some(state) : O.none()
 
-  return O.some({ ...state, pluginState: setCollecting(state, false) })
-}
-
-export const wikiPatternModeHandlers = [
-  handleCodeFenceOpenInWikiPattern,
-  handleCodeFenceLineInWikiPattern,
-  handleCodeFenceCloseInWikiPattern,
-]
+export const wikiPatternModeHandlers = [handleImageInWikiPattern, handleCodeFenceInWikiPattern]

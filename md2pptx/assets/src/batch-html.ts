@@ -821,7 +821,10 @@ const program = Effect.gen(function* () {
     const htmlPath = join(htmlsDir, htmlFile)
 
     const markdown = readFileSync(mdPath, "utf-8")
-    const result = yield* Effect.either(md2html(markdown, { theme: DEFAULT_THEME }))
+    // 図解の `![…](….svg)` はその md からの相対で書かれている
+    const result = yield* Effect.either(
+      md2html(markdown, { theme: DEFAULT_THEME, baseDir: draftsDir })
+    )
 
     if (result._tag === "Right") {
       writeFileSync(htmlPath, injectAllSlidesView(result.right), "utf-8")

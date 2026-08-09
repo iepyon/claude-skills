@@ -1,0 +1,25 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="34" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">書かない問い</text>
+  <text x="248" y="34" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">置いた問い</text>
+  <line x1="166" y1="48" x2="166" y2="234" stroke="#E2E8F0" stroke-width="1"/>
+
+  <circle cx="82" cy="118" r="26" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="82" y="126" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#9CA3AF">?</text>
+  <text x="82" y="176" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">頭の中にある</text>
+  <text x="82" y="196" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">誰にも見えない</text>
+
+  <line x1="248" y1="140" x2="204" y2="182" stroke="#4B5563" stroke-width="1.5"/>
+  <line x1="248" y1="140" x2="248" y2="192" stroke="#4B5563" stroke-width="1.5"/>
+  <line x1="248" y1="140" x2="292" y2="182" stroke="#4B5563" stroke-width="1.5"/>
+
+  <circle cx="248" cy="114" r="26" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="248" y="122" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#1E40AF">?</text>
+
+  <circle cx="202" cy="190" r="11" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="248" cy="202" r="11" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="294" cy="190" r="11" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="248" y="234" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">AI が集めた材料</text>
+
+  <text x="170" y="274" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">答えの無い1枚が、作業の入口になる</text>
+  <text x="170" y="298" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">見えている問いだけが、引き取れる</text>
+</svg>

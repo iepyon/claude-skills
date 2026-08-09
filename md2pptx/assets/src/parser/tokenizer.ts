@@ -17,6 +17,7 @@ export type Token =
   | { type: "IdDirective"; id: string; line: number }
   | { type: "TakeawayMarker"; line: number }
   | { type: "PluginDirective"; pluginId: string; line: number }
+  | { type: "Image"; alt: string; src: string; line: number }
   | { type: "CodeFenceOpen"; language: string; line: number }
   | { type: "CodeFenceLine"; text: string; line: number }
   | { type: "CodeFenceClose"; line: number }
@@ -134,6 +135,20 @@ const matchTakeawayMarker: TokenMatcher = (line, lineNum) =>
     }))
   )
 
+// Image: ![alt](src) — 行まるごとが画像参照のときだけ。
+// 行の一部に混ざった `![…](…)` は本文のまま（インライン画像は持たない）。
+const matchImage: TokenMatcher = (line, lineNum) =>
+  pipe(
+    line.trim().match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/),
+    O.fromNullable,
+    O.map(m => ({
+      type: "Image" as const,
+      alt: m[1].trim(),
+      src: m[2].trim(),
+      line: lineNum
+    }))
+  )
+
 // H1: # Title
 const matchH1: TokenMatcher = (line, lineNum) =>
   line.startsWith("# ")
@@ -169,6 +184,7 @@ const coreMatchers: ReadonlyArray<TokenMatcher> = [
   matchIconDirective,
   matchIdDirective,
   matchTakeawayMarker,
+  matchImage,
 ]
 
 function buildMatchers(): ReadonlyArray<TokenMatcher> {

@@ -2,6 +2,7 @@ import { Option as O } from "effect"
 import { ContentSlide } from "../../schema/presentation.js"
 import type { RawSlide } from "../../parser/builder-types.js"
 import type { Slide } from "../../schema/presentation.js"
+import { fitSvgToBox } from "../../assets.js"
 import {
   PatternMeta,
   PatternSuccessExample,
@@ -55,7 +56,10 @@ export const convertPatternLanguage = (raw: RawSlide): O.Option<Slide[]> => {
       principles: plData.principles,
       result: plData.sections["result"] || "",
       caution: plData.sections["caution"] || "",
-      diagram: plData.diagram || "",
+      // WikiPattern の図解と同じ ShapeBox に載るので、大きさの読み替えも同じ規則に通す。
+      // ここを通さないと、書き手が `width="100%"` を手で書いたときだけ枠に収まる
+      // ＝レイアウトごとに違う約束が2つできる（外部ファイルから貼ると実寸で描かれる）
+      diagram: plData.diagram ? fitSvgToBox(plData.diagram) : "",
     }),
   })
 

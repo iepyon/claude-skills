@@ -15,14 +15,15 @@ import { slidesToInventory } from "../src/tools/inventory.js"
 import type { ContentSlide } from "../src/schema/presentation.js"
 import type { WikiPatternLayout } from "../src/plugins/wiki-pattern/schema.js"
 
-const SVG = `<svg width="100%" height="100%" viewBox="0 0 340 320" xmlns="http://www.w3.org/2000/svg">
-  <rect x="10" y="10" width="100" height="40" fill="none" stroke="#4B5563"/>
-</svg>`
+/** 図解のファイルはリポジトリに実在する。参照を解く起点はこのディレクトリ */
+const FIXTURE_DIR = join(__dirname, "fixtures")
+const SAMPLE = "diagrams/sample.svg"
+const SVG = readFileSync(join(FIXTURE_DIR, SAMPLE), "utf-8").trimEnd()
 
 /**
  * 節を任意の順で書けるように、本文はテンプレートから組む。
- * `diagram` はフェンスの**中身**。`false` を渡すとフェンスごと省く
- * （「フェンスが無い」と「フェンスが空」は別の話なので、区別できる形にしてある）。
+ * `diagram` は参照先の**パス**。`false` を渡すと参照ごと省く
+ * （「参照が無い」と「参照先が読めない」は別の話なので、区別できる形にしてある）。
  */
 const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: string } = {}): string => {
   const sections =
@@ -30,8 +31,7 @@ const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: st
     ["### 状況", "きっかけ。", "### 問題", "困りごと。", "### 解決", "打ち手は [[別のパターン]]。"].join(
       "\n"
     )
-  const fence =
-    opts.diagram === false ? "" : `\n\`\`\`pattern-diagram\n${opts.diagram ?? SVG}\n\`\`\`\n`
+  const image = opts.diagram === false ? "" : `\n![種ノート](${opts.diagram ?? SAMPLE})\n`
   const takeaway = opts.takeaway ? `\n<!--takeaway-->\n${opts.takeaway}\n` : ""
   return `# テスト
 
@@ -41,12 +41,14 @@ const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: st
 <!--id:種ノート-->
 <!--pattern-->
 ${sections}
-${fence}${takeaway}`
+${image}${takeaway}`
 }
 
 /** parse → validate。4箇所で書き下すと、テストが本題以外の差で見分けにくくなる */
 const present = (markdown: string) =>
-  Effect.runPromise(parseMarkdown(markdown).pipe(Effect.flatMap(validatePresentation)))
+  Effect.runPromise(
+    parseMarkdown(markdown, { baseDir: FIXTURE_DIR }).pipe(Effect.flatMap(validatePresentation))
+  )
 
 const layoutOf = async (markdown: string): Promise<WikiPatternLayout> => {
   const pres = await present(markdown)
@@ -85,34 +87,65 @@ describe("WikiPattern — 3節の左段", () => {
 })
 
 describe("WikiPattern — 図解", () => {
-  it("フェンスの中身を原文のまま持つ", async () => {
+  it("参照先のファイルの中身を持つ", async () => {
     const layout = await layoutOf(deck())
-    expect(layout.diagram).toBe(SVG)
+    expect(layout.diagram).toContain(`<rect x="10" y="10"`)
+    expect(layout.diagram).toContain(`viewBox="0 0 340 320"`)
   })
 
-  it("フェンスが無ければ変換で止まる", async () => {
+  it("埋め込むときは幅と高さを枠いっぱいに読み替える", async () => {
+    // ファイル側は md で <img> として読まれるときのために実寸を名乗る。
+    // スライドでは右カラムの枠に合わせて伸びてほしいので、ここで 100% に置き換わる
+    expect(SVG).toMatch(/<svg[^>]*\swidth="340"/)
+    const layout = await layoutOf(deck())
+    expect(layout.diagram).toMatch(/^<svg width="100%" height="100%"/)
+    expect(layout.diagram).not.toMatch(/width="340"/)
+  })
+
+  it("参照が無ければ変換で止まる", async () => {
     // 「必ず」を運用の心がけにしない。宣言（cardinality: 1）を lint が報告し、
     // 通り抜けようとしてもここで落ちる
-    const result = await Effect.runPromiseExit(parseMarkdown(deck({ diagram: false })))
+    const result = await Effect.runPromiseExit(
+      parseMarkdown(deck({ diagram: false }), { baseDir: FIXTURE_DIR })
+    )
     expect(result._tag).toBe("Failure")
-    expect(JSON.stringify(result)).toContain("pattern-diagram")
+    expect(JSON.stringify(result)).toContain(".svg")
   })
 
-  it("空のフェンスも「図解あり」とは見なさない", async () => {
-    const result = await Effect.runPromiseExit(parseMarkdown(deck({ diagram: "" })))
+  it("読めないパスは行番号つきでその場で落ちる", async () => {
+    // 後段まで持ち越すと、報告できる場所から行番号が消える
+    const result = await Effect.runPromiseExit(
+      parseMarkdown(deck({ diagram: "diagrams/ない.svg" }), { baseDir: FIXTURE_DIR })
+    )
     expect(result._tag).toBe("Failure")
+    expect(JSON.stringify(result)).toContain("diagrams/ない.svg")
   })
 
-  it("lint がフェンスの欠落を slot-cardinality として報告する", () => {
+  it("宣言された拡張子でない参照は受け付けない", async () => {
+    // 埋め込めるのは SVG だけ。読めるつもりで .png を書いたら、その場で言う
+    const result = await Effect.runPromiseExit(
+      parseMarkdown(deck({ diagram: "diagrams/sample.png" }), { baseDir: FIXTURE_DIR })
+    )
+    expect(result._tag).toBe("Failure")
+    expect(JSON.stringify(result)).toContain(".svg")
+  })
+
+  it("lint が参照の欠落を slot-cardinality として報告する", () => {
     const diagnostics = lintSource(deck({ diagram: false }))
     expect(diagnostics.map((d) => d.check)).toContain("slot-cardinality")
-    expect(diagnostics.find((d) => d.check === "slot-cardinality")?.message).toContain(
-      "pattern-diagram"
-    )
+    expect(diagnostics.find((d) => d.check === "slot-cardinality")?.message).toContain(".svg")
   })
 
   it("図解のあるスライドには診断が出ない", () => {
     expect(lintSource(deck())).toEqual([])
+  })
+
+  it("画像を読まないレイアウトに置かれた参照は lint が報告する", () => {
+    // `####` と同じ「黙って落ちる」種類の間違い。描かれないことを書き手に返す
+    const diagnostics = lintSource("## ふつうのスライド\n### 見出し\n本文\n\n![図](a.svg)")
+    expect(diagnostics.map((d) => d.message)).toContainEqual(
+      expect.stringContaining("画像を読まない")
+    )
   })
 })
 
@@ -195,8 +228,9 @@ describe("WikiPattern — Wiki との接続", () => {
 
   it("SVG の長さは文字数上限に数えない", async () => {
     // 図を描き込むほど「文字数超過」で落ちるのでは、上限が守らせたいものとずれる
-    const huge = "<svg xmlns='http://www.w3.org/2000/svg'>" + "<rect x='1'/>".repeat(400) + "</svg>"
-    await expect(present(deck({ diagram: huge }))).resolves.toBeDefined()
+    const huge = readFileSync(join(FIXTURE_DIR, "diagrams", "huge.svg"), "utf-8")
+    expect(huge.length).toBeGreaterThan(1000)
+    await expect(present(deck({ diagram: "diagrams/huge.svg" }))).resolves.toBeDefined()
   })
 })
 
@@ -219,25 +253,52 @@ const FORBIDDEN: ReadonlyArray<readonly [RegExp, string]> = [
 
 describe("配布しているデッキの図解", () => {
   const WIKI_DIR = join(__dirname, "..", "doc", "wiki")
-  const decks = readdirSync(WIKI_DIR)
-    .filter((f) => f.startsWith("patterns-") && f.endsWith(".md"))
-    .map((f) => ({ name: f, body: readFileSync(join(WIKI_DIR, f), "utf-8") }))
+  const DIAGRAMS_DIR = join(WIKI_DIR, "diagrams")
 
-  it("パターンのデッキが見つかる", () => {
-    expect(decks.length).toBeGreaterThan(0)
+  const deckNames = readdirSync(WIKI_DIR)
+    .filter((f) => f.startsWith("patterns-") && f.endsWith(".md"))
+    .map((f) => f.replace(/\.md$/, ""))
+
+  /** 実際に配っている図解のファイル。デッキごとに1ディレクトリ */
+  const diagrams = deckNames.flatMap((deck) =>
+    readdirSync(join(DIAGRAMS_DIR, deck))
+      .filter((f) => f.endsWith(".svg"))
+      .map((f) => ({
+        name: `${deck}/${f}`,
+        svg: readFileSync(join(DIAGRAMS_DIR, deck, f), "utf-8"),
+      }))
+  )
+
+  it("パターンのデッキと図解のファイルが見つかる", () => {
+    expect(deckNames.length).toBeGreaterThan(0)
+    expect(diagrams.length).toBeGreaterThan(0)
   })
 
-  it.each(decks.map((d) => d.name))("%s の SVG は DOM を壊す書き方をしていない", (name) => {
-    const body = decks.find((d) => d.name === name)!.body
-    const fences = [...body.matchAll(/```pattern-diagram\n([\s\S]*?)\n```/g)].map((m) => m[1])
-    expect(fences.length).toBeGreaterThan(0)
-
-    for (const svg of fences) {
-      for (const [pattern, why] of FORBIDDEN) {
-        expect(svg, `${name}: ${why}`).not.toMatch(pattern)
-      }
-      // PPTX は SVG を単体の文書として base64 化するので xmlns が要る
-      expect(svg, `${name}: xmlns が要る`).toMatch(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)
+  it("どのデッキも図解を md に書き込んでいない", () => {
+    // md に SVG を書くと、GitHub で開いた読み手にはソースが見えるだけになる。
+    // 外部ファイルにした意味がそこにあるので、戻っていないことを見張る
+    for (const deck of deckNames) {
+      const body = readFileSync(join(WIKI_DIR, `${deck}.md`), "utf-8")
+      expect(body, `${deck}.md: SVG は別ファイルに置く`).not.toContain("<svg")
+      expect(body, `${deck}.md: 図解は ![…](….svg) で参照する`).toMatch(/!\[[^\]]*\]\([^)]+\.svg\)/)
     }
+  })
+
+  it.each(diagrams)("$name は DOM を壊す書き方をしていない", ({ name, svg }) => {
+    for (const [pattern, why] of FORBIDDEN) {
+      expect(svg, `${name}: ${why}`).not.toMatch(pattern)
+    }
+    // PPTX は SVG を単体の文書として base64 化するので xmlns が要る
+    expect(svg, `${name}: xmlns が要る`).toMatch(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)
+  })
+
+  it.each(diagrams)("$name は実寸を名乗る", ({ name, svg }) => {
+    // md から `<img>` として読まれるときの表示サイズになる。実寸が無い SVG は
+    // 既定の大きさに押し込められて字が潰れる（埋め込み側では 100% に読み替わる）
+    const open = svg.match(/<svg\b[^>]*>/)![0]
+    const [, , vw, vh] = open.match(/viewBox="([^"]+)"/)![1].trim().split(/[\s,]+/).map(Number)
+
+    expect(Number(open.match(/\swidth="(\d+)"/)?.[1]), `${name}: width が viewBox と食い違う`).toBe(vw)
+    expect(Number(open.match(/\sheight="(\d+)"/)?.[1]), `${name}: height が viewBox と食い違う`).toBe(vh)
   })
 })
