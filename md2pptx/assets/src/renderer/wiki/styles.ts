@@ -5,7 +5,9 @@ import { slideBaseCss } from "../html/slide-css.js"
 const SLIDE_W_PX = SLIDE_WIDTH * 96
 const SLIDE_H_PX = SLIDE_HEIGHT * 96
 
-// プレビューカードの縮小率。0.5 なら 480x270 に収まる。
+// プレビューカードの縮小率のフォールバック。実際の値は client-script の
+// previewScale() が画面サイズと入れ子の深さから決め、--preview-scale に入れる。
+// ここに残すのは、スクリプトが走る前でもカードが潰れないようにするため。
 const PREVIEW_SCALE = 0.5
 
 /**
@@ -26,6 +28,7 @@ ${slideBaseCss(theme)}
       --text: #d7dee9;
       --muted: #8496ad;
       --accent: #7aa2f7;
+      --preview-scale: ${PREVIEW_SCALE};
     }
 
     body {
@@ -130,8 +133,13 @@ ${slideBaseCss(theme)}
     .main {
       grid-area: main;
       overflow-y: auto;
-      padding: 24px;
+      padding: 16px;
       display: flex; flex-direction: column; align-items: center;
+      /* 幅が制約になる縦長のウィンドウでは「拡大 → 縦が溢れる → スクロールバーが出る
+         → clientWidth が減る → 縮小 → スクロールバーが消える」で振動しうる。
+         溝を常に空けておけば clientWidth が動かない。macOS のオーバーレイ
+         スクロールバーでは再現しないので、手元で見えなくても外さないこと。 */
+      scrollbar-gutter: stable;
     }
 
     /* transform: scale() は描画だけを縮め、レイアウト上の寸法は変えない。
@@ -155,9 +163,12 @@ ${slideBaseCss(theme)}
     .wiki-slide.active { display: block; }
     .wiki-slide .slide { display: block; }
 
+    /* 幅は scaleStage() が縮小後のステージに合わせて入れる。ここで max-width を
+       持つと、拡大したときインラインの width に勝ってしまい、ステージだけ広がって
+       この帯が 960px に取り残される。 */
     .backlinks {
       margin-top: 20px;
-      width: 100%; max-width: ${SLIDE_W_PX}px;
+      width: 100%;
       border-top: 1px solid var(--line);
       padding-top: 14px;
       font-size: 12.5px;
@@ -189,10 +200,13 @@ ${slideBaseCss(theme)}
     /* ---------- hover preview ---------- */
     #preview-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9000; }
 
+    /* 寸法は --preview-scale で決まる。カード自身にこの変数が載るので
+       （client-script の buildCard）、入れ子のカードは各自の倍率を持つ。 */
     .preview-card {
       position: fixed; pointer-events: auto;
-      width: ${Math.round(SLIDE_W_PX * PREVIEW_SCALE) + 4}px;
+      width: calc(${SLIDE_W_PX}px * var(--preview-scale) + 4px);
       max-width: calc(100vw - 16px);
+      cursor: pointer;   /* カードごとクリックでそのスライドへ移動する */
       background: var(--panel);
       border: 1px solid rgba(255,255,255,.16);
       border-radius: 10px;
@@ -209,19 +223,24 @@ ${slideBaseCss(theme)}
       font-size: 11px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    /* min-width:0 が無いと、flex アイテムは内容幅より縮まない。長い見出しが
+       「クリックで開く」を枠の外へ押し出して、そのまま切り落とす。 */
+    .preview-head .p-title,
+    .preview-head .p-deck { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .preview-head .p-title { font-weight: 700; color: #fff; }
     .preview-head .p-deck { color: var(--muted); }
+    .preview-head .p-open { margin-left: auto; color: var(--muted); flex-shrink: 0; }
 
     /* viewport が縮小後のサイズを持ち、中身をクリップする。
        scale した子は依然 960x540 でレイアウトされるので overflow:hidden は必須。 */
     .preview-viewport {
-      width: ${SLIDE_W_PX * PREVIEW_SCALE}px;
-      height: ${SLIDE_H_PX * PREVIEW_SCALE}px;
+      width: calc(${SLIDE_W_PX}px * var(--preview-scale));
+      height: calc(${SLIDE_H_PX}px * var(--preview-scale));
       overflow: hidden;
     }
     .preview-scale {
       width: ${SLIDE_W_PX}px; height: ${SLIDE_H_PX}px;
-      transform: scale(${PREVIEW_SCALE});
+      transform: scale(var(--preview-scale));
       transform-origin: top left;
     }
     .preview-scale .slide { display: block !important; position: absolute; inset: 0; }

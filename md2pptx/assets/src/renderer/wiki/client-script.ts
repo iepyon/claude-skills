@@ -113,8 +113,13 @@ export function wikiScript(): string {
     if (a.dataset.goto) return a.dataset.goto;
     var ref = a.dataset.wikilink;
     if (!ref) return null;
-    var slideEl = a.closest(".wiki-slide");
-    var deck = slideEl ? slideEl.dataset.deck : null;
+    // 参照はデッキごとに解決する。プレビューカードは .slide だけを clone するので
+    // data-deck を持つ .wiki-slide が祖先に居ない — カード自身が deck を名乗り直す。
+    // このフォールバックは *切り離されたカード* の上でも効く必要がある。下の click
+    // ハンドラが targetOf より先に closeAllPreviews() を呼んで removeChild するため
+    // （closest は木が document に繋がっていなくても祖先を辿る）。
+    var scope = a.closest(".wiki-slide") || a.closest(".preview-card");
+    var deck = scope ? scope.dataset.deck : null;
     var perDeck = (deck && RESOLVE[deck]) || {};
     return perDeck[ref] || (byId[ref] ? ref : null);
   }
@@ -145,6 +150,21 @@ export function wikiScript(): string {
     closeDrawer();   // 狭い画面では選んだら引っ込める
   });
 
+  // プレビューは「見るだけ」ではなく、そのままそのスライドへの入口にする。
+  // リンクの除外は closest 1つで行う。e.defaultPrevented を併用すると
+  // 「上のハンドラが先に走る」という登録順を前提にしてしまい、並べ替えで壊れる。
+  function onPreviewClick(e) {
+    if (!e.target.closest) return;
+    if (e.target.closest("a.wikilink")) return;   // リンクは上のハンドラの担当
+    var card = e.target.closest(".preview-card");
+    if (!card || !card.dataset.target) return;
+    // 文字を選択しただけで飛ばされると、プレビューから引用できない
+    if (window.getSelection && String(window.getSelection()).length) return;
+    closeAllPreviews();
+    go(card.dataset.target);
+  }
+  document.addEventListener("click", onPreviewClick);
+
   // ------------------------------------------------------------- drawer
   // 画面が狭いときサイドバーは引き出しになる。以前は入力デバイスが
   // タッチかどうかで目次ごと消していたが、それではタッチ対応の
@@ -167,6 +187,9 @@ export function wikiScript(): string {
 
   // ---------------------------------------------------------- hover preview
   var OPEN_DELAY = 220, CLOSE_DELAY = 160, MAX_DEPTH = 3;
+  // プレビューの倍率。0.5 では中身が読めないので大きく出す。入れ子は段ごとに
+  // 縮めて、下に重なった親カードの縁が見えるようにする（同寸だと完全に隠れる）。
+  var PREVIEW_MAX_SCALE = 1, PREVIEW_MIN_SCALE = 0.3, PREVIEW_DEPTH_SHRINK = 0.85;
   var stack = [];            // [{card, anchor, depth}]
   var openTimer = null, closeTimer = null;
   var layer = document.getElementById("preview-layer");
@@ -180,6 +203,17 @@ export function wikiScript(): string {
   }
   function closeAllPreviews() { closeFrom(0); }
 
+  // 開くたびに画面サイズから決める。カード自身に載せるので resize 監視は要らない
+  // （resize では closeAllPreviews するため、次に開くときの値が必ず最新になる）。
+  function previewScale(depth) {
+    var s = Math.min(
+      PREVIEW_MAX_SCALE,
+      (window.innerWidth - 32) / ${SLIDE_W_PX},
+      (window.innerHeight - 160) / ${SLIDE_H_PX}
+    ) * Math.pow(PREVIEW_DEPTH_SHRINK, depth);
+    return Math.max(PREVIEW_MIN_SCALE, s);
+  }
+
   function buildCard(entry, depth) {
     var source = slideEls[entry.id];
     if (!source) return null;
@@ -189,11 +223,17 @@ export function wikiScript(): string {
     var card = document.createElement("div");
     card.className = "preview-card";
     card.dataset.depth = String(depth);
+    card.dataset.deck = entry.deck;      // カード内のリンクを解決する足場 (targetOf)
+    card.dataset.target = entry.id;      // カード自体をクリックしたときの行き先
+    // append より前に置く。positionCard が offsetWidth を読むので、後だと
+    // 初回だけ既定倍率の寸法で位置が決まり、1フレーム小さく点滅する。
+    card.style.setProperty("--preview-scale", String(previewScale(depth)));
 
     var head = document.createElement("div");
     head.className = "preview-head";
     head.innerHTML = '<span class="p-title">' + escapeHtml(entry.title) +
-      '</span><span class="p-deck">' + escapeHtml(entry.deckTitle) + "</span>";
+      '</span><span class="p-deck">' + escapeHtml(entry.deckTitle) +
+      '</span><span class="p-open">クリックで開く</span>';
 
     var viewport = document.createElement("div");
     viewport.className = "preview-viewport";
@@ -289,8 +329,12 @@ export function wikiScript(): string {
 
   // --------------------------------------------------------------- scaling
   // バックリンク欄とキーヒントのぶん、縦に残しておく余白。
-  // これが無いとスライドが縦いっぱいに広がり、下の情報が常に画面外に出る。
-  var CHROME_RESERVE = 150;
+  // 実際に要るのは 115px ほどだが、そこまで確保するとスライドが目に見えて縮む。
+  // 下端の手がかりだけ覗かせ、残りは .main のスクロールに逃がす。
+  var CHROME_RESERVE = 64;
+  // 暴走よけであって、制限ではない。中身はベクタの文字と SVG なので拡大で劣化しない。
+  // 常に下の contain（幅と高さの小さいほう）が効くよう、十分高く取る。
+  var MAX_STAGE_SCALE = 4;
 
   function scaleStage() {
     var main = document.querySelector(".main");
@@ -303,8 +347,9 @@ export function wikiScript(): string {
     var availH = Math.max(200, main.clientHeight - pad * 2 - CHROME_RESERVE);
 
     // 幅と高さの両方に収める。横だけで決めると、背の低い画面で
-    // スライドの下が切れる。
-    var scale = Math.min(availW / ${SLIDE_W_PX}, availH / ${SLIDE_H_PX}, 1);
+    // スライドの下が切れる。本文領域はスライドより横長なのが普通なので、
+    // 実際に効くのはたいてい高さのほう。
+    var scale = Math.min(availW / ${SLIDE_W_PX}, availH / ${SLIDE_H_PX}, MAX_STAGE_SCALE);
 
     frame.style.transform = "scale(" + scale + ")";
     // 外箱に「縮小後の実寸」を持たせる。transform はレイアウト寸法を

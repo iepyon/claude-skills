@@ -121,7 +121,7 @@ src/renderer/
 │   ├── site-index.ts   ID のデッキ名前空間化 (deck-slug/slide-id)
 │   ├── link-graph.ts   参照収集・4段階の解決・バックリンクの逆引き
 │   ├── styles.ts       サイトシェルの CSS (slide-css.ts を取り込む)
-│   ├── client-script.ts  ルーティング・ホバープレビュー・キーボード
+│   ├── client-script.ts  ルーティング・ホバープレビュー・キーボード・拡大率
 │   └── template.ts     サイトのドキュメントテンプレート
 │   ※ スライドの DOM は html/ の renderSlide() を再利用する。
 │      複製すると PPTX/HTML/Wiki の三者がずれるため。
@@ -277,7 +277,7 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `block-formatter.test.ts` | parser/block-formatter.ts (リスト → Paragraph 変換) |
 | `inline-formatting.test.ts` | parser/inline-formatter.ts (**bold** / *italic* / `code` / リンク) |
 | `slide-id.test.ts` | parser/slide-ids.ts (slug 生成・ID 採番・衝突の連番) |
-| `wiki.test.ts` | renderer/wiki/ (デッキ合成・リンク解決・バックリンク・自己完結性) |
+| `wiki.test.ts` | renderer/wiki/ (デッキ合成・リンク解決・バックリンク・自己完結性・ビューア幾何) |
 | `deck-order.test.ts` | deck-order.ts (order.yaml の宣言順・未宣言デッキの扱い・宣言の誤り) |
 | `validation.test.ts` | schema/validation.ts (文字数制限) |
 | `ontology.test.ts` | ontology.yaml + src/ontology/ (宣言の自己整合・宣言⇔実装・lint・生成物の鮮度) |
