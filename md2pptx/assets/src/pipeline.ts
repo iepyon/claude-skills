@@ -2,7 +2,7 @@ import "./plugins/index.js"
 import { Effect } from "effect"
 import { Md2PptxError, ValidationError } from "./errors.js"
 import { lintTokens, shouldFail, type Diagnostic } from "./ontology/lint.js"
-import { parseTokens } from "./parser/index.js"
+import { parseTokens, type ParseOptions } from "./parser/index.js"
 import { tokenize, type Token } from "./parser/tokenizer.js"
 import { validatePresentation, Presentation, Theme, DEFAULT_THEME } from "./schema/index.js"
 import { renderPresentation, renderToHtml, RenderOptions } from "./renderer/index.js"
@@ -62,7 +62,7 @@ function lintStage(
 function prepare(
   markdown: string,
   theme: Theme,
-  options: LintOptions,
+  options: LintOptions & ParseOptions,
   deck?: string
 ): Effect.Effect<Presentation, Md2PptxError> {
   return Effect.gen(function* () {
@@ -72,8 +72,8 @@ function prepare(
     // Stage 1: 宣言（ontology.yaml）に照らした構造の検査
     yield* lintStage(tokens, options, deck)
 
-    // Stage 2: トークン列 → 生AST
-    const raw = yield* parseTokens(tokens)
+    // Stage 2: トークン列 → 生AST（`![…](…)` の参照先はここで読み込まれる）
+    const raw = yield* parseTokens(tokens, { baseDir: options.baseDir })
 
     // Stage 3: Schema decode + 文字数チェック
     const pres = yield* validatePresentation(raw)
@@ -85,7 +85,7 @@ function prepare(
   })
 }
 
-export interface Md2PptxOptions extends LintOptions {
+export interface Md2PptxOptions extends LintOptions, ParseOptions {
   compression?: boolean
   theme?: Theme
 }
@@ -110,7 +110,7 @@ export function md2pptx(
   })
 }
 
-export interface Md2HtmlOptions extends LintOptions {
+export interface Md2HtmlOptions extends LintOptions, ParseOptions {
   theme?: Theme
 }
 
@@ -132,6 +132,11 @@ export interface WikiSource {
   /** デッキの識別子のもと。通常は拡張子を除いたファイル名 */
   readonly name: string
   readonly markdown: string
+  /**
+   * この md が置かれているディレクトリ。`![…](….svg)` の相対パスの起点になる。
+   * デッキごとに持つのは、`--wiki` が別々のディレクトリの md を並べて取れるため。
+   */
+  readonly baseDir?: string
 }
 
 export interface Md2WikiOptions extends LintOptions {
@@ -155,7 +160,12 @@ export function md2wiki(
 
     const decks: WikiDeck[] = []
     for (const source of sources) {
-      const pres = yield* prepare(source.markdown, theme, options, source.name)
+      const pres = yield* prepare(
+        source.markdown,
+        theme,
+        { ...options, baseDir: source.baseDir },
+        source.name
+      )
 
       // デッキ名は先頭のタイトルスライド優先。無ければ最初のスライドの見出し、
       // それも無ければファイル名。サイドバーの見出しになるので空にしない。

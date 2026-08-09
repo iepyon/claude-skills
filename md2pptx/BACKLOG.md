@@ -115,6 +115,8 @@ PPTX は `slide-builder.ts` の `bulletToPptxOption` でネイティブバレッ
 
 **背景**: `![alt](src)` のマッチャが存在せず、ユーザー画像を挿入する手段がゼロ。`addImage` は Material Icon の SVG 埋め込み専用(`assets/src/renderer/icon-resolver.ts`)。スクリーンショットや図版を貼れないのはプレゼンツールとして大きな欠落。
 
+**一部着手済み (2026-08-09)**: 行まるごとの `![alt](src)` は `Image` トークンとして認識され、パスは `baseDir`（md の置かれたディレクトリ）から解かれる。読み込みは `assets.ts` の1関数だけが行い、存在しないパスと宣言外の拡張子は行番号つきの ParseError で落ちる。ただし**読むのは WikiPattern の図解スロットだけ**で、対象も SVG のみ（HTML はインライン展開、PPTX は data URI で `addImage`）。残件はここで挙げた本題のほう — 任意のレイアウトに画像を置けるようにする `ImageBox` の追加と、ラスタ画像・アスペクト比保持・領域内フィット。画像を読まないレイアウトに置かれた参照は lint が「描かれない」と報告する。
+
 **実装方針**: ローカルパス/相対パスを読み込み base64 data URI で `addImage`。レイアウトエンジンに `ImageBox` を追加し PPTX/HTML 両対応。LeftRight レイアウトとの組み合わせ(左テキスト+右画像 — 標準スキルの推奨パターン)を最優先ユースケースとする。アスペクト比保持・領域内フィットを自動計算。
 
 **受け入れ基準**: `![説明](./fig.png)` が PPTX/HTML 両方に表示される。存在しないパスは ParseError/ValidationError で明確に失敗する。

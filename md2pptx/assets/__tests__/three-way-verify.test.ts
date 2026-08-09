@@ -31,14 +31,19 @@ const DOC_DIR = join(__dirname, "..", "doc")
 const specDecks = readdirSync(SPEC_DIR)
   .filter((f) => f.endsWith(".md") && f !== "README.md")
   .sort()
-  .map((name) => ({ name, path: join(SPEC_DIR, name) }))
+  .map((name) => ({ name, path: join(SPEC_DIR, name), baseDir: SPEC_DIR }))
 
 const docDecks = [
-  { name: "doc/Spec.md", path: join(DOC_DIR, "Spec.md") },
+  { name: "doc/Spec.md", path: join(DOC_DIR, "Spec.md"), baseDir: DOC_DIR },
   ...readdirSync(join(DOC_DIR, "wiki"))
     .filter((f) => f.endsWith(".md"))
     .sort()
-    .map((name) => ({ name: `doc/wiki/${name}`, path: join(DOC_DIR, "wiki", name) })),
+    .map((name) => ({
+      name: `doc/wiki/${name}`,
+      path: join(DOC_DIR, "wiki", name),
+      // 図解の `![…](….svg)` はそのデッキからの相対
+      baseDir: join(DOC_DIR, "wiki"),
+    })),
 ]
 
 const decks = [...specDecks, ...docDecks]
@@ -54,13 +59,15 @@ const describeMismatches = (mismatches: readonly Mismatch[]): string =>
 
 // 3脚のインベントリを作る。比較そのものは verify.ts の判定を通す
 // （テストだけが別の突き合わせ方を持つと、CI と手元で結論が変わりうる）。
-const threeWay = async (markdown: string, theme = DEFAULT_THEME) => {
-  const ast = await Effect.runPromise(parseMarkdown(markdown))
+const threeWay = async (markdown: string, theme = DEFAULT_THEME, baseDir?: string) => {
+  const ast = await Effect.runPromise(parseMarkdown(markdown, { baseDir }))
   const presentation = await Effect.runPromise(validatePresentation(ast))
   const expected = await Effect.runPromise(slidesToInventory(presentation.slides, theme))
-  const pptx = await Effect.runPromise(inspectPptx(await Effect.runPromise(md2pptx(markdown, { theme }))))
+  const pptx = await Effect.runPromise(
+    inspectPptx(await Effect.runPromise(md2pptx(markdown, { theme, baseDir })))
+  )
   const html = await Effect.runPromise(
-    extractInventoryFromHtml(await Effect.runPromise(md2html(markdown, { theme })))
+    extractInventoryFromHtml(await Effect.runPromise(md2html(markdown, { theme, baseDir })))
   )
   return { expected, pptx, html }
 }
@@ -71,15 +78,19 @@ const expectAgreement = (label: string, report: VerifyReport): void => {
   }
 }
 
-const verifyDeck = async (markdown: string, theme = DEFAULT_THEME): Promise<VerifyReport> => {
-  const { expected, pptx, html } = await threeWay(markdown, theme)
+const verifyDeck = async (
+  markdown: string,
+  theme = DEFAULT_THEME,
+  baseDir?: string
+): Promise<VerifyReport> => {
+  const { expected, pptx, html } = await threeWay(markdown, theme, baseDir)
   return verifyInventories(expected, pptx, html)
 }
 
 describe("3-way verification over every deck we ship", () => {
   for (const deck of decks) {
     it(`${deck.name} — AST / HTML / PPTX agree`, async () => {
-      const report = await verifyDeck(readFileSync(deck.path, "utf-8"))
+      const report = await verifyDeck(readFileSync(deck.path, "utf-8"), DEFAULT_THEME, deck.baseDir)
       expectAgreement(deck.name, report)
 
       // 「0 件」だけでは、全部落として一致したのか本当に合っているのか分からない

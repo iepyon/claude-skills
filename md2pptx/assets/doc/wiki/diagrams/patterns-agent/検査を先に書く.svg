@@ -1,0 +1,46 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="30" font-family="sans-serif" font-size="13" fill="#9CA3AF">手段を探してから決める</text>
+
+  <rect x="30" y="46" width="62" height="30" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="61" y="66" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">ゴール</text>
+  <line x1="92" y1="61" x2="110" y2="61" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M112 61 l-9 -5 l0 10 z" fill="#9CA3AF"/>
+  <rect x="116" y="46" width="62" height="30" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="147" y="66" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">探索</text>
+  <line x1="178" y1="61" x2="196" y2="61" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M198 61 l-9 -5 l0 10 z" fill="#9CA3AF"/>
+  <rect x="202" y="46" width="62" height="30" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="233" y="66" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">判定</text>
+
+  <text x="30" y="98" font-family="sans-serif" font-size="12" fill="#9CA3AF">試行 1</text>
+  <line x1="80" y1="94" x2="130" y2="94" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="30" y="116" font-family="sans-serif" font-size="12" fill="#9CA3AF">試行 2</text>
+  <line x1="80" y1="112" x2="164" y2="112" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="192" y="108" font-family="sans-serif" font-size="12" fill="#9CA3AF">比べられない</text>
+
+  <line x1="30" y1="138" x2="310" y2="138" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="30" y="166" font-family="sans-serif" font-size="13" fill="#1E40AF">検査を書いてから探す</text>
+
+  <rect x="30" y="182" width="62" height="30" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="61" y="202" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">ゴール</text>
+  <line x1="92" y1="197" x2="110" y2="197" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M112 197 l-9 -5 l0 10 z" fill="#4B5563"/>
+  <rect x="116" y="182" width="62" height="30" rx="4" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="147" y="202" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">検査</text>
+  <line x1="178" y1="197" x2="196" y2="197" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M198 197 l-9 -5 l0 10 z" fill="#4B5563"/>
+  <rect x="202" y="182" width="62" height="30" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="233" y="202" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">探索</text>
+
+  <line x1="147" y1="216" x2="147" y2="236" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="30" y="248" font-family="sans-serif" font-size="12" fill="#4B5563">試行 1</text>
+  <line x1="80" y1="244" x2="147" y2="244" stroke="#4B5563" stroke-width="1.5"/>
+  <line x1="240" y1="238" x2="256" y2="250" stroke="#9CA3AF" stroke-width="2"/>
+  <line x1="256" y1="238" x2="240" y2="250" stroke="#9CA3AF" stroke-width="2"/>
+  <text x="30" y="268" font-family="sans-serif" font-size="12" fill="#1E40AF">試行 2</text>
+  <line x1="80" y1="264" x2="228" y2="264" stroke="#1E40AF" stroke-width="1.5"/>
+  <polyline points="240,262 247,269 260,254" fill="none" stroke="#1E40AF" stroke-width="2"/>
+
+  <text x="170" y="300" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">同じ物差しでだけ、前進が見える</text>
+</svg>

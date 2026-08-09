@@ -10,7 +10,7 @@ import type { SlideLayout, TextBlock } from "../../schema/presentation.js"
 export class WikiPatternLayout implements SlideLayout {
   readonly _tag = "WikiPattern" as const
   readonly sections: readonly TextBlock[]
-  /** ```pattern-diagram フェンスの中身（SVG マークアップそのまま） */
+  /** `![…](….svg)` が指すファイルの中身（枠に合わせて幅高だけ 100% に読み替えた SVG） */
   readonly diagram: string
   readonly takeaway?: string
 

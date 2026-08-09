@@ -1,0 +1,20 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <rect x="24" y="70" width="104" height="120" rx="5" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="60" cy="108" r="16" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <circle cx="96" cy="152" r="16" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <text x="76" y="212" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">混ざった1枚</text>
+
+  <line x1="140" y1="130" x2="188" y2="130" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M190 130 l-9 -5 l0 10 z" fill="#4B5563"/>
+
+  <rect x="204" y="62" width="98" height="66" rx="5" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="253" cy="95" r="16" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+
+  <rect x="204" y="158" width="98" height="66" rx="5" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <circle cx="253" cy="191" r="16" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+
+  <line x1="253" y1="128" x2="253" y2="158" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="253" y="248" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">割って、繋ぐ</text>
+
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">1枚に1つなら、名指しで指せる</text>
+</svg>

@@ -80,6 +80,9 @@ export const saveSlide = (state: BuilderState): BuilderState => {
         currentSection: O.none(),
         mode: "default" as string,
         pluginState: {},
+        // options はスライドを跨いでも変わらない（デッキ全体の情報）。
+        // ここで落とすと2枚目以降の `![…](…)` が別の場所から解かれる
+        options: afterSection.options,
       }),
     })
   )

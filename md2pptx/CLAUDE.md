@@ -184,6 +184,7 @@ src/shape-keys.ts   3者比較で図形を指す名前 (レンダラとツール
 src/text-lines.ts   「1行 = 1段落」の切り出し (レンダラとツールが共有)
 src/text-style.ts   中央寄せ・コードのフォントの判定 (レンダラとツールが共有)
 src/entities.ts     実体参照のデコード (レンダラとツールが共有)
+src/assets.ts       `![…](….svg)` の参照先の読み込み (**ファイルを読むのはここだけ**)
 ```
 
 `constants.ts` は layout/ 内の全ファイルが参照する。座標調整や新レイアウト追加時に必ず確認。
@@ -210,6 +211,7 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 - スライド ID の採番: `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
 - HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` と `data-default-font-name` は `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
+- 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）
 
 ## Plugin System
 
@@ -238,7 +240,7 @@ src/plugins/
 ├── quote/                `<!--quote-->`
 ├── agenda/               `<!--agenda-->`
 ├── pattern-language/     `<!--pattern-language-a-->` (1ブロック → Overview + Detail の2スライド)
-└── wiki-pattern/         `<!--pattern-->` (左に3節、右に ```pattern-diagram の SVG)
+└── wiki-pattern/         `<!--pattern-->` (左に3節、右に `![…](….svg)` が指す外部 SVG)
 ```
 
 11ディレクトリ・**12プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
@@ -247,8 +249,9 @@ src/plugins/
 - `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ — customer-journey, pattern-language, quote, table, text-only, steps, icon-layout, agenda, wiki-pattern
 
 (steps / icon-layout / agenda / wiki-pattern は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる。
-wiki-pattern が挟むのはコードフェンスだけ — 捕まえないとコアのハンドラが `mode` を `"code"` にして、
-スライドが CodeDisplay として変換されてしまう)
+wiki-pattern が挟むのは画像とコードフェンス — 画像は図解の参照を読み込む本題で、フェンスのほうは
+飲むだけ。捕まえないとコアのハンドラが `mode` を `"code"` にして、スライドが CodeDisplay として
+変換されてしまう)
 
 ディレクティブと文字数上限は**プラグインには書かない**。正本は `ontology.yaml` の `layouts` で、
 `registerPlugin()` が `id` を鍵に完全一致の `tokenMatcher` を導出し（宣言の読み込みは
@@ -286,7 +289,7 @@ wiki-pattern が挟むのはコードフェンスだけ — 捕まえないと�
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
-| `wiki-pattern.test.ts` | WikiPattern レイアウト (3節の並べ替え・図解の必須化・座標・配布デッキの SVG 検査) |
+| `wiki-pattern.test.ts` | WikiPattern レイアウト (3節の並べ替え・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |
 | `icon-resolver.test.ts` | renderer/icon-resolver.ts |

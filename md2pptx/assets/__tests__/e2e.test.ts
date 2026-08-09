@@ -15,6 +15,8 @@ const getSpecFiles = (): Array<{ name: string; path: string }> => {
   return files.map((name) => ({
     name: name.replace(/\.md$/, ""),
     path: join(MARKDOWN_SPEC_DIR, name),
+    // 図解の `![…](….svg)` はデッキからの相対で書かれている
+    baseDir: MARKDOWN_SPEC_DIR,
   }))
 }
 
@@ -46,6 +48,12 @@ const extractTextFromMarkdown = (markdown: string): string[] => {
 
     // Skip code block content, HTML comments, and empty lines
     if (inCodeBlock || trimmed.startsWith("<!--") || trimmed === "") {
+      continue
+    }
+
+    // 画像の行は参照であって本文ではない。中身は SVG として埋め込まれるので、
+    // alt もパスもテキストとしては出てこない
+    if (/^!\[[^\]]*\]\([^)]+\)$/.test(trimmed)) {
       continue
     }
 
@@ -97,10 +105,10 @@ describe("md2pptx e2e", () => {
   const specFiles = getSpecFiles()
 
   describe("PPTX generation", () => {
-    specFiles.forEach(({ name, path }) => {
+    specFiles.forEach(({ name, path, baseDir }) => {
       it(`should generate PPTX from ${name}`, async () => {
         const markdown = readFileSync(path, "utf-8")
-        const buffer = await Effect.runPromise(md2pptx(markdown))
+        const buffer = await Effect.runPromise(md2pptx(markdown, { baseDir }))
 
         // Structure validation
         expect(buffer).toBeInstanceOf(Buffer)
@@ -122,10 +130,10 @@ describe("md2pptx e2e", () => {
   })
 
   describe("HTML generation", () => {
-    specFiles.forEach(({ name, path }) => {
+    specFiles.forEach(({ name, path, baseDir }) => {
       it(`should generate HTML from ${name}`, async () => {
         const markdown = readFileSync(path, "utf-8")
-        const html = await Effect.runPromise(md2html(markdown))
+        const html = await Effect.runPromise(md2html(markdown, { baseDir }))
 
         // Structure validation
         expect(html).toBeTruthy()
@@ -143,13 +151,13 @@ describe("md2pptx e2e", () => {
   })
 
   describe("Format consistency", () => {
-    specFiles.forEach(({ name, path }) => {
+    specFiles.forEach(({ name, path, baseDir }) => {
       it(`should generate consistent output for ${name}`, async () => {
         const markdown = readFileSync(path, "utf-8")
 
         // Both should succeed without errors
         const [pptxBuffer, htmlString] = await Effect.runPromise(
-          Effect.all([md2pptx(markdown), md2html(markdown)], {
+          Effect.all([md2pptx(markdown, { baseDir }), md2html(markdown, { baseDir })], {
             concurrency: 2,
           })
         )

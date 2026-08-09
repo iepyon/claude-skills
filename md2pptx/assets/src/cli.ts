@@ -133,6 +133,8 @@ function collectWikiSources(paths: readonly string[]): WikiSource[] {
   return collectMarkdownFiles(paths).map((f) => ({
     name: basename(f, extname(f)),
     markdown: readFileSync(f, "utf-8"),
+    // 図解の `![…](….svg)` はその md からの相対で書かれている
+    baseDir: dirname(f),
   }))
 }
 
@@ -156,10 +158,12 @@ const program = Effect.gen(function* () {
 
   const markdown = readFileSync(inputPath, "utf-8")
   const theme = themePath ? yield* loadThemeFile(themePath) : DEFAULT_THEME
+  // 図解の `![…](….svg)` は md からの相対。出力先ではなく入力の場所から解く
+  const baseDir = dirname(inputPath)
 
   // --html mode: Generate HTML output
   if (htmlMode && !verifyMode) {
-    const html = yield* md2html(markdown, { theme, ...lintOpts })
+    const html = yield* md2html(markdown, { theme, baseDir, ...lintOpts })
     writeFileSync(outputPath, html, "utf-8")
     console.log(`✅ Generated HTML: ${outputPath}`)
     return 0
@@ -170,20 +174,20 @@ const program = Effect.gen(function* () {
     console.log("🔍 Verify mode: Generating PPTX and HTML, comparing inventories...")
 
     // Generate PPTX
-    const pptxBuffer = yield* md2pptx(markdown, { compression, theme, ...lintOpts })
+    const pptxBuffer = yield* md2pptx(markdown, { compression, theme, baseDir, ...lintOpts })
     const pptxPath = outputPath.replace(/\.(html|pptx)$/, ".pptx")
     writeFileSync(pptxPath, pptxBuffer)
     console.log(`✅ Generated PPTX: ${pptxPath}`)
 
     // Generate HTML — lintOpts をあえて渡さない。同じ markdown を上の md2pptx が
     // 既に検査しており、渡すと同じ違反が二度出る
-    const html = yield* md2html(markdown, { theme })
+    const html = yield* md2html(markdown, { theme, baseDir })
     const htmlPath = outputPath.replace(/\.(html|pptx)$/, ".html")
     writeFileSync(htmlPath, html, "utf-8")
     console.log(`✅ Generated HTML: ${htmlPath}`)
 
     // Build expected inventory from AST
-    const raw = yield* parseMarkdown(markdown)
+    const raw = yield* parseMarkdown(markdown, { baseDir })
     const pres = yield* validatePresentation(raw)
     const expectedInventory = yield* slidesToInventory(pres.slides, theme)
 
@@ -202,7 +206,7 @@ const program = Effect.gen(function* () {
   }
 
   // Default mode: Generate PPTX
-  const buffer = yield* md2pptx(markdown, { compression, theme, ...lintOpts })
+  const buffer = yield* md2pptx(markdown, { compression, theme, baseDir, ...lintOpts })
   writeFileSync(outputPath, buffer)
   console.log(`✅ Generated PPTX: ${outputPath} ${compression ? "(compressed)" : "(uncompressed)"}`)
   return 0

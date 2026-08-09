@@ -1,0 +1,35 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="30" font-family="sans-serif" font-size="13" fill="#9CA3AF">終わりを決めない</text>
+
+  <line x1="30" y1="66" x2="150" y2="66" stroke="#9CA3AF" stroke-width="2"/>
+  <line x1="150" y1="66" x2="230" y2="66" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <line x1="230" y1="66" x2="310" y2="66" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="3 5"/>
+  <text x="170" y="92" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">あと少しに見え続ける</text>
+
+  <line x1="30" y1="116" x2="310" y2="116" stroke="#E2E8F0" stroke-width="1"/>
+
+  <text x="30" y="144" font-family="sans-serif" font-size="13" fill="#1E40AF">期間を先に固定する</text>
+
+  <rect x="30" y="160" width="82" height="34" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="71" y="182" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">試す</text>
+  <rect x="129" y="160" width="82" height="34" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="170" y="182" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">試す</text>
+  <rect x="228" y="160" width="82" height="34" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="269" y="182" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">試す</text>
+
+  <circle cx="120" cy="177" r="9" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="120" y="182" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">?</text>
+  <circle cx="219" cy="177" r="9" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <text x="219" y="182" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">?</text>
+
+  <line x1="120" y1="200" x2="120" y2="222" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M120 224 l-5 -9 l10 0 z" fill="#1E40AF"/>
+  <line x1="219" y1="200" x2="219" y2="222" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M219 224 l-5 -9 l10 0 z" fill="#1E40AF"/>
+
+  <rect x="76" y="230" width="188" height="30" rx="4" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="170" y="250" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">ゴールを問い直す</text>
+
+  <text x="170" y="288" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">期限は、作業ではなくゴールに効かせる</text>
+  <text x="170" y="310" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">延ばすのは期限ではなく、次の仮説</text>
+</svg>

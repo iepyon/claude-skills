@@ -36,6 +36,15 @@ export type RawSection = {
 
 export type LayoutMode = "default" | "left" | "right" | "top" | "bottom" | "grid" | "takeaway" | "code"
 
+/** 解析に要る、md の文字列の外側の情報 */
+export type ParseOptions = {
+  /**
+   * `![…](….svg)` の相対パスを解く起点＝そのデッキの md が置かれているディレクトリ。
+   * 文字列だけを渡す呼び出し（API・テスト）では省略でき、その場合は cwd から解く。
+   */
+  baseDir?: string
+}
+
 export type BuilderState = {
   slides: RawSlide[]
   currentSlide: O.Option<RawSlide>
@@ -43,13 +52,17 @@ export type BuilderState = {
   mode: string                           // LayoutMode or plugin mode
   // Plugin-specific state
   pluginState: Record<string, unknown>
+  // 解析中ずっと変わらない外側の情報。状態に載せているのは、トークンハンドラが
+  // 引数を1つしか受け取らないため（増やすと12プラグインの全ハンドラの型が変わる）
+  options: ParseOptions
 }
 
 // 初期状態
-export const initialState: BuilderState = {
+export const initialState = (options: ParseOptions = {}): BuilderState => ({
   slides: [],
   currentSlide: O.none(),
   currentSection: O.none(),
   mode: "default",
   pluginState: {},
-}
+  options,
+})

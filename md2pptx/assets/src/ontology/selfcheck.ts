@@ -16,6 +16,7 @@ import {
   getLayouts,
   getLimits,
   getVocabularies,
+  imageExtension,
   isDynamicCardinality,
   loadOntology,
   parseCardinality,
@@ -78,14 +79,16 @@ export function selfcheckProblems(): string[] {
     for (const slot of layout.slots) {
       const sat = `${at}.slots.${slot.name}`
       const fence = codeFenceLanguage(slot.marker)
+      const image = imageExtension(slot.marker)
       fail(
-        slot.marker === "###" || slot.marker === "####" || fence !== undefined,
-        `${sat}: marker が ### / #### / \`\`\`<lang> のいずれでもない`
+        slot.marker === "###" || slot.marker === "####" || fence !== undefined || image !== undefined,
+        `${sat}: marker が ### / #### / \`\`\`<lang> / ![…](….<ext>) のいずれでもない`
       )
-      // フェンスの枠は見出しを持たない。語彙を宣言しても照合される見出しが無い
+      // 行そのものが枠になるスロット（フェンス・画像）は見出しを持たない。
+      // 語彙を宣言しても照合される見出しが無い
       fail(
-        fence === undefined || slot.heading === "free",
-        `${sat}: コードフェンスの枠は見出しを持たないので heading: free でなければならない`
+        (fence === undefined && image === undefined) || slot.heading === "free",
+        `${sat}: 行そのものが枠のスロットは見出しを持たないので heading: free でなければならない`
       )
       try {
         parseCardinality(slot.cardinality)

@@ -5,7 +5,7 @@ import type { Slide } from "../../schema/presentation.js"
 import { ParseError } from "../../errors.js"
 import { getVocabulary, resolveTerm } from "../../ontology/index.js"
 import { WikiPatternLayout } from "./schema.js"
-import { diagramFenceLanguage, DIAGRAM_FIELD, SECTIONS_FIELD } from "./handler.js"
+import { diagramFileExtension, DIAGRAM_FIELD, SECTIONS_FIELD } from "./handler.js"
 
 const VOCABULARY = "wiki-pattern-sections"
 
@@ -42,7 +42,7 @@ export const convertWikiPattern = (raw: RawSlide): O.Option<Slide[]> => {
   if (!diagram) {
     throw new ParseError({
       message:
-        `パターン「${raw.title}」に \`\`\`${diagramFenceLanguage()} フェンスが無い。` +
+        `パターン「${raw.title}」に図解の参照 \`![…](….${diagramFileExtension().replace(/^\./, "")})\` が無い。` +
         `WikiPattern は右側の図解が必須（ontology.yaml の WikiPattern.slots.diagram）`,
     })
   }

@@ -224,3 +224,30 @@ export function fenceLanguageForLayout(tag: string, slotName: string): string {
   }
   return language
 }
+
+const IMAGE_MARKER = /^!\[.*\]\((.*)\)$/
+
+/**
+ * スロットの marker が画像参照を指すなら、受理する拡張子（`.svg` 等）を返す。
+ *
+ * `codeFenceLanguage` の相方。フェンスと同じく「行そのものが1つの枠」になる
+ * スロットで、拡張子まで marker に書かせているのは、**受理する種類の正本を
+ * 宣言側に置く**ため（実装が独自に `.svg` を知っていると、宣言を変えても
+ * 読める種類が変わらない）。拡張子を名乗らない marker は画像枠と認めない。
+ */
+export function imageExtension(marker: string): string | undefined {
+  const path = marker.match(IMAGE_MARKER)?.[1]
+  return path?.match(/\.[A-Za-z0-9]+$/)?.[0].toLowerCase()
+}
+
+/** そのレイアウトの画像枠が受理する拡張子。宣言から導く（fenceLanguageForLayout と同じ理由） */
+export function imageExtensionForLayout(tag: string, slotName: string): string {
+  const marker = getLayoutByTag(tag)?.slots.find((s) => s.name === slotName)?.marker
+  const extension = marker ? imageExtension(marker) : undefined
+  if (!extension) {
+    throw new Error(
+      `ontology.yaml: ${tag}.slots.${slotName} が画像の枠として宣言されていない`
+    )
+  }
+  return extension
+}

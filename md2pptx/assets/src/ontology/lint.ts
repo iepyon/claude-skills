@@ -20,6 +20,7 @@ import {
   getFieldSet,
   getLayouts,
   getVocabulary,
+  imageExtension,
   isDynamicCardinality,
   parseCardinality,
   resolveTerm,
@@ -113,6 +114,16 @@ function countCodeFences(tokens: readonly Token[], language: string): number {
   return tokens.filter((t) => t.type === "CodeFenceOpen" && t.language === language).length
 }
 
+/**
+ * その拡張子を指す画像参照の数。コードフェンスと同じく「行そのものが1つの枠」。
+ *
+ * 拡張子が違う参照はここで数えない。数えてしまうと「1件ある」と見えたまま
+ * 変換で落ちる（読めるのは宣言された種類だけ）ので、欠落として報告させる。
+ */
+function countImages(tokens: readonly Token[], extension: string): number {
+  return tokens.filter((t) => t.type === "Image" && t.src.toLowerCase().endsWith(extension)).length
+}
+
 /** グリッドの `###` 件数はディレクティブの引数で決まる */
 function gridCellCount(tokens: readonly Token[]): number | undefined {
   const grid = tokens.find((t) => t.type === "GridDirective")
@@ -149,6 +160,10 @@ function collectHeadings(tokens: readonly Token[]): Headings {
   return { h3, h4, h4Groups: groups.filter((g) => g.length > 0) }
 }
 
+/** 見出し（`###` / `####`）で数える枠か。フェンスと画像は行そのものが枠になる */
+const isHeadingSlot = (slot: Slot): boolean =>
+  codeFenceLanguage(slot.marker) === undefined && imageExtension(slot.marker) === undefined
+
 /** `resolved` は grid のようにディレクティブの引数で件数が決まる宣言に渡す */
 function checkCardinality(
   slot: Slot,
@@ -173,11 +188,11 @@ function checkCardinality(
 }
 
 function checkVocabulary(slot: Slot, headings: Headings): Diagnostic[] {
-  // フェンスの枠は見出しを持たない。ここで抜けないと `####` の側に落ち、
+  // フェンス・画像の枠は見出しを持たない。ここで抜けないと `####` の側に落ち、
   // そのスライドの `####` を図解の語彙で照合してしまう（selfcheck が
-  // 「フェンスの枠は heading: free」を強制しているが、lint の正しさが
+  // 「行そのものが枠なら heading: free」を強制しているが、lint の正しさが
   // 別ファイルの規則に依存する形になる）
-  if (codeFenceLanguage(slot.marker) !== undefined) return []
+  if (!isHeadingSlot(slot)) return []
   if (slot.heading !== "vocabulary" || !slot.vocabulary) return []
   const vocab = getVocabulary(slot.vocabulary)
   if (!vocab || vocab.unknown === "ignore") return []
@@ -317,8 +332,11 @@ export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
     for (const slot of layout.slots) {
       out.push(...checkVocabulary(slot, headings))
       const fence = codeFenceLanguage(slot.marker)
+      const image = imageExtension(slot.marker)
       if (fence !== undefined) {
         out.push(...checkCardinality(slot, countCodeFences(slide.tokens, fence), slide.line))
+      } else if (image !== undefined) {
+        out.push(...checkCardinality(slot, countImages(slide.tokens, image), slide.line))
       } else if (slot.marker === "###") {
         const resolved = isDynamicCardinality(slot.cardinality)
           ? gridCellCount(slide.tokens)
@@ -339,6 +357,20 @@ export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
         line: headings.h4[0].line,
         message: `${layout.label} は #### を読まない（この行以下は描かれない）`,
       })
+    }
+
+    // 画像の枠を持たないレイアウトに置かれた `![…](…)` は、どこにも描かれず消える
+    // （`####` と同じ「黙って落ちる」種類の間違い）
+    if (!layout.slots.some((s) => imageExtension(s.marker) !== undefined)) {
+      for (const token of slide.tokens) {
+        if (token.type !== "Image") continue
+        out.push({
+          level: "warning",
+          check: "slot-cardinality",
+          line: token.line,
+          message: `${layout.label} は画像を読まない（'${token.src}' は描かれない）`,
+        })
+      }
     }
   }
 
