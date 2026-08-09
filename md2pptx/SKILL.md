@@ -1,6 +1,6 @@
 ---
 name: md2pptx
-description: Markdown to PowerPoint/HTML slide generator with layout plugins, wiki-style links and a link-navigable wiki output. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 16 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, and pattern language. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, building a linked slide wiki from several decks, or when the user wants to format content for presentation output.
+description: Markdown to PowerPoint/HTML slide generator with layout plugins, wiki-style links and a link-navigable wiki output. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 17 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, pattern language, and wiki patterns with a required SVG diagram. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, building a linked slide wiki from several decks, or when the user wants to format content for presentation output.
 ---
 
 # md2pptx
@@ -101,6 +101,7 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
 | PatternLanguage | `<!--pattern-language-a-->` | パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成 |
+| WikiPattern | `<!--pattern-->` | Wiki のパターン1件。左に 状況/問題/解決、右に SVG の図解 |
 <!-- END GENERATED: layouts -->
 
 各レイアウトが `###` / `####` に何を期待するか（件数・見出しの語彙・本文の読まれ方）は
@@ -113,7 +114,7 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 |---|---|---|---|
 | `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`[[…]]` の解決先であり HTML の `#hash` でもある。 |
 | `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
-| `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
+| `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
 <!-- END GENERATED: annotations -->
 
 ### リンク
@@ -156,7 +157,8 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 
 リンクの解決順は、① `deck/slide` の明示 → ② 自デッキ内 → ③ サイト全体で一意 →
 ④ 未解決（複数一致しても選ばない。サイドバーに一覧が出る）。
-サンプルは `doc/wiki/`（相互リンクしたパターン集＋機能ガイドの2デッキ）。
+サンプルは `doc/wiki/`（機能ガイド + 人が育てる Wiki のパターン + LLM が手入れする Wiki のパターン
+の3デッキ。パターンは互いにデッキをまたいで参照し合う）。
 
 ## 記法サンプル
 

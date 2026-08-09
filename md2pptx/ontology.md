@@ -31,7 +31,7 @@ md2pptx が読む Markdown の構造の全文リファレンス。**この文書
 |---|---|---|---|
 | `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`[[…]]` の解決先であり HTML の `#hash` でもある。 |
 | `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
-| `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
+| `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
 
 - `id` — 省略するとスライドタイトルの slug を採り、衝突したら連番（`-2`）を付ける。 採番は parser/slide-ids.ts が一括で行う。
 
@@ -59,6 +59,7 @@ md2pptx が読む Markdown の構造の全文リファレンス。**この文書
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
 | PatternLanguage | `<!--pattern-language-a-->` | パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成 |
+| WikiPattern | `<!--pattern-->` | Wiki のパターン1件。左に 状況/問題/解決、右に SVG の図解 |
 
 ## レイアウトごとの構造
 
@@ -437,6 +438,7 @@ interface User {
 |---|---|---|---|---|---|
 | `sections` | `###` | `1..n` | 語彙 `pattern-sections` | `free` | パターンの節。節ごとに本文の読まれ方が違う（語彙の説明を見る）。 |
 | `example-items` | `####` | `0..n` | 自由 | `free` | 「具体例N：…」節の中の小項目。 |
+| `diagram` | `` ```pattern-diagram `` | `0..1` | 自由 | `none` | 概要ページの左下に置く SVG。フェンスの中身をそのまま図として描く。 |
 
 ```markdown
 ## パターン12
@@ -454,6 +456,41 @@ oneliner: 何が起きたら崩れるかを、実験の前に一文で決める
 - 実験の前に確定させる
 ### 期待結果
 結果の解釈が一意に定まる。
+```
+
+### WikiPattern
+
+- ディレクティブ: `<!--pattern-->`
+- `_tag`: `WikiPattern`（プラグイン `wiki-pattern`）
+- 説明: Wiki のパターン1件。左に 状況/問題/解決、右に SVG の図解
+- 効く注釈: `id`・`takeaway`
+
+**図解は必須。** ```pattern-diagram フェンスの中に SVG をそのまま書く。
+パターン・ランゲージは構造を一目で掴ませる形式なので、絵の無いパターンを
+置けないようにしてある（フェンスを書き忘れたスライドは lint が報告する）。
+SVG は自分で `width="100%" height="100%" viewBox="…"` を名乗ること
+（HTML はフェンスの中身をそのまま吐き、大きさを外から与えない）。
+
+| スロット | 記号 | 個数 | 見出し | 本文 | 説明 |
+|---|---|---|---|---|---|
+| `sections` | `###` | `3` | 語彙 `wiki-pattern-sections` | `free` | 状況・問題・解決の3枠。左カラムに上から積まれる。 |
+| `diagram` | `` ```pattern-diagram `` | `1` | 自由 | `none` | 右カラムに置く SVG。1スライドにつき必ず1つ。 |
+
+```markdown
+## 種ノート
+<!--pattern-->
+### 状況
+思いついたことを、後で書こうと思って書かないまま忘れる。
+### 問題
+「ちゃんと書ける状態」を待つと、永遠にその状態は来ない。
+### 解決
+**一文でよいから置く。** 育てるのは後の自分に任せる。
+```pattern-diagram
+<svg width="100%" height="100%" viewBox="0 0 360 340"><title>種ノート</title></svg>
+```
+
+<!--takeaway-->
+関連: [[一枚一義]]
 ```
 
 ## 語彙
@@ -534,6 +571,19 @@ oneliner: 何が起きたら崩れるかを、実験の前に一文で決める
 | `goodExample` | `良い` と `例` を両方含む |
 | `badExample` | `NG` か `短すぎる` を含む |
 | `badReason` | `失敗` を含む |
+
+### Wiki パターンの3節（`wiki-pattern-sections`）
+
+語彙外の見出しの扱い: **warning** — どの枠にも入らず、その節は描かれない
+
+3節そろって1つのパターンになる。順番は書いた順ではなく、この語彙の並び
+（状況 → 問題 → 解決）で左カラムに積まれる。
+
+| キー | 正書 | 別表記 | 説明 |
+|---|---|---|---|
+| `situation` | 状況 | `いつ`・`situation` | どんな場面で起きるか。本文がそのまま入る。 |
+| `problem` | 問題 | `なぜ`・`problem` | 何が困るのか。本文がそのまま入る。 |
+| `solution` | 解決 | `どうする`・`solution` | 打ち手。本文がそのまま入る。 |
 
 ## メタ（`key: value`）
 

@@ -237,15 +237,18 @@ src/plugins/
 ├── table/                `<!--table-->` (shape + text の自力描画)
 ├── quote/                `<!--quote-->`
 ├── agenda/               `<!--agenda-->`
-└── pattern-language/     `<!--pattern-language-a-->` (1ブロック → Overview + Detail の2スライド)
+├── pattern-language/     `<!--pattern-language-a-->` (1ブロック → Overview + Detail の2スライド)
+└── wiki-pattern/         `<!--pattern-->` (左に3節、右に ```pattern-diagram の SVG)
 ```
 
-10ディレクトリ・**11プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
+11ディレクトリ・**12プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
 
-- `sectionRoute`: `###` セクションを `pluginData` の指定フィールドに集めるだけの標準ルート — lean-canvas, numbered-list, steps, icon-layout, agenda
-- `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ — customer-journey, pattern-language, quote, table, text-only, steps, icon-layout, agenda
+- `sectionRoute`: `###` セクションを `pluginData` の指定フィールドに集めるだけの標準ルート — lean-canvas, numbered-list, steps, icon-layout, agenda, wiki-pattern
+- `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ — customer-journey, pattern-language, quote, table, text-only, steps, icon-layout, agenda, wiki-pattern
 
-(steps / icon-layout / agenda は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる)
+(steps / icon-layout / agenda / wiki-pattern は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる。
+wiki-pattern が挟むのはコードフェンスだけ — 捕まえないとコアのハンドラが `mode` を `"code"` にして、
+スライドが CodeDisplay として変換されてしまう)
 
 ディレクティブと文字数上限は**プラグインには書かない**。正本は `ontology.yaml` の `layouts` で、
 `registerPlugin()` が `id` を鍵に完全一致の `tokenMatcher` を導出し（宣言の読み込みは
@@ -283,6 +286,7 @@ src/plugins/
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
+| `wiki-pattern.test.ts` | WikiPattern レイアウト (3節の並べ替え・図解の必須化・座標・配布デッキの SVG 検査) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |
 | `icon-resolver.test.ts` | renderer/icon-resolver.ts |
