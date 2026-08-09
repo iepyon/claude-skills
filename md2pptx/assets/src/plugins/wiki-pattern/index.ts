@@ -5,6 +5,16 @@ import { convertWikiPattern } from "./converter.js"
 import { handleWikiPatternLayout } from "./layout.js"
 import { WikiPatternLayout } from "./schema.js"
 
+// 記法そのものは数えない（agenda / steps / icon-layout / lean-canvas / numbered-list と同じ数え方。
+// ここだけ生の length で数えると、同じ本文がレイアウトごとに違う長さで上限に当たる）
+function countPlainTextChars(text: string): number {
+  return text
+    .replace(/^#+\s+/gm, "")
+    .replace(/<!--.*?-->/gs, "")
+    .replace(/^\s*$/gm, "")
+    .trim().length
+}
+
 /**
  * 数えるのは人が読む文字だけ。**SVG は数えない。**
  *
@@ -16,10 +26,10 @@ function countWikiPatternChars(layout: SlideLayout): number {
   const l = layout as WikiPatternLayout
   let count = 0
   for (const section of l.sections) {
-    if (section.heading) count += section.heading.length
-    if (section.body) count += section.body.length
+    if (section.heading) count += countPlainTextChars(section.heading)
+    if (section.body) count += countPlainTextChars(section.body)
   }
-  if (l.takeaway) count += l.takeaway.length
+  if (l.takeaway) count += countPlainTextChars(l.takeaway)
   return count
 }
 

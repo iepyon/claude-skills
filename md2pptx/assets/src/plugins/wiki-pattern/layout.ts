@@ -13,7 +13,6 @@ import {
   WP_LEFT_RATIO,
   WP_RIGHT_RATIO,
   WP_PANEL_RADIUS,
-  WP_PANEL_FILL,
   WP_PANEL_BORDER,
   WP_PANEL_BORDER_WIDTH,
   WP_PANEL_PADDING,
@@ -52,7 +51,9 @@ export function layoutWikiPattern(
       w: dims.rightWidth,
       h: dims.availableHeight,
       shapeType: "rect",
-      fillColor: WP_PANEL_FILL,
+      // 同じ役割（内容の後ろに敷く淡いカード）の色がテーマにあるので、そこから採る。
+      // ここに hex を書くと --theme でアイコンカードだけ色が変わって並びがずれる
+      fillColor: theme.contentSlide.iconCardBackground,
       rectRadius: WP_PANEL_RADIUS,
       borderColor: WP_PANEL_BORDER,
       borderWidth: WP_PANEL_BORDER_WIDTH,

@@ -3,6 +3,12 @@ import { ParseError } from "../../errors.js"
 import type { BuilderState } from "../../parser/builder-types.js"
 import type { Token } from "../../parser/tokenizer.js"
 import { saveSection } from "../../parser/builder-state.js"
+import { fenceLanguageForLayout } from "../../ontology/index.js"
+
+/** 図解のフェンスの言語名。読み込みは初回まで遅らせる（import しただけで YAML を読まない） */
+let diagramFence: string | undefined
+const diagramFenceLanguage = (): string =>
+  (diagramFence ??= fenceLanguageForLayout("PatternLanguageOverview", "diagram"))
 
 export type RawConcreteExampleItem = {
   label: string
@@ -222,8 +228,10 @@ export const handleCodeFenceLineInPL = (state: BuilderState, token: Token): O.Op
 
   const slide = state.currentSlide.value
 
-  // pattern-diagram: SVG コンテンツ蓄積
-  if (plState.currentCodeLang === "pattern-diagram") {
+  // 図解のフェンス: SVG コンテンツ蓄積。綴りは ontology.yaml の
+  // PatternLanguageOverview.slots.diagram から導く（手で書き写すと、宣言を変えたときに
+  // lint は新しい綴りを数え、ここは古い綴りを集める — 緑のまま図解だけ入らなくなる）
+  if (plState.currentCodeLang === diagramFenceLanguage()) {
     const separator = pl.diagram ? "\n" : ""
     return O.some({
       ...state,

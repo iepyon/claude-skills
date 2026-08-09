@@ -3,31 +3,41 @@ import { ParseError } from "../../errors.js"
 import type { BuilderState } from "../../parser/builder-types.js"
 import type { Token } from "../../parser/tokenizer.js"
 import { saveSection } from "../../parser/builder-state.js"
+import { fenceLanguageForLayout } from "../../ontology/index.js"
 
-/** 図解を運ぶフェンスの言語名。ontology.yaml の diagram スロットの marker と同じ綴り */
-export const DIAGRAM_FENCE = "pattern-diagram"
+/**
+ * 図解を運ぶフェンスの言語名。**綴りは宣言から導く。**
+ *
+ * 手で書き写すと、ontology.yaml の marker を変えたときに lint は新しい綴りを数え、
+ * 実装は古い綴りを集める — lint は緑のまま図解だけが入らなくなる。
+ * 読み込みは初回まで遅らせる（registry がディレクティブの導出を
+ * `getTokenMatchers()` まで遅らせているのと同じ理由で、import しただけで
+ * ontology.yaml を読みに行かせない）。
+ */
+let diagramFence: string | undefined
+export const diagramFenceLanguage = (): string =>
+  (diagramFence ??= fenceLanguageForLayout("WikiPattern", "diagram"))
 
 /** `###` を集める先。registerPlugin の sectionRoute と同じ名前 */
 export const SECTIONS_FIELD = "wikiPatternSections"
 
 /** フェンスの中身を積む先 */
-const DIAGRAM_FIELD = "wikiPatternDiagram"
+export const DIAGRAM_FIELD = "wikiPatternDiagram"
 
-/** フェンスの中に居るか、その言語は何か。スライドを跨がない一時状態 */
-interface FenceState {
-  readonly inFence: boolean
-  readonly language: string
-}
+/**
+ * いま図解のフェンスを読んでいるか。スライドを跨がない一時状態。
+ *
+ * 「フェンスの中か」と「その言語は何か」を別々に持つ必要はない。積む先が1つしか
+ * 無いので、開いた時点で「積むかどうか」を決めてしまえばよい
+ * （pattern-language が両方持つのは、フェンスの中身を4つの宛先に振り分けるため）。
+ */
+const FENCE_KEY = "wikiPatternCollectingDiagram"
 
-const getFenceState = (state: BuilderState): FenceState =>
-  (state.pluginState["wikiPatternFence"] as FenceState | undefined) ?? {
-    inFence: false,
-    language: "",
-  }
+const isCollecting = (state: BuilderState): boolean => state.pluginState[FENCE_KEY] === true
 
-const setFenceState = (state: BuilderState, fence: FenceState): Record<string, unknown> => ({
+const setCollecting = (state: BuilderState, on: boolean): Record<string, unknown> => ({
   ...state.pluginState,
-  wikiPatternFence: fence,
+  [FENCE_KEY]: on,
 })
 
 // PluginDirective: <!--pattern--> — パターンモード開始
@@ -56,12 +66,11 @@ export const handleWikiPatternDirective = (
       sections: undefined,
     }),
     mode: "wiki-pattern",
-    pluginState: setFenceState(afterSection, { inFence: false, language: "" }),
   })
 }
 
 /**
- * CodeFenceOpen: フェンスに入る。
+ * CodeFenceOpen: フェンスに入る。開いた時点で「積むかどうか」を決める。
  *
  * ここで捕まえないとコアの `handleCodeFenceOpen` が走り、`mode` を "code" に、
  * `codeLanguage` をスライドに書き込む。そうなるとセクションのルート先が消え、
@@ -77,20 +86,18 @@ export const handleCodeFenceOpenInWikiPattern = (
   const afterSection = saveSection(state)
   return O.some({
     ...afterSection,
-    pluginState: setFenceState(afterSection, { inFence: true, language: token.language }),
+    pluginState: setCollecting(afterSection, token.language === diagramFenceLanguage()),
   })
 }
 
-// CodeFenceLine: 図解のフェンスなら1行ずつ原文のまま積む
+// CodeFenceLine: 図解のフェンスなら1行ずつ原文のまま積む（別言語のフェンスは読み捨てる）
 export const handleCodeFenceLineInWikiPattern = (
   state: BuilderState,
   token: Token
 ): O.Option<BuilderState> => {
   if (token.type !== "CodeFenceLine" || state.mode !== "wiki-pattern") return O.none()
 
-  const fence = getFenceState(state)
-  if (O.isNone(state.currentSlide) || !fence.inFence) return O.some(state)
-  if (fence.language !== DIAGRAM_FENCE) return O.some(state) // 別言語のフェンスは読み捨てる
+  if (!isCollecting(state) || O.isNone(state.currentSlide)) return O.some(state)
 
   const slide = state.currentSlide.value
   const existing = (slide.pluginData?.[DIAGRAM_FIELD] as string | undefined) ?? ""
@@ -105,8 +112,10 @@ export const handleCodeFenceLineInWikiPattern = (
 }
 
 /**
- * CodeFenceClose: フェンスを出る。**モードは "wiki-pattern" のまま保つ。**
- * コアの `handleCodeFenceClose` は "default" に戻すので、そのあとの
+ * CodeFenceClose: フェンスを出る。
+ *
+ * このハンドラの仕事は**トークンを飲むこと**で、コアの `handleCodeFenceClose` に
+ * 届かせないこと。コアは `mode` を "default" に戻すので、そのあとの
  * `<!--takeaway-->` や `###` が別のレイアウトの規則で読まれてしまう。
  */
 export const handleCodeFenceCloseInWikiPattern = (
@@ -115,10 +124,7 @@ export const handleCodeFenceCloseInWikiPattern = (
 ): O.Option<BuilderState> => {
   if (token.type !== "CodeFenceClose" || state.mode !== "wiki-pattern") return O.none()
 
-  return O.some({
-    ...state,
-    pluginState: setFenceState(state, { inFence: false, language: "" }),
-  })
+  return O.some({ ...state, pluginState: setCollecting(state, false) })
 }
 
 export const wikiPatternModeHandlers = [

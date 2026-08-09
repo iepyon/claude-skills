@@ -173,6 +173,11 @@ function checkCardinality(
 }
 
 function checkVocabulary(slot: Slot, headings: Headings): Diagnostic[] {
+  // フェンスの枠は見出しを持たない。ここで抜けないと `####` の側に落ち、
+  // そのスライドの `####` を図解の語彙で照合してしまう（selfcheck が
+  // 「フェンスの枠は heading: free」を強制しているが、lint の正しさが
+  // 別ファイルの規則に依存する形になる）
+  if (codeFenceLanguage(slot.marker) !== undefined) return []
   if (slot.heading !== "vocabulary" || !slot.vocabulary) return []
   const vocab = getVocabulary(slot.vocabulary)
   if (!vocab || vocab.unknown === "ignore") return []

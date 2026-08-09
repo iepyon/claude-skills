@@ -5,6 +5,7 @@ import { join } from "path"
 import { parseMarkdown } from "../src/parser/index.js"
 import { validatePresentation } from "../src/schema/validation.js"
 import { layoutSlide } from "../src/renderer/layout/index.js"
+import type { LayoutResult, ShapeBox } from "../src/renderer/layout/types.js"
 import { collectRefs } from "../src/renderer/wiki/link-graph.js"
 import { lintSource } from "../src/ontology/lint.js"
 import { DEFAULT_THEME } from "../src/schema/theme.js"
@@ -18,14 +19,19 @@ const SVG = `<svg width="100%" height="100%" viewBox="0 0 340 320" xmlns="http:/
   <rect x="10" y="10" width="100" height="40" fill="none" stroke="#4B5563"/>
 </svg>`
 
-/** 節を任意の順で書けるように、本文はテンプレートから組む */
-const deck = (opts: { sections?: string; diagram?: string; takeaway?: string } = {}): string => {
+/**
+ * 節を任意の順で書けるように、本文はテンプレートから組む。
+ * `diagram` はフェンスの**中身**。`false` を渡すとフェンスごと省く
+ * （「フェンスが無い」と「フェンスが空」は別の話なので、区別できる形にしてある）。
+ */
+const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: string } = {}): string => {
   const sections =
     opts.sections ??
     ["### 状況", "きっかけ。", "### 問題", "困りごと。", "### 解決", "打ち手は [[別のパターン]]。"].join(
       "\n"
     )
-  const diagram = opts.diagram === undefined ? "\n```pattern-diagram\n" + SVG + "\n```\n" : opts.diagram
+  const fence =
+    opts.diagram === false ? "" : `\n\`\`\`pattern-diagram\n${opts.diagram ?? SVG}\n\`\`\`\n`
   const takeaway = opts.takeaway ? `\n<!--takeaway-->\n${opts.takeaway}\n` : ""
   return `# テスト
 
@@ -35,12 +41,15 @@ const deck = (opts: { sections?: string; diagram?: string; takeaway?: string } =
 <!--id:種ノート-->
 <!--pattern-->
 ${sections}
-${diagram}${takeaway}`
+${fence}${takeaway}`
 }
 
+/** parse → validate。4箇所で書き下すと、テストが本題以外の差で見分けにくくなる */
+const present = (markdown: string) =>
+  Effect.runPromise(parseMarkdown(markdown).pipe(Effect.flatMap(validatePresentation)))
+
 const layoutOf = async (markdown: string): Promise<WikiPatternLayout> => {
-  const ast = await Effect.runPromise(parseMarkdown(markdown))
-  const pres = await Effect.runPromise(validatePresentation(ast))
+  const pres = await present(markdown)
   const slide = pres.slides[1] as ContentSlide
   expect(slide.layout._tag).toBe("WikiPattern")
   return slide.layout as unknown as WikiPatternLayout
@@ -84,20 +93,18 @@ describe("WikiPattern — 図解", () => {
   it("フェンスが無ければ変換で止まる", async () => {
     // 「必ず」を運用の心がけにしない。宣言（cardinality: 1）を lint が報告し、
     // 通り抜けようとしてもここで落ちる
-    const result = await Effect.runPromiseExit(parseMarkdown(deck({ diagram: "" })))
+    const result = await Effect.runPromiseExit(parseMarkdown(deck({ diagram: false })))
     expect(result._tag).toBe("Failure")
     expect(JSON.stringify(result)).toContain("pattern-diagram")
   })
 
   it("空のフェンスも「図解あり」とは見なさない", async () => {
-    const result = await Effect.runPromiseExit(
-      parseMarkdown(deck({ diagram: "\n```pattern-diagram\n\n```\n" }))
-    )
+    const result = await Effect.runPromiseExit(parseMarkdown(deck({ diagram: "" })))
     expect(result._tag).toBe("Failure")
   })
 
   it("lint がフェンスの欠落を slot-cardinality として報告する", () => {
-    const diagnostics = lintSource(deck({ diagram: "" }))
+    const diagnostics = lintSource(deck({ diagram: false }))
     expect(diagnostics.map((d) => d.check)).toContain("slot-cardinality")
     expect(diagnostics.find((d) => d.check === "slot-cardinality")?.message).toContain(
       "pattern-diagram"
@@ -110,17 +117,16 @@ describe("WikiPattern — 図解", () => {
 })
 
 describe("WikiPattern — 座標", () => {
-  const layoutFor = async (markdown: string) => {
-    const ast = await Effect.runPromise(parseMarkdown(markdown))
-    const pres = await Effect.runPromise(validatePresentation(ast))
-    return layoutSlide(pres.slides[1], DEFAULT_THEME)
-  }
+  const layoutFor = async (markdown: string) =>
+    layoutSlide((await present(markdown)).slides[1], DEFAULT_THEME)
+
+  const svgBox = (result: LayoutResult): ShapeBox =>
+    result.shapeBoxes!.find((s) => s.shapeType === "svg")!
 
   it("図解は右半分にあり、右端は本文と同じマージンで揃う", async () => {
     const result = await layoutFor(deck())
-    const svg = result.shapeBoxes?.find((s) => s.shapeType === "svg")
-    expect(svg).toBeDefined()
-    expect(svg!.x).toBeGreaterThan(SLIDE_WIDTH / 2)
+    const svg = svgBox(result)
+    expect(svg.x).toBeGreaterThan(SLIDE_WIDTH / 2)
     const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
     expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X, 5)
   })
@@ -129,7 +135,7 @@ describe("WikiPattern — 座標", () => {
     // タイトルと takeaway は全幅なので「左半分に収まる」では言えない。
     // 言いたいのは重ならないこと — 縦か横のどちらかで必ず離れている
     const result = await layoutFor(deck({ takeaway: "関連: [[別のパターン2]]" }))
-    const svg = result.shapeBoxes!.find((s) => s.shapeType === "svg")!
+    const svg = svgBox(result)
     expect(result.textBoxes.length).toBeGreaterThanOrEqual(8) // タイトル + 3節×2 + takeaway
     for (const box of result.textBoxes) {
       const apart =
@@ -143,7 +149,7 @@ describe("WikiPattern — 座標", () => {
 
   it("takeaway があると図解はその上で止まる", async () => {
     const result = await layoutFor(deck({ takeaway: "関連: [[別のパターン]]" }))
-    const svg = result.shapeBoxes!.find((s) => s.shapeType === "svg")!
+    const svg = svgBox(result)
     const takeaway = result.textBoxes[result.textBoxes.length - 1]
     expect(svg.y + svg.h).toBeLessThanOrEqual(takeaway.y)
   })
@@ -152,13 +158,12 @@ describe("WikiPattern — 座標", () => {
     // 運んだ瞬間に3者比較の対象になるが、PPTX は addImage で描くのでテキストを持てず、
     // --verify が必ず食い違う。shape-keys.ts の deco: 除外はこれが前提
     const result = await layoutFor(deck())
-    const svg = result.shapeBoxes!.find((s) => s.shapeType === "svg")!
+    const svg = svgBox(result)
     expect(svg.text).toBeUndefined()
   })
 
   it("図解の図形は3者比較の対象に入らない", async () => {
-    const ast = await Effect.runPromise(parseMarkdown(deck()))
-    const pres = await Effect.runPromise(validatePresentation(ast))
+    const pres = await present(deck())
     const inventory = await Effect.runPromise(slidesToInventory(pres.slides, DEFAULT_THEME))
     const keys = Object.values(inventory).flatMap((slide) => Object.keys(slide))
     expect(keys.length).toBeGreaterThan(0)
@@ -171,8 +176,7 @@ describe("WikiPattern — Wiki との接続", () => {
   it("本文と takeaway の [[…]] が参照として拾われる", async () => {
     // 拾えるのは buildSectionBoxes が richText を作るから。自前で TextBox を組むと
     // 見た目は同じままリンクだけが消える
-    const ast = await Effect.runPromise(parseMarkdown(deck({ takeaway: "関連: [[別のパターン2]]" })))
-    const pres = await Effect.runPromise(validatePresentation(ast))
+    const pres = await present(deck({ takeaway: "関連: [[別のパターン2]]" }))
     const refs = collectRefs(
       {
         globalId: "d/種ノート",
@@ -192,14 +196,26 @@ describe("WikiPattern — Wiki との接続", () => {
   it("SVG の長さは文字数上限に数えない", async () => {
     // 図を描き込むほど「文字数超過」で落ちるのでは、上限が守らせたいものとずれる
     const huge = "<svg xmlns='http://www.w3.org/2000/svg'>" + "<rect x='1'/>".repeat(400) + "</svg>"
-    const result = await Effect.runPromiseExit(
-      parseMarkdown(deck({ diagram: "\n```pattern-diagram\n" + huge + "\n```\n" })).pipe(
-        Effect.flatMap(validatePresentation)
-      )
-    )
-    expect(result._tag).toBe("Success")
+    await expect(present(deck({ diagram: huge }))).resolves.toBeDefined()
   })
 })
+
+/**
+ * SVG に書いてはいけないものと、その理由。
+ *
+ * どれも静かに壊れる種類の間違いで、生成物を見ても気づけない:
+ * `id=` はホバープレビューが cloneNode したときに重複する（CLAUDE.md がスライドの div に
+ * id を置かないのと同じ理由）。`<div>` は html-inspector が div を数えて要素の範囲を
+ * 決めているので、入れ子になるとその先の抽出が丸ごとずれる。`<style>` は文書スコープなので
+ * サイト全体に漏れる。
+ */
+const FORBIDDEN: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\sid=/, "id= は使わない"],
+  [/<defs/, "<defs> は使わない"],
+  [/<style/, "<style> は使わない"],
+  [/<div/, "<div> は使わない"],
+  [/<foreignObject/, "<foreignObject> は使わない"],
+]
 
 describe("配布しているデッキの図解", () => {
   const WIKI_DIR = join(__dirname, "..", "doc", "wiki")
@@ -217,15 +233,9 @@ describe("配布しているデッキの図解", () => {
     expect(fences.length).toBeGreaterThan(0)
 
     for (const svg of fences) {
-      // id= はホバープレビューが cloneNode したときに重複する（CLAUDE.md がスライド div に
-      // id を置かないのと同じ理由）。<div> は html-inspector が div を数えて要素の範囲を
-      // 決めているので、入れ子になるとその先の抽出が丸ごとずれる。
-      // <style> は文書スコープなのでサイト全体に漏れる。
-      expect(svg, `${name}: id= は使わない`).not.toMatch(/\sid=/)
-      expect(svg, `${name}: <defs> は使わない`).not.toMatch(/<defs/)
-      expect(svg, `${name}: <style> は使わない`).not.toMatch(/<style/)
-      expect(svg, `${name}: <div> は使わない`).not.toMatch(/<div/)
-      expect(svg, `${name}: <foreignObject> は使わない`).not.toMatch(/<foreignObject/)
+      for (const [pattern, why] of FORBIDDEN) {
+        expect(svg, `${name}: ${why}`).not.toMatch(pattern)
+      }
       // PPTX は SVG を単体の文書として base64 化するので xmlns が要る
       expect(svg, `${name}: xmlns が要る`).toMatch(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)
     }

@@ -1,5 +1,4 @@
-import type { SlideLayout } from "../../schema/presentation.js"
-import type { TextBlock } from "../../schema/presentation.js"
+import type { SlideLayout, TextBlock } from "../../schema/presentation.js"
 
 /**
  * Wiki のパターン1件。左に 状況/問題/解決、右に SVG の図解。
