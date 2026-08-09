@@ -95,6 +95,33 @@ export const handleImageInWikiPattern = (
 }
 
 /**
+ * BlankLine: 節の中の空行を**段落の切れ目として残す**。
+ *
+ * コアの `handleBlankLine` は空行を捨てるので、素通しにすると
+ * 「場面の段落」と「困りごとの段落」が1つに繋がって出る。ここで捕まえられるのは、
+ * `pluginModeDispatcher` がコアのハンドラより先に走るため（parser/handlers/index.ts）。
+ *
+ * 本文の無いところ（`###` の直後・ディレクティブの直後）と空行の連続は吸収する。
+ * 節の末尾に残った `\n` は converter が落とす — ここで先読みはできないので、
+ * 「足しておいて後で削る」ほうに寄せている。
+ */
+export const handleBlankLineInWikiPattern = (
+  state: BuilderState,
+  token: Token
+): O.Option<BuilderState> => {
+  if (token.type !== "BlankLine" || state.mode !== "wiki-pattern") return O.none()
+  if (O.isNone(state.currentSection)) return O.some(state)
+
+  const section = state.currentSection.value
+  if (!section.body || section.body.endsWith("\n")) return O.some(state)
+
+  return O.some({
+    ...state,
+    currentSection: O.some({ ...section, body: section.body + "\n" }),
+  })
+}
+
+/**
  * コードフェンスを飲む。**中身は読まない。**
  *
  * WikiPattern はコードフェンスを1つも読まないが、素通しにするとコアの
@@ -116,4 +143,8 @@ export const handleCodeFenceInWikiPattern = (
 ): O.Option<BuilderState> =>
   state.mode === "wiki-pattern" && FENCE_TOKENS.includes(token.type) ? O.some(state) : O.none()
 
-export const wikiPatternModeHandlers = [handleImageInWikiPattern, handleCodeFenceInWikiPattern]
+export const wikiPatternModeHandlers = [
+  handleImageInWikiPattern,
+  handleBlankLineInWikiPattern,
+  handleCodeFenceInWikiPattern,
+]

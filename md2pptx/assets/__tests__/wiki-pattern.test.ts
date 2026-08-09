@@ -30,9 +30,14 @@ const SVG = readFileSync(join(FIXTURE_DIR, SAMPLE), "utf-8").trimEnd()
 const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: string } = {}): string => {
   const sections =
     opts.sections ??
-    ["### 状況", "きっかけ。", "### 問題", "困りごと。", "### 解決", "打ち手は [[別のパターン]]。"].join(
-      "\n"
-    )
+    [
+      "### いつ・なにが困るか",
+      "きっかけ。",
+      "",
+      "**困りごと。**",
+      "### そこで",
+      "打ち手は [[別のパターン]]。",
+    ].join("\n")
   const image = opts.diagram === false ? "" : `\n![種ノート](${opts.diagram ?? SAMPLE})\n`
   const takeaway = opts.takeaway ? `\n<!--takeaway-->\n${opts.takeaway}\n` : ""
   return `# テスト
@@ -59,32 +64,73 @@ const layoutOf = async (markdown: string): Promise<WikiPatternLayout> => {
   return slide.layout as unknown as WikiPatternLayout
 }
 
-describe("WikiPattern — 3節の左段", () => {
-  it("状況・問題・解決を3件そろえる", async () => {
-    const layout = await layoutOf(deck())
-    expect(layout.sections.map((s) => s.heading)).toEqual(["状況", "問題", "解決"])
+describe("WikiPattern — 2見出しの左段", () => {
+  it("いつ・なにが困るか と そこで の2件をそろえる", async () => {
+    const layout = await layoutOf(
+      deck({ sections: ["### いつ・なにが困るか", "きっかけ。", "### そこで", "打ち手。"].join("\n") })
+    )
+    expect(layout.sections.map((s) => s.heading)).toEqual(["いつ・なにが困るか", "そこで"])
     expect(layout.sections[0].body).toBe("きっかけ。")
   })
 
   it("書いた順ではなく語彙の宣言順に積む", async () => {
-    // 宣言は 状況 → 問題 → 解決。読む順が書く順に引きずられてはいけない
+    // 宣言は いつ・なにが困るか → そこで。読む順が書く順に引きずられてはいけない
     const layout = await layoutOf(
       deck({
-        sections: ["### 解決", "あとで書いた。", "### 状況", "さきに書いた。", "### 問題", "まんなか。"].join(
-          "\n"
-        ),
+        sections: ["### そこで", "あとで書いた。", "### いつ・なにが困るか", "さきに書いた。"].join("\n"),
       })
     )
-    expect(layout.sections.map((s) => s.heading)).toEqual(["状況", "問題", "解決"])
+    expect(layout.sections.map((s) => s.heading)).toEqual(["いつ・なにが困るか", "そこで"])
     expect(layout.sections[0].body).toBe("さきに書いた。")
   })
 
   it("別名の見出しも受理する（宣言の aliases）", async () => {
+    // 3節だった頃の 状況 / 解決 は別名として残してある（外のデッキを折らないため）
     const layout = await layoutOf(
-      deck({ sections: ["### いつ", "A。", "### なぜ", "B。", "### どうする", "C。"].join("\n") })
+      deck({ sections: ["### 状況", "A。", "### どうする", "B。"].join("\n") })
     )
-    expect(layout.sections).toHaveLength(3)
-    expect(layout.sections.map((s) => s.body)).toEqual(["A。", "B。", "C。"])
+    expect(layout.sections).toHaveLength(2)
+    expect(layout.sections.map((s) => s.body)).toEqual(["A。", "B。"])
+  })
+
+  it("節の中の空行で段落が割れ、2段落目からは見出しを持たない", async () => {
+    // 場面と困りごとを1つの見出しに束ねたまま、読み手には別の塊として見せる仕掛け。
+    // 隙間は節と節の隙間（WP_SECTION_GAP）がそのまま担う
+    const layout = await layoutOf(deck())
+    expect(layout.sections.map((s) => s.heading)).toEqual(["いつ・なにが困るか", undefined, "そこで"])
+    expect(layout.sections.map((s) => s.body)).toEqual([
+      "きっかけ。",
+      "**困りごと。**",
+      "打ち手は [[別のパターン]]。",
+    ])
+  })
+
+  it("段落の中の改行は段落を割らない", async () => {
+    const layout = await layoutOf(
+      deck({ sections: ["### 状況", "1行目。\n2行目。", "### そこで", "打ち手。"].join("\n") })
+    )
+    expect(layout.sections).toHaveLength(2)
+    expect(layout.sections[0].body).toBe("1行目。\n2行目。")
+  })
+
+  it("節の末尾に残った空行は捨てる", async () => {
+    // 図解や <!--takeaway--> の前の空行がそのまま残ると、空の段落が1つ増えて
+    // そのぶん本文の高さが削られる。ハンドラは節の終わりを知らないので converter が落とす
+    const layout = await layoutOf(
+      deck({ sections: ["### 状況", "きっかけ。", "### そこで", "打ち手。", ""].join("\n") })
+    )
+    expect(layout.sections).toHaveLength(2)
+    expect(layout.sections[1].body).toBe("打ち手。")
+  })
+
+  it("語彙外の見出しは lint がエラーで止める", () => {
+    // 3節だった頃の `### 問題` を書き残すと、描かれないまま公開されてしまう。
+    // 節が2つしかないレイアウトでは、1つ落ちれば残りは片肺だと分かりきっている
+    const diagnostics = lintSource(
+      deck({ sections: ["### 状況", "A。", "### 問題", "B。", "### そこで", "C。"].join("\n") })
+    )
+    const unknown = diagnostics.filter((d) => d.message.includes("問題"))
+    expect(unknown.map((d) => d.level)).toContain("error")
   })
 })
 
@@ -193,7 +239,7 @@ describe("WikiPattern — 座標", () => {
     // 言いたいのは重ならないこと — 縦か横のどちらかで必ず離れている
     const result = await layoutFor(deck({ takeaway: "関連: [[別のパターン2]]" }))
     const svg = svgBox(result)
-    expect(result.textBoxes.length).toBeGreaterThanOrEqual(8) // タイトル + 3節×2 + takeaway
+    expect(result.textBoxes.length).toBeGreaterThanOrEqual(7) // タイトル + 見出し2 + 段落3 + takeaway
     for (const box of result.textBoxes) {
       const apart =
         box.x + box.w <= svg.x + 1e-6 ||
@@ -364,14 +410,20 @@ describe("配布しているデッキの図解", () => {
           expect(sizes, `${where}: 本文が ${DEFAULT_THEME.wikiPattern.bodySize}pt でない`).toContain(
             DEFAULT_THEME.wikiPattern.bodySize
           )
-          // 3節ぶんの見出しと本文が、どれも縮んでいないこと
+          // 2つの見出しと、場面・困りごと・打ち手の3段落が、どれも縮んでいないこと
           // （タイトルと takeaway は全幅なので、幅で左段だけを取り出せる）
           const fullWidth = SLIDE_WIDTH - 2 * MARGIN_X
           const left = result.textBoxes.filter((b) => b.w < fullWidth - 0.01)
-          expect(left.length, `${where}: 左段が3節ぶん無い`).toBe(6)
           expect(new Set(left.map((b) => b.fontSize)), `${where}: 左段に想定外の文字サイズがある`).toEqual(
             new Set([DEFAULT_THEME.wikiPattern.headingSize, DEFAULT_THEME.wikiPattern.bodySize])
           )
+          const headings = left.filter((b) => b.fontSize === DEFAULT_THEME.wikiPattern.headingSize)
+          const paragraphs = left.filter((b) => b.fontSize === DEFAULT_THEME.wikiPattern.bodySize)
+          expect(headings.length, `${where}: 左段の見出しが2つ無い`).toBe(2)
+          expect(
+            paragraphs.length,
+            `${where}: 段落が3つ無い（場面・困りごと・打ち手）`
+          ).toBeGreaterThanOrEqual(3)
           expect(detectOverflow(result), `${where} がはみ出している`).toEqual([])
         }
       }
@@ -386,7 +438,7 @@ describe("WikiPattern — 収まらない本文", () => {
     // ページの見た目を崩す代わりに、スライド番号つきで書き手に返る
     const long = (label: string) =>
       `### ${label}\n` + `長い本文をここに置いて枠を溢れさせる。`.repeat(12)
-    const sections = [long("状況"), long("問題"), long("解決")].join("\n")
+    const sections = [long("いつ・なにが困るか"), long("そこで")].join("\n")
     await expect(
       Effect.runPromise(
         parseMarkdown(deck({ sections }), { baseDir: FIXTURE_DIR })
