@@ -3,6 +3,7 @@ import { ContentSlide, TextBlock } from "../../schema/presentation.js"
 import type { RawSlide, RawSection } from "../../parser/builder-types.js"
 import type { Slide } from "../../schema/presentation.js"
 import { ParseError } from "../../errors.js"
+import { svgAspectRatio } from "../../assets.js"
 import { getVocabulary, resolveTerm } from "../../ontology/index.js"
 import { WikiPatternLayout } from "./schema.js"
 import { diagramMarker, DIAGRAM_FIELD, SECTIONS_FIELD } from "./handler.js"
@@ -53,6 +54,7 @@ export const convertWikiPattern = (raw: RawSlide): O.Option<Slide[]> => {
       layout: new WikiPatternLayout({
         sections: orderSections(sections),
         diagram,
+        diagramAspect: svgAspectRatio(diagram),
         takeaway: raw.takeaway,
       }),
     }),

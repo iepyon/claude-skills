@@ -125,6 +125,10 @@ describe("Theme", () => {
           subtitleSize: 14,
           itemSize: 16,
         },
+        wikiPattern: {
+          headingSize: 15,
+          bodySize: 13,
+        },
       }
       const result = mergeTheme(custom)
       expect(result).toEqual(custom)

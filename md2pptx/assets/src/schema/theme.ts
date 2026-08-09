@@ -77,6 +77,20 @@ export interface Theme {
     subtitleSize: number
     itemSize: number
   }
+  /**
+   * Wiki パターンの3節の文字サイズ。**`contentSlide` に相乗りさせてはいけない。**
+   *
+   * `dispatchLayout` は、はみ出したスライドの `contentSlide.{heading,body,…}Size` を
+   * 段階的に縮めて再レイアウトする。それは1枚のスライドを収めるための仕組みだが、
+   * Wiki のパターンは隣り合わせで読まれるページなので、**本文の長さに応じて
+   * ページごとに文字が小さくなる**のがそのまま不揃いとして出る。
+   * ここに置いた値は縮小の対象外なので、どのパターンも同じ大きさで描かれ、
+   * 収まらない本文は縮む代わりに `validateLayout` がビルドを止める。
+   */
+  wikiPattern: {
+    headingSize: number
+    bodySize: number
+  }
 }
 
 export type PartialTheme = DeepPartial<Theme>
@@ -158,6 +172,13 @@ export const DEFAULT_THEME: Theme = {
     titleSize: 36,
     subtitleSize: 14,
     itemSize: 16,
+  },
+  // 16/14 は「配布中の22パターンが1枚も縮まずに収まる最大」から決めた。
+  // 18/16（contentSlide の既定）だと本文の長い2枚が入らず、左カラムをどれだけ
+  // 広げても入らない（幅ではなく高さで詰まる）
+  wikiPattern: {
+    headingSize: 16,
+    bodySize: 14,
   },
 }
 
@@ -254,6 +275,10 @@ export function mergeTheme(partial: PartialTheme): Theme {
       titleSize: stripped.agenda?.titleSize ?? DEFAULT_THEME.agenda.titleSize,
       subtitleSize: stripped.agenda?.subtitleSize ?? DEFAULT_THEME.agenda.subtitleSize,
       itemSize: stripped.agenda?.itemSize ?? DEFAULT_THEME.agenda.itemSize,
+    },
+    wikiPattern: {
+      headingSize: stripped.wikiPattern?.headingSize ?? DEFAULT_THEME.wikiPattern.headingSize,
+      bodySize: stripped.wikiPattern?.bodySize ?? DEFAULT_THEME.wikiPattern.bodySize,
     },
   }
 }
