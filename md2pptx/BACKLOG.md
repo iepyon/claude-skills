@@ -7,14 +7,16 @@ Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書�
 - md2pptx が既に優位な点: 決定論的再現性、レビュー可能な中間表現(Markdown)、AST/HTML/PPTX の3者比較検証(`src/tools/inventory-diff.ts`)、グラデーション表現
 
 B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュー + 動作確認）で追加した。
-上記の「3者比較検証」は**現状は機能していない** — 詳細は [B-24](#b-24)。
+上記の「3者比較検証」は長らく機能していなかった（AST の脚が別のキー空間を使い、
+`--verify` は食い違いを見つけても常に exit 0 だった）。2026-08-08 に修復した — [B-24](#b-24)。
+残る範囲は [B-33](#b-33)。
 
 ## 一覧
 
 | ID | 優先度 | 項目 | カテゴリ |
 |---|---|---|---|
 | [B-01](#b-01) | ✅済 | ドキュメント乖離の解消 | ツール品質 |
-| [B-02](#b-02) | P0 | 箇条書きリスト対応(1階層) | Markdown基本 |
+| [B-02](#b-02) | ✅済 | 箇条書きリスト対応(1階層) | Markdown基本 |
 | [B-03](#b-03) | P0 | スピーカーノート対応 | 表現力 |
 | [B-04](#b-04) | P1 | 画像挿入 `![alt](src)` | 表現力 |
 | [B-05](#b-05) | P1 | ネイティブチャート | 表現力 |
@@ -36,7 +38,7 @@ B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュ�
 | [B-21](#b-21) | P3 | HTML 出力の印刷/PDF 対応 | 表現力 |
 | [B-22](#b-22) | P2 | プラグイン内テキストのリンク対応 | Markdown基本 |
 | [B-23](#b-23) | P2 | 記法そのものの整理（宣言で洗い出した候補） | Markdown基本 |
-| [B-24](#b-24) | P0 | `--verify` の3者比較が壊れている | ツール品質 |
+| [B-24](#b-24) | ✅済 | `--verify` の3者比較が壊れている | ツール品質 |
 | [B-25](#b-25) | P0 | 型検査が CI にもテストにも無い | ツール品質 |
 | [B-26](#b-26) | P1 | 文字数の数え方が宣言に反する | オントロジー |
 | [B-27](#b-27) | P1 | lint の盲点（タイトルスライド・`slot.body`） | オントロジー |
@@ -45,6 +47,7 @@ B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュ�
 | [B-30](#b-30) | P2 | 層ごとに名前が違う同一概念 | オントロジー |
 | [B-31](#b-31) | P2 | `LayoutPlugin` に足りないモデル | オントロジー |
 | [B-32](#b-32) | P2 | 存在しない保証を主張しているコメント・数え上げ | ツール品質 |
+| [B-33](#b-33) | P2 | 3者比較が見ていない残り | ツール品質 |
 
 ---
 
@@ -79,6 +82,19 @@ B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュ�
 **実装方針**: pptxgenjs の `bullet: true` + `breakLine: true` + `paraSpaceAfter` を使用(標準スキルの規範に従い、リテラル `•` の埋め込みは禁止 — 二重表示になる。`lineSpacing` ではなく `paraSpaceAfter` で間隔調整)。HTML レンダラ側は `<ul>/<li>` 相当の描画を `LayoutResult` 経由で同一座標に出す。
 
 **受け入れ基準**: `- item` が箇条書きとして PPTX/HTML 両方に描画される。番号付き `1. item` も対応。既存の pattern-language プラグインのローカル解釈(`handler.ts:367`)と衝突しない。
+
+**✅ 実装済み**。ただし置き場所は上の想定と違う — マッチャは `tokenizer.ts` ではなく
+**ブロック層の `parser/block-formatter.ts`** にある（`UNORDERED` / `ORDERED` 正規表現、
+`- ` `* ` `+ ` `N. ` を受理）。トークン層で拾わないので `*italic*` と衝突せず、
+`parseInlineFormatting` とも素直に合成できる。
+`renderer/layout/helpers.ts:357` の `buildSectionBoxes` が `hasListMarker` で分岐し、
+PPTX は `slide-builder.ts` の `bulletToPptxOption` でネイティブバレット、HTML は
+`element-renderers.ts` の `.para-bullet` / `.para-number` を CSS 疑似要素で描く
+（リテラルの `•` は書かない）。`block-formatter.test.ts` が9件で覆っている。
+
+**残っているスコープ外**: 箇条書きが効くのは `buildSectionBoxes` を通る経路
+（コアレイアウトと lean-canvas）だけ。`layout.ts` で `text:` に直接書き出す
+プラグインには届かない — B-22 と同じ範囲。
 
 <a id="b-03"></a>
 ### B-03: スピーカーノート対応
@@ -339,8 +355,8 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 | `npx tsx src/tools/gen-ontology-doc.ts --check` | ✅ ドリフト無し |
 | `--lint --strict`（`doc/Spec.md` / `doc/wiki` / `__tests__/markdown-spec/` 全件） | ✅ 全通過 |
 | 全 20 デッキの PPTX / HTML 生成 | ✅ 全成功 |
-| `--verify`（3者比較） | ❌ 20 デッキ中 14 デッキで大量の偽陽性。常に exit 0 → [B-24](#b-24) |
-| `npx tsc --noEmit` | ❌ 8 件のエラー。うち1件は実行時に落ちる → [B-25](#b-25) |
+| `--verify`（3者比較） | ❌ 20 デッキ中 14 デッキで大量の偽陽性。常に exit 0 → [B-24](#b-24) で修復済み |
+| `npx tsc --noEmit` | ❌ 8 件のエラー。うち1件は実行時に落ちる → [B-25](#b-25)（B-24 で4件消化、残り4件） |
 
 **緑のものが緑なのは本物**（selfcheck・gen --check・lint はいずれも宣言と実装を実際に突き合わせて
 いる）。問題は、緑のチェックが**見ていない範囲**が広いことと、赤いはずのものが赤くならないこと。
@@ -378,6 +394,49 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 **受け入れ基準**: `__tests__/markdown-spec/` 全件で3脚が一致する。同じ入力集合を回すテストを
 追加し、キーのずれが再発したら赤くなる。
 
+**✅ 実装済み（2026-08-08）**。方針は上と違う道を採った。
+
+インベントリをインスペクタの**描画順の連番に合わせる**と、アクセントバー・コード背景・
+テキストオーバーレイという「1ボックス → 複数図形」の展開規則をインベントリ側に写すことになる。
+写経はまた必ずずれる — B-24 が生まれたのと同じ機構をもう一度作る。そこで逆にした:
+
+- **レンダラがキーを宣言し、インスペクタは数えずに読む。** 語彙は `src/shape-keys.ts` の1本で、
+  PPTX は pptxgenjs の `objectName`（→ `<p:cNvPr name>`）、HTML は `data-shape-id` に
+  同じ文字列を書く。`pptx-inspector` は `<p:sp>` を数える代わりにこの名前を読む
+- **比較対象は「テキストを運ぶ図形」。** 境界ボックス・塗り・コード背景・SVG アイコンは
+  `deco:` を付けて除外する。これは両インスペクタの既存の実挙動でもあった
+  （テキストの無い図形は元から拾えない）。違ったのは AST の脚だけ。
+  除外が生成物の中に書かれている状態にして、拡大（B-33）を安くした
+- `--verify` は mismatch があれば**非ゼロ終了**。判定は `src/tools/verify.ts` に切り出して、
+  「食い違いを失敗と呼ぶ」こと自体をテストできるようにした
+
+**併せて見つけて直した実バグ**（比較を直したから見えた。どれも PowerPoint 上の実害がある）:
+
+- 絵文字アイコンの `addText` に `fontFace` が無く、テーマ既定の Calibri Light で
+  描かれていた（デッキの他の文字と別フォント）
+- 改行を含む run を pptxgenjs にそのまま渡すと、STEP 4-C が**共有の options** に
+  `breakLine` を立ててから全断片を push するため、最後の断片にも改行が付いて
+  後続の run が1行余計に下がる（リンクだけ次行に落ちる）
+- **末尾が改行の文字列は pptxgenjs がまったく分割しない**（`match(/\n$/g) === null` ガード）。
+  生の改行を含む1つの `<a:p>` になっていた
+- `pptx-inspector` の `extractText` が実体参照をデコードしておらず、`=>` を含むコードが
+  `=&gt;` として読み出されていた。両インスペクタで `tools/entities.ts` を共有した
+- `html-inspector` の `font_name` が `"Arial"` のリテラル。DEFAULT_THEME と偶然一致して
+  いただけで、`--theme` を使うと PPTX 側とだけ食い違う。`data-font-name` を読むようにした
+- コードテキストの座標が `padding` ぶん内側にずれていた（HTML は外枠を報告）。
+  座標から引くのをやめて pptxgenjs の `margin` に移した — 見た目は同じ
+
+**実測（修復後）**: `__tests__/markdown-spec/` 20件 + `doc/Spec.md` + `doc/wiki/` の
+**全22デッキで3脚とも mismatch 0**。`10-numbered-list` は `0 shapes match, 102 mismatches`
+から全一致、`Spec.md` は 400 件から 0 件になった。
+`__tests__/three-way-verify.test.ts` が全デッキ + 非既定テーマ + 判定そのものを見る（25件、0.7秒）。
+`npm test` は 22 files / 444 tests → 23 files / 471 tests。
+
+**副産物**: `src/tools/index.ts` の壊れた再輸出（存在しない `inspectHtml`）も直した。
+このバレルは CLAUDE.md が検証ユーティリティの入口として案内している当のもので、
+import するだけで実行時に throw していた。B-25 の8件のうち4件（これと
+`html-inspector` の `fontSize`/`font_size` 3件）が消え、残り4件は `schema/theme.ts`。
+
 <a id="b-25"></a>
 ### B-25: 型検査が CI にもテストにも無い
 
@@ -407,7 +466,14 @@ CLAUDE.md は `src/tools/` を「検証ユーティリティ」の入口とし�
 `package.json` のスクリプトに無く、`ontology.test.ts` 経由でしか実行されない。
 
 **実装方針**: `npm run typecheck`（`tsc --noEmit`）を足して8件を潰し、CI に PR トリガと
-typecheck ステップを追加する。`__tests__` は tsconfig の `exclude` にあるので、テスト側も
+typecheck ステップを追加する。
+
+**一部消化（B-24 の作業中）**: `src/tools/index.ts` の壊れた再輸出と、
+`tools/html-inspector.ts:133,148,180` の `fontSize`/`font_size` 取り違え（`parseParagraphStyle` が
+`Partial<ParagraphData>` を返すと宣言していたのをやめ、専用の `ParagraphStyle` 型にした）、
+`renderer/pptx/slide-builder.ts` の `box.text` が undefined のまま渡りうる箇所を直した。
+**残り4件は `schema/theme.ts:210,214,236` の配列マージのみ。** typecheck スクリプトと
+CI トリガはまだ無い。`__tests__` は tsconfig の `exclude` にあるので、テスト側も
 見るなら別 tsconfig が要る。
 
 **受け入れ基準**: `npm run typecheck` が緑。PR で test + typecheck が走る。
@@ -597,3 +663,25 @@ BodyText を warning）。
 
 **受け入れ基準**: コードコメントが主張する保証が全て実在する。レイアウト件数を1つ増やすと
 テストが赤くなる。
+
+<a id="b-33"></a>
+### B-33: 3者比較が見ていない残り
+
+**背景**: [B-24](#b-24) で3脚を揃えたが、意図的に対象外にした範囲と、直さずに
+コメントで明示した弱点が残る。「何を保証していないか」を項目として持っておく
+（B-32 と同じ理由 — 書いていない除外は「守られている」と読まれる）。
+
+- **幾何のみの図形が比較対象外**。境界ボックス・塗り・コード背景・SVG アイコンは
+  `deco:` で除外している。`inventory-diff.ts` の語彙がテキスト前提（`text` /
+  `font_name` / `font_size` / `bold` / `color`）なので、幾何だけの脚を足すには
+  両インスペクタが「テキストの無い `<p:sp>` / `<p:pic>` / div」を拾えるようにする必要がある。
+  名前は既に両生成物に書かれているので、緩めるのはフィルタだけ
+- **`slide-builder.ts` は codeBoxes があると borderBoxes を丸ごと描かない**。
+  HTML は常に描く。実在する PPTX/HTML の乖離だが `deco:` なので現在の比較には出ない
+- **`pptx-inspector.ts` は段落の最初の `<a:rPr>` しか読まない**。同一段落内で書式が
+  変わるデッキ（太字の途中挿入など）では2番目以降の run の書式を取りこぼす。
+  インベントリ側も「行の先頭 run」で揃えてあるので現状は一致するが、
+  両方が同じ弱点を持っているだけで、真に一致を検証しているわけではない
+
+**受け入れ基準**: 上の3点それぞれについて、直すか「直さない理由」を持つ。
+少なくとも幾何のみの図形が比較に入る。

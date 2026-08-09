@@ -28,7 +28,7 @@ See [../BACKLOG.md](../BACKLOG.md) for the feature backlog (prioritized, with ac
 - Direct pptxgenjs API calls — no browser dependency
 - Three outputs from one source: `.pptx`, a self-contained `.html` deck (arrow-key navigation), and a linked wiki site (`--wiki`)
 - Wiki mode: several decks in one page, `[[wikilink]]` navigation, hover previews of the target slide, backlinks, hash routing with browser back/forward
-- 3-way verification (`--verify`): AST vs HTML vs PPTX coordinate/text comparison
+- 3-way verification (`--verify`): AST vs HTML vs PPTX coordinate/text comparison, exits non-zero on any mismatch
 - Per-slide character validation and structural lint, both declared in `../ontology.yaml`
 - Bullet and numbered lists rendered as native PPTX bullets / CSS pseudo-elements
 - Inline formatting (`**bold**`, `*italic*`, `` `code` ``) and syntax-highlighted code blocks
@@ -65,7 +65,7 @@ npx tsx src/cli.ts input.md output.pptx --compress
 | Option | Description |
 |--------|-------------|
 | `--html` | Generate HTML instead of PPTX |
-| `--verify` | Generate PPTX + HTML, then compare both against the AST inventory |
+| `--verify` | Generate PPTX + HTML, then compare both against the AST inventory. Exits non-zero if the three disagree |
 | `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory) |
 | `--site-title <text>` | Title of the wiki site (with `--wiki`) |
 | `--theme <path>`, `-t <path>` | YAML theme file (falls back to `DEFAULT_THEME`) |

@@ -33,7 +33,7 @@ npx tsx src/cli.ts --lint input.md                   # 構造の検査だけ
 | `--html` | HTML 出力 |
 | `--compress`, `-c` | PPTX を ZIP 圧縮 |
 | `--theme <path>`, `-t <path>` | YAML テーマファイル指定 |
-| `--verify` | PPTX + HTML 生成 + AST との3者比較 |
+| `--verify` | PPTX + HTML 生成 + AST との3者比較（食い違えば非ゼロ終了） |
 | `--wiki` | 複数デッキを1枚のリンク可能な Wiki サイトに出力（入力はファイル・複数ファイル・ディレクトリ） |
 | `--site-title <text>` | Wiki サイトのタイトル（`--wiki` と併用） |
 | `--lint` | 生成せず、md の構造を [ontology.yaml](ontology.yaml) の宣言に照らして検査する |

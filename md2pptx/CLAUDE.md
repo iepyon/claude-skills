@@ -29,7 +29,7 @@ cd assets
 npm test                                          # 全テスト
 npx tsx src/cli.ts input.md output.pptx           # PPTX 生成
 npx tsx src/cli.ts input.md output.html --html    # HTML 生成
-npx tsx src/cli.ts input.md out.html --html --verify  # 検証
+npx tsx src/cli.ts input.md out.html --html --verify  # 3者比較 (食い違えば非ゼロ終了)
 npx tsx src/cli.ts --wiki doc/wiki _site/index.html    # Wiki サイト生成
 npx tsx src/cli.ts --lint [--strict] doc/Spec.md doc/wiki  # 宣言に照らして検査
 npx tsx src/ontology/selfcheck.ts                 # 宣言の自己点検
@@ -149,8 +149,21 @@ src/tools/
 ├── inventory.ts       layoutSlide() → JSON スナップショット
 ├── html-inspector.ts  HTML data-* 属性 → JSON 抽出
 ├── pptx-inspector.ts  PPTX XML → JSON 抽出
-└── inventory-diff.ts  3者比較 (AST vs HTML vs PPTX)
+├── inventory-diff.ts  2つのインベントリの差分
+├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
+└── entities.ts        実体参照のデコード (両インスペクタで共有)
 ```
+
+**図形の名前は数えずに宣言する。** `--verify` が突き合わせる図形のキーは
+`src/shape-keys.ts` が唯一の語彙で、PPTX は pptxgenjs の `objectName`
+(→ `<p:cNvPr name>`)、HTML は `data-shape-id` に**同じ文字列**を書き出す。
+インスペクタは描画順を数えず、その名前を読む。比較対象は**テキストを運ぶ図形**だけで、
+境界ボックス・塗り・コード背景・SVG は `deco:` を付けて除外する
+（除外が生成物の中に書かれている状態を保つ）。
+
+**段落の数え方も1箇所** (`src/text-lines.ts`)。PPTX は改行ごとに `<a:p>` を出すので、
+HTML も AST インベントリも「1行 = 1段落」で数える。3脚が別々の規則を持つと、
+見た目が同じでも段落数が食い違って比較が落ちる。
 
 ### 6. Batch: 複数 Markdown の一括 HTML 化
 
@@ -164,6 +177,8 @@ src/batch-html.ts   drafts/*.md → htmls/*.html + index.html 目次ページ生
 ```
 src/constants.ts    スライド寸法・マージン・GAP 等のレイアウト定数を集約
 src/errors.ts       ParseError, ValidationError, RenderError (Tagged errors)
+src/shape-keys.ts   3者比較で図形を指す名前 (レンダラとツールが共有)
+src/text-lines.ts   「1行 = 1段落」の切り出し (レンダラとツールが共有)
 ```
 
 `constants.ts` は layout/ 内の全ファイルが参照する。座標調整や新レイアウト追加時に必ず確認。
@@ -256,7 +271,8 @@ src/plugins/
 | `overflow.test.ts` | renderer/layout/overflow.ts + validate-layout.ts (はみ出し検出・縮小・失敗) |
 | `html-renderer.test.ts` | renderer/html/ (HTML 生成・data 属性) |
 | `theme.test.ts` | schema/theme.ts (YAML テーマ読み込み) |
-| `snapshot-comparison.test.ts` | tools/ (インベントリ比較) |
+| `snapshot-comparison.test.ts` | tools/ (コアレイアウト6種のインベントリ比較) |
+| `three-way-verify.test.ts` | tools/ (実在する全デッキの3者比較 + 食い違いの判定) |
 | `cli.test.ts` | cli.ts (CLI 引数・ファイル出力) |
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
