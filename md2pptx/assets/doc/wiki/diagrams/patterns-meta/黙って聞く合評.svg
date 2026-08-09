@@ -1,18 +1,18 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="58" cy="112" r="22" fill="none" stroke="#4B5563" stroke-width="1.5"/>
-  <line x1="46" y1="120" x2="70" y2="120" stroke="#4B5563" stroke-width="2"/>
+  <path d="M80.5 112 C80.5 124.4 70.5 134.5 58 134.5 C45.5 134.5 36.1 124.1 36.1 112 C36.1 99.9 45.7 89.8 58 89.8 C70.3 89.8 80.5 99.6 80.5 112 Z" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M46.5 120.2 C54 120.4 62 119.8 70.3 120.1" stroke="#4B5563" stroke-width="2" fill="none" stroke-linecap="round"/>
   <path d="M28 170 a30 30 0 0 1 60 0" fill="none" stroke="#4B5563" stroke-width="1.5"/>
   <text x="58" y="198" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#4B5563">著者</text>
   <text x="58" y="220" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">黙って聞く</text>
 
-  <line x1="112" y1="130" x2="112" y2="60" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <path d="M111.6 129.6 C113.1 106.7 111.6 83.3 112.2 59.9" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4" fill="none" stroke-linecap="round"/>
 
-  <circle cx="164" cy="90" r="18" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <circle cx="246" cy="90" r="18" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <circle cx="205" cy="160" r="18" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <line x1="182" y1="90" x2="228" y2="90" stroke="#1E40AF" stroke-width="1.5"/>
-  <line x1="172" y1="106" x2="196" y2="144" stroke="#1E40AF" stroke-width="1.5"/>
-  <line x1="238" y1="106" x2="214" y2="144" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M182.2 90 C182.2 100.1 174.3 108.7 164 108.7 C153.7 108.7 146.2 99.8 146.2 90 C146.2 80.2 154.1 72.1 164 72.1 C173.9 72.1 182.2 79.9 182.2 90 Z" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M264 90 C264 99.9 255.7 107.5 246 107.5 C236.3 107.5 227.4 100.3 227.4 90 C227.4 79.7 235.8 71.5 246 71.5 C256.2 71.5 264 80.1 264 90 Z" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M222.9 160 C222.9 169.9 214.6 177.5 205 177.5 C195.4 177.5 186.7 170.1 186.7 160 C186.7 149.9 195.3 142.4 205 142.4 C214.7 142.4 222.9 150.1 222.9 160 Z" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M182 90.1 C197.3 90.6 212.7 89.6 228.4 90.4" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M171.9 106 C180.8 118.1 187.6 131.6 195.9 143.7" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M238.5 105.5 C229.4 118.3 222.4 131.6 214.5 144" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
   <text x="205" y="212" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">読者だけで議論する</text>
 
   <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">説明が要った箇所が、直す箇所</text>
