@@ -16,6 +16,7 @@
 import "../plugins/index.js" // side-effect: 登録が済んでいないとプラグインのディレクティブが本文に落ちる
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
+  codeFenceLanguage,
   getFieldSet,
   getLayouts,
   getVocabulary,
@@ -99,6 +100,17 @@ export function detectLayout(tokens: readonly Token[]): Layout | undefined {
   // タイトルスライドはレイアウトを持たない。`##` の無い断片（先頭の空行など）も同じく対象外
   if (!types.has("H2")) return undefined
   return byName("Default")
+}
+
+/**
+ * その言語で開かれたコードフェンスの数。
+ *
+ * 図解のように「フェンスそのものが1つの枠」であるスロットを数える。見出しと違って
+ * トークン列に痕跡が残るので、`###` と同じ cardinality の検査に載せられる
+ * （各プラグインの handler.ts は language を見てフェンスの中身を振り分けている）。
+ */
+function countCodeFences(tokens: readonly Token[], language: string): number {
+  return tokens.filter((t) => t.type === "CodeFenceOpen" && t.language === language).length
 }
 
 /** グリッドの `###` 件数はディレクティブの引数で決まる */
@@ -299,7 +311,10 @@ export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
 
     for (const slot of layout.slots) {
       out.push(...checkVocabulary(slot, headings))
-      if (slot.marker === "###") {
+      const fence = codeFenceLanguage(slot.marker)
+      if (fence !== undefined) {
+        out.push(...checkCardinality(slot, countCodeFences(slide.tokens, fence), slide.line))
+      } else if (slot.marker === "###") {
         const resolved = isDynamicCardinality(slot.cardinality)
           ? gridCellCount(slide.tokens)
           : undefined

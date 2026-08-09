@@ -193,3 +193,15 @@ export function parseCardinality(spec: string, resolved?: number): Cardinality {
 export function isDynamicCardinality(spec: string): boolean {
   return spec === DYNAMIC
 }
+
+/**
+ * スロットの marker がコードフェンスを指すなら、その言語名を返す。
+ *
+ * `###` / `####` は「見出しを数える」枠だが、図解のようにフェンスそのものが1枠に
+ * なるスロットもある（```pattern-diagram）。綴りの解釈をここ1箇所に閉じておくと、
+ * lint（実際に数える側）と selfcheck（宣言の形を検める側）が同じ規則で動く。
+ */
+export function codeFenceLanguage(marker: string): string | undefined {
+  const match = marker.match(/^```(\S+)$/)
+  return match ? match[1] : undefined
+}
