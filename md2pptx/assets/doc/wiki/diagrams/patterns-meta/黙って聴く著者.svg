@@ -3,7 +3,7 @@
   <path d="M46.5 120.2 C54 120.4 62 119.8 70.3 120.1" stroke="#4B5563" stroke-width="2" fill="none" stroke-linecap="round"/>
   <path d="M27.8 170.5 C27 143.5 40 134.5 58.5 134.8 C76 135.1 88.8 144 87.6 170.2" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
   <text x="58" y="198" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#4B5563">著者</text>
-  <text x="58" y="220" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">黙って聞く</text>
+  <text x="58" y="220" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">黙って聴く</text>
 
   <path d="M111.6 129.6 C113.1 106.7 111.6 83.3 112.2 59.9" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4" fill="none" stroke-linecap="round"/>
 
