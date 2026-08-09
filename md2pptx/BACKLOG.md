@@ -356,7 +356,7 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 | `--lint --strict`（`doc/Spec.md` / `doc/wiki` / `__tests__/markdown-spec/` 全件） | ✅ 全通過 |
 | 全 20 デッキの PPTX / HTML 生成 | ✅ 全成功 |
 | `--verify`（3者比較） | ❌ 20 デッキ中 14 デッキで大量の偽陽性。常に exit 0 → [B-24](#b-24) で修復済み |
-| `npx tsc --noEmit` | ❌ 8 件のエラー。うち1件は実行時に落ちる → [B-25](#b-25)（B-24 で4件消化、残り4件） |
+| `npx tsc --noEmit` | ❌ 8 件のエラー。うち1件は実行時に落ちる → [B-25](#b-25)（B-24 で5件消化、残り3件） |
 
 **緑のものが緑なのは本物**（selfcheck・gen --check・lint はいずれも宣言と実装を実際に突き合わせて
 いる）。問題は、緑のチェックが**見ていない範囲**が広いことと、赤いはずのものが赤くならないこと。
@@ -434,8 +434,9 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 
 **副産物**: `src/tools/index.ts` の壊れた再輸出（存在しない `inspectHtml`）も直した。
 このバレルは CLAUDE.md が検証ユーティリティの入口として案内している当のもので、
-import するだけで実行時に throw していた。B-25 の8件のうち4件（これと
-`html-inspector` の `fontSize`/`font_size` 3件）が消え、残り4件は `schema/theme.ts`。
+import するだけで実行時に throw していた。B-25 の8件のうち5件（これと
+`html-inspector` の `fontSize`/`font_size` 3件、`slide-builder` の `box.text` 1件）が消え、
+残り3件は `schema/theme.ts` の配列マージのみ。
 
 <a id="b-25"></a>
 ### B-25: 型検査が CI にもテストにも無い
@@ -472,7 +473,7 @@ typecheck ステップを追加する。
 `tools/html-inspector.ts:133,148,180` の `fontSize`/`font_size` 取り違え（`parseParagraphStyle` が
 `Partial<ParagraphData>` を返すと宣言していたのをやめ、専用の `ParagraphStyle` 型にした）、
 `renderer/pptx/slide-builder.ts` の `box.text` が undefined のまま渡りうる箇所を直した。
-**残り4件は `schema/theme.ts:210,214,236` の配列マージのみ。** typecheck スクリプトと
+**残り3件は `schema/theme.ts:210,214,236` の配列マージのみ。** typecheck スクリプトと
 CI トリガはまだ無い。`__tests__` は tsconfig の `exclude` にあるので、テスト側も
 見るなら別 tsconfig が要る。
 
