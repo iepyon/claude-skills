@@ -1,12 +1,13 @@
 # patterns-meta の出典調査
 
 `assets/doc/wiki/patterns-meta.md`（パターンを書くパターン）の10パターンについて、
-名前と主張の出どころを一次資料まで辿った記録。スライド下部に 3〜4pt で刻む文字列の草案を含む。
+名前と主張の出どころを一次資料まで辿った記録。**実装済み** — `<!--source-->` 注釈として
+スライド下部に 6pt で刻んである（枠は3行ぶん 0.3in）。
 
 **検証の度合いを行ごとに明示する。** 印刷されて残るので、辿れなかったものは
 「出典なし」と書く。もっともらしい系譜を作らない。
 
-- ◎ 一次資料の本文を読んで引用を確認
+- ◎ 一次資料の本文を自分で取って引用を確認（`curl` + `grep`、PDF は zlib 展開）
 - ○ 一次資料の要約・二次資料で確認（本文は未読）
 - △ 未確認（本文にアクセスできず）
 
@@ -33,7 +34,7 @@ Meszaros & Doble, **"A Pattern Language for Pattern Writing"**
 
 ## パターンごとの出典
 
-### ジワる名前 ○
+### ジワる名前 ◎
 
 **一次**: Meszaros & Doble (1997) **Evocative Pattern Name**
 Problem: "How do you name a pattern so that it is easy to remember and refer to?"
@@ -66,7 +67,7 @@ Evocative Pattern Name が本当に対立させているのは **evocative 対 d
 
 > 草案: `Meszaros & Doble "Evocative Pattern Name" (PLoPD3, 1997) / まつもとゆきひろ「名前重要」`
 
-### 借りてきた比喩 ○
+### 借りてきた比喩 ◎
 
 **一次**: Meszaros & Doble (1997) **Meaningful Metaphor Name**
 Problem: "How do you give your pattern a useful and memorable name?"
@@ -78,7 +79,7 @@ Solution: "Find a meaningful metaphor for the pattern, and name the pattern acco
 
 > 草案: `Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997)`
 
-### 声に出して読む ○
+### 声に出して読む ◎
 
 **一次候補が2つあり、どちらも部分的にしか合わない。**
 
@@ -93,12 +94,22 @@ Solution: "Find a meaningful metaphor for the pattern, and name the pattern acco
 **パターンコミュニティの一般則としては**「名前は言いやすくあるべき」が
 共有語彙を作る目的から導かれている（Hillside の命名ガイドライン）。
 
-**「DDD で度々言われている」は裏付いた**が、書籍本文の該当箇所は未読なので ○ 止まり。
-Gabriel を併記すると場面が混ざるので、DDD 単独を推す。
+**書籍本文を取って確認した（◎）。** ユビキタス言語の章に **「Modeling Out Loud」** という
+節がそのままある。
 
-> 草案: `Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語`
+> "One of the best ways of refining a model is to explore with speech, trying out loud
+> various constructs from possible model variations. **Rough edges are easy to hear.**"
 
-### ザワつく状況 ○
+> "Play with the model as you talk about the system. Describe scenarios out loud using
+> the elements and interactions of the model…"
+
+「Rough edges are easy to hear」がデッキの「声に出して詰まる名前も、黙読では詰まらない」の
+逐語の裏付け。**節名を刻む** — 「ユビキタス言語」だけでは章が広すぎて読者が辿れない。
+Gabriel を併記しないのは場面が混ざるから（合評の場 vs 書いた直後の一人での検算）。
+
+> 刻んだ文字列: `Evans『…ドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」＝…"Rough edges are easy to hear"`
+
+### ザワつく状況 ◎
 
 **一次**: Meszaros & Doble (1997) **Visible Forces**
 Problem: "How do you ensure that the reader understands the choice of solution?"
@@ -202,10 +213,12 @@ forces も引いておらず、パターン・ランゲージからの派生で�
    Rule of Three（Don Roberts 由来）— 3回目の重複でリファクタリングする。
    ユーザの記憶どおり実在するが、**扱っている対象が違う**（コードの重複 vs パターンの妥当性）。
 
-デッキ本文が「一度きりの成功は、偶然と区別がつかない」と書いているので、
-**1 を主、2 を従**にするのが正しい。逆にすると主張と出典がずれる。
+**主従ではなく、役割分担だった。** Fowler のルールの言い回しは
+**"Three strikes and you refactor"** で、**「3ストライク」という名前はここから来ている**。
+つまり `でこぼこ石畳`（名前は 247、内容は序文）と同じ構造 — **名前は Fowler、内容は Coplien**。
+デッキ本文の「パターンは発明ではなく発見である」は Coplien の主張そのもの。
 
-> 草案: `Coplien の rule of three（既知の適用例3件, 1996）/ 『リファクタリング』の Rule of Three`
+> 刻んだ文字列: `名前は『リファクタリング』の "Three strikes and you refactor"（Don Roberts 由来）。内容は Coplien の rule of three (1996)＝…`
 
 ### でこぼこ石畳 ○
 
@@ -231,7 +244,7 @@ leads to / specializes / generalizes / alternatives の関係を記録する。
 
 > 草案: `Alexander『パタン・ランゲージ』(1977) 序文 + 247 Paving With Cracks Between The Stones`
 
-### 文に溶かす ○
+### 文に溶かす ◎
 
 **一次**: Meszaros & Doble (1997) **Readable References to Patterns**
 Problem: "How do you refer to other patterns within the description of your pattern?"
@@ -244,7 +257,7 @@ Solution: "When referring to patterns within the body of your pattern,
 
 > 草案: `Meszaros & Doble "Readable References to Patterns" (PLoPD3, 1997)`
 
-### 黙って聴く著者 ○
+### 黙って聴く著者 ◎
 
 **一次**: Gabriel, *A Pattern Language for Writers' Workshops* の **Fly on the Wall**
 — 著者を破壊的な存在にせずに活動の中に留めるには、どうするか。
@@ -256,13 +269,90 @@ Hillside の "How to Hold a Writer's Workshop" の手順書でも
 discussion." / ラウンド3・4・5では著者は「仮想的にしか」その場にいない、と規定されている。
 
 **「オンザフライ」は名前の記憶違い。** 正しくは **Fly on the Wall**（壁の蝿＝
-気づかれない観察者）。on-the-fly（その場しのぎ）ではない。刻むときは綴りに注意。
+気づかれない観察者）。on-the-fly（その場しのぎ）ではない。
+**この注意はスライドには刻まない** — 読者向けの典拠ではなく、書き手向けの覚え書きなので。
 
 7ラウンドの手順:
 1. 導入 → 2. **著者が一節を音読** → 3. 参加者が要約 → 4. **良かった点**（内容→文体）
 → 5. 改善案 → 6. 著者が質問 → 7. 謝意
 
 > 草案: `Gabriel "Fly on the Wall" (A Pattern Language for Writers' Workshops)`
+
+---
+
+## 捏造チェック（一次資料の本文を自分で取って突き合わせた）
+
+WebFetch の要約は小型モデルが書くので、引用が捏造される経路がある。そこで
+**HTML を curl して grep、PDF は zlib で展開して grep** し、引用を1件ずつ当て直した。
+
+**結論: 捏造は1件も無かった。** パターン名も、引用した Problem / Solution の文も、
+すべて一次資料に実在する。ただし2点を直し、1点を訂正した。
+
+### 逐語で一致を確認したもの
+
+Meszaros & Doble の4件は、hillside.net の本文（82K字）から `Pattern:` 見出しごとに
+Problem / Solution を切り出して照合した。
+
+| パターン | 確認した文 |
+|---|---|
+| Visible Forces | Problem "How do you ensure that the reader understands the choice of solution?" / Solution "ensure that the forces are highly visible… by highlighting them using fonts, underlining, or other typographic techniques" |
+| Evocative Pattern Name | Solution "Choose a pattern name that are likely to conjure up images which convey the essence of the pattern solution to the target audience."（原文の "that are" という崩れまで一致） |
+| Meaningful Metaphor Name | Solution "Find a meaningful metaphor for the pattern, and name the pattern accordingly." ＋ "**If you have to explain the metaphor, it is not familiar enough.**" |
+| Readable References to Patterns | Solution "weave the pattern names into the narrative" |
+
+他:
+
+- **Buxton** — PDF 本文から属性一覧を抽出（前から ◎）。
+- **Alexander 247** — patternlanguage.cc の本文。表題も "lay paving stones with a 1 inch
+  crack between the stones, so that grass and mosses and small flowers can grow" も一致。
+- **Alexander『時を超えた建設の道』** — "It is both a process and a thing; both a description
+  of a thing which is alive, and a description of the process which will generate that thing."
+  を2つの独立した転記で逐語確認（書籍本体の PDF は字形が埋め込みで抽出できず）。
+- **Gabriel** — 書籍 *Writers' Workshops & the Work of Making Things* (2002) の
+  目次に **Fly on the Wall (p.109)** が章として実在。本文でも "fly-on-the-wall" を使う。
+- **まつもとゆきひろ「名前重要」** — Wikisource（CC-by-3.0-US）。日本語版の書き下ろし10本の1つ。
+
+### 直した2点
+
+1. **声に出して読む が ○ → ◎ に上がった。** DDD の本文を取って grep したら、
+   ユビキタス言語の章に **「Modeling Out Loud」という節がそのままあった**。
+   「One of the best ways of refining a model is to explore with speech, trying out loud
+   various constructs from possible model variations. **Rough edges are easy to hear.**」
+   デッキの「声に出して詰まる名前も、黙読では詰まらない」の逐語の裏付け。
+   節名を刻むよう書き換えた（「ユビキタス言語」だけだと読者が辿れない）。
+
+2. **3ストライクで書く は、名前と内容で出典の役割が違う。** Fowler『リファクタリング』の
+   ルールは **"Three strikes and you refactor"**（Don Roberts 由来）で、
+   **「3ストライク」という名前はここから来ている**。内容（発明ではなく発見）は
+   Coplien の rule of three。`でこぼこ石畳` と同じ「名前は A、内容は B」の構造なので、
+   主従ではなくそう書き換えた。
+
+### 訂正: gush は文献に実在した
+
+前回「Gabriel の PL にも hillside の手順書にも gush は無い、コミュニティの口語」と
+報告したが、**書籍の本文にあった**。検索が大文字の "Gush" だけを見ていたのが原因。
+
+> The shorthand I have heard to cover this case is to say, "gush!" In many cases I have
+> heard a comment followed by a virtual chorus of gushes.
+> — *Writers' Workshops & the Work of Making Things* (2002), p.132
+
+索引にも項目がある: `"gush" See Also Culture / as shorthand for "I agree with the
+preceding statement," 133`。
+
+つまり gush は**章の名前ではないが、Gabriel が記録した語彙**。章の名前は
+**Positive Feedback (p.127)**。パターンとして立てるなら、出典は
+`Gabriel, Writers' Workshops (2002) の "gush" (p.132)` と書ける。
+
+### まだ一次で取れていないもの（○ 止まり）
+
+- **Coplien の rule of three (1996)** — 『Software Patterns』(SIGS) 本体が読めていない。
+  複数の査読論文が「Coplien (1996) が rule of three を確立した」と帰属させており、
+  「3件」も一致するが、言い回しは二次資料間で揺れる（"three known uses" /
+  "three insightfully different implementations"）。**数字は安全、逐語は避ける。**
+- **Alexander『パタン・ランゲージ』序文の上位/同位/下位** — 検索要約が逐語で一致するが、
+  書籍本文は未読。
+- **東京科学大学 EDP の「ざわざわ」** — Cloudflare で機械的に読めず、
+  **ユーザから本文の提供を受けて確認**した（自分で取得したものではない）。
 
 ---
 
@@ -292,16 +382,16 @@ Gush と刻むと、探した読者が文献に見つけられない。
 
 | パターン | 検証 | 出典行の草案 | 注記（草案を変えるときに壊してはいけない判断） |
 |---|---|---|---|
-| ジワる名前 | ○ | Meszaros & Doble "Evocative Pattern Name" (PLoPD3, 1997) / まつもとゆきひろ「名前重要」（日本語版書き下ろし, 2010） | Meszaros が負うのは**説明的な名前を避ける**ところまで。「使うたびにジワジワくる」の遅効性は**どの出典にも無い**デッキの追加なので、Meszaros 単独にしない |
-| 借りてきた比喩 | ○ | Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997) | ほぼ完全一致。単独で足りる |
-| 声に出して読む | ○ | Evans『ドメイン駆動設計』(2003) ユビキタス言語 | **Gabriel の Author Reads Selection を足さない。** あれは合評の場での手順で、このパターンは書いた直後の一人での検算。場面が違う |
-| ザワつく状況 | ◎ | Meszaros & Doble "Visible Forces" (PLoPD3, 1997) / 名前は東京科学大学 EDP の「ざわざわ」 | EDP の記事は Alexander も forces も引いていない**独立の語彙**。「フォースの言い換え」と書くと無い系譜を作る。**名前の由来**として並べる（でこぼこ石畳と同じ扱い）。表記は「ざわざわ」— 記事に「ざわざわ感」の形は無い |
+| ジワる名前 | ◎ | Meszaros & Doble "Evocative Pattern Name" (PLoPD3, 1997) / まつもとゆきひろ「名前重要」（日本語版書き下ろし, 2010） | Meszaros が負うのは**説明的な名前を避ける**ところまで。「使うたびにジワジワくる」の遅効性は**どの出典にも無い**デッキの追加なので、Meszaros 単独にしない |
+| 借りてきた比喩 | ◎ | Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997) | ほぼ完全一致。単独で足りる |
+| 声に出して読む | ◎ | Evans『ドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」 | **Gabriel の Author Reads Selection を足さない。** あれは合評の場での手順で、このパターンは書いた直後の一人での検算。場面が違う |
+| ザワつく状況 | ◎（名前は提供された本文で確認） | Meszaros & Doble "Visible Forces" (PLoPD3, 1997) / 名前は東京科学大学 EDP の「ざわざわ」 | EDP の記事は Alexander も forces も引いていない**独立の語彙**。「フォースの言い換え」と書くと無い系譜を作る。**名前の由来**として並べる（でこぼこ石畳と同じ扱い）。表記は「ざわざわ」— 記事に「ざわざわ感」の形は無い |
 | 釣り竿を渡す | ○ | Alexander『時を超えた建設の道』(1979) の生成性 / Coplien, generative pattern (1994) | **名前の由来（魚と釣り方の格言）は書かない** — 典拠が無い。出典は内容＝生成性のほうに付ける |
 | ラフで出す | ◎ | Buxton『Sketching User Experiences』(2007) Appropriate Degree of Refinement | 唯一の一次資料確認済み。**Meszaros の Understood Notations を足さない**（記法の馴染みの話で、粗さの話ではない） |
-| 3ストライクで書く | ○ | Coplien の rule of three（既知の適用例3件, 1996）/ 従: 『リファクタリング』の Rule of Three | **順序を入れ替えない。** デッキ本文は「発明ではなく発見」＝パターンの妥当性の話なので Coplien が主。Fowler はコードの重複の話で別系譜だが、ユーザの記憶どおり実在するので従として残す |
+| 3ストライクで書く | ○ | 名前は『リファクタリング』の "Three strikes and you refactor"（Don Roberts 由来）/ 内容は Coplien の rule of three (1996) | **主従ではなく役割分担。** 「3ストライク」という名前は Fowler の "Three strikes and you refactor" から。内容（発明ではなく発見）は Coplien。でこぼこ石畳と同じ構造。**Coplien 1996 の本文は未読**なので逐語引用は避け、数字（3件）だけに留める |
 | でこぼこ石畳 | ○ | Alexander『パタン・ランゲージ』(1977) 序文 + 247 Paving With Cracks Between The Stones | 序文が**上位・同位・下位の3方向**の出典、247 が**名前**の出典。役割が違うので両方要る |
-| 文に溶かす | ○ | Meszaros & Doble "Readable References to Patterns" (PLoPD3, 1997) | 完全一致。単独で足りる |
-| 黙って聴く著者 | ○ | Gabriel "Fly on the Wall"（Writers' Workshops の合評） | **綴りは Fly on the Wall。** on-the-fly ではない |
+| 文に溶かす | ◎ | Meszaros & Doble "Readable References to Patterns" (PLoPD3, 1997) | 完全一致。単独で足りる |
+| 黙って聴く著者 | ◎ | Gabriel "Fly on the Wall"（Writers' Workshops の合評） | **綴りは Fly on the Wall。** on-the-fly ではない（この注意は調査メモに留め、スライドには刻まない — 読者向けの典拠ではなく書き手向けの覚え書き） |
 
 保留:
 - ザワつく状況 の名前は、実際に EDP の「ざわざわ」から採ったのか
@@ -328,7 +418,7 @@ Gush と刻むと、探した読者が文献に見つけられない。
 
 | | takeaway | source |
 |---|---|---|
-| 大きさ | 20pt・太字 | 4pt |
+| 大きさ | 20pt・太字 | 6pt |
 | 位置 | 全幅・中央寄せ | 左段幅・左寄せ |
 | リンク | `richText` なので `[[…]]` が効く | 素の `text` なので効かない |
 | 役割 | 読ませる（まとめ・関連） | 読み飛ばせる（典拠） |
@@ -336,7 +426,8 @@ Gush と刻むと、探した読者が文献に見つけられない。
 とくに3行目が効く。takeaway に出典を書くと、文献名がバックリンクのグラフに載って
 **パターンの隣人として並ぶ**。「関連」と「典拠」が混ざる。
 
-確保は 0.2in にした（4pt の1〜2行に要るのは 0.13in）。余りを全部確保しないのは、
+確保は 0.3in ＝ 6pt の3行ぶんにした（インク 0.333in、許容 0.36in）。
+4行になると許容を超えてビルドが止まるので、余地は1行ぶん。余りを全部確保しないのは、
 確保した高さがそのまま本文の取り分から消えるため。
 
 ### 訂正: shape-keys.ts は触らなくてよかった
@@ -347,7 +438,7 @@ Gush と刻むと、探した読者が文献に見つけられない。
 ### そのまま正しかったもの
 
 - **3pt は HTML/Wiki 側では約4px**（`font-size: Npt` をそのまま出し、CSS の 1in = 96px）。
-  4pt にした。Wiki ビューアは画面幅に合わせて拡大するので実際はもう少し大きい。
+  実際にビューアで見て 5pt → **6pt** にした。Wiki は画面幅に合わせて拡大するので、そのぶん大きく出る。
 - 文字数上限（1000字）には余裕がある。最長の出典は 187字。
 
 ## 出典の出典（この調査で読んだもの）

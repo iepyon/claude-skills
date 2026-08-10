@@ -133,7 +133,7 @@ Meszaros & Doble "Meaningful Metaphor Name"（PLoPD3, 1997）＝読者に馴染�
 ![声に出して読む](diagrams/patterns-meta/声に出して読む.svg)
 
 <!--source-->
-Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語＝モデルを声に出して使うことが、言語とモデルのテストになる。言いにくい用語には異議を唱えよ。
+Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」＝モデルを声に出して試すのが、モデルを洗練させる最良の方法のひとつ。"Rough edges are easy to hear"（粗い所は耳で分かる）。
 
 ---
 
@@ -225,7 +225,7 @@ Buxton『Sketching User Experiences』(2007) "Appropriate Degree of Refinement"�
 ![3ストライクで書く](diagrams/patterns-meta/3ストライクで書く.svg)
 
 <!--source-->
-Coplien の rule of three (1996)＝文書化されたパターンは、有意に異なる既知の適用例を3件示さねばならない。パターンは発明も開発もされず観察される。／『リファクタリング』の Rule of Three は3度目の重複でリファクタリングする別系譜。
+名前は『リファクタリング』の "Three strikes and you refactor"（Don Roberts 由来）。内容は Coplien の rule of three (1996)＝文書化されたパターンは有意に異なる既知の適用例を3件示さねばならず、パターンは発明も開発もされず観察される。
 
 ---
 
@@ -294,6 +294,6 @@ Meszaros & Doble "Readable References to Patterns"（PLoPD3, 1997）＝他のパ
 ![黙って聴く著者](diagrams/patterns-meta/黙って聴く著者.svg)
 
 <!--source-->
-Gabriel "Fly on the Wall"（A Pattern Language for Writers' Workshops）＝著者を破壊的な存在にせずに場へ留める。合評の大半で著者は「見えない」ままでいる。綴りは on-the-fly ではない。
+Gabriel "Fly on the Wall"（A Pattern Language for Writers' Workshops）＝著者を破壊的な存在にせずに場へ留める。合評の大半で著者は「見えない」ままでいる。
 
 ---

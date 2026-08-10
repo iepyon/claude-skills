@@ -182,7 +182,7 @@ export const DEFAULT_THEME: Theme = {
   wikiPattern: {
     headingSize: 16,
     bodySize: 14,
-    sourceSize: 4,
+    sourceSize: 6,
     sourceColor: "94A3B8",
   },
 }
