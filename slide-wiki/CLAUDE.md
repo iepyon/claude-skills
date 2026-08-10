@@ -2,7 +2,18 @@
 
 ## Git Push Policy
 
-**DO NOT `git push` automatically.** `git commit` is OK. Push only when explicitly requested.
+**作業ブランチへの push は済ませる。** 以前ここには「push するな、要求されたときだけ」と
+書いてあったが、**Claude Code on the web の停止フックが未 push のコミットを毎回差し戻すので、
+規約として成り立っていなかった**（フックは無条件で、未コミット・未追跡・未 push のいずれかが
+あれば止める）。守るべきものはフックのほうにある — リモートセッションのコンテナは
+使い終わると回収されるので、**push していないコミットは失われる。**
+
+代わりに残す線は3つ。どれもフックが見ていないので、ここにしか無い規約になる。
+
+- **`main` に直接 push しない。** 公開サイトは `main` への push で再ビルドされる
+  （`.github/workflows/pages.yml`）。作業は必ずブランチに置く
+- **force push しない。** 明示的に要求されたときだけ
+- **PR は頼まれてから作る。** ブランチを push しても PR は開かない
 
 ## Overview
 
