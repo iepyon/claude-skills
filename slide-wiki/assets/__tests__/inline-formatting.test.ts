@@ -307,3 +307,67 @@ describe("stripInlineFormatting - links", () => {
     expect(stripInlineFormatting("**太字**と[[a|リンク]]と`code`")).toBe("太字とリンクとcode")
   })
 })
+
+/**
+ * 装飾の中の記法。
+ *
+ * パターンの「そこで」の一行目のように、**結論を太字にしてから参照を張る**書き方は
+ * 自然に出てくる。再帰しないと bold の交替が内側の `[[…]]` ごと飲むので、リンクが
+ * 黙って消える — しかも stripInlineFormatting は中を剥がすため、文字数だけは正しく
+ * 数えられて表示と食い違う。実際に配布デッキの `切れない鎖` で1本死んでいた。
+ */
+describe("parseInlineFormatting - decorations nest", () => {
+  it("should keep a wikilink alive inside bold", () => {
+    expect(parseInlineFormatting("**主張から [[原本と写し|原本]] まで**")).toEqual([
+      { text: "主張から ", bold: true },
+      { text: "原本", bold: true, link: { kind: "internal", target: "原本と写し" } },
+      { text: " まで", bold: true },
+    ])
+  })
+
+  it("should keep a wikilink alive inside italic", () => {
+    expect(parseInlineFormatting("*斜体の [[接ぎ木]]*")).toEqual([
+      { text: "斜体の ", italic: true },
+      { text: "接ぎ木", italic: true, link: { kind: "internal", target: "接ぎ木" } },
+    ])
+  })
+
+  it("should keep an external link alive inside bold", () => {
+    expect(parseInlineFormatting("**[docs](https://example.com) を見る**")).toEqual([
+      { text: "docs", bold: true, link: { kind: "external", href: "https://example.com" } },
+      { text: " を見る", bold: true },
+    ])
+  })
+
+  it("should stack decorations instead of replacing them", () => {
+    // code は交替の先頭なので中身を書式として解釈しない。装飾は積み上がる
+    expect(parseInlineFormatting("**`[[種ノート]]` は記法**")).toEqual([
+      { text: "[[種ノート]]", bold: true, code: true },
+      { text: " は記法", bold: true },
+    ])
+  })
+
+  it("should not nest italic into bold (a limit of the star grammar, not of the recursion)", () => {
+    // `*` の交替が `**` を先に割るので、`*` と `**` は互いに入れ子にできない。
+    // 再帰を入れても変わらない（内側に届く前に外側の切り方が決まっている）。
+    // 記録しておくのは、`[[…]]` が効くようになったぶん「装飾も入れ子になった」と
+    // 読まれうるため — なったのはリンクとコードだけである。
+    expect(parseInlineFormatting("*斜体の中に **太字** がある*")).toEqual([
+      { text: "斜体の中に ", italic: true },
+      { text: "太字", italic: true },
+      { text: " がある", italic: true },
+    ])
+  })
+
+  it("should leave a plain bold run as one run", () => {
+    // 内側に記法が無ければ分割しない（既存のスナップショットが動かない条件）
+    expect(parseInlineFormatting("**ただの太字**")).toEqual([{ text: "ただの太字", bold: true }])
+  })
+
+  it("should not recurse into a link label", () => {
+    // ラベルは表示テキスト。`**` はリテラルとして残す（現時点の仕様）
+    expect(parseInlineFormatting("[[id|**強調**]]")).toEqual([
+      { text: "**強調**", link: { kind: "internal", target: "id" } },
+    ])
+  })
+})
