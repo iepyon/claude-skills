@@ -37,7 +37,7 @@ slide-wiki が読む Markdown の構造の全文リファレンス。**この文
 | `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
 | `source` | `<!--source-->` | WikiPattern | そのスライドの主張の典拠。マーカーの次の行以降が本文になる。 |
 
-- `id` — 省略するとスライドタイトルの slug を採り、衝突したら連番（`-2`）を付ける。 採番は parser/slide-ids.ts が一括で行う。
+- `id` — 省略するとスライドタイトルの slug を採り、衝突したら連番（`-2`）を付ける。 採番は parser/slide-ids.ts が一括で行う。 **明示した ID は予約である。** 他のスライドの見出しから作られた自動 slug より強く、 同じ綴りを欲しがった見出しのほうが連番に回る。したがって `[[…]]` の行き先は md の並び順で変わらない。 **明示 ID 同士がぶつかった場合は一意化を続ける**（重複するとリンクが解決できない）。 どちらが間違っているかは機械には決められないので、lint の `slide-id` が 両方の行番号を報告する（`--strict` で終了コード 1）。折れたリンクと違い `[[…]]` は解決してしまう — 常に最初の1枚へ — ので、報告が無いと気づけない。
 
 - `icon` — 効くのは annotations に icon を挙げたレイアウトだけ。他では黙って捨てられる。
 

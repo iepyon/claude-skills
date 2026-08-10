@@ -303,6 +303,41 @@ describe("lint", () => {
     expect(checks(["## 制限", "- 1つ目", "- 2つ目"].join("\n"))).toEqual([])
   })
 
+  it("flags the same explicit id on two slides, naming both lines", () => {
+    // 折れたリンクより見つけにくい壊れ方。[[seed]] は解決する（常に1枚目へ）ので
+    // 未解決リンクの一覧にも出ず、2枚目が誰からも指せないまま公開される
+    const deck = ["## 一枚目", "<!--id:seed-->", "本文", "", "---", "", "## 二枚目", "<!--id:seed-->", "本文"]
+    const diagnostics = lintSource(deck.join("\n"))
+    expect(diagnostics.map((d) => d.check)).toEqual(["slide-id", "slide-id"])
+    expect(diagnostics.map((d) => d.line)).toEqual([2, 8])
+    expect(diagnostics[0].message).toContain("8 行目")
+    expect(diagnostics[1].message).toContain("2 行目")
+  })
+
+  it("says nothing when two slides merely share a title", () => {
+    // 自動 slug の衝突は連番が正しい振る舞い。書き手の意思表示ではないので報告しない
+    expect(checks(["## まとめ", "本文", "", "---", "", "## まとめ", "本文"].join("\n"))).toEqual([])
+  })
+
+  it("flags a heading whose automatic id is already claimed by an explicit one", () => {
+    // 採番は明示 ID を優先するのでリンクは正しい行き先に着くが、この見出しの ID は
+    // '設計' ではなく '設計-2' になる。推測できない綴りなので書き手に知らせる
+    const deck = ["# 設計", "", "---", "", "## 設計の考え方", "<!--id:設計-->", "本文"]
+    const diagnostics = lintSource(deck.join("\n"))
+    expect(diagnostics.map((d) => d.check)).toEqual(["slide-id"])
+    expect(diagnostics[0].line).toBe(1)
+    expect(diagnostics[0].message).toContain("設計-2")
+  })
+
+  it("reads the id from the last directive when a slide carries two", () => {
+    // annotations の cardinality: one — 後ろが勝つ。採番と同じものを見ないと
+    // 「効いていない ID」で衝突を報告してしまう
+    const deck = ["## A", "<!--id:捨てられる-->", "<!--id:seed-->", "本文", "", "---", "", "## B", "<!--id:seed-->", "本文"]
+    const diagnostics = lintSource(deck.join("\n"))
+    expect(diagnostics.map((d) => d.check)).toEqual(["slide-id", "slide-id"])
+    expect(diagnostics.map((d) => d.line)).toEqual([3, 9])
+  })
+
   it("leaves the character limit to validatePresentation", () => {
     // 二重報告しない（直し方が増えないため）
     const long = ["## 長い", "### 見出し", "あ".repeat(getLimits()["max-chars-per-slide"] + 1)].join("\n")
