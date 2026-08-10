@@ -1,0 +1,32 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">感想で決める</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">答案で測る</text>
+
+  <path d="M32.1 72.5 Q83.8 74.2 135.6 73.4 Q134.8 85.2 132.5 96.8 Q80.9 98.4 29.2 98.5 Q30.5 86.5 32 74.6" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M32.1 72.5 Q83.8 74.1 135.6 73.4 Q135.1 85.3 132.5 96.8 Q80.8 97.5 29.2 98.5 Q32 85.3 33.9 71.9" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="90" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">「よさそう」</text>
+  <path d="M30.2 105.8 Q82.9 107.8 135.7 106.7 Q136.7 118.9 135.7 131.2 Q82.9 131 30.2 132.7 Q30.8 118.3 32.6 104.1" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.2 105.8 Q82.9 105.1 135.7 106.7 Q136.8 118.9 135.7 131.2 Q82.9 132.2 30.2 132.7 Q31.8 118.4 31.1 104" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="124" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">「前より速い」</text>
+  <path d="M30.8 138.5 Q82.6 139 134.3 140.9 Q134.2 154.2 132.7 167.5 Q81.9 167.6 31.2 163.8 Q29.6 150 29.6 136.1" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.8 138.5 Q82.6 138 134.3 140.9 Q133.2 154.2 132.7 167.5 Q82 164.3 31.2 163.8 Q31.6 151.2 29.9 138.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="158" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">「悪くない」</text>
+  <text x="82" y="196" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">良くなったのか</text>
+  <text x="82" y="218" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">慣れたのか分からない</text>
+
+  <path d="M195.7 72.2 Q252.9 70.9 310.1 73 Q309.5 120.8 309.1 168.6 Q252.1 166.4 195.1 167.3 Q195.5 119.8 194.6 72.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M195.7 72.2 Q252.9 73 310.1 73 Q310.7 120.8 309.1 168.6 Q252.1 167.9 195.1 167.3 Q195 120.3 193.3 73.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M194.2 94.9 Q250.1 95.6 305.9 94.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M194.2 94.9 Q250.1 95.8 305.9 94.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M195.9 121.5 Q252 121.9 308 118.5" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M195.9 121.5 Q252 120.1 308 118.5" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M195.4 146.2 Q252.8 146.7 310.1 144" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M195.4 146.2 Q252.7 144.7 310.1 144" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="212" y="89" font-family="sans-serif" font-size="12" fill="#1E40AF">例1</text>
+  <text x="212" y="113" font-family="sans-serif" font-size="12" fill="#1E40AF">例2</text>
+  <text x="212" y="137" font-family="sans-serif" font-size="12" fill="#1E40AF">例3</text>
+  <text x="212" y="161" font-family="sans-serif" font-size="12" fill="#1E40AF">例4</text>
+  <path d="M294.3 88.1 C292.1 91.6 287.5 91.3 284.5 89.4 C281.6 87.4 279.5 83.4 281.7 79.9 C284 76.5 288.5 76.4 291.6 78.4 C294.7 80.4 296.1 84.6 294 87.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M294.9 84.2 C294.8 88.1 291.5 90.9 287.8 90.8 C284 90.6 280.5 87.8 280.7 83.7 C280.8 79.7 284.3 76.6 288.2 76.8 C292.2 76.9 295 80.4 294.9 84.2" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M295.2 108.6 C294.9 112.6 291.3 115.3 287.4 115 C283.6 114.7 280.5 111.4 280.8 107.4 C281.1 103.4 285 101.2 288.5 101.5 C292.1 101.8 295.4 104.6 295.1 108.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M295.1 106.8 C295.7 110.7 293.2 114.6 289.2 115.3 C285.2 116 281.6 113.1 280.9 109.2 C280.3 105.3 283 101.7 286.9 101 C290.7 100.4 294.4 103 295 106.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M282.5 126.3 Q288.3 131.6 293.6 137.3" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M282.5 126.3 Q288.1 131.8 293.6 137.3" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M294.2 124 Q287.9 131.1 281.2 137.8" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M294.2 124 Q287.5 130.8 281.2 137.8" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M293.5 152.6 C295.4 155.6 295.6 160.2 292 162.4 C288.5 164.6 283.8 163.5 281.6 160 C279.4 156.5 281.6 152.4 284.6 150.6 C287.6 148.7 291.8 149.2 293.8 152.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M294.8 157.7 C293.9 161.5 290 163.7 286.3 162.7 C282.6 161.8 280.2 158.1 281.1 154.3 C282.1 150.5 285.9 148.2 289.7 149.1 C293.5 150.1 295.3 154.1 294.4 157.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="196" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">前より落ちたら止まる</text>
+  <text x="252" y="218" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">合格の形は先に決める</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">任せる前に、合格の形を固定しておく</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">測れないものは、広げてよい理由にならない</text>
+</svg>

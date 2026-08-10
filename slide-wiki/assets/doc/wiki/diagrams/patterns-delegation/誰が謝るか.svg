@@ -1,0 +1,38 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">見ているだけ</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">引き受け手がいる</text>
+
+  <path d="M28.4 73.3 Q81.3 73 134.2 70.9 Q132.4 84 132.7 97.3 Q81.7 98.5 30.7 99.8 Q30.4 86.1 28.2 72.7" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M28.4 73.3 Q81.3 73.2 134.2 70.9 Q133.6 84.1 132.7 97.3 Q81.7 97.4 30.7 99.8 Q29.6 86.1 27.7 72.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="90" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">AI の答え</text>
+  <path d="M83.8 99.9 Q83.3 104.9 82.9 110" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M83.8 99.9 Q83 104.9 82.9 110" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M81.5 121.6 Q79.1 116.1 76.3 110.8 Q81.1 109.7 85.7 107.9 Q84 114.9 81.5 121.6 Z" fill="#9CA3AF"/>
+
+  <path d="M98.9 145.9 C99 155.2 91.9 163.7 82.1 163.8 C72.3 163.8 65.1 155.4 65.1 146.1 C65 136.8 71.4 127.1 81.9 127 C92.4 127 98.8 136.6 98.8 145.9" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="151" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">空席</text>
+  <path d="M81.8 164.5 Q81.4 172.3 80 179.9" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M81.8 164.5 Q80.5 172.2 80 179.9" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M80.9 185.3 Q79.8 181.7 78.5 178.2 Q81.5 176.8 84.3 175 Q82.3 180.1 80.9 185.3 Z" fill="#9CA3AF"/>
+
+  <path d="M31.1 187.6 Q82.3 186.3 133.5 186.8 Q134.7 200.8 135.9 214.9 Q82.7 211.9 29.5 212.4 Q28.8 199.6 29.4 186.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M31.1 187.6 Q82.3 185.9 133.5 186.8 Q133.9 200.9 135.9 214.9 Q82.7 211.7 29.5 212.4 Q30.1 200.1 32.4 187.9" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="206" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">そのまま通る</text>
+  <text x="82" y="238" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">事故の時に誰もいない</text>
+
+  <path d="M199.4 72.4 Q252.3 73.9 305.2 71.4 Q304.8 84.1 302.9 96.6 Q252.3 97.7 201.6 97.6 Q199.9 84.8 198.7 72.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M199.4 72.4 Q252.3 70.4 305.2 71.4 Q304.4 84 302.9 96.6 Q252.3 97.3 201.6 97.6 Q200.6 85.8 200.8 74" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="90" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">AI の答え</text>
+  <path d="M251.4 99 Q252.3 104.5 252.8 109.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M251.4 99 Q251.8 104.5 252.8 109.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M253.6 119.9 Q251.1 114.6 249.4 109 Q253.7 109.1 258 110 Q256 115 253.6 119.9 Z" fill="#1E40AF"/>
+
+  <path d="M267.8 155.9 C262.4 164.6 251 165.3 243 160.4 C235.1 155.4 230.2 144.8 235.8 135.9 C241.4 126.9 253 126.7 260.9 131.7 C268.8 136.6 271.9 147.1 266.8 155.2" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M267 136.8 C272.1 145.2 269.5 156 261.2 161.1 C252.9 166.2 241.4 164.6 236 155.7 C230.6 146.9 235.3 136.5 243.2 131.6 C251.2 126.8 262 128.4 267.1 136.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="151" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">名前</text>
+  <path d="M270.3 144 Q284.3 144.3 298.2 146.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M270.3 144 Q284.4 144 298.2 146.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M305.8 147.3 Q303.1 143.5 299.8 140.3 Q298.1 145.7 296.3 151.1 Q301 148.9 305.8 147.3 Z" fill="#1E40AF"/>
+  <text x="288" y="136" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">覆す</text>
+  <path d="M251.2 163.8 Q251.6 172 252.2 180.2" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M251.2 163.8 Q251.1 172 252.2 180.2" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M253.7 186.6 Q249.9 182.1 246.2 177.4 Q250.1 176.8 253.8 175.6 Q253.9 181.1 253.7 186.6 Z" fill="#1E40AF"/>
+
+  <path d="M199.9 188.1 Q250.9 190.3 301.9 189.9 Q301.8 202.8 303.9 215.5 Q251.5 216.6 199.1 215.7 Q199.5 202.8 200.7 190" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M199.9 188.1 Q250.9 188.6 301.9 189.9 Q302 202.7 303.9 215.5 Q251.5 217 199.1 215.7 Q198.6 202.9 199.8 190.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="206" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">通す / 止める</text>
+  <text x="252" y="238" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">謝る人が決まっている</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">謝る人が決まらない仕事は、渡さない</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">精度の話をするのは、その後</text>
+</svg>

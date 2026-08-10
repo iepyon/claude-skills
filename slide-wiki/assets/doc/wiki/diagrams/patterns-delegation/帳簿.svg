@@ -1,0 +1,25 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">流れて消える</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">起きた順に積む</text>
+
+  <path d="M26.1 96.6 Q83.2 97.3 140.2 99.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M26.1 96.6 Q83.1 97.9 140.2 99.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M49.4 100.1 C48.2 105.3 42.6 107 38.2 106 C33.8 105 31 100.7 32 96.2 C33 91.8 36.9 87.6 42 88.7 C47.2 89.9 49.1 95.3 48.1 99.8" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M49.5 96.8 C50.2 102 46.6 106.9 41.3 107.6 C35.9 108.3 32.1 103.8 31.5 99.1 C30.9 94.4 34.3 90.2 38.9 89.6 C43.5 89 48.3 91.9 48.9 96.8" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M80.7 97.1 C81.2 101.9 78 106.6 73 107.1 C67.9 107.6 63.6 103.9 63.1 99 C62.6 94 65.9 89.3 71 88.8 C76.1 88.2 80.3 92.2 80.8 97.1" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="3 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M111.1 93.3 C113.7 97.2 113.2 102.8 109 105.6 C104.9 108.4 99.7 106.3 97.2 102.6 C94.6 98.8 94.6 93.1 98.9 90.3 C103.1 87.5 108.5 89.3 111.1 93.3" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="2 4" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="132" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">後から数えられない</text>
+
+  <path d="M31.9 149.3 Q82.8 150.7 133.8 151 Q133.9 166.1 135.7 181.1 Q82 181.6 28.4 180.1 Q30.1 163.7 29.8 147.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M31.9 149.3 Q82.8 150 133.8 151 Q135.5 166 135.7 181.1 Q82.1 180.3 28.4 180.1 Q28 164.2 30.7 148.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="170" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">言葉で埋める</text>
+  <text x="82" y="212" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">合っているか不明</text>
+
+  <path d="M253.6 73.8 Q252.6 78.6 251.5 83.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M253.6 73.8 Q252.8 78.7 251.5 83.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M250.2 90.1 Q249.3 85.7 248.2 81.3 Q252.8 83.1 257.7 84 Q253.7 86.7 250.2 90.1 Z" fill="#1E40AF"/>
+  <path d="M202 94 Q252.6 95.6 303.2 97.3 Q304.1 105.7 306.2 113.8 Q253.9 113.7 201.7 116.1 Q201 103.9 200.4 91.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M202 94 Q252.6 96.7 303.2 97.3 Q304.3 105.6 306.2 113.8 Q254 116.6 201.7 116.1 Q203.3 105.6 203 94.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M201.8 116.7 Q253.7 116.6 305.6 115.8 Q304.5 125.2 302.3 134.4 Q251.7 135.4 201.1 136.8 Q203.1 126.3 203.2 115.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M201.8 116.7 Q253.7 117.6 305.6 115.8 Q303.1 125 302.3 134.4 Q251.8 137.6 201.1 136.8 Q201 126.8 200.7 116.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M198.3 141.5 Q250.9 139.1 303.6 138.2 Q304.4 147.6 304.6 157.1 Q252.8 159.4 200.9 158 Q197.6 149 196.2 139.5" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M198.3 141.5 Q250.9 139.7 303.6 138.2 Q304.1 147.7 304.6 157.1 Q252.7 156.6 200.9 158 Q200.4 150 200.5 142" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M198.1 164 Q251.7 164.7 305.3 162.8 Q305.1 171 304.1 179 Q251.6 181.5 199.1 180.2 Q198 171 198 161.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M198.1 164 Q251.7 161.7 305.3 162.8 Q304.4 170.9 304.1 179 Q251.6 179.3 199.1 180.2 Q199.3 172.6 199.8 165" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="212" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">問いは後から決まる</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">問いより先に、出来事のほうを残す</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">残していない出来事は、後から数えられない</text>
+</svg>

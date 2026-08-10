@@ -1,0 +1,37 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="58" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">毎回たずねる</text>
+  <text x="252" y="58" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">型で抜く</text>
+
+  <path d="M25.6 72.4 Q80.9 73.9 136.1 75.3 Q135.9 87.1 137.7 98.8 Q82.8 98.1 27.9 98.8 Q27.2 85.1 25.3 71.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M25.6 72.4 Q80.9 73.8 136.1 75.3 Q137.5 87 137.7 98.8 Q82.8 97.3 27.9 98.8 Q26.6 84.7 23.7 70.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="92" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">同じ問い</text>
+  <path d="M81.9 101 Q82.4 109.3 82.3 117.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M81.9 101 Q81.9 109.3 82.3 117.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M81.5 125.6 Q80.7 120.4 79.9 115.3 Q82.7 115.1 85.5 114.7 Q83.4 120.1 81.5 125.6 Z" fill="#9CA3AF"/>
+
+  <path d="M26.7 128.5 Q43.7 126.8 60.9 127 Q60.1 140.5 60.5 154 Q43.9 154.7 27.2 155.2 Q27.4 141.8 27.9 128.4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M26.7 128.5 Q43.7 126.8 60.9 127 Q60.2 140.5 60.5 154 Q43.8 153.8 27.2 155.2 Q27.6 142.3 28.8 129.4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64.1 127 Q81.6 130.1 99.4 129.6 Q100.2 141.1 100.6 152.7 Q83.9 153.7 67.1 153.9 Q65.6 141.3 62.2 129.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M64.1 127 Q81.7 129.1 99.4 129.6 Q99.6 141.2 100.6 152.7 Q83.8 152.7 67.1 153.9 Q65 139.7 64.8 125.4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M106 127.8 Q121.5 127.5 136.8 125.9 Q137.4 139.9 136 153.8 Q120.8 153.2 105.5 154.1 Q104.7 142.1 104.8 130" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M106 127.8 Q121.4 126.6 136.8 125.9 Q136.9 139.9 136 153.8 Q120.8 154 105.5 154.1 Q105.4 139.9 106.5 125.8" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="43" y="146" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">A</text>
+  <text x="82" y="146" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">A</text>
+  <text x="121" y="146" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">B</text>
+
+  <text x="82" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">￥ ￥ ￥</text>
+  <text x="82" y="204" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">たまに違う答え</text>
+
+  <path d="M197.3 75.2 Q252.4 75.1 307.5 72.5 Q307.7 86.4 308.6 100.2 Q251.8 99.3 195 98.7 Q195.6 87.7 198.2 77" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M197.3 75.2 Q252.4 72.5 307.5 72.5 Q307.6 86.4 308.6 100.2 Q251.8 99.9 195 98.7 Q195.4 87.4 195.7 76" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="92" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">書き下した規則</text>
+  <path d="M250.5 101.4 Q252.5 108.1 253.6 114.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M250.5 101.4 Q251.9 108.2 253.6 114.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M253.8 122.1 Q250.5 118.1 247.5 113.9 Q252.3 114.5 256.9 116 Q255.4 119.1 253.8 122.1 Z" fill="#1E40AF"/>
+
+  <path d="M195.6 129.6 Q213.3 128.7 230.9 127.2 Q230.9 141.1 231.2 154.9 Q214.6 156.8 197.9 155.5 Q196.8 141.9 193.6 128.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M195.6 129.6 Q213.3 128.9 230.9 127.2 Q231.6 141.1 231.2 154.9 Q214.6 156.1 197.9 155.5 Q196.7 143.6 196.2 131.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M235 128.4 Q252.8 130.7 270.7 129.9 Q270 141.5 269.3 153.1 Q251.2 153.5 233.1 153 Q235.7 139.6 236.2 125.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M235 128.4 Q252.9 128.1 270.7 129.9 Q269.3 141.5 269.3 153.1 Q251.2 152.2 233.1 153 Q233.2 141.3 232.9 129.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M273.8 126.6 Q290.6 126.2 307.3 125.9 Q308.3 139.1 308.4 152.3 Q290.8 152.3 273.5 155.6 Q273.1 142.2 271.6 128.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M273.8 126.6 Q290.6 126.1 307.3 125.9 Q308.1 139.1 308.4 152.3 Q291 154.7 273.5 155.6 Q275.6 141.5 276.3 127.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="213" y="146" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">A</text>
+  <text x="252" y="146" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">A</text>
+  <text x="291" y="146" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">A</text>
+
+  <text x="252" y="180" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">ただ同然</text>
+  <text x="252" y="204" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">いつも同じ答え</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">分岐が数えられる所に、AI は要らない</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">数えられない所だけ、開けて残す</text>
+</svg>

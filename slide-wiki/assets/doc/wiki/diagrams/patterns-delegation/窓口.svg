@@ -1,0 +1,36 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">回して待つ</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">一往復で頼む</text>
+
+  <path d="M29.9 71.8 Q83 71.3 136.2 70.9 Q135 83.4 132.9 95.8 Q81.9 96.1 31 95.2 Q28.7 83 28.3 70.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M29.9 71.8 Q83 72.4 136.2 70.9 Q134.8 83.4 132.9 95.8 Q81.9 95.2 31 95.2 Q29.1 83.7 28.2 72.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="89" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">頼み</text>
+  <path d="M82.1 95.8 Q82.4 99.8 83.4 103.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M82.1 95.8 Q82.9 99.7 83.4 103.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M80.7 112.6 Q78.3 107 76.7 101.1 Q81.6 100.9 86.4 101.4 Q83.9 107.2 80.7 112.6 Z" fill="#9CA3AF"/>
+
+  <path d="M27.9 112.6 Q80 111.6 132 112.3 Q131.6 124.3 132 136.2 Q81.4 135.2 30.8 135.1 Q30.2 122.9 30.3 110.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M27.9 112.6 Q79.9 110.7 132 112.3 Q132.4 124.3 132 136.2 Q81.4 136.2 30.8 135.1 Q27.2 124.5 25.6 113.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="130" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">道具を呼ぶ</text>
+  <path d="M81.8 137.3 Q81.2 140.9 80.6 144.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M81.8 137.3 Q81.4 140.9 80.6 144.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M83.9 152.8 Q80.2 147.2 77.7 141 Q82.3 140.2 86.9 140.4 Q85.4 146.6 83.9 152.8 Z" fill="#9CA3AF"/>
+
+  <path d="M28.2 154.5 Q81.8 153.4 135.5 153.4 Q133.4 163.7 132 174.1 Q81 172.8 30 174.5 Q27.5 164 25.9 153.3" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M28.2 154.5 Q81.8 153.8 135.5 153.4 Q134.7 163.9 132 174.1 Q81 173.6 30 174.5 Q29 164.5 28.3 154.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="170" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">読み直す</text>
+  <path d="M82.1 173.9 Q82.9 179.6 83.2 185.2" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M82.1 173.9 Q83.1 179.5 83.2 185.2" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M81.5 190.6 Q80.6 185.9 79.7 181.3 Q83.7 182.4 87.6 183.6 Q84.5 187 81.5 190.6 Z" fill="#9CA3AF"/>
+
+  <path d="M30.3 194.4 Q82.7 195 135.2 195.8 Q134.2 207 134.8 218.2 Q83.2 217.4 31.6 218.1 Q32.1 206.6 30.8 195.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.3 194.4 Q82.7 196.2 135.2 195.8 Q135.1 207 134.8 218.2 Q83.2 219.7 31.6 218.1 Q32.9 205.4 32.4 192.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="211" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">返事</text>
+  <text x="82" y="240" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">失敗の種類が増える</text>
+
+  <path d="M200.7 70.9 Q251.8 70.1 302.9 70.8 Q301.7 83.3 302.6 95.9 Q252.1 97.6 201.6 97.2 Q202.2 83.7 200.3 70.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M200.7 70.9 Q251.8 69.3 302.9 70.8 Q301.8 83.3 302.6 95.9 Q252.1 95.1 201.6 97.2 Q199.8 83.7 198.7 70.2" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="89" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">頼み</text>
+  <path d="M252.7 93.9 Q250.9 138 250.3 182.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M252.7 93.9 Q251 138.1 250.3 182.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M253.1 192.8 Q249.9 187.3 247.6 181.4 Q252 180.5 256.5 180.4 Q254.3 186.4 253.1 192.8 Z" fill="#1E40AF"/>
+  <text x="264" y="142" font-family="sans-serif" font-size="12" fill="#1E40AF">席を立たない</text>
+
+  <path d="M200.8 195.5 Q253.4 194.2 306.1 192.7 Q305.4 204.7 306 216.7 Q252.4 216.8 198.9 219.4 Q199.8 207.6 200.5 195.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M200.8 195.5 Q253.5 195.7 306.1 192.7 Q306.1 204.7 306 216.7 Q252.4 218.1 198.9 219.4 Q198.7 208.2 200.5 197.2" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="211" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">返事</text>
+  <text x="252" y="240" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">渡した材料の中で終わる</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">一往復で済む用に、席を立たせない</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">外へ取りに行く必要が出て、初めて回す</text>
+</svg>
