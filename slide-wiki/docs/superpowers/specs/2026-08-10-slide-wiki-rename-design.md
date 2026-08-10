@@ -37,7 +37,7 @@ triggering は description が担っていて、そこには "generating PPTX fi
 | ディレクトリ | `md2pptx/` → `slide-wiki/`（`git mv`。無視ファイルもディレクトリごと移動する） |
 | `SKILL.md:2,6` | `name:` と H1 |
 | `assets/package.json:2` | `"name": "md2pptx"` |
-| `assets/package-lock.json:2,8` | ルートと `packages[""]` の `"name"`。package.json だけ直すとロックファイルと食い違う |
+| `BACKLOG.md`（6箇所） | **記録ではなく生きた文書**。下の節を参照 |
 | `assets/README.md:1,7` | プロジェクト名としての言及（`:85,:179` は API 名なので残す） |
 | `assets/doc/theme.yaml:1` | コメント |
 | `assets/src/tools/gen-ontology-doc.ts:206,208` | **`ontology.md` の正本**。ここを直して再生成する |
@@ -66,8 +66,22 @@ triggering は description が担っていて、そこには "generating PPTX fi
 - **`md2pptx()` 関数と `Md2PptxOptions` 型、その全 import、`e2e.test.ts:108` の describe 名**（42箇所）。
   `md2html()` / `md2wiki()` と並ぶ「md → pptx 変換」の正しい名前である。`pptx-inspector.ts` のファイル名も同様。
 - `CLAUDE.md:217` の `md2pptx`/`md2html` は**オプションを持つ関数**の話なので該当しない。
-- **記録** — `BACKLOG.md`（6箇所）・`docs/superpowers/plans/`（11箇所）・`doc/session-insights/`（10箇所）。
-  当時 `md2pptx` だった事実であり、書き換えると履歴の改変になる。
+- **記録** — `docs/superpowers/plans/`（11箇所）・`doc/session-insights/`（10箇所）。
+  日付を持つスナップショットであり、当時 `md2pptx` だった事実を書き換えると履歴の改変になる。
+- `assets/package-lock.json` — `assets/.gitignore` の対象で**追跡されていない**（`pages.yml` が
+  `npm ci` を使わず `npm install` にしている理由もこれ）。ローカルで直しても出荷されないので、
+  変更対象に数えない。
+
+### `BACKLOG.md` は記録ではない
+
+当初これを記録に分類したのは誤りだった。780行の**生きた文書**で、
+「2026-08-08 に修復した」のような追記が続いており、`md2pptx` の6箇所すべてが
+**現在のツールの状態を現在形で述べている**（`:7` 「既に優位な点」、`:190` 「`--verify` は
+座標の3者比較のみで」、`:277` 「素の白紙に絶対座標描画のみ」）。過去の出来事を書いた行に
+`md2pptx` は現れない。したがって全6箇所を置換する。
+
+放置すると**公開サンプルとの食い違い**になる。`assets/doc/wiki/guide.md:95` の出典が
+`slide-wiki BACKLOG B-14` を指すのに、その文書の題が `# md2pptx 機能バックログ` のままになる。
 
 ## 同時にやる掃除（改名とは別の腐り）
 
@@ -131,11 +145,10 @@ grep -rIn 'md2pptx' --exclude-dir=node_modules --exclude-dir=.git . \
   | grep -vE 'md2pptx\(|md2pptx,|md2pptx *\}|Md2Pptx'
 ```
 
-これで残るべきものは、**記録3系統 + この仕様書 + 意図して残す3行**だけである。
+これで残るべきものは、**記録2系統 + この仕様書 + 意図して残す3行**だけである。
 
 | 残存 | 種別 |
 |---|---|
-| `BACKLOG.md`（6） | 記録 |
 | `docs/superpowers/plans/2026-08-07-…md`（11） | 記録 |
 | `doc/session-insights/insights-20260807.md`（10） | 記録 |
 | `docs/superpowers/specs/2026-08-10-…md`（この文書） | 記録 |

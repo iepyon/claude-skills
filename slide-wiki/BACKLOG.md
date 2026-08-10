@@ -1,10 +1,10 @@
-# md2pptx 機能バックログ
+# slide-wiki 機能バックログ
 
 Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書き下ろし + 目視修正ループ)で生成するプレゼンテーションと同等の品質を、**決定論的な Markdown → PPTX パイプライン**として実現するためのバックログ。
 
 - 調査日: 2026-08-07
 - 比較対象: `~/.claude/plugins/cache/anthropic-agent-skills/document-skills/*/skills/pptx/`(version b29e7cf65e5c)
-- md2pptx が既に優位な点: 決定論的再現性、レビュー可能な中間表現(Markdown)、AST/HTML/PPTX の3者比較検証(`src/tools/inventory-diff.ts`)、グラデーション表現
+- slide-wiki が既に優位な点: 決定論的再現性、レビュー可能な中間表現(Markdown)、AST/HTML/PPTX の3者比較検証(`src/tools/inventory-diff.ts`)、グラデーション表現
 
 B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュー + 動作確認）で追加した。
 上記の「3者比較検証」は長らく機能していなかった（AST の脚が別のキー空間を使い、
@@ -58,7 +58,7 @@ B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュ�
 <a id="b-01"></a>
 ### B-01: ドキュメント乖離の解消
 
-**背景**: ドキュメントと実装の乖離が複数箇所ある。md2pptx は「Claude がドキュメントを読んで機械的に使う」ツールなので、ドキュメントの誤りはそのまま生成品質の劣化・機能の不使用につながる。
+**背景**: ドキュメントと実装の乖離が複数箇所ある。slide-wiki は「Claude がドキュメントを読んで機械的に使う」ツールなので、ドキュメントの誤りはそのまま生成品質の劣化・機能の不使用につながる。
 
 - 文字数制限: 実装は `MAX_CHARS_PER_SLIDE = 1000`(`assets/src/constants.ts:31`)だが、SKILL.md / CLAUDE.md / assets/README.md は「240文字」、`assets/src/schema/validation.ts` のコメントは「240文字、LeanCanvas は800文字」と3様に食い違う
 - SKILL.md のレイアウト一覧に `pattern-language`(`<!--pattern-language-a-->`)が未記載 — 実装済みなのに Claude から発見できない
@@ -178,7 +178,7 @@ PPTX は `slide-builder.ts` の `bulletToPptxOption` でネイティブバレッ
 <a id="b-10"></a>
 ### B-10: レンダリング検証ループ
 
-**背景**: 標準スキルは「soffice で PDF 化 → pdftoppm で JPEG 化 → 全スライドを目視」を**必須ワークフロー**とし、18種のチェック項目(はみ出し・重なり・マージン不足・低コントラスト等)を規定する。md2pptx は決定論的だが、レイアウトバグや新プラグインの検証にこのループがあると開発・利用両面で品質が上がる。
+**背景**: 標準スキルは「soffice で PDF 化 → pdftoppm で JPEG 化 → 全スライドを目視」を**必須ワークフロー**とし、18種のチェック項目(はみ出し・重なり・マージン不足・低コントラスト等)を規定する。slide-wiki は決定論的だが、レイアウトバグや新プラグインの検証にこのループがあると開発・利用両面で品質が上がる。
 
 **実装方針**: CLI に `--render-check` を追加し、`soffice --convert-to pdf` → `pdftoppm -jpeg -r 150` を実行してスライド画像を出力(標準スキルの `scripts/office/soffice.py` と同様、sandbox でのハング対策を考慮)。SKILL.md に「生成後に画像を確認する」手順を追記。
 
@@ -187,7 +187,7 @@ PPTX は `slide-builder.ts` の `bulletToPptxOption` でネイティブバレッ
 <a id="b-11"></a>
 ### B-11: OOXML 検証の統合
 
-**背景**: 標準スキルは ISO-IEC29500 XSD 一式 + 14種の検証 + 「**pptxgenjs は PowerPoint が開けないチャート XML を出すが、python-pptx も LibreOffice も XSD もそれを通す**」という他ツールで検出不能な破損パターンの検出器(`scripts/office/validators/pptx.py`)を持つ。md2pptx の `--verify` は座標の3者比較のみで、**ファイルとしての妥当性**は検証していない。B-05(チャート)導入時には特に必須。
+**背景**: 標準スキルは ISO-IEC29500 XSD 一式 + 14種の検証 + 「**pptxgenjs は PowerPoint が開けないチャート XML を出すが、python-pptx も LibreOffice も XSD もそれを通す**」という他ツールで検出不能な破損パターンの検出器(`scripts/office/validators/pptx.py`)を持つ。slide-wiki の `--verify` は座標の3者比較のみで、**ファイルとしての妥当性**は検証していない。B-05(チャート)導入時には特に必須。
 
 **実装方針**: 標準スキルの `validate.py` を外部コマンドとして呼び出す統合(パスは環境依存のため設定可能に)か、最低限 SKILL.md に「チャート使用時は validate.py を実行する」手順を記載。
 
@@ -274,7 +274,7 @@ numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 <a id="b-17"></a>
 ### B-17: .potx テンプレート駆動出力
 
-**背景**: 標準スキルは企業テンプレートのマスター・テーマ・図版を継承して中身だけ差し替えられる(unpack → OOXML 編集 → pack、`add_slide.py` / `clean.py`)。業務利用では「会社テンプレに流し込む」需要が大きいが、md2pptx は素の白紙に絶対座標描画のみ。
+**背景**: 標準スキルは企業テンプレートのマスター・テーマ・図版を継承して中身だけ差し替えられる(unpack → OOXML 編集 → pack、`add_slide.py` / `clean.py`)。業務利用では「会社テンプレに流し込む」需要が大きいが、slide-wiki は素の白紙に絶対座標描画のみ。
 
 **備考**: pptxgenjs の枠を超える(OOXML 直接操作が必要)ため設計インパクト大。B-13(マスタースライド)を先に済ませ、需要を見て判断。
 
