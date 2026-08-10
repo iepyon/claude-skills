@@ -30,6 +30,10 @@ function countWikiPatternChars(layout: SlideLayout): number {
     if (section.body) count += countPlainTextChars(section.body)
   }
   if (l.takeaway) count += countPlainTextChars(l.takeaway)
+  // **出典は数えない。** 図解の SVG を数えないのと同じ理由で、
+  // 典拠を厚く書くほど「文字数超過」で落ちるのでは、上限が守らせたいもの
+  // （読み手が1枚で受け取れる本文の量）とずれる。出典の長さは上限ではなく
+  // 箱のはみ出しが見る（0.2in を超えれば validateLayout がビルドを止める）。
   return count
 }
 

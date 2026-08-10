@@ -570,6 +570,15 @@ describe("WikiPattern — 出典", () => {
     ).resolves.toBeDefined()
   })
 
+  it("出典の長さは文字数上限に数えない", async () => {
+    // 図解の SVG を数えないのと同じ理由。典拠を厚く書くほど「文字数超過」で
+    // 落ちるのでは、上限が守らせたいもの（1枚で受け取れる本文の量）とずれる。
+    // 長すぎる出典は上限ではなく、箱のはみ出しが止める（次のテスト）
+    const long = "出典".repeat(600) // 1200字 > limits.max-chars-per-slide (1000)
+    expect(long.length).toBeGreaterThan(1000)
+    await expect(present(deck({ source: long }))).resolves.toBeDefined()
+  })
+
   it("長すぎる出典はビルドを止める（黙って切り落とさない）", async () => {
     // 4pt は小さいので、溢れても生成物を見て気づけない。切り落とされた出典は
     // 「文献名の途中で終わっている引用」になり、辿れないまま残る
