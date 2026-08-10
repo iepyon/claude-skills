@@ -14,6 +14,7 @@ import { DEFAULT_THEME } from "../src/schema/theme.js"
 import { SLIDE_WIDTH, SLIDE_HEIGHT, MARGIN_X, MARGIN_Y, CONTENT_START_Y } from "../src/constants.js"
 import { isDecoKey } from "../src/shape-keys.js"
 import { slidesToInventory } from "../src/tools/inventory.js"
+import { roughenSvg } from "../src/tools/roughen-svg.js"
 import type { ContentSlide } from "../src/schema/presentation.js"
 import type { WikiPatternLayout } from "../src/plugins/wiki-pattern/schema.js"
 
@@ -321,6 +322,37 @@ const FORBIDDEN: ReadonlyArray<readonly [RegExp, string]> = [
   [/<foreignObject/, "<foreignObject> は使わない"],
 ]
 
+describe("図解を崩す道具", () => {
+  const wrap = (inner: string) =>
+    `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`
+
+  it("コメントの中に書かれた図形の名前には触らない", () => {
+    // 図の意図を注記に書くと、そこに出てくる `<rect>` が変換されて文が壊れた。
+    // 読み手に向けた文を図形として扱ってはいけない（`ラフで出す.svg` で起きた）
+    const note = "<!-- ここは <rect> や <line> で書かず path で引く -->"
+    expect(roughenSvg(wrap(note), "t.svg")).toContain(note)
+  })
+
+  it("同じ形を2度引くとき、角は共有して反りだけを変える", () => {
+    // 2度とも角を引き直すと、線が2本ではなく箱が2つに見える
+    const out = roughenSvg(wrap(`<rect x="2" y="2" width="16" height="16" fill="none" stroke="#000"/>`), "t.svg")
+    const starts = [...out.matchAll(/d="(M[\d.]+ [\d.]+)/g)].map((m) => m[1])
+    expect(starts).toHaveLength(2)
+    expect(starts[0]).toBe(starts[1])
+  })
+
+  it("走らせ直しても同じ絵が出る（種はファイル名から）", () => {
+    const src = wrap(`<line x1="1" y1="1" x2="19" y2="19" stroke="#000"/>`)
+    expect(roughenSvg(src, "t.svg")).toBe(roughenSvg(src, "t.svg"))
+    expect(roughenSvg(src, "u.svg")).not.toBe(roughenSvg(src, "t.svg"))
+  })
+
+  it("崩した結果をもう一度通しても変わらない（冪等）", () => {
+    const once = roughenSvg(wrap(`<circle cx="10" cy="10" r="6" fill="none" stroke="#000"/>`), "t.svg")
+    expect(roughenSvg(once, "t.svg")).toBe(once)
+  })
+})
+
 describe("配布しているデッキの図解", () => {
   const WIKI_DIR = join(__dirname, "..", "doc", "wiki")
   const DIAGRAMS_DIR = join(WIKI_DIR, "diagrams")
@@ -369,11 +401,17 @@ describe("配布しているデッキの図解", () => {
    * だからこの決まりは文章ではなく検査で持つ（`実行可能な規約` がこのサイトのパターンで、
    * 読ませるだけの決まりは破られて、気づくのは後だと言っている）。
    * 揺らし直すのは `npx tsx src/tools/roughen-svg.ts`。
+   *
+   * **コメントは外してから見る。** 図の意図を注記に書くと `<rect>` に言及したくなる
+   * （`ラフで出す.svg` が「rect で書くと崩される」と書いている）。読み手に向けた文を
+   * markup として数えると、説明を書いたぶんだけ検査が落ちる。道具のほうも同じ理由で
+   * コメントを避けている。
    */
   it.each(diagrams)("$name に定規で引いた線が残っていない", ({ name, svg }) => {
+    const markup = svg.replace(/<!--[\s\S]*?-->/g, "")
     for (const tag of ["rect", "line", "circle", "ellipse", "polygon", "polyline"]) {
       expect(
-        svg,
+        markup,
         `${name}: <${tag}> は真っ直ぐすぎる。npx tsx src/tools/roughen-svg.ts を通す`
       ).not.toMatch(new RegExp(`<${tag}\\b`))
     }

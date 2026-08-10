@@ -234,17 +234,37 @@ const ROUGHENERS: ReadonlyArray<{
  */
 const SHAPE_TAG = /<(rect|line|circle|ellipse|polygon|polyline)\b[^>]*>(?:\s*<\/\1\s*>)?/g
 
+/**
+ * コメントは切り分けてから変換する。
+ *
+ * 図の意図を書いた注記の中で `<rect>` に言及すると、それが変換されて注記が壊れた
+ * （`ラフで出す.svg` で実際に起きた。「rect で書くと崩される」と書いた行が、
+ * 崩された path に置き換わった）。読み手に向けた文を、図形として扱ってはいけない。
+ */
+const COMMENT = /<!--[\s\S]*?-->/g
+
 export const roughenSvg = (svg: string, seedKey: string): string => {
   let index = 0
-  return svg.replace(SHAPE_TAG, (tag, name: string) => {
-    const r = ROUGHENERS.find((x) => x.tag === name)!
-    const next = rng(hash(`${seedKey}:${index++}`))
-    const kept = carryOver(tag, r.drop)
-    if (r.render) return toPaths(kept, () => r.render!(next, tag))
-    // shape は外で作る。2度引いても角は同じで、反りだけが変わる
-    const shape = r.shape!(next, tag)
-    return toPaths(kept, () => draw(next, shape, hasFill(tag)))
-  })
+  const roughenShapes = (chunk: string) =>
+    chunk.replace(SHAPE_TAG, (tag, name: string) => {
+      const r = ROUGHENERS.find((x) => x.tag === name)!
+      const next = rng(hash(`${seedKey}:${index++}`))
+      const kept = carryOver(tag, r.drop)
+      if (r.render) return toPaths(kept, () => r.render!(next, tag))
+      // shape は外で作る。2度引いても角は同じで、反りだけが変わる
+      const shape = r.shape!(next, tag)
+      return toPaths(kept, () => draw(next, shape, hasFill(tag)))
+    })
+
+  // コメントはそのまま、間の図形だけを崩す。index は跨いで通し番号のまま進める
+  const parts: string[] = []
+  let at = 0
+  for (const m of svg.matchAll(COMMENT)) {
+    parts.push(roughenShapes(svg.slice(at, m.index)), m[0])
+    at = m.index + m[0].length
+  }
+  parts.push(roughenShapes(svg.slice(at)))
+  return parts.join("")
 }
 
 const DIAGRAMS = join(import.meta.dirname, "..", "..", "doc", "wiki", "diagrams")
@@ -258,16 +278,22 @@ const distributedDiagrams = (): string[] =>
         .map((f) => join(DIAGRAMS, d, f))
     )
 
-const files = process.argv.slice(2).length > 0 ? process.argv.slice(2) : distributedDiagrams()
+const main = () => {
+  const files = process.argv.slice(2).length > 0 ? process.argv.slice(2) : distributedDiagrams()
 
-let changed = 0
-for (const file of files) {
-  const before = readFileSync(file, "utf-8")
-  // 種はファイル名から。走らせ直しても同じ絵が出る
-  const after = roughenSvg(before, basename(file))
-  if (after === before) continue
-  writeFileSync(file, after)
-  changed++
-  console.log(`  ${file.replace(`${DIAGRAMS}/`, "")}`)
+  let changed = 0
+  for (const file of files) {
+    const before = readFileSync(file, "utf-8")
+    // 種はファイル名から。走らせ直しても同じ絵が出る
+    const after = roughenSvg(before, basename(file))
+    if (after === before) continue
+    writeFileSync(file, after)
+    changed++
+    console.log(`  ${file.replace(`${DIAGRAMS}/`, "")}`)
+  }
+  console.log(`✅ ${changed} / ${files.length} 枚を崩した`)
 }
-console.log(`✅ ${changed} / ${files.length} 枚を崩した`)
+
+// 直に走らせたときだけ書き換える。`roughenSvg` を import した側（テスト）で
+// 配布中の図を勝手に書き換えないため
+if (import.meta.filename === process.argv[1]) main()

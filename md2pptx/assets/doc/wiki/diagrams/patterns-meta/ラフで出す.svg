@@ -1,21 +1,114 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <path d="M20.5 75.9 Q83.2 76 145.9 74.6 Q143 130 142.9 185.4 Q82.7 187.8 22.5 187.9 Q24.1 130.7 22 73.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M20.5 75.9 Q83.2 73.7 145.9 74.6 Q145.5 130 142.9 185.4 Q82.7 186.2 22.5 187.9 Q19.1 132.3 18.4 76.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M37.5 90.9 Q57.7 88.6 78 89.8 Q77.1 105.2 78.6 120.5 Q58.4 121.8 38.2 119.9 Q38.2 105.9 39.5 92" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M37.5 90.9 Q57.7 90.4 78 89.8 Q78.9 105.1 78.6 120.5 Q58.4 120 38.2 119.9 Q37.1 105.4 38.8 91" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M88 93.5 Q110.5 90.8 133.2 91.8 Q131.1 107.3 131.4 122.9 Q110 122.5 88.6 120.7 Q86.2 107.9 86.4 95" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M88 93.5 Q110.6 92.8 133.2 91.8 Q131.1 107.3 131.4 122.9 Q110 122.6 88.6 120.7 Q88.5 106.3 85.9 92.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M35.8 139 Q58.6 137.3 81.4 138.3 Q80.4 154.1 79.1 169.8 Q59.4 168.9 39.7 168.5 Q39.5 152.8 37.8 137.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M35.8 139 Q58.6 139.7 81.4 138.3 Q79.1 154 79.1 169.8 Q59.4 169.1 39.7 168.5 Q36.8 154.9 36.4 141" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M88.7 136.2 Q111.3 134.8 133.8 136.2 Q131.6 151 131.1 166 Q109.7 168.4 88.3 170.1 Q87 154.1 88.6 138.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M88.7 136.2 Q111.3 134.3 133.8 136.2 Q133.5 151.2 131.1 166 Q109.5 166.6 88.3 170.1 Q87.1 154.1 87.7 138.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M78.9 107.1 Q83.6 106.7 88.2 106" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M78.9 107.1 Q83.5 106.4 88.2 106" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M58.7 121.5 Q58.8 129.9 59.1 138.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M58.7 121.5 Q58.3 129.9 59.1 138.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-  <text x="83" y="210" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">描き込んだ図</text>
-  <text x="83" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">唯一の実装に読める</text>
+  <!--
+    この図だけは、左側をわざと定規で引いている。左右の対比そのものが主張なので、
+    左が崩れると「描き込んだ図」が何を指すのか読めなくなる（一度そうなった）。
 
-  <path d="M198 80 q60 -6 120 2 q-5 54 2 106 q-62 6 -122 -2 q6 -52 0 -106 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <path d="M212 96 q22 -4 42 1 q-3 14 1 28 q-22 4 -43 -1 q3 -14 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <path d="M264 94 q22 -3 42 2 q-4 14 1 28 q-22 3 -43 -2 q3 -13 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <path d="M212 142 q22 -4 42 1 q-3 14 1 28 q-22 4 -43 -1 q3 -14 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <path d="M264 140 q22 -3 42 2 q-4 14 1 28 q-22 3 -43 -2 q3 -13 0 -28 z" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <path d="M255 110 q5 3 9 -1" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <path d="M233 125 q-3 9 1 17" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+    **左右は同じ絵。** 右は左の幾何を +170 して手で引き直しただけで、箱の数も
+    見出し帯も罫も矢印も同じ。内容を揃えたので、残る差は きっちり / ラフ だけになる。
+    左にしか無いのは目盛り・トンボ・寸法線 —— どれも中身ではなく「決めた」の印。
+
+    直線を <path> の L で引いているのは、roughen-svg.ts が <path> に触らないため
+    （<rect> / <line> で書くと崩されるうえ、wiki-pattern.test.ts が止める）。
+    右側の生成も同じ道具に通した結果を貼っている。
+  -->
+
+  <!-- 左: 描き込んだ図。目盛り・枠・見出し帯・本文の罫・矢印・寸法線まで決めてある -->
+  <path d="M14 72 L14 190" fill="none" stroke="#D1D5DB" stroke-width="1"/>
+  <path d="M14 78 L20 78 M14 94 L20 94 M14 110 L20 110 M14 126 L20 126 M14 142 L20 142 M14 158 L20 158 M14 174 L20 174 M14 190 L20 190" fill="none" stroke="#D1D5DB" stroke-width="1"/>
+
+  <path d="M26 72 L144 72 L144 190 L26 190 Z" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M26 86 L144 86" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M32 79 L44 79 M48 79 L56 79" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M22 68 L22 76 M22 68 L30 68 M148 68 L148 76 M148 68 L140 68" fill="none" stroke="#D1D5DB" stroke-width="1"/>
+  <path d="M22 194 L22 186 M22 194 L30 194 M148 194 L148 186 M148 194 L140 194" fill="none" stroke="#D1D5DB" stroke-width="1"/>
+
+  <path d="M34 94 L76 94 L76 124 L34 124 Z" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M34 103 L76 103" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M39 111 L65 111 M39 117 L59 117" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+
+  <path d="M90 94 L132 94 L132 124 L90 124 Z" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M90 103 L132 103" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M95 111 L121 111 M95 117 L113 117" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+
+  <path d="M34 142 L76 142 L76 172 L34 172 Z" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M34 151 L76 151" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M39 159 L65 159 M39 165 L57 165" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+
+  <path d="M90 142 L132 142 L132 172 L90 172 Z" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M90 151 L132 151" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M95 159 L121 159 M95 165 L115 165" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+
+  <path d="M76 109 L85 109" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M90 109 L84 106.5 L84 111.5 Z" fill="#9CA3AF"/>
+  <path d="M76 157 L85 157" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M90 157 L84 154.5 L84 159.5 Z" fill="#9CA3AF"/>
+  <path d="M55 124 L55 133" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M55 138 L52.5 132 L57.5 132 Z" fill="#9CA3AF"/>
+  <path d="M111 124 L111 133" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M111 138 L108.5 132 L113.5 132 Z" fill="#9CA3AF"/>
+
+  <path d="M34 181 L132 181 M34 177 L34 185 M132 177 L132 185" fill="none" stroke="#D1D5DB" stroke-width="1"/>
+
+  <text x="85" y="210" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">描き込んだ図</text>
+  <text x="85" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">唯一の実装に読める</text>
+
+  <!-- 右: ラフのまま。左とまったく同じ幾何を、手で引き直しただけ。
+       内容が同じなので、対比に残るのは きっちり / ラフ の差だけになる。
+       生成は roughen-svg.ts（左の幾何を +170 して崩した） -->
+  <path d="M196.4 70.5 Q255.9 72 315.3 70.5 Q315.2 129.6 315.3 188.8 Q255.1 191.7 194.7 191.8 Q194.7 130.4 195.1 69.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M196.4 70.5 Q255.9 69.7 315.3 70.5 Q314.3 129.6 315.3 188.8 Q255 189.4 194.7 191.8 Q193.1 130.8 195.4 69.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M196.1 84.7 Q255.9 85.9 315.7 84.5" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M196.1 84.7 Q255.9 82.6 315.7 84.5" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M200.9 81.1 Q208.1 79.9 215.2 78.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M200.9 81.1 Q208 79.7 215.2 78.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M218.9 77 Q223.2 77.5 227.6 77.8" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M218.9 77 Q223.2 77.7 227.6 77.8" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M202.4 96 Q224.1 95.4 245.9 95.6 Q245.8 108.8 247.7 121.9 Q226.9 124 205.9 123.5 Q204.9 109 204.7 94.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M202.4 96 Q224.2 97.3 245.9 95.6 Q246.7 108.7 247.7 121.9 Q226.8 122.6 205.9 123.5 Q204.1 110.5 201.1 97.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M202.2 102.1 Q224 100.2 245.7 102.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M202.2 102.1 Q223.9 101.2 245.7 102.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M207.9 110.5 Q222.2 110.6 236.5 111.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M207.9 110.5 Q222.2 109.9 236.5 111.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M209.8 117.7 Q219.3 116.2 229 116" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M209.8 117.7 Q219.3 116.4 229 116" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M261.6 94.6 Q281.2 93.1 300.9 94.5 Q302.3 108.6 303.3 122.6 Q282.4 123.1 261.6 125 Q262.2 110.3 263.7 95.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M261.6 94.6 Q281.2 94.1 300.9 94.5 Q302.3 108.6 303.3 122.6 Q282.5 124.6 261.6 125 Q263.7 110.1 263 95.2" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M259.3 104.1 Q280.3 104.9 301.1 102" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M259.3 104.1 Q280.2 102.6 301.1 102" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M265.6 110.4 Q279.3 111.6 293.1 111.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M265.6 110.4 Q279.3 111 293.1 111.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M264.2 116.3 Q274.1 117.4 284 116.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M264.2 116.3 Q274.1 116.9 284 116.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M203.4 142 Q225.1 140.7 246.8 143.2 Q246.4 156.8 246.5 170.4 Q224.8 171.3 203 172.8 Q202.5 157.3 202.2 141.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M203.4 142 Q225.1 143 246.8 143.2 Q247.4 156.8 246.5 170.4 Q224.8 172.4 203 172.8 Q202.5 158 202.2 143.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M204.4 149.6 Q225.8 150.4 247.2 152.5" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M204.4 149.6 Q225.9 149.4 247.2 152.5" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M208.7 159 Q221.3 157.2 234.1 156.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M208.7 159 Q221.5 159 234.1 156.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M210 165.9 Q219.3 165.1 228.5 163.2" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M210 165.9 Q219.2 164 228.5 163.2" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M259.4 143.4 Q280.8 144.9 302.2 143.7 Q300 158.2 300.2 172.8 Q280.6 173.5 261.1 173.8 Q258.3 158 257 142" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M259.4 143.4 Q280.8 144.3 302.2 143.7 Q301 158.3 300.2 172.8 Q280.6 171.6 261.1 173.8 Q260.2 159.6 257.5 145.5" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M259.8 151.7 Q281.5 149.1 303.3 148.8" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M259.8 151.7 Q281.5 149.3 303.3 148.8" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M263.6 157.2 Q278 158.9 292.5 158.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M263.6 157.2 Q278.1 156.6 292.5 158.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M264 163 Q274.1 163.9 284.2 164.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M264 163 Q274.1 164.3 284.2 164.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M246.8 108.2 Q250.8 108.9 254.7 110.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M246.8 108.2 Q250.8 108.9 254.7 110.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M247.2 156.2 Q251.5 157 255.6 158.5" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M247.2 156.2 Q251.4 157.4 255.6 158.5" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M225.1 124.4 Q224.7 128.5 223.5 132.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M225.1 124.4 Q224 128.4 223.5 132.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M279.8 122.6 Q280.8 127.9 281.7 133.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M279.8 122.6 Q281.2 127.8 281.7 133.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <path d="M258.8 108.9 Q257.5 107.6 256.1 106.6 Q255.1 108.3 254.3 110.1 Q256.5 109.4 258.8 108.9 Z" fill="#1E40AF"/>
+  <path d="M259.8 158 Q256.9 155.7 254.4 153 Q254.6 156.7 255.5 160.2 Q257.6 159 259.8 158 Z" fill="#1E40AF"/>
+  <path d="M227.2 136 Q224.6 133.4 221.7 131.1 Q224.6 131.9 227.3 133 Q227.2 134.5 227.2 136 Z" fill="#1E40AF"/>
+  <path d="M281.6 136.1 Q280.4 135.1 279 134.2 Q282.1 133.6 285.2 133.2 Q283.4 134.6 281.6 136.1 Z" fill="#1E40AF"/>
+
   <text x="248" y="210" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">ラフのまま</text>
   <text x="248" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">置き換えて読める</text>
 
