@@ -19,7 +19,7 @@
 
   <path d="M30.3 112.6 Q171 113.2 311.8 111" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.3 112.6 Q171 113.1 311.8 111" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <text x="30" y="140" font-family="sans-serif" font-size="12" fill="#9CA3AF">生成物を直すと</text>
+  <text x="30" y="140" font-family="sans-serif" font-size="12" fill="#9CA3AF">鏡を拭くと</text>
   <path d="M26.9 147.9 Q98.7 150.7 170.5 151.2 Q171.8 165.4 173.2 179.7 Q99.3 177.3 25.3 178.3 Q26.1 164.2 28.3 150.2" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="99" y="170" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">手直し</text>
   <path d="M182.7 163.1 Q196.1 164.9 209.7 164.9" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4" stroke-linejoin="round" stroke-linecap="round"/>
@@ -27,7 +27,7 @@
   <path d="M243.2 152.4 Q231.1 163.4 221.1 176.4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M243.2 152.4 Q231.6 164 221.1 176.4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="256" y="170" font-family="sans-serif" font-size="11" fill="#9CA3AF">消える</text>
 
-  <text x="30" y="212" font-family="sans-serif" font-size="12" fill="#1E40AF">元を直すと</text>
+  <text x="30" y="212" font-family="sans-serif" font-size="12" fill="#1E40AF">顔を直すと</text>
   <path d="M24.3 220.6 Q97.8 221.9 171.3 223.3 Q170.5 236.6 170.1 250 Q97.2 248.6 24.2 251 Q25.6 235.7 25 220.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M24.3 220.6 Q97.8 220.8 171.3 223.3 Q170.2 236.6 170.1 250 Q97.2 251.4 24.2 251 Q25.3 236.4 24.4 221.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="99" y="242" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">手直し</text>
   <path d="M183.9 237.5 Q197 235.8 210.1 236.5" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M183.9 237.5 Q197 237.2 210.1 236.5" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
@@ -35,5 +35,5 @@
   <path d="M223.5 237.9 Q226.2 241.9 229.4 245.5 Q236.7 234.4 243.9 223.2" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M223.5 237.9 Q226.2 241.9 229.4 245.5 Q237.3 234.8 243.9 223.2" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="256" y="242" font-family="sans-serif" font-size="11" fill="#1E40AF">残る</text>
 
-  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">直すのは、生成物ではなく生成の元</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">拭くのは鏡ではなく、顔のほう</text>
 </svg>
