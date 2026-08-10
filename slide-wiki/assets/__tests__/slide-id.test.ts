@@ -67,6 +67,30 @@ describe("slide id assignment", () => {
     ])
   })
 
+  it("should let an explicit id win over another slide's automatic slug", async () => {
+    // 表紙の見出しが先に `設計` を取ると、書き手が名指した本文スライドが `設計-2` に落ち、
+    // [[設計]] は表紙に着く。明示 ID は予約なので、並び順で勝敗が変わってはいけない
+    const markdown = "# 設計\n\n---\n\n## 設計の考え方\n<!--id:設計-->\n### H\nbody"
+    expect(await ids(markdown)).toEqual(["設計-2", "設計"])
+  })
+
+  it("should keep automatic slugs out of the way wherever the explicit id appears", async () => {
+    // 予約は md の並び順に依らない。明示が後ろにあっても前にあっても同じ結果になる
+    const before = "## 設計\n<!--id:設計-->\n### H\na\n\n---\n\n## 設計\n### H\nb"
+    const after = "## 設計\n### H\nb\n\n---\n\n## 設計\n<!--id:設計-->\n### H\na"
+    expect(await ids(before)).toEqual(["設計", "設計-2"])
+    expect(await ids(after)).toEqual(["設計-2", "設計"])
+  })
+
+  it("should never emit the same id twice, even when a title already looks numbered", async () => {
+    // 連番は「その base が何度目か」ではなく「その綴りが空いているか」で決める。
+    // 前者だと `## X-2` が先にある状態で `## X` が2枚続くと、2枚目が `x-2` を再発行して
+    // 1枚目と衝突していた（サイトのリンクが解決できなくなる）
+    const result = await ids("## X-2\n### H\na\n\n---\n\n## X\n### H\nb\n\n---\n\n## X\n### H\nc")
+    expect(result).toEqual(["x-2", "x", "x-3"])
+    expect(new Set(result).size).toBe(result.length)
+  })
+
   it("should fall back to a positional id when the title yields no slug", async () => {
     expect(await ids("## !!!\n### H\nbody")).toEqual(["slide-1"])
   })

@@ -14,6 +14,9 @@
  * ValidationError として弾いており、二重に報告しても直し方は増えないため。
  */
 import "../plugins/index.js" // side-effect: 登録が済んでいないとプラグインのディレクティブが本文に落ちる
+// 自動 ID の綴りは採番と同じ関数で出す。ここに写すと、slug の規則を変えた日に
+// lint だけが古い綴りで衝突を判定する（`slide-ids.ts` が正本）
+import { slugify } from "../parser/slide-ids.js"
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
   getFieldSet,
@@ -303,6 +306,82 @@ function checkUnknownDirectives(tokens: readonly Token[]): Diagnostic[] {
     }))
 }
 
+/**
+ * スライド ID の衝突。
+ *
+ * なぜ採番側ではなくここで報告するか: `assignSlideIds` は必ず一意な ID を返す契約である
+ * （重複するとサイトのリンクが解決できない）。だから機械は連番で先に進むしかなく、
+ * 「どちらかが間違っている」と言えるのは書き手だけ。採番が跡を残し、lint がそれを読む。
+ *
+ * **折れたリンクより見つけにくい。** `<!--id:seed-->` を2枚に書くと `[[seed]]` は
+ * 解決する — 常に1枚目へ。2枚目は誰からも指されないスライドとしてサイトに残り、
+ * 書き手は繋いだつもりでいる。未解決リンクの一覧にも出ない。
+ *
+ * デッキ内で閉じるのは ID がデッキ内で採番されるため（`site-index.ts` が `deck-slug/` を
+ * 前置する）。lint は1ファイルずつ呼ばれるので、検査の範囲もそのまま合う。
+ *
+ * **1ブロックが複数スライドを生む場合の派生 ID（`--2`）は見ない。** 何枚生まれるかは
+ * 変換しないと分からず、それはトークン層の2段下流にある。取り逃がすのはその衝突だけ。
+ */
+function checkSlideIds(slides: readonly SlideTokens[]): Diagnostic[] {
+  const explicit = new Map<string, number[]>()
+  const autoSlugs: Array<{ slug: string; title: string; line: number }> = []
+
+  for (const slide of slides) {
+    // `<!--id:-->` は cardinality: one。2つ書けば後ろが勝つので、採番と同じく最後を見る
+    const idTokens = slide.tokens.filter((t) => t.type === "IdDirective")
+    const last = idTokens[idTokens.length - 1]
+    if (last?.type === "IdDirective") {
+      const id = last.id.trim()
+      if (id) {
+        const lines = explicit.get(id)
+        if (lines) lines.push(last.line)
+        else explicit.set(id, [last.line])
+      }
+      continue // 明示した時点で見出しの slug は使われない
+    }
+    const heading = slide.tokens.find((t) => t.type === "H1" || t.type === "H2")
+    if (heading?.type !== "H1" && heading?.type !== "H2") continue
+    const slug = slugify(heading.text)
+    if (slug) autoSlugs.push({ slug, title: heading.text, line: heading.line })
+  }
+
+  const out: Diagnostic[] = []
+
+  for (const [id, lines] of explicit) {
+    if (lines.length < 2) continue
+    for (const line of lines) {
+      const others = lines.filter((l) => l !== line).join(", ")
+      out.push({
+        level: "warning",
+        check: "slide-id",
+        line,
+        message:
+          `<!--id:${id}--> が ${lines.length} 枚にある（${others} 行目にも）。` +
+          `[[${id}]] は常に最初の1枚に解決し、残りは誰からも指せなくなる`,
+      })
+    }
+  }
+
+  // 明示 ID が押さえている名前を自動 slug が欲しがった場合。採番は明示側を優先するので
+  // リンクは正しい行き先に着くが、この見出しの ID は推測できない綴りに変わる
+  for (const auto of autoSlugs) {
+    const claimedAt = explicit.get(auto.slug)
+    if (!claimedAt) continue
+    out.push({
+      level: "warning",
+      check: "slide-id",
+      line: auto.line,
+      message:
+        `見出し '${auto.title}' の自動 ID '${auto.slug}' は ` +
+        `${claimedAt.join(", ")} 行目の <!--id:${auto.slug}--> が押さえている` +
+        `（このスライドは '${auto.slug}-2' になる。指したいなら <!--id:--> で名前を付ける）`,
+    })
+  }
+
+  return out
+}
+
 /** 宣言に照らして Markdown を検証する。行番号順に返す */
 export function lintSource(markdown: string): Diagnostic[] {
   return lintTokens(tokenize(markdown))
@@ -313,8 +392,14 @@ export function lintSource(markdown: string): Diagnostic[] {
  */
 export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
   const out: Diagnostic[] = []
+  const slides = splitSlides(tokens)
 
-  for (const slide of splitSlides(tokens)) {
+  // ID はスライドをまたいで衝突するので、レイアウトごとのループの外で見る。
+  // タイトルスライドも対象に入れる（`<!--id:-->` の applies-to は title-slide を含み、
+  // 表紙の自動 slug が本文スライドの明示 ID とぶつかりうる）
+  out.push(...checkSlideIds(slides))
+
+  for (const slide of slides) {
     out.push(...checkUnknownDirectives(slide.tokens))
 
     const layout = detectLayout(slide.tokens)
