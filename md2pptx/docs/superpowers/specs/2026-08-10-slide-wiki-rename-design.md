@@ -37,6 +37,7 @@ triggering は description が担っていて、そこには "generating PPTX fi
 | ディレクトリ | `md2pptx/` → `slide-wiki/`（`git mv`。無視ファイルもディレクトリごと移動する） |
 | `SKILL.md:2,6` | `name:` と H1 |
 | `assets/package.json:2` | `"name": "md2pptx"` |
+| `assets/package-lock.json:2,8` | ルートと `packages[""]` の `"name"`。package.json だけ直すとロックファイルと食い違う |
 | `assets/README.md:1,7` | プロジェクト名としての言及（`:85,:179` は API 名なので残す） |
 | `assets/doc/theme.yaml:1` | コメント |
 | `assets/src/tools/gen-ontology-doc.ts:206,208` | **`ontology.md` の正本**。ここを直して再生成する |
@@ -47,9 +48,18 @@ triggering は description が担っていて、そこには "generating PPTX fi
 | `assets/src/text-style.ts:24`, `assets/src/tools/pptx-inspector.ts:189`, `assets/__tests__/docs-consistency.test.ts:8` | 「md2pptx が作った / というスキル」＝**ツールの通称**として `slide-wiki` に置換 |
 
 `pages.yml:58` のサイトタイトルは `"md2pptx Slide Wiki"` → **`"Slide Wiki"`**。
-`"slide-wiki Slide Wiki"` は重複するため、素朴な文字列置換をしてはいけない。
+`"slide-wiki Slide Wiki"` は重複するので、**`pages.yml` は一括置換に混ぜず手で直す**。
 
 `ontology.md` は生成物なので**手編集しない**。`gen-ontology-doc.ts` を直して再生成する。
+
+### リポジトリ外に直すものは無い
+
+`~/.claude` 配下を走査した結果、直すべき参照は無かった。
+
+- `~/.claude/projects/…/memory/` は**空**。`MEMORY.md` も無いので、記憶が陳腐化する経路は無い
+- `~/.claude/plans/claude-serene-lecun.md`・`mossy-sleeping-fern.md` は**過去のプラン**（記録なので残す）
+- `~/.claude/projects/-Users-eiji--claude-skills-md2pptx/` は旧 cwd の名を持つセッションログ。改名後は新しいディレクトリができるだけ
+- `~/.claude/jobs/5d9d2142/state.json` の `cwd` は旧パスを指すが、完了済みジョブの記録
 
 ## 変えないもの
 
@@ -93,12 +103,44 @@ triggering は description が担っていて、そこには "generating PPTX fi
 加えて **`hooks.TaskCompleted` ブロック全体を削除**。存在しないリポジトリの
 `scripts/check-tests.sh` を叩いており、このディレクトリでタスクを完了するたびに空振りしている。
 
-## 検証
+## 実行順
 
-1. `gen-ontology-doc.ts` を実行し、`ontology.md` と `SKILL.md` の生成領域を更新する
-2. `cd assets && npm test` — `ontology.test.ts` が生成物の鮮度を、
-   `docs-consistency.test.ts` が SKILL.md / CLAUDE.md / README と実装の乖離を見る
-3. `grep -rI 'md2pptx' --exclude-dir=node_modules --exclude-dir=.git . | grep -v 'md2pptx('`
-   の残存が、`BACKLOG.md`・`docs/superpowers/plans/`・`doc/session-insights/` の3系統だけになることを確認する
-4. `.github/workflows/pages.yml` は CI でしか動かないため、grep によるパス確認のみ。
-   **テストが検出しない**ので、改名と同じコミットに含める
+**掃除を `git mv` の前に置く。** `settings.local.json` はグローバルに無視されており、
+`git mv` がディレクトリを移すときに無視ファイルをどう扱うかを当てにしたくない。
+先に消して剪定すれば、その問いごと消える。
+
+1. `assets/.claude/settings.local.json` を削除、`.claude/settings.local.json` を剪定
+2. `git mv md2pptx slide-wiki` → **移動漏れを即座に確認する**:
+   `ls slide-wiki/doc/ slide-wiki/.claude/settings.local.json; ls md2pptx`
+   （`md2pptx/` が残っていればその場で分かる。`doc/` は未追跡、`settings.local.json` は無視ファイル）
+3. 上の表のテキスト置換。**`pages.yml` は手で直す**（サイトタイトルを一括置換に巻き込ませない）
+4. `npx tsx src/tools/gen-ontology-doc.ts` — `ontology.md` と `SKILL.md` の生成領域を更新
+5. `cd assets && npm test`
+6. 下の残存確認
+
+改名と `pages.yml` は**同じコミット**にする。`pages.yml` のパス誤りはテストが検出せず、
+CI でしか露見しないため、分けると壊れた中間状態が残る。
+
+## 残存確認
+
+`grep -v 'md2pptx('` を判定に使ってはいけない。`import { md2pptx, md2html }` の行には
+`md2pptx(` が無いので**素通りする**。API 名を除くにはこう書く:
+
+```bash
+grep -rIn 'md2pptx' --exclude-dir=node_modules --exclude-dir=.git . \
+  | grep -vE 'md2pptx\(|md2pptx,|md2pptx *\}|Md2Pptx'
+```
+
+これで残るべきものは、**記録3系統 + この仕様書 + 意図して残す3行**だけである。
+
+| 残存 | 種別 |
+|---|---|
+| `BACKLOG.md`（6） | 記録 |
+| `docs/superpowers/plans/2026-08-07-…md`（11） | 記録 |
+| `doc/session-insights/insights-20260807.md`（10） | 記録 |
+| `docs/superpowers/specs/2026-08-10-…md`（この文書） | 記録 |
+| `CLAUDE.md:217` | 関数 `md2pptx`/`md2html` のオプションの話。丸括弧が無いのでフィルタを素通りするが**正しい残存** |
+| `assets/__tests__/e2e.test.ts:108` | `describe("md2pptx e2e", …)` — テスト対象の関数名 |
+| `assets/src/cli.ts:194` | 「上の `md2pptx` が」= 直前の関数呼び出しを指すコメント |
+
+これ以外の行が出たら、置換漏れである。
