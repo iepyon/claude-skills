@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, readdirSync } from "fs"
 import { join } from "path"
 import { parse } from "yaml"
 
@@ -7,60 +7,84 @@ import { parse } from "yaml"
  * GitHub Actions の宣言に対する検査。
  *
  * ここにあるのは1件の事故の再発防止である。公開用の `pages.yml` は
- * `concurrency: {group: pages, cancel-in-progress: true}` を単一グループで持っていて、
- * 以前そこに PR の run が混ざったとき、**後から始まった PR 側が push 側を殺して
- * デプロイが消えた**。原因と対処は pages.yml のコメントに書かれているが、
- * コメントは次にワークフローを足す人を止められない（`ci.yml` を作るときに
- * 同じ group 名を書くか、pages.yml に `pull_request` を1行足すだけで再発する）。
+ * `concurrency: {group: pages, cancel-in-progress: true}` を持っていて、以前そこに PR の
+ * run が混ざったとき、**後から始まった PR 側が push 側を殺してデプロイが消えた**。
+ * 原因は pages.yml のコメントに書かれているが、コメントは次にワークフローを足す人を
+ * 止められない — `pages.yml` に `pull_request` を1行足すか、新しいワークフローが
+ * `group: pages` と書くだけで再発する。
  *
- * このサイトが載せている `実行可能な規約` — 守らせたい規約は、読み物ではなく
- * 落ちる仕組みにする — をワークフローの側でも守るため、テストにしてある。
+ * **だからワークフローは列挙して検査する。** ファイル名を書き並べると、3本目が足された日に
+ * それが検査の対象から外れ、カバレッジが黙って減る（コメントと同じ弱さに戻る）。
+ * 対象が1本に決まっている検査だけ、そのファイルを名指しする。
  */
 
-const REPO_ROOT = join(__dirname, "..", "..", "..")
-const WORKFLOW_DIR = join(REPO_ROOT, ".github", "workflows")
+const WORKFLOW_DIR = join(__dirname, "..", "..", "..", ".github", "workflows")
 
 interface Workflow {
-  readonly on?: Record<string, unknown>
+  readonly on: Record<string, unknown>
   readonly concurrency?: { readonly group?: string }
+  readonly jobs?: Record<
+    string,
+    { readonly steps?: ReadonlyArray<{ readonly run?: string; readonly with?: Record<string, unknown> }> }
+  >
 }
-
-// `on:` は YAML 1.1 の真偽値リテラルなので、パーサによっては `true` というキーになる。
-// どちらでも読めるようにしておく（ここで取り違えると検査が空振りする）
-const triggers = (wf: Workflow): string[] =>
-  Object.keys(wf.on ?? (wf as unknown as Record<true, Record<string, unknown>>)[true] ?? {})
 
 const load = (name: string): Workflow => parse(readFileSync(join(WORKFLOW_DIR, name), "utf-8"))
 
-// スキルを `.github/` ごと持たない場所へ複製した場合に落とさない。
-// ただし「見つからないので緑」を黙って許すと検査が消えるので、存在確認そのものを表に出す
-const present = existsSync(WORKFLOW_DIR)
+const workflowFiles = (): string[] => readdirSync(WORKFLOW_DIR).filter((f) => /\.ya?ml$/.test(f))
+
+const steps = (wf: Workflow): ReadonlyArray<{ run?: string; with?: Record<string, unknown> }> =>
+  Object.values(wf.jobs ?? {}).flatMap((job) => job.steps ?? [])
+
+/**
+ * 実行時に実際に衝突する group か。`${{ github.workflow }}` を含む group は
+ * ワークフローごとに別の値になるので、宣言の文字列が同じでも衝突しない。
+ * リテラルを2本が書いた場合だけが衝突なので、その1点を見分ける。
+ */
+const groupIdentity = (wf: Workflow, file: string): string | undefined =>
+  wf.concurrency?.group?.replace(/\$\{\{\s*github\.workflow\s*\}\}/g, file)
+
+// スキルを `.github/` ごと持たない場所へ複製した場合に落とさない。判定はディレクトリの
+// 有無ではなく**このリポジトリのワークフローがあるか**で見る — ディレクトリだけを見ると、
+// 自前の Actions を持つ複製先で ENOENT になり、規約を押し付けた形で赤くなる
+const present = existsSync(join(WORKFLOW_DIR, "pages.yml"))
 
 describe.skipIf(!present)("github workflows", () => {
-  it("finds the workflows to check", () => {
-    expect(existsSync(join(WORKFLOW_DIR, "pages.yml"))).toBe(true)
-    expect(existsSync(join(WORKFLOW_DIR, "ci.yml"))).toBe(true)
-  })
-
   it("never publishes from a pull request", () => {
-    // PR で公開が走ると、レビュー前の内容が本番サイトに出る
-    expect(triggers(load("pages.yml"))).not.toContain("pull_request")
+    // PR で公開が走ると、レビュー前の内容が本番サイトに出る。
+    // `on` を素直に読む（`?? {}` で補うと、`on:` を失った pages.yml で空振りして緑になる）
+    expect(Object.keys(load("pages.yml").on)).not.toContain("pull_request")
   })
 
   it("keeps every workflow in its own concurrency group", () => {
-    // 同じ group を共有した瞬間、cancel-in-progress が他方の run を殺す。
-    // 殺されたのが公開側だと、デプロイが黙って消える（実際に起きた）
-    const groups = ["pages.yml", "ci.yml"].map((f) => load(f).concurrency?.group)
-    for (const group of groups) expect(group, "each workflow must set a concurrency group").toBeTruthy()
-    expect(new Set(groups).size, `concurrency groups must be distinct: ${groups.join(" / ")}`).toBe(
-      groups.length
+    const files = workflowFiles()
+    expect(files.length, "見つかったワークフローが少なすぎる（検査が空振りしている）").toBeGreaterThan(1)
+
+    const identities = files.map((file) => groupIdentity(load(file), file))
+    identities.forEach((identity, i) => {
+      expect(identity, `${files[i]} は concurrency group を宣言していない`).toBeTruthy()
+    })
+    expect(new Set(identities).size, `group が衝突している: ${identities.join(" / ")}`).toBe(files.length)
+  })
+
+  it("checks pull requests on the version it publishes with", () => {
+    // node-version は2本が別々に名乗る（共有しない判断は ci.yml のコメントにある）。
+    // 片方だけ上げると「検査した runtime と公開した runtime が違う」状態になり、
+    // どちらのファイルを個別に読んでも見えない
+    const versions = new Set(
+      workflowFiles().flatMap((file) =>
+        steps(load(file))
+          .map((step) => step.with?.["node-version"])
+          .filter((version) => version !== undefined)
+      )
     )
+    expect(versions.size, `node-version が食い違っている: ${[...versions].join(" / ")}`).toBe(1)
   })
 
   it("runs the type checker somewhere, since vitest cannot", () => {
-    // vitest は esbuild で型を捨てるので、npm test だけでは型エラーが出ない。
-    // typecheck を CI から外すと、その穴が黙って戻る（BACKLOG B-25）
-    const ci = readFileSync(join(WORKFLOW_DIR, "ci.yml"), "utf-8")
-    expect(ci).toContain("npm run typecheck")
+    // vitest は esbuild で型を捨てるので、npm test だけでは型エラーが出ない（BACKLOG B-25）。
+    // 生の grep ではなく steps の `run` を読む — コメントアウトされた行を緑と読まないため
+    const runs = steps(load("ci.yml")).map((step) => step.run ?? "")
+    expect(runs.join("\n")).toContain("npm run typecheck")
   })
 })
