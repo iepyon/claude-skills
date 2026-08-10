@@ -9,7 +9,7 @@
 
   <path d="M30.8 168.4 Q170.3 170.5 309.8 170" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.8 168.4 Q170.3 169.1 309.8 170" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <text x="30" y="200" font-family="sans-serif" font-size="13" fill="#9CA3AF">消すのは重複だけ</text>
+  <text x="30" y="200" font-family="sans-serif" font-size="13" fill="#9CA3AF">切るのは忌み枝（重複）だけ</text>
   <path d="M30.3 216.1 Q86.4 213 142.7 213.6 Q142.5 231 140.9 248.3 Q86.2 249.4 31.5 247.6 Q32.4 231 31.6 214.5" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.3 216.1 Q86.5 215.6 142.7 213.6 Q142.5 231 140.9 248.3 Q86.2 246.9 31.5 247.6 Q30.6 230.8 29.5 213.9" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <path d="M45.3 234.7 Q87 233.8 128.8 232.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M45.3 234.7 Q87 231.7 128.8 232.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
   <path d="M157.3 213.4 Q213.1 213.4 268.7 215.7 Q269 231.6 270.3 247.6 Q214.1 247.1 158 247.9 Q160 231.1 158.9 214.3" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
