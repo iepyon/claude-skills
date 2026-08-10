@@ -98,8 +98,21 @@ export interface Theme {
 
 export type PartialTheme = DeepPartial<Theme>
 
+/**
+ * テーマ YAML は節ごとの部分指定を許す。
+ *
+ * **配列は再帰の対象から外す。** `string[] extends object` が真なので、素朴に再帰すると
+ * 配列の要素まで省略可能になり `(string | undefined)[]` が出てくる（`mergeTheme` が
+ * `Theme` に代入できず、型検査が3件落ちていた）。意味としても配列は「全部か、なし」が
+ * 正しい — `iconCardAccentColors` の3要素目だけを部分上書きする操作に意味は無く、
+ * 穴の空いたパレットを許すと描画側が `undefined` を色として受け取る。
+ */
 type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
+  [P in keyof T]?: T[P] extends readonly unknown[]
+    ? T[P]
+    : T[P] extends object
+      ? DeepPartial<T[P]>
+      : T[P]
 }
 
 export const DEFAULT_THEME: Theme = {

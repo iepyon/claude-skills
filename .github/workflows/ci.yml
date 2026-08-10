@@ -1,0 +1,64 @@
+name: CI
+
+# PR で検査を走らせる。**pages.yml に PR トリガを足してはいけない** —
+# あちらは `concurrency: group: pages` を単一グループで持っており、以前 PR の run が
+# 混ざったときに、後から始まった PR 側が cancel-in-progress で push 側を殺して
+# デプロイが消えた（pages.yml の当該コメントに記録がある）。公開と検査は別の
+# workflow・別の concurrency group に分ける。
+#
+# main への push はここでは見ない。pages.yml が同じ `npm test` を通してから公開する。
+on:
+  pull_request:
+    paths:
+      - "slide-wiki/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# PR ごとに1本。押し直したら古い run を捨てる。
+# group 名は pages と必ず別にする（同じにすると上記の事故が再発する）。
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: slide-wiki/assets
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # setup-node の cache: npm は package-lock.json を要求するが、
+      # このリポジトリは lockfile を追跡していない（assets/.gitignore）。
+      # 同じ理由で npm ci も使えないため npm install を使う。
+      # 代わりに ~/.npm を自前でキャッシュする（pages.yml と同じ手）。
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('slide-wiki/assets/package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # 宣言の自己点検・生成物の鮮度・宣言に照らしたデッキの検査・3者比較は、
+      # すべて __tests__ 経由で走る（ontology.test.ts / three-way-verify.test.ts）。
+      # ここで CLI をもう一度叩くと二重管理になるので足さない。
+      - name: Run tests
+        run: npm test
+
+      # vitest は esbuild で型を捨てるので、npm test では型エラーが出ない。
+      # 検査するのは src/ だけ（tsconfig の exclude どおり）。__tests__ を入れるには
+      # 別 tsconfig と 38 件の解消が要る — BACKLOG B-25 に残してある。
+      - name: Typecheck
+        run: npm run typecheck

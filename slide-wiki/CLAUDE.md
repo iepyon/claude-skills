@@ -38,6 +38,7 @@ Markdown のデッキをリンクで辿れる Wiki にする Claude Code skill�
 ```bash
 cd assets
 npm test                                          # 全テスト
+npm run typecheck                                 # 型検査 (vitest は型を捨てるので別に要る)
 npx tsx src/cli.ts input.md output.pptx           # PPTX 生成
 npx tsx src/cli.ts input.md output.html --html    # HTML 生成
 npx tsx src/cli.ts input.md out.html --html --verify  # 3者比較 (食い違えば非ゼロ終了)
@@ -314,6 +315,7 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
 | `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査＝実寸・禁止要素・定規で引いた線) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
+| `workflows.test.ts` | `.github/workflows/` の宣言 (公開が PR で走らないこと・concurrency group が重ならないこと) |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |
 | `icon-resolver.test.ts` | renderer/icon-resolver.ts |
 | `syntax-highlighter.test.ts` | renderer/syntax-highlighter.ts |
@@ -325,3 +327,11 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 - `.pptx`, `.html` は gitignore 済み
 - `npx tsx` で直接実行 (ビルド不要)
 - PPTX/HTML 両レンダラは同一の `LayoutResult` を消費 → 座標ドリフト防止
+- **CI は2本に分ける。** `ci.yml` が PR で `npm test` + `npm run typecheck`、`pages.yml` が
+  `main` への push で公開する。**pages.yml に `pull_request` を足してはいけない**し、
+  2本が同じ concurrency group を使ってもいけない — 以前 PR の run が公開側と同じ
+  group に入り、`cancel-in-progress` が push 側を殺してデプロイが消えた。
+  この2点は `workflows.test.ts` が落ちる形で守っている
+- **型検査は `npm test` に含まれない。** vitest は esbuild で型を捨てるので
+  `npm run typecheck` を別に打つ。見るのは `src/` だけ（`__tests__` は tsconfig の
+  `exclude` にあり、入れるには別 tsconfig と 38 件の解消が要る — BACKLOG B-45）
