@@ -1,4 +1,4 @@
-# md2pptx スライド Markdown のオントロジー（SSoT）
+# slide-wiki スライド Markdown のオントロジー（SSoT）
 #
 # このファイルが「md の構造」の唯一の正本(Single Source of Truth)。
 # - 実装（src/plugins/registry.ts・src/schema/validation.ts・src/ontology/lint.ts）は
@@ -6,7 +6,7 @@
 # - 人間/AI 可読な ../ontology.md と SKILL.md の生成領域は
 #   `npx tsx src/tools/gen-ontology-doc.ts` でここから生成する（手編集禁止）。
 #
-# なぜ要るか: md2pptx は「Claude がドキュメントを読んで機械的に使う」スキルなので、
+# なぜ要るか: slide-wiki は「Claude がドキュメントを読んで機械的に使う」スキルなので、
 # md の構造が宣言されていないことがそのまま生成品質の劣化になる。実際これまで
 # lean-canvas の9ブロック名・カスタマージャーニーの行ラベル・pattern-language の
 # メタキーは**コードの中のリテラルにしか存在せず**、語彙外の見出しは黙って消えていた。

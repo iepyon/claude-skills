@@ -2,9 +2,9 @@
      `npx tsx src/tools/gen-ontology-doc.ts` で再生成する。正本は ontology.yaml。
      ontology-version: 2 -->
 
-# md2pptx スライド Markdown オントロジー
+# slide-wiki スライド Markdown オントロジー
 
-md2pptx が読む Markdown の構造の全文リファレンス。**この文書は生成物**で、正本は
+slide-wiki が読む Markdown の構造の全文リファレンス。**この文書は生成物**で、正本は
 [ontology.yaml](ontology.yaml)。書き方の要約は [SKILL.md](SKILL.md) にある。
 
 ## md の骨格要素

@@ -186,7 +186,7 @@ function parseSlide(
     const shape = parseShape(match[0], defaultFontName)
     if (!shape) continue
 
-    // 名前が無いのは md2pptx 以外が作った pptx。位置で数える従来の挙動に落とす
+    // 名前が無いのは slide-wiki 以外が作った pptx。位置で数える従来の挙動に落とす
     inventory[name ?? textKey(shapeIndex++)] = shape
   }
 

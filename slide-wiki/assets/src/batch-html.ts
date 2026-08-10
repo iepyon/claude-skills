@@ -3,7 +3,7 @@
  * drafts/*.md → htmls/*.html 一括変換 + index.html 目次ページ生成
  *
  * Usage:
- *   cd skills/md2pptx/assets
+ *   cd skills/slide-wiki/assets
  *   npx tsx src/batch-html.ts <drafts-dir> <htmls-dir>
  *
  * Example:

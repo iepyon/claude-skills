@@ -92,4 +92,4 @@
 1つの成果物で両方を満たせる。これが [[収穫]] というパターンである。
 
 <!--takeaway-->
-出典: [md2pptx BACKLOG B-14](https://github.com/iepyon/claude-skills)
+出典: [slide-wiki BACKLOG B-14](https://github.com/iepyon/claude-skills)

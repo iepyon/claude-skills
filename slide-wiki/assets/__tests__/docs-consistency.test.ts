@@ -5,7 +5,7 @@ import { getPlugins } from "../src/plugins/registry.js"
 import "../src/plugins/index.js" // side-effect: self-registration
 
 /**
- * md2pptx は「Claude がドキュメントを読んで機械的に使う」スキルなので、ドキュメントの
+ * slide-wiki は「Claude がドキュメントを読んで機械的に使う」スキルなので、ドキュメントの
  * 誤りは実装済み機能の不使用・生成品質の劣化に直結する（BACKLOG B-01）。
  *
  * md の構造（レイアウト一覧・ディレクティブ・語彙・文字数）については、この照合はもう
