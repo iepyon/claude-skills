@@ -90,6 +90,9 @@ export interface Theme {
   wikiPattern: {
     headingSize: number
     bodySize: number
+    /** 出典の文字の大きさ。読まずに飛ばせる小ささが要件なので、本文とは桁を変える */
+    sourceSize: number
+    sourceColor: string
   }
 }
 
@@ -179,6 +182,8 @@ export const DEFAULT_THEME: Theme = {
   wikiPattern: {
     headingSize: 16,
     bodySize: 14,
+    sourceSize: 4,
+    sourceColor: "94A3B8",
   },
 }
 
@@ -279,6 +284,8 @@ export function mergeTheme(partial: PartialTheme): Theme {
     wikiPattern: {
       headingSize: stripped.wikiPattern?.headingSize ?? DEFAULT_THEME.wikiPattern.headingSize,
       bodySize: stripped.wikiPattern?.bodySize ?? DEFAULT_THEME.wikiPattern.bodySize,
+      sourceSize: stripped.wikiPattern?.sourceSize ?? DEFAULT_THEME.wikiPattern.sourceSize,
+      sourceColor: stripped.wikiPattern?.sourceColor ?? DEFAULT_THEME.wikiPattern.sourceColor,
     },
   }
 }

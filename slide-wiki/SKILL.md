@@ -115,6 +115,7 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`[[…]]` の解決先であり HTML の `#hash` でもある。 |
 | `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
 | `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
+| `source` | `<!--source-->` | WikiPattern | そのスライドの主張の典拠。マーカーの次の行以降が本文になる。 |
 <!-- END GENERATED: annotations -->
 
 ### リンク

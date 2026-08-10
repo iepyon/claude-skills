@@ -28,7 +28,14 @@ const SVG = readFileSync(join(FIXTURE_DIR, SAMPLE), "utf-8").trimEnd()
  * `diagram` は参照先の**パス**。`false` を渡すと参照ごと省く
  * （「参照が無い」と「参照先が読めない」は別の話なので、区別できる形にしてある）。
  */
-const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: string } = {}): string => {
+const deck = (
+  opts: {
+    sections?: string
+    diagram?: string | false
+    takeaway?: string
+    source?: string
+  } = {}
+): string => {
   const sections =
     opts.sections ??
     [
@@ -41,6 +48,7 @@ const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: st
     ].join("\n")
   const image = opts.diagram === false ? "" : `\n![種ノート](${opts.diagram ?? SAMPLE})\n`
   const takeaway = opts.takeaway ? `\n<!--takeaway-->\n${opts.takeaway}\n` : ""
+  const source = opts.source ? `\n<!--source-->\n${opts.source}\n` : ""
   return `# テスト
 
 ---
@@ -49,7 +57,7 @@ const deck = (opts: { sections?: string; diagram?: string | false; takeaway?: st
 <!--id:種ノート-->
 <!--pattern-->
 ${sections}
-${image}${takeaway}`
+${image}${source}${takeaway}`
 }
 
 /** parse → validate。4箇所で書き下すと、テストが本題以外の差で見分けにくくなる */
@@ -467,11 +475,25 @@ describe("配布しているデッキの図解", () => {
           )
           // 2つの見出しと、場面・困りごと・打ち手の3段落が、どれも縮んでいないこと
           // （タイトルと takeaway は全幅なので、幅で左段だけを取り出せる）
+          //
+          // 出典も左段の幅なのでここに入る。**3つとも theme.wikiPattern から採る**ので、
+          // 揃っていることを絶対値で見るこの検査の趣旨は変わらない
+          // （contentSlide 由来のサイズが混ざったら、それは縮小に入った証拠）
           const fullWidth = SLIDE_WIDTH - 2 * MARGIN_X
           const left = result.textBoxes.filter((b) => b.w < fullWidth - 0.01)
-          expect(new Set(left.map((b) => b.fontSize)), `${where}: 左段に想定外の文字サイズがある`).toEqual(
-            new Set([DEFAULT_THEME.wikiPattern.headingSize, DEFAULT_THEME.wikiPattern.bodySize])
-          )
+          // 出典は書いてあるデッキだけに出るので、完全一致では表せない。
+          // 「この3つ以外が混ざっていない」を見る（見出しと本文が在ることは上で押さえた）
+          const allowed = [
+            DEFAULT_THEME.wikiPattern.headingSize,
+            DEFAULT_THEME.wikiPattern.bodySize,
+            DEFAULT_THEME.wikiPattern.sourceSize,
+          ]
+          for (const box of left) {
+            expect(
+              allowed,
+              `${where}: 左段に想定外の文字サイズ ${box.fontSize}pt がある`
+            ).toContain(box.fontSize)
+          }
           const headings = left.filter((b) => b.fontSize === DEFAULT_THEME.wikiPattern.headingSize)
           const paragraphs = left.filter((b) => b.fontSize === DEFAULT_THEME.wikiPattern.bodySize)
           expect(headings.length, `${where}: 左段の見出しが2つ無い`).toBe(2)
@@ -484,6 +506,123 @@ describe("配布しているデッキの図解", () => {
       }
       expect(pages).toBeGreaterThan(1)
     })
+  })
+})
+
+describe("WikiPattern — 出典", () => {
+  const layoutFor = async (markdown: string) =>
+    layoutSlide((await present(markdown)).slides[1], DEFAULT_THEME)
+
+  /** 配布中のパターンと同じ分量（2行 + 3行 + 3行）。出典の確保がここに効く */
+  const EIGHT_LINES = [
+    "### いつ・なにが困るか",
+    "名前を、意味が合うかで選ぶ。",
+    "説明せずに通じる名前が親切に思える。",
+    "",
+    "**一度で伝わる名前は、説明である。**",
+    "説明は読んだ時点で満杯で、増えない。",
+    "増えない名前は会話に載らず忘れられる。",
+    "### そこで",
+    "**一発で伝わらなくてよい。**",
+    "理屈で選ぶと薄れる。声に出すと効く。",
+    "説明は本文と比喩が引き受ける。",
+  ].join("\n")
+
+  const SOURCE = 'Meszaros & Doble "Evocative Pattern Name" (PLoPD3, 1997)'
+
+  it("本文よりずっと小さい文字で、スライドの下端に置く", async () => {
+    const result = await layoutFor(deck({ source: SOURCE }))
+    const box = result.textBoxes.find((b) => b.text === SOURCE)
+    expect(box, "出典の箱が無い").toBeDefined()
+    expect(box!.fontSize).toBeLessThan(DEFAULT_THEME.wikiPattern.bodySize / 2)
+    expect(box!.y + box!.h).toBeCloseTo(SLIDE_HEIGHT - MARGIN_Y, 5)
+  })
+
+  it("出典が無ければ箱は増えない", async () => {
+    const withSource = await layoutFor(deck({ source: SOURCE }))
+    const without = await layoutFor(deck())
+    expect(withSource.textBoxes.length).toBe(without.textBoxes.length + 1)
+  })
+
+  it("左段の幅に収まる（出典は本文に属するので、図解の下までは伸ばさない）", async () => {
+    const result = await layoutFor(deck({ source: SOURCE }))
+    const box = result.textBoxes.find((b) => b.text === SOURCE)!
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    expect(box.x).toBeCloseTo(MARGIN_X, 5)
+    expect(box.x + box.w).toBeLessThanOrEqual(panel.x + 1e-6)
+  })
+
+  it("出典があると図解はその上で止まる（確保した高さと実物が食い違わない）", async () => {
+    // **列いっぱいに敷かれる図で試す。** 縦横比を名乗る図は列の中で縦中央に縮むので、
+    // 確保を忘れていても下端まで届かず、この食い違いを隠してしまう
+    const result = await layoutFor(
+      deck({ source: SOURCE, diagram: "diagrams/no-viewbox.svg" })
+    )
+    const source = result.textBoxes.find((b) => b.text === SOURCE)!
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    expect(panel.y + panel.h).toBeCloseTo(source.y, 5)
+  })
+
+  it("8行のパターンに出典を足しても、本文がはみ出さない", async () => {
+    const pres = await present(deck({ sections: EIGHT_LINES, source: SOURCE }))
+    await expect(
+      Effect.runPromise(validateLayout(pres, DEFAULT_THEME))
+    ).resolves.toBeDefined()
+  })
+
+  it("長すぎる出典はビルドを止める（黙って切り落とさない）", async () => {
+    // 4pt は小さいので、溢れても生成物を見て気づけない。切り落とされた出典は
+    // 「文献名の途中で終わっている引用」になり、辿れないまま残る
+    const pres = await present(deck({ source: "長い出典をここに置く。".repeat(30) }))
+    await expect(Effect.runPromise(validateLayout(pres, DEFAULT_THEME))).rejects.toThrow()
+  })
+
+  it("配布中の patterns-meta.md は10枚すべてに出典があり、どれも収まる", async () => {
+    const dir = join(__dirname, "..", "doc", "wiki")
+    const md = readFileSync(join(dir, "patterns-meta.md"), "utf-8")
+    const pres = await Effect.runPromise(
+      parseMarkdown(md, { baseDir: dir }).pipe(Effect.flatMap(validatePresentation))
+    )
+    const patterns = pres.slides.filter(
+      (s) => (s as ContentSlide).layout?._tag === "WikiPattern"
+    )
+    expect(patterns.length).toBe(10)
+    for (const slide of patterns) {
+      const layout = (slide as ContentSlide).layout as unknown as WikiPatternLayout
+      expect(layout.source, `${(slide as ContentSlide).title} に出典が無い`).toBeTruthy()
+    }
+    await expect(Effect.runPromise(validateLayout(pres, DEFAULT_THEME))).resolves.toBeDefined()
+  })
+
+  it("takeaway と併記すると、出典が下、takeaway がその上に積まれる", async () => {
+    // 両方とも「下端に置く」ので、素朴に足すと重なる。重なりは生成物を見ても
+    // 気づきにくい（4pt の文字が 20pt の裏に隠れる）
+    const result = await layoutFor(
+      deck({ source: SOURCE, takeaway: "関連: [[別のパターン2]]" })
+    )
+    const source = result.textBoxes.find((b) => b.text === SOURCE)!
+    const takeaway = result.textBoxes.find((b) => b.richText !== undefined && b.isBold)!
+    expect(takeaway.y + takeaway.h).toBeLessThanOrEqual(source.y + 1e-6)
+  })
+
+  it("出典は Wiki のリンクを作らない（参照ではなく典拠なので、グラフに載せない）", async () => {
+    // takeaway と違って richText にしない。出典に [[…]] を書いても
+    // バックリンクが増えないほうが、「関連」と「典拠」が混ざらない
+    const pres = await present(deck({ source: `${SOURCE} [[別のパターン3]]` }))
+    const refs = collectRefs(
+      {
+        globalId: "d/種ノート",
+        deckSlug: "d",
+        localId: "種ノート",
+        title: "種ノート",
+        slide: pres.slides[1],
+        globalIndex: 1,
+        deckIndex: 1,
+      },
+      DEFAULT_THEME
+    )
+    expect(refs).toContain("別のパターン") // 本文のリンクは拾われる
+    expect(refs).not.toContain("別のパターン3") // 出典のリンクは拾わない
   })
 })
 

@@ -21,16 +21,27 @@ export class WikiPatternLayout implements SlideLayout {
    */
   readonly diagramAspect?: number
   readonly takeaway?: string
+  /**
+   * 主張の典拠。**`string` のまま持つ（`TextBlock` にも richText にもしない）。**
+   *
+   * インライン装飾を解かないことが、出典に `[[…]]` を書いてもリンクにならない
+   * 理由そのもの。参照を拾う `collectRefs` が見るのは richText / paragraphs だけなので、
+   * 素の text で置けばバックリンクのグラフに載らない
+   * — 「関連」と「典拠」が混ざって、文献名がパターンの隣人として並ぶのを防ぐ。
+   */
+  readonly source?: string
 
   constructor(props: {
     sections: readonly TextBlock[]
     diagram: string
     diagramAspect?: number
     takeaway?: string
+    source?: string
   }) {
     this.sections = props.sections
     this.diagram = props.diagram
     this.diagramAspect = props.diagramAspect
     this.takeaway = props.takeaway
+    this.source = props.source
   }
 }

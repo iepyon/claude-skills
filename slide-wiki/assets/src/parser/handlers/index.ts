@@ -5,7 +5,7 @@ import { getDirectiveHandlers, getModeHandlers } from "../../plugins/registry.js
 
 import { handleBlankLine, handleHorizontalRule, handleH1, handleH2, handleH3 } from "./structural.js"
 import { handleLeftDirective, handleRightDirective, handleTopDirective, handleBottomDirective, handleGridDirective } from "./layout-directives.js"
-import { handleIconDirective, handleIdDirective, handleTakeawayMarker, handleCodeFenceOpen, handleCodeFenceLine, handleCodeFenceClose } from "./inline.js"
+import { handleIconDirective, handleIdDirective, handleTakeawayMarker, handleSourceMarker, handleCodeFenceOpen, handleCodeFenceLine, handleCodeFenceClose } from "./inline.js"
 import { handleBodyText } from "./body-text.js"
 
 // トークンハンドラーの型
@@ -46,6 +46,7 @@ function buildHandlers(): ReadonlyArray<TokenHandler> {
     handleGridDirective,
     handleIconDirective,
     handleTakeawayMarker,
+    handleSourceMarker,
     ...getDirectiveHandlers(),
     handleCodeFenceOpen,
     handleCodeFenceLine,

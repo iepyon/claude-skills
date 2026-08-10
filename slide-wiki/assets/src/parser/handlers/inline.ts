@@ -41,6 +41,22 @@ export const handleTakeawayMarker: TokenHandler = (state, token) => {
   })
 }
 
+// SourceMarker: <!--source--> (enters source capture mode)
+export const handleSourceMarker: TokenHandler = (state, token) => {
+  if (token.type !== "SourceMarker") return O.none()
+
+  if (O.isNone(state.currentSlide) || state.currentSlide.value.type !== "content") {
+    return O.some(state)
+  }
+
+  const afterSection = saveSection(state)
+  return O.some({
+    ...afterSection,
+    mode: "source" as LayoutMode,
+    currentSection: O.none(),
+  })
+}
+
 // CodeFenceOpen: コードブロック開始
 export const handleCodeFenceOpen: TokenHandler = (state, token) => {
   if (token.type !== "CodeFenceOpen") return O.none()

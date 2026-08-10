@@ -128,6 +128,8 @@ describe("Theme", () => {
         wikiPattern: {
           headingSize: 15,
           bodySize: 13,
+          sourceSize: 5,
+          sourceColor: "64748B",
         },
       }
       const result = mergeTheme(custom)

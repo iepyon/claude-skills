@@ -42,6 +42,20 @@ export const WP_PADDING = 0.1
  */
 export const WP_TAKEAWAY_HEIGHT = 0.35
 
+/**
+ * 出典に確保する高さ。4pt の1〜2行に要るのは 0.13in なので、0.2in で足りる。
+ *
+ * **高さに余裕はある。** 配布中の10枚は左段の下端が 4.32in で、下マージン（5.325in）まで
+ * 1.0in 余っている。だから 0.35in でも入る — つまり `WP_TAKEAWAY_HEIGHT` を流用しない
+ * 理由は**高さではない**。理由は役割で、takeaway は 20pt・太字・中央寄せ・全幅で
+ * 「読ませる」側、出典は 4pt・左寄せ・左段幅で「読み飛ばせる」側にある。
+ * さらに takeaway は richText になるので `[[…]]` がリンクになってしまう（schema.ts を見よ）。
+ *
+ * 余っているぶんを全部確保しないのは、確保した高さがそのまま本文の取り分から
+ * 消えるため（helpers.ts が takeaway の 0.9in について書いているのと同じ話）。
+ */
+export const WP_SOURCE_HEIGHT = 0.2
+
 /** 図解を載せる下敷きの角丸と枠線。塗りはテーマの iconCardBackground を使う */
 export const WP_PANEL_RADIUS = 0.06
 export const WP_PANEL_BORDER = "E2E8F0"

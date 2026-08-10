@@ -82,6 +82,7 @@ export const convertWikiPattern = (raw: RawSlide): O.Option<Slide[]> => {
         diagram,
         diagramAspect: svgAspectRatio(diagram),
         takeaway: raw.takeaway,
+        source: raw.source,
       }),
     }),
   ])
