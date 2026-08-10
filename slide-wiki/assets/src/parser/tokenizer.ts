@@ -16,6 +16,7 @@ export type Token =
   | { type: "IconDirective"; icon: string; line: number }
   | { type: "IdDirective"; id: string; line: number }
   | { type: "TakeawayMarker"; line: number }
+  | { type: "SourceMarker"; line: number }
   | { type: "PluginDirective"; pluginId: string; line: number }
   | { type: "Image"; alt: string; src: string; line: number }
   | { type: "CodeFenceOpen"; language: string; line: number }
@@ -135,6 +136,22 @@ const matchTakeawayMarker: TokenMatcher = (line, lineNum) =>
     }))
   )
 
+// SourceMarker: <!--source--> (text on following lines)
+//
+// takeaway と別のトークンにしてあるのは、行き先が別だから。takeaway は
+// 「まとめ・関連」で richText になりリンクを作るが、source は典拠で、
+// リンクを作らず本文の1/3以下の大きさで下端に伏せる。同じトークンで
+// 受けて後段で仕分けると、仕分けの根拠が md から消える。
+const matchSourceMarker: TokenMatcher = (line, lineNum) =>
+  pipe(
+    line.match(/^<!--source-->$/),
+    O.fromNullable,
+    O.map(() => ({
+      type: "SourceMarker" as const,
+      line: lineNum
+    }))
+  )
+
 // Image: ![alt](src) — 行まるごとが画像参照のときだけ。
 // 行の一部に混ざった `![…](…)` は本文のまま（インライン画像は持たない）。
 const matchImage: TokenMatcher = (line, lineNum) =>
@@ -184,6 +201,7 @@ const coreMatchers: ReadonlyArray<TokenMatcher> = [
   matchIconDirective,
   matchIdDirective,
   matchTakeawayMarker,
+  matchSourceMarker,
   matchImage,
 ]
 

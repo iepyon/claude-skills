@@ -22,6 +22,8 @@ export type RawSlide = {
   gridCols?: number
   gridCells?: RawSection[]
   takeaway?: string
+  /** `<!--source-->` の本文。典拠なので、レイアウトはリンクを作らずに小さく敷く */
+  source?: string
   codeLanguage?: string
   codeLines?: string[]
   codeCaption?: string
@@ -34,7 +36,16 @@ export type RawSection = {
   body?: string
 }
 
-export type LayoutMode = "default" | "left" | "right" | "top" | "bottom" | "grid" | "takeaway" | "code"
+export type LayoutMode =
+  | "default"
+  | "left"
+  | "right"
+  | "top"
+  | "bottom"
+  | "grid"
+  | "takeaway"
+  | "source"
+  | "code"
 
 /** 解析に要る、md の文字列の外側の情報 */
 export type ParseOptions = {

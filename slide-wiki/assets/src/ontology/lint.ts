@@ -273,6 +273,7 @@ function checkAnnotationScope(layout: Layout, tokens: readonly Token[]): Diagnos
   for (const token of tokens) {
     if (token.type === "IconDirective") used.push({ name: "icon", token })
     if (token.type === "TakeawayMarker") used.push({ name: "takeaway", token })
+    if (token.type === "SourceMarker") used.push({ name: "source", token })
     if (token.type === "IdDirective") used.push({ name: "id", token })
   }
   return used

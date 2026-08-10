@@ -51,6 +51,23 @@ export const handleBodyText: TokenHandler = (state, token) => {
     })
   }
 
+  // 出典モード: スライドの source に追加
+  if (state.mode === "source" && O.isSome(state.currentSlide)) {
+    const text = token.text.trim()
+    if (!text) return O.some(state)
+
+    const slide = state.currentSlide.value
+    const existing = slide.source || ""
+
+    return O.some({
+      ...state,
+      currentSlide: O.some({
+        ...slide,
+        source: existing ? `${existing} ${text}` : text,
+      }),
+    })
+  }
+
   // それ以外はセクションの本文
   if (O.isNone(state.currentSection)) {
     return O.some({

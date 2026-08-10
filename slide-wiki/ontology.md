@@ -35,12 +35,15 @@ slide-wiki が読む Markdown の構造の全文リファレンス。**この文
 | `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`[[…]]` の解決先であり HTML の `#hash` でもある。 |
 | `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
 | `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
+| `source` | `<!--source-->` | WikiPattern | そのスライドの主張の典拠。マーカーの次の行以降が本文になる。 |
 
 - `id` — 省略するとスライドタイトルの slug を採り、衝突したら連番（`-2`）を付ける。 採番は parser/slide-ids.ts が一括で行う。
 
 - `icon` — 効くのは annotations に icon を挙げたレイアウトだけ。他では黙って捨てられる。
 
 - `takeaway` — 効くのは annotations に takeaway を挙げたレイアウトだけ。
+
+- `source` — **`takeaway` とは役割が違う。** takeaway は読み手に次を示す「まとめ・関連」で、 本文と同じ大きさで中央に置く。`source` は主張がどこから来たかの**典拠**で、 本文の1/3以下の大きさで下端に伏せる（読まずに飛ばせることが要件）。 **`[[…]]` を書いてもリンクにならない。** 出典は参照ではないので、 バックリンクのグラフに載せない（載せると「関連」と「典拠」が混ざり、 文献名がパターンの隣人として並ぶ）。 **書く順と出る順は逆になる。** md では `<!--takeaway-->` の**前**に置くが、 描かれるのは takeaway の**下**（スライドの最下端）。takeaway はそのぶん 持ち上がる。両方を素朴に下端へ置くと重なり、小さい出典のほうが隠れる。 効くのは annotations に source を挙げたレイアウトだけ。 挙げていないレイアウトに書くと本文ごと消えるので、lint が `annotation-scope` で報告する（`--strict` で終了コード 1）。
 
 ## レイアウト一覧
 
@@ -466,7 +469,7 @@ oneliner: 何が起きたら崩れるかを、実験の前に一文で決める
 - ディレクティブ: `<!--pattern-->`
 - `_tag`: `WikiPattern`（プラグイン `wiki-pattern`）
 - 説明: Wiki のパターン1件。左に いつ・なにが困るか／そこで、右に SVG の図解
-- 効く注釈: `id`・`takeaway`
+- 効く注釈: `id`・`takeaway`・`source`
 
 **見出しは2つ。** 状況と問題は地続きの1つの話なので `いつ・なにが困るか` に束ね、
 打ち手は `そこで` で受ける（「こういう場面で、こう困る。**そこで**、こうする」）。

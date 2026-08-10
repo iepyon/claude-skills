@@ -48,9 +48,10 @@ export const reservedForTakeaway = (
 export function buildTakeawayBox(
   takeaway: string,
   theme: Theme,
-  height: number = TAKEAWAY_HEIGHT
+  height: number = TAKEAWAY_HEIGHT,
+  bottomOffset: number = 0
 ): TextBox {
-  const takeawayY = SLIDE_HEIGHT - MARGIN_Y - height
+  const takeawayY = SLIDE_HEIGHT - MARGIN_Y - height - bottomOffset
   return {
     x: MARGIN_X,
     y: takeawayY,
@@ -70,17 +71,22 @@ export function buildTakeawayBox(
 /**
  * Append a takeaway box to an existing LayoutResult if a takeaway string is provided.
  * Consolidates the repeated pattern: if (takeaway) { textBoxes.push(buildTakeawayBox(...)) }
+ *
+ * `bottomOffset` は下端に**別の箱が先に居る**ときに takeaway を持ち上げる口
+ * （wiki-pattern の出典がそれ）。既定の 0 では従来どおり下マージンに接する。
+ * 素朴に両方を「下端」に置くと重なり、しかも小さい側が隠れて気づけない。
  */
 export function withTakeaway(
   result: LayoutResult,
   takeaway: string | undefined,
   theme: Theme,
-  height: number = TAKEAWAY_HEIGHT
+  height: number = TAKEAWAY_HEIGHT,
+  bottomOffset: number = 0
 ): LayoutResult {
   if (!takeaway) return result
   return {
     ...result,
-    textBoxes: [...result.textBoxes, buildTakeawayBox(takeaway, theme, height)],
+    textBoxes: [...result.textBoxes, buildTakeawayBox(takeaway, theme, height, bottomOffset)],
   }
 }
 

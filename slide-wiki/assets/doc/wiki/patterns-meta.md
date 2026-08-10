@@ -86,6 +86,9 @@
 
 ![ジワる名前](diagrams/patterns-meta/ジワる名前.svg)
 
+<!--source-->
+Meszaros & Doble "Evocative Pattern Name"（PLoPD3, 1997）＝説明的な名前を避け、像を喚起する名前を選ぶ。／まつもとゆきひろ「名前重要」（『プログラマが知るべき97のこと』日本語版書き下ろし, 2010）＝名前を付けられないのは設計を理解していない証拠。「使うたびにジワジワくる」の遅効性はどちらにも無く、このデッキの追加。
+
 ---
 
 ## 借りてきた比喩
@@ -105,6 +108,9 @@
 要らない意味も運ぶので、本文の最初で打ち消す。
 
 ![借りてきた比喩](diagrams/patterns-meta/借りてきた比喩.svg)
+
+<!--source-->
+Meszaros & Doble "Meaningful Metaphor Name"（PLoPD3, 1997）＝読者に馴染みのある比喩を見つけ、それで名前を付ける。新語を作らないことで、覚える手間を読者に払わせない。
 
 ---
 
@@ -126,6 +132,9 @@
 
 ![声に出して読む](diagrams/patterns-meta/声に出して読む.svg)
 
+<!--source-->
+Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」＝モデルを声に出して試すのが、モデルを洗練させる最良の方法のひとつ。"Rough edges are easy to hear"（粗い所は耳で分かる）。
+
 ---
 
 ## ザワつく状況
@@ -145,6 +154,9 @@
 反対の力が書けないなら、それはパターンではない。
 
 ![ザワつく状況](diagrams/patterns-meta/ザワつく状況.svg)
+
+<!--source-->
+Meszaros & Doble "Visible Forces"（PLoPD3, 1997）＝読者が解の選択を理解できるよう、力を目立たせる。／名前は東京科学大学 EDP の「ざわざわ感」＝2つの対立から立つ違和感で、インサイトの材料になる（フォース由来ではなく独立の語彙）。
 
 ---
 
@@ -166,6 +178,9 @@
 
 ![釣り竿を渡す](diagrams/patterns-meta/釣り竿を渡す.svg)
 
+<!--source-->
+Alexander『時を超えた建設の道』(1979)＝パターンは物であると同時に、その物を生成する過程の記述である。／Coplien "A Development Process Generative Pattern Language" (1994)＝生成的パターンは構造に間接的に働きかける。
+
 ---
 
 ## ラフで出す
@@ -185,6 +200,9 @@
 粗さが「ここは決めていない」の合図になる。
 
 ![ラフで出す](diagrams/patterns-meta/ラフで出す.svg)
+
+<!--source-->
+Buxton『Sketching User Experiences』(2007) "Appropriate Degree of Refinement"＝描き込みは、概念の検討状態を超えた完成度を示唆してはならない。同 "Suggest & explore rather than confirm"＝スケッチは告げず、示唆する。
 
 ---
 
@@ -206,6 +224,9 @@
 
 ![3ストライクで書く](diagrams/patterns-meta/3ストライクで書く.svg)
 
+<!--source-->
+名前は『リファクタリング』の "Three strikes and you refactor"（Don Roberts 由来）。内容は Coplien の rule of three (1996)＝文書化されたパターンは有意に異なる既知の適用例を3件示さねばならず、パターンは発明も開発もされず観察される。
+
 ---
 
 ## でこぼこ石畳
@@ -225,6 +246,9 @@
 不揃いのまま噛み合ったとき、集まりは言語になる。
 
 ![でこぼこ石畳](diagrams/patterns-meta/でこぼこ石畳.svg)
+
+<!--source-->
+Alexander『パタン・ランゲージ』(1977) 序文＝各パターンは、それを含む上位・周りを囲む同位・内に含まれる下位のパターンに支えられてのみ存在する。／名前は同書 247「目地に草の生える石畳」。
 
 ---
 
@@ -246,6 +270,9 @@
 
 ![文に溶かす](diagrams/patterns-meta/文に溶かす.svg)
 
+<!--source-->
+Meszaros & Doble "Readable References to Patterns"（PLoPD3, 1997）＝他のパターンを参照するときは、パターン名を本文の語りに織り込め（weave the pattern names into the narrative）。
+
 ---
 
 ## 黙って聴く著者
@@ -265,5 +292,8 @@
 説明しないと伝わらなかった箇所が、直すべき箇所。
 
 ![黙って聴く著者](diagrams/patterns-meta/黙って聴く著者.svg)
+
+<!--source-->
+Gabriel "Fly on the Wall"（A Pattern Language for Writers' Workshops）＝著者を破壊的な存在にせずに場へ留める。合評の大半で著者は「見えない」ままでいる。
 
 ---

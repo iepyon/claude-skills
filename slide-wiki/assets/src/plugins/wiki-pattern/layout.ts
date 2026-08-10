@@ -1,7 +1,12 @@
 import { Option as O } from "effect"
-import { MARGIN_X } from "../../constants.js"
+import { MARGIN_X, MARGIN_Y, SLIDE_HEIGHT } from "../../constants.js"
 import type { SlideLayout, Theme } from "../../schema/index.js"
-import type { ShapeBox, LayoutResult, SectionContext } from "../../renderer/layout/types.js"
+import type {
+  ShapeBox,
+  TextBox,
+  LayoutResult,
+  SectionContext,
+} from "../../renderer/layout/types.js"
 import {
   calculateColumnDimensions,
   reservedForTakeaway,
@@ -17,6 +22,7 @@ import {
   WP_HEADING_HEIGHT,
   WP_HEADING_BODY_GAP,
   WP_TAKEAWAY_HEIGHT,
+  WP_SOURCE_HEIGHT,
   WP_PANEL_RADIUS,
   WP_PANEL_BORDER,
   WP_PANEL_BORDER_WIDTH,
@@ -39,12 +45,39 @@ function panelHeight(
   return Math.min(availableHeight, inner / aspect + 2 * WP_PANEL_PADDING)
 }
 
+/**
+ * 出典の箱。左段の幅で、スライドの下端に敷く。
+ *
+ * **全幅にしない。** 出典は左段の主張の典拠なので、左端と幅が本文と揃っていないと
+ * 図解にも掛かる注記に見える。図の下敷きは列の中で縦中央にあるので下に余地はあるが、
+ * そこまで伸ばすと「このスライド全体の脚注」に読み替わる。
+ *
+ * `richText` を使わず `text` で置くのが、`[[…]]` がリンクにならない仕組み
+ * （schema.ts の source の説明を見よ）。
+ */
+function buildSourceBox(source: string, leftWidth: number, theme: Theme): TextBox {
+  return {
+    x: MARGIN_X,
+    y: SLIDE_HEIGHT - MARGIN_Y - WP_SOURCE_HEIGHT,
+    w: leftWidth,
+    h: WP_SOURCE_HEIGHT,
+    text: source,
+    fontSize: theme.wikiPattern.sourceSize,
+    color: theme.wikiPattern.sourceColor,
+    align: "left",
+    valign: "bottom",
+  }
+}
+
 export function layoutWikiPattern(
   layout: WikiPatternLayout,
   titleY: number,
   theme: Theme
 ): LayoutResult {
-  const reserved = reservedForTakeaway(layout.takeaway, WP_TAKEAWAY_HEIGHT)
+  // 出典と takeaway は両方書ける。確保は足し合わせる（どちらも下端に積む）
+  const reserved =
+    reservedForTakeaway(layout.takeaway, WP_TAKEAWAY_HEIGHT) +
+    (layout.source ? WP_SOURCE_HEIGHT : 0)
   const dims = calculateColumnDimensions(WP_LEFT_RATIO, WP_RIGHT_RATIO, titleY, reserved)
 
   // 左段: いつ・なにが困るか／そこで（と、その中の段落）。**必ず buildSectionBoxes を通す。**
@@ -104,7 +137,19 @@ export function layoutWikiPattern(
     },
   ]
 
-  return withTakeaway({ textBoxes, shapeBoxes }, layout.takeaway, theme, WP_TAKEAWAY_HEIGHT)
+  // 出典は下端に接する。takeaway があればその上へ持ち上げる（重なると 4pt が隠れる）
+  const sourceOffset = layout.source ? WP_SOURCE_HEIGHT : 0
+  const withSource = layout.source
+    ? [...textBoxes, buildSourceBox(layout.source, dims.leftWidth, theme)]
+    : textBoxes
+
+  return withTakeaway(
+    { textBoxes: withSource, shapeBoxes },
+    layout.takeaway,
+    theme,
+    WP_TAKEAWAY_HEIGHT,
+    sourceOffset
+  )
 }
 
 export const handleWikiPatternLayout = (
