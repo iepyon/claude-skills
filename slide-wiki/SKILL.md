@@ -1,11 +1,11 @@
 ---
 name: slide-wiki
-description: Markdown to PowerPoint/HTML slide generator with layout plugins, wiki-style links and a link-navigable wiki output. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 17 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, pattern language, and wiki patterns with a required SVG diagram. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, building a linked slide wiki from several decks, or when the user wants to format content for presentation output.
+description: Builds a link-navigable slide wiki from Markdown decks, and renders the same decks to PowerPoint and HTML. Converts structured Markdown through a pipeline of parse → validate → layout → render, with layout plugins and wiki-style links that carry hover previews and backlinks across deck boundaries. Supports 17 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, pattern language, and wiki patterns with a required SVG diagram. Use when building a linked slide wiki from several decks, creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
 ---
 
 # slide-wiki
 
-Markdown → AST → PPTX/HTML 変換スキル。共通レイアウトエンジンで座標を計算し、PPTX と HTML 両方に出力する。
+Markdown のデッキを、リンクで辿れるスライド Wiki にする。同じデッキを PPTX と HTML にも出力し、座標は3系統で共通のレイアウトエンジンが計算する。
 
 ## Quick Start
 

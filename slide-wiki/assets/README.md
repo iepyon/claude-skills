@@ -1,14 +1,16 @@
 # slide-wiki
 
-Lightweight Markdown to PowerPoint / HTML slide generator using Effect-TS and pptxgenjs.
+Builds a link-navigable slide wiki from Markdown decks, and renders the same decks to PowerPoint / HTML. Effect-TS and pptxgenjs.
 
 ## Overview
 
-`slide-wiki` converts Markdown directly to PPTX using a custom AST, bypassing the heavyweight
-Markdown → HTML → Playwright → PPTX pipeline used in `md2html2pptx`.
+`slide-wiki` links several Markdown decks into one self-contained wiki site you can read by
+following `[[links]]`, hovering to peek, and walking backlinks home. The same decks also render
+directly to PPTX using a custom AST, bypassing the heavyweight Markdown → HTML → Playwright →
+PPTX pipeline used in `md2html2pptx`.
 
-A shared layout engine computes every coordinate once, and both renderers consume the same
-`LayoutResult` — so the HTML preview and the PPTX file place elements identically.
+A shared layout engine computes every coordinate once, and all three renderers consume the same
+`LayoutResult` — so the wiki, the HTML preview and the PPTX file place elements identically.
 
 **Pipeline:**
 ```

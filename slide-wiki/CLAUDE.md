@@ -6,7 +6,7 @@
 
 ## Overview
 
-Markdown → AST → pptxgenjs → PPTX 変換の Claude Code skill。HTML プレビューモードと、複数デッキをリンクで辿れる Wiki モードも備え、共通のレイアウトエンジンで座標を計算して3系統に出力する。
+Markdown のデッキをリンクで辿れる Wiki にする Claude Code skill。同じデッキを PPTX（AST → pptxgenjs）と HTML にも出力し、共通のレイアウトエンジンで座標を計算して3系統に出す。
 
 ## オントロジー（md の構造の正本）
 
