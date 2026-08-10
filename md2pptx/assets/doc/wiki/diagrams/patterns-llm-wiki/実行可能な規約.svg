@@ -1,5 +1,5 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">掲示だけの規約</text>
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">読ませる規約</text>
 
   <path d="M26.6 46.7 Q78.6 47.5 130.6 47.2 Q130.9 75 131.4 102.9 Q78.3 103.7 25.2 102.1 Q25.8 74.7 28.3 47.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
   <path d="M42 67.6 Q78.6 68.6 115 66.6" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M42 67.6 Q78.5 67.6 115 66.6" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
@@ -11,10 +11,10 @@
 
   <path d="M30 126.4 Q170.3 126.8 310.6 126.5" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M30 126.4 Q170.3 125 310.6 126.5" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <text x="30" y="154" font-family="sans-serif" font-size="13" fill="#1E40AF">改札にした規約</text>
+  <text x="30" y="154" font-family="sans-serif" font-size="13" fill="#1E40AF">走らせる規約</text>
 
   <path d="M25.1 166.7 Q78.1 165.6 131 166.4 Q129.1 195.6 130.6 224.9 Q78.7 225 26.7 225.3 Q27.1 195.9 25.1 166.7 Z" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M25.1 166.7 Q78.1 165.6 131 166.4 Q131.9 195.6 130.6 224.9 Q78.7 224.1 26.7 225.3 Q25.2 196 25.1 166.7 Z" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-  <text x="78" y="190" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">改札</text>
+  <text x="78" y="190" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">検査</text>
   <text x="78" y="208" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">毎回走る</text>
 
   <path d="M138.8 197.1 Q158.7 195.2 178.6 196.8" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M138.8 197.1 Q158.7 195.3 178.6 196.8" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>

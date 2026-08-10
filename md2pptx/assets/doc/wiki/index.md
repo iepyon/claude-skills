@@ -57,7 +57,7 @@ LLM が手入れする Wiki — 原則6つと、日々の実務6つ
 LLM が手入れする Wiki — 毎日の手入れで効いてくること
 
 ### 語彙: [[patterns-llm-wiki/語彙を寄せる|語彙を寄せる]]
-### 検査: [[patterns-llm-wiki/改札|改札]]
+### 検査: [[patterns-llm-wiki/実行可能な規約|実行可能な規約]]
 ### 導出: [[patterns-llm-wiki/鏡は拭かない|鏡は拭かない]]
 ### 未解決: [[patterns-llm-wiki/問いを置く|問いを置く]]
 ### 分量: [[patterns-llm-wiki/近所だけ渡す|近所だけ渡す]]
