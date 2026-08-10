@@ -1,0 +1,30 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM だけ</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">＋ ガードレール</text>
+  <path d="M30.7 85 Q81.6 86 132.4 83.8 Q133.1 101.3 133 118.8 Q82.8 118.2 32.6 119.3 Q32.4 102 31.4 84.7" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.7 85 Q81.5 83.1 132.4 83.8 Q133.4 101.3 133 118.8 Q82.8 119.2 32.6 119.3 Q30.6 102.4 31.4 85.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="105" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM</text>
+  <path d="M82.8 117.2 Q81.3 126.1 81.1 135.2" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M82.8 117.2 Q81.8 126.2 81.1 135.2" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M83.9 142.4 Q81.3 138 78.5 133.8 Q81.5 132.1 84.4 130.2 Q84.2 136.3 83.9 142.4 Z" fill="#9CA3AF"/>
+  <path d="M32 143.5 Q81.3 143.5 130.7 141.5 Q132.4 155.5 134.2 169.5 Q82.4 168.8 30.7 172.1 Q31.8 158.1 32.1 144.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M32 143.5 Q81.3 142.5 130.7 141.5 Q131.4 155.6 134.2 169.5 Q82.4 170 30.7 172.1 Q31.9 158.6 34.1 145.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="160" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">そのまま外へ</text>
+  <text x="82" y="198" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">形式が崩れる</text>
+  <text x="82" y="220" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">出たら戻せない</text>
+  <path d="M202.2 72.8 Q253 72.3 303.7 72.6 Q303.3 88.3 302.3 104.1 Q252.8 105.9 203.4 107 Q203 89.7 202.3 72.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M202.2 72.8 Q253 72.6 303.7 72.6 Q303.9 88.3 302.3 104.1 Q252.8 105.2 203.4 107 Q202.3 90.5 201.8 74" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="94" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">LLM</text>
+  <path d="M253.8 105.7 Q254 111.8 253.6 117.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M253.8 105.7 Q253.8 111.8 253.6 117.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M250.8 122.7 Q249.1 117.3 246.9 112.2 Q251.6 113.3 256.3 114.4 Q253.6 118.5 250.8 122.7 Z" fill="#1E40AF"/>
+  <path d="M193.4 125.1 Q251.4 124.8 309.5 124.1 Q308.7 136.4 310.1 148.7 Q252.9 147.8 195.6 150.2 Q193.5 136.8 191.9 123.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M193.4 125.1 Q251.5 126.3 309.5 124.1 Q309.2 136.4 310.1 148.7 Q252.9 150.1 195.6 150.2 Q196.1 137.6 195.6 124.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="141" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">検査</text>
+  <path d="M214.6 151.7 Q214.2 155.5 213.3 159.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M214.6 151.7 Q214.2 155.5 213.3 159.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M215.4 166.6 Q212.2 162.3 208.9 158 Q213.8 157.9 218.7 157.7 Q216.8 162.1 215.4 166.6 Z" fill="#1E40AF"/>
+  <path d="M291.7 149.2 Q290.4 155.4 289.8 161.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M291.7 149.2 Q291.4 155.5 289.8 161.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M289.3 168.2 Q286.6 163.9 284.2 159.3 Q289.7 159.2 295.2 158.4 Q292 163.2 289.3 168.2 Z" fill="#1E40AF"/>
+  <path d="M186 168.3 Q215.9 169 245.8 169.7 Q246.4 181.2 245.5 192.6 Q215.5 191 185.5 191.7 Q186.2 180.3 186.5 168.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M186 168.3 Q215.9 167.7 245.8 169.7 Q245.7 181.2 245.5 192.6 Q215.5 190.8 185.5 191.7 Q185.6 179.6 185.3 167.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="214" y="184" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">通す</text>
+  <path d="M260.6 166.6 Q289.7 169.1 319 169 Q319.1 181.6 318.2 194.1 Q289.5 193.9 260.8 193.6 Q260.1 181 261 168.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M260.6 166.6 Q289.8 167 319 169 Q318.5 181.5 318.2 194.1 Q289.5 192.9 260.8 193.6 Q261.4 180.3 261.9 167" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="290" y="184" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">弾く</text>
+  <text x="252" y="220" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">形式・PII は決定的に</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">足すのは「実行時の合否」</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">頼みごとは規則ではない。門は外に置く</text>
+</svg>

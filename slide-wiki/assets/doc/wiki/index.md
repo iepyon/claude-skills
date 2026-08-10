@@ -94,6 +94,39 @@ LLM が手入れする Wiki — 毎日の手入れで効いてくること
 ### 接続: [[patterns-delegation/コンセント|コンセント]]
 ### 検査: [[patterns-delegation/答案用紙|答案用紙]]
 ### 一覧: [[intro-delegation/一覧-任せ先|何が決まっていれば使えるか]]
+### 次: [[部品|同じ話を、部品の名前で]]
+
+---
+
+## 部品
+<!--id:部品-索引-->
+<!--agenda-->
+LLM と、その周りの部品 — 誰が決め、何を渡すか
+
+### 背景: [[intro-solutions/部品|なぜ差分で書くか]]
+### 基準: [[patterns-solutions/LLM|LLM]]
+### 規則: [[patterns-solutions/ルールベースのプログラミング|ルールベースのプログラミング]]
+### 予測: [[patterns-solutions/機械学習モデル|機械学習モデル]]
+### 振る舞い: [[patterns-solutions/ファインチューニング|ファインチューニング]]
+### 材料: [[patterns-solutions/RAG|RAG]]
+### 前提: [[patterns-solutions/LLM-Wiki|LLM Wiki]]
+### 事実: [[patterns-solutions/データ基盤|データ基盤]]
+### 次: [[配管|どう動かし、どう囲うか]]
+
+---
+
+## 配管
+<!--id:配管-->
+<!--agenda-->
+LLM と、その周りの部品 — 動かし方と、囲い方
+
+### 口: [[patterns-solutions/MCP|MCP]]
+### 段取り: [[patterns-solutions/ワークフロー|ワークフロー]]
+### 自律: [[patterns-solutions/AI-エージェント|AI エージェント]]
+### 並列: [[patterns-solutions/マルチエージェント|マルチエージェント]]
+### 門: [[patterns-solutions/ガードレール|ガードレール]]
+### 物差し: [[patterns-solutions/Evals|Evals]]
+### 一覧: [[intro-solutions/足す表|何を足し、何が LLM に残るか]]
 ### 次: [[書く|パターンを書くパターン]]
 
 ---
@@ -124,6 +157,7 @@ LLM が手入れする Wiki — 毎日の手入れで効いてくること
 ### 育てる: [[intro-wiki/育てる理由|なぜ Wiki を育てるのか]]
 ### 任せる: [[intro-llm-wiki/任せる理由|なぜ AI に手入れを任せるのか]]
 ### 選ぶ: [[intro-delegation/任せ先|なぜ「任せる」を割るのか]]
+### 部品: [[intro-solutions/部品|LLM と、その周りの部品]]
 ### 狙う: [[intro-wiki/狙い直す-wiki|なぜ目的を先に決めないのか]]
 ### 書く: [[patterns-meta/読み方|良いパターンとは何か]]
 ### 語彙: [[育てる|34の語彙を頭から引く]]

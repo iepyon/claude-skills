@@ -1,0 +1,26 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM だけ</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">＋ 学習モデル</text>
+  <path d="M33.5 79.2 Q83.3 80 133.2 81.1 Q133.4 96.6 133.9 112.1 Q83.2 111 32.5 111.9 Q32.5 94.5 32.1 77.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M33.5 79.2 Q83.3 79.5 133.2 81.1 Q133.4 96.6 133.9 112.1 Q83.2 113.7 32.5 111.9 Q33.4 94.6 32.3 77.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="101" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM</text>
+  <path d="M80.5 112.3 Q82.3 121.8 83.3 131.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M80.5 112.3 Q82.7 121.8 83.3 131.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M82.6 137 Q81.2 133.1 79.4 129.4 Q83 129.1 86.5 128.4 Q84.2 132.6 82.6 137 Z" fill="#9CA3AF"/>
+  <path d="M30.9 136.7 Q81 137.9 131.1 137.1 Q132.3 152.6 131.9 168.1 Q82.3 169.8 32.5 169 Q30.7 153.9 28.6 138.8" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.9 136.7 Q81 136 131.1 137.1 Q132 152.6 131.9 168.1 Q82.3 170 32.5 169 Q30.4 153.2 29.9 137.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="157" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">「たぶん高い」</text>
+  <text x="82" y="194" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">0.8 に意味が無い</text>
+  <text x="82" y="216" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">外しても直す先が無い</text>
+  <path d="M201.1 67.8 Q252.5 67.4 304 69.5 Q304.5 80.8 303.3 92.2 Q253.7 92.7 204 92.1 Q201 80.9 200.3 69.4" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M201.1 67.8 Q252.5 68.6 304 69.5 Q304.3 80.8 303.3 92.2 Q253.7 91.6 204 92.1 Q202.6 80.7 202.2 69.3" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="85" text-anchor="middle" font-family="sans-serif" font-size="1" fill="#4B5563">表のデータ</text>
+  <path d="M251.8 92.6 Q252.4 98.9 253.8 105.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M251.8 92.6 Q252.7 98.8 253.8 105.1" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M251.7 110.1 Q249.8 106.5 247.7 103 Q252.4 102.3 257.2 101.7 Q254.8 106.1 251.7 110.1 Z" fill="#1E40AF"/>
+  <path d="M203.8 110 Q252.8 112.5 301.9 112 Q304.3 126.7 304 141.6 Q251.9 139.4 199.9 141.1 Q201.4 125 204.6 109.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M203.8 110 Q252.8 112.6 301.9 112 Q304 126.7 304 141.6 Q251.9 142.3 199.9 141.1 Q204.1 126.3 205.4 111" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="131" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">学習モデル</text>
+  <path d="M252 143.7 Q252.2 147.8 252.2 151.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M252 143.7 Q252.2 147.8 252.2 151.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M252.5 159.2 Q250.1 155.1 248.1 150.9 Q252.6 150.3 257.1 149.2 Q254.6 154.1 252.5 159.2 Z" fill="#1E40AF"/>
+  <path d="M201.6 161.2 Q251.4 160.3 301.2 160.2 Q303.2 173.8 303.2 187.4 Q251.7 188 200.1 186.7 Q199.9 174.9 199.5 163" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M201.6 161.2 Q251.4 160.2 301.2 160.2 Q302.7 173.8 303.2 187.4 Q251.7 186.7 200.1 186.7 Q201.8 173.1 201.2 159.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="178" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">0.83</text>
+  <text x="252" y="216" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">LLM は言葉にする役</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">足すのは「数の勘」</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM に残るのは、問いの言い換えと説明</text>
+</svg>

@@ -1,0 +1,28 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">感想で決める</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">＋ Evals</text>
+  <path d="M31.8 74.9 Q82.2 73.8 132.5 76.6 Q131.6 90.2 131.8 103.8 Q80.9 101.4 29.9 100.7 Q30.6 87.6 30 74.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M31.8 74.9 Q82.2 75.2 132.5 76.6 Q132.3 90.2 131.8 103.8 Q80.8 103.7 29.9 100.7 Q31.4 87.1 31.3 73.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="93" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">直した</text>
+  <path d="M82.7 102.2 Q82.4 107.1 82.8 112" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M82.7 102.2 Q83 107.1 82.8 112" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M82.4 121.7 Q79.5 115.9 75.9 110.5 Q81.4 111 86.9 111.1 Q84.4 116.3 82.4 121.7 Z" fill="#9CA3AF"/>
+  <path d="M32.2 120.2 Q81.8 120.3 131.4 121.2 Q133.1 132.8 132.6 144.5 Q82.2 143.1 31.8 144.3 Q32.1 133.2 30.4 122.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M32.2 120.2 Q81.8 122.6 131.4 121.2 Q132.3 132.8 132.6 144.5 Q82.2 146 31.8 144.3 Q32.8 132 32.3 119.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="137" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">「よさそう」</text>
+  <text x="82" y="176" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">直した所は直る</text>
+  <text x="82" y="198" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">他が落ちても見えない</text>
+  <path d="M199.7 66.3 Q234.4 66.3 268.9 69.7 Q267.4 78.4 267.4 87.2 Q234.1 83.9 200.6 84.5 Q201.5 76.2 201.9 67.9" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M199.7 66.3 Q234.3 68 268.9 69.7 Q267.6 78.4 267.4 87.2 Q234.1 84.4 200.6 84.5 Q198.9 76.6 198.5 68.4" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M201.8 89.8 Q234.8 90.1 267.7 88.5 Q268.9 97.2 268.6 105.9 Q235.1 107.9 201.5 108.2 Q202.6 100.1 203.7 92" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M201.8 89.8 Q234.8 90.9 267.7 88.5 Q267.8 97.2 268.6 105.9 Q235.1 109 201.5 108.2 Q202.7 98.6 202.4 89" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M200.2 106.8 Q234.8 108.6 269.4 108 Q268.6 117.4 268.7 126.8 Q234.1 127.2 199.5 128.2 Q200.5 116.4 202.1 104.7" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M200.2 106.8 Q234.8 107.5 269.4 108 Q269.2 117.4 268.7 126.8 Q234.1 127.7 199.5 128.2 Q199.8 116.7 198 105.4" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="288" y="88" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4B5563">例題</text>
+  <path d="M235.6 126.2 Q234 129.4 232.8 132.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M235.6 126.2 Q234.5 129.7 232.8 132.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M232.6 140 Q230.7 135 228.6 130.1 Q234.1 131.8 239.7 132.8 Q236.1 136.3 232.6 140 Z" fill="#1E40AF"/>
+  <path d="M201.8 142.1 Q253.9 142.3 306 143.9 Q305.1 156.3 303.9 168.8 Q251 167 198.1 167 Q199.5 154.6 202.6 142.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M201.8 142.1 Q253.9 142.8 306 143.9 Q303.8 156.2 303.9 168.8 Q251 166.3 198.1 167 Q200 154.1 204.1 141.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="159" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">採点</text>
+  <path d="M254.1 169.4 Q253.7 172.3 253.6 175.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M254.1 169.4 Q253.9 172.4 253.6 175.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M250 183.4 Q249.9 178.6 249.9 173.8 Q253.2 173.1 256.5 172 Q253.7 178 250 183.4 Z" fill="#1E40AF"/>
+  <path d="M201.8 186 Q251.8 183.9 301.9 183 Q304.4 197.1 305.7 211.4 Q253.3 210.3 201 210.7 Q200.1 197.6 201.6 184.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M201.8 186 Q251.9 185.8 301.9 183 Q303.9 197.2 305.7 211.4 Q253.3 211.7 201 210.7 Q200.8 197.1 200.4 183.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="201" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">前回との差</text>
+  <text x="252" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">落ちたら止める</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">足すのは「変化の測定」</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">感想では、良くなったのか慣れたのか分からない</text>
+</svg>

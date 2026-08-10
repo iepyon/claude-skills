@@ -16,5 +16,7 @@ decks:
   - patterns-llm-wiki # 第2部: LLM が手入れする Wiki のパターン
   - intro-delegation # 第1部: なぜ「AI に任せる」を割るのか
   - patterns-delegation # 第2部: 任せ先を選ぶパターン
+  - intro-solutions # 第1部: 同じ話を、市場にある部品の名前で（LLM との差分）
+  - patterns-solutions # 第2部: 13の部品を LLM との差分で引く
   - patterns-meta # パターンを書くパターン。第1部はまだ無い（対の intro-meta を書いたら隣へ）
   - index # 索引。送りはここで止まるので、最後の1枚から先頭へ戻す

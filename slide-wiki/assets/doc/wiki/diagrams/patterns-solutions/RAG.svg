@@ -1,0 +1,33 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM だけ</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">＋ RAG</text>
+  <path d="M30.3 75.9 Q81.6 76.5 132.8 73.5 Q133.1 87.4 133.7 101.3 Q83.7 99.4 33.6 99.3 Q32.8 86.6 30.4 74.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.3 75.9 Q81.5 72.7 132.8 73.5 Q134.4 87.4 133.7 101.3 Q83.6 102.2 33.6 99.3 Q31.6 87.8 28.3 76.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="91" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">問い</text>
+  <path d="M80.6 101 Q80.5 109.4 80.5 117.8" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M80.6 101 Q80.7 109.4 80.5 117.8" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M83.2 124.1 Q80.6 119.8 77.6 115.7 Q82.9 114.8 88 113.1 Q85.2 118.5 83.2 124.1 Z" fill="#9CA3AF"/>
+  <path d="M30 122.1 Q80.5 123.1 130.9 123.6 Q131.5 140.6 130.9 157.7 Q80.6 156.3 30.2 158.5 Q30.8 139.2 31.2 120" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M30 122.1 Q80.4 123.7 130.9 123.6 Q130.3 140.6 130.9 157.7 Q80.6 156.5 30.2 158.5 Q29.6 140.5 29 122.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="145" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM</text>
+  <path d="M83.5 157.1 Q84 165 83.2 173" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M83.5 157.1 Q84.1 165 83.2 173" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M81.1 181.1 Q80.3 177.3 79.8 173.4 Q82.3 172.1 84.8 170.7 Q82.6 175.8 81.1 181.1 Z" fill="#9CA3AF"/>
+  <path d="M33.5 180.7 Q83 180.5 132.5 181.7 Q131 194.9 130.8 208.1 Q82.1 208.2 33.5 209.7 Q33.8 195.6 31.3 181.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M33.5 180.7 Q83 179.9 132.5 181.7 Q132.9 195 130.8 208.1 Q82.1 209.5 33.5 209.7 Q32.2 195 32.9 180.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="200" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">それらしい答え</text>
+  <text x="82" y="234" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">知らない所を埋める</text>
+  <path d="M201.1 68.5 Q251.2 67.4 301.2 67.3 Q302.3 79.8 302.4 92.4 Q252.8 94.1 203.1 93.3 Q202.1 81.2 202.3 69.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M201.1 68.5 Q251.1 66.6 301.2 67.3 Q302 79.8 302.4 92.4 Q252.8 91.8 203.1 93.3 Q202 81.1 200.3 69" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="84" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">問い</text>
+  <path d="M252.2 94.1 Q252.5 96.9 252.8 99.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M252.2 94.1 Q252.6 96.9 252.8 99.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M252.6 106.8 Q251.3 101.7 250.1 96.6 Q253.1 97.6 256.3 98.1 Q254.3 102.4 252.6 106.8 Z" fill="#1E40AF"/>
+  <path d="M203.7 106.8 Q253.6 106.9 303.4 105 Q302 118.9 302.9 132.9 Q251.7 133.7 200.6 134 Q203.9 121.6 206.1 109" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M203.7 106.8 Q253.5 104.1 303.4 105 Q302.5 118.9 302.9 132.9 Q251.7 133.4 200.6 134 Q202.3 119.5 205.5 105.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="124" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">棚から取る</text>
+  <path d="M250.7 133.7 Q250.3 137.7 249.8 141.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M250.7 133.7 Q249.9 137.7 249.8 141.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M251.2 148.7 Q249.6 142.6 248.3 136.5 Q251.4 136.4 254.4 136.2 Q253.4 142.6 251.2 148.7 Z" fill="#1E40AF"/>
+  <path d="M202.2 148 Q252.8 146.1 303.4 147.8 Q301.3 163.8 301 179.8 Q251.3 180.9 201.5 181.7 Q202.3 163.8 204.3 146.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M202.2 148 Q252.8 149.7 303.4 147.8 Q301.8 163.8 301 179.8 Q251.3 180.8 201.5 181.7 Q202.3 164.1 202.3 146.5" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="168" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">LLM</text>
+  <path d="M252.7 180.5 Q252.2 184 251.8 187.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M252.7 180.5 Q252 183.9 251.8 187.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M252.3 194.4 Q249.6 189.6 247 184.7 Q251.4 185.4 255.9 186 Q254.5 190.4 252.3 194.4 Z" fill="#1E40AF"/>
+  <path d="M203.9 192.2 Q253.7 193.6 303.5 194.5 Q303.6 206.8 301.8 219 Q252.3 220.8 202.9 219.2 Q201.9 204.8 202.1 190.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M203.9 192.2 Q253.8 192 303.5 194.5 Q302.4 206.7 301.8 219 Q252.3 219.8 202.9 219.2 Q204 205.5 203.8 191.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="210" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">根拠の付く答え</text>
+  <text x="252" y="234" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">読んで形にするだけ</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">足すのは「その場の記憶」</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM に残るのは、読んで答えの形にすること</text>
+</svg>

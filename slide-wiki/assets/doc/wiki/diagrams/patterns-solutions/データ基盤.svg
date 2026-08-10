@@ -1,0 +1,24 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM だけ</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">＋ データ基盤</text>
+  <path d="M32 80 Q83.1 78.1 134.2 75.8 Q133.2 93.3 135.1 110.7 Q82.4 110.4 29.7 111.2 Q29.1 95.8 30.9 80.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M32 80 Q83.1 76.6 134.2 75.8 Q136.2 93.2 135.1 110.7 Q82.4 109.5 29.7 111.2 Q29.4 94.7 29.7 78.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="98" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM</text>
+  <path d="M82.4 111 Q82 117 82.2 123.1" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M82.4 111 Q81.8 117 82.2 123.1" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M81.3 130.1 Q80.1 126.2 78.4 122.5 Q82.3 122.5 86.1 121.9 Q83.7 126 81.3 130.1 Z" fill="#9CA3AF"/>
+  <path d="M28.2 130.6 Q80.4 129.9 132.7 130.8 Q133.9 146.4 132.3 161.9 Q82.2 162.5 32 162 Q31.1 147 29.3 132.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M28.2 130.6 Q80.4 129.9 132.7 130.8 Q133.7 146.4 132.3 161.9 Q82.1 160 32 162 Q31.3 145.6 27.5 129.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="150" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">「約 1,200 万」</text>
+  <text x="82" y="190" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">文章の数字を拾う</text>
+  <text x="82" y="212" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">定義が三通りある</text>
+  <path d="M199 66.7 Q252.3 67.8 305.5 67.1 Q303.2 76.5 301.8 86.1 Q250 85.9 198.3 88 Q197.7 77.6 196.9 67.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M199 66.7 Q252.3 67.7 305.5 67.1 Q304 76.6 301.8 86.1 Q250 86.4 198.3 88 Q197.9 76.7 198.8 65.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M197.8 89.3 Q250.7 89.3 303.6 88.8 Q304.6 97.3 304.7 105.9 Q251.7 106.5 198.6 107.8 Q197.8 98.7 195.9 89.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M197.8 89.3 Q250.7 88.1 303.6 88.8 Q303.4 97.4 304.7 105.9 Q251.6 105.4 198.6 107.8 Q197.5 99.6 196 91.5" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M202.2 109.8 Q253.4 106.6 304.8 106.4 Q304.6 115.9 305.5 125.4 Q252.4 126.7 199.3 126.1 Q199.8 117.7 201.1 109.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M202.2 109.8 Q253.5 108.9 304.8 106.4 Q305.8 115.9 305.5 125.4 Q252.4 127.3 199.3 126.1 Q202.1 118.8 203.8 111.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="144" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">出来事の積みと定義</text>
+  <path d="M251.1 150.3 Q252.4 152.4 253.8 154.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M251.1 150.3 Q252.3 152.5 253.8 154.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M251.3 163.4 Q249.8 158.5 247.8 153.8 Q251.5 155.2 255.4 156.2 Q253.2 159.7 251.3 163.4 Z" fill="#1E40AF"/>
+  <path d="M197.9 162.9 Q251.2 162.4 304.4 163 Q305 176.6 305.9 190.1 Q253.6 192.4 201.3 190.7 Q200.4 175.9 198 161.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M197.9 162.9 Q251.2 162.6 304.4 163 Q304.4 176.6 305.9 190.1 Q253.6 192.2 201.3 190.7 Q199 177.8 196.5 165" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="182" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">数える</text>
+  <text x="252" y="212" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">LLM は何を数えるか選ぶ</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">足すのは「数えられる事実」</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">LLM は数えない。選ぶだけにする</text>
+</svg>

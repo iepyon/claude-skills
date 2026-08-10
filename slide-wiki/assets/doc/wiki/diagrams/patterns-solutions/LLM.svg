@@ -1,0 +1,27 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <path d="M18 98.2 Q51.7 97.8 85.3 95.3 Q86.8 110.7 86.6 126.2 Q52 125.9 17.4 126.5 Q16.8 111.5 15.9 96.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M18 98.2 Q51.7 98.1 85.3 95.3 Q86.5 110.7 86.6 126.2 Q52 124.9 17.4 126.5 Q17.9 112 18.9 97.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="52" y="115" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">問い</text>
+  <path d="M85.7 109.8 Q98.9 108.8 112.2 109.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M85.7 109.8 Q99 110.3 112.2 109.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M122 112.4 Q116.6 109 111.3 105.3 Q110.8 111.1 110.2 116.9 Q116.1 114.7 122 112.4 Z" fill="#9CA3AF"/>
+  <path d="M127.8 83 Q171.8 84.9 215.9 85.2 Q215.2 111.4 215.7 137.6 Q170.1 135.9 124.5 137 Q126.8 110.7 127.5 84.2" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M127.8 83 Q171.8 84.4 215.9 85.2 Q214.5 111.4 215.7 137.6 Q170.1 139 124.5 137 Q126.9 110 128.3 82.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="170" y="115" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1E40AF">LLM</text>
+  <path d="M215.4 110.3 Q229.8 111.8 244.2 110.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M215.4 110.3 Q229.8 111 244.2 110.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M250.6 112.4 Q245.5 108.9 240.3 105.7 Q240.1 111.1 239.9 116.6 Q245 114 250.6 112.4 Z" fill="#9CA3AF"/>
+  <path d="M255.9 97.7 Q288.7 98.8 321.6 97.7 Q322.5 112.6 322.3 127.5 Q288.8 125.1 255.4 126.1 Q256.2 111.3 256.1 96.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M255.9 97.7 Q288.7 96.1 321.6 97.7 Q323.3 112.6 322.3 127.5 Q288.8 128.1 255.4 126.1 Q256.8 112.9 257.2 99.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="288" y="115" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">答え</text>
+  <text x="170" y="158" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">一往復。ここで終わる</text>
+  <text x="170" y="180" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">持っていないもの</text>
+  <path d="M17 192.4 Q44.4 192 71.8 194 Q73.2 206.5 73.7 219 Q45.6 218.6 17.5 217.3 Q16.4 204.3 15.2 191.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="44" y="209" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">記憶</text>
+  <path d="M79 192.6 Q107.3 192.9 135.7 192.7 Q134.8 206 133.6 219.3 Q107.2 219 80.7 219.2 Q80.5 205.1 81.4 191" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="107" y="209" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">手</text>
+  <path d="M140.5 192.9 Q169.1 191.3 197.8 193 Q198.4 205 197.2 216.9 Q169.9 218.5 142.6 217.1 Q141.9 205.8 142.4 194.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="170" y="209" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">段取り</text>
+  <path d="M205.8 190.8 Q232.6 191.1 259.2 192.7 Q262 204.2 262.6 216 Q234.7 216.6 206.9 218.7 Q205.3 205.9 204.9 192.9" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="233" y="209" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">同じ答え</text>
+  <path d="M266.7 193.9 Q296.2 191.4 325.8 190.8 Q326.3 204.8 324.9 218.9 Q295.8 219.4 266.8 218 Q268.4 206.8 268.7 195.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="296" y="209" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">数の勘</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">LLM は、言葉を言葉に変える一往復</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">足りない5つを、名前の付いた部品で足す</text>
+</svg>

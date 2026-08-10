@@ -1,0 +1,32 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="82" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">棚が空</text>
+  <text x="252" y="56" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">＋ LLM Wiki</text>
+  <path d="M60.9 99.8 C57.7 107 49.4 110.8 41.9 107.4 C34.5 104.1 29.6 95.5 33.3 87.4 C37 79.2 46.6 76.1 54.5 79.6 C62.4 83.2 64.6 92.7 61.3 100" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M59.7 86.6 C63.8 93 62.7 102 55.9 106.4 C49 110.7 40.1 108.4 35.9 101.7 C31.6 95 32.7 85.7 39.8 81.1 C46.9 76.6 56.6 78.2 61.3 85.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="48" y="124" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">人の頭</text>
+  <path d="M77.3 73 Q105.1 74 132.9 74.7 Q133.2 95.5 132 116.4 Q105.3 116.3 78.7 118 Q77.1 95.6 77 73.2" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="3 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="106" y="99" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">空の棚</text>
+  <path d="M28.7 146.6 Q82.3 145.9 135.8 148.2 Q135.3 162.9 136 177.6 Q83.6 177 31.2 176.3 Q31.1 160.4 30.7 144.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M28.7 146.6 Q82.2 147.5 135.8 148.2 Q136.3 162.9 136 177.6 Q83.6 175.7 31.2 176.3 Q27.9 160.9 27.2 145.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="167" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">RAG</text>
+  <path d="M83.8 178.1 Q82.1 183.7 80.8 189.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M83.8 178.1 Q82.5 183.8 80.8 189.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M80.3 195 Q79.3 191.2 78.2 187.4 Q81.5 186.6 84.7 185.6 Q82.7 190.4 80.3 195 Z" fill="#9CA3AF"/>
+  <path d="M29.1 197 Q81 196.5 132.9 198.1 Q135.1 210 136.2 221.9 Q83.4 220.5 30.6 222.9 Q31.2 208.7 28.9 194.7" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M29.1 197 Q81 195.7 132.9 198.1 Q134 210.1 136.2 221.9 Q83.4 224.3 30.6 222.9 Q30.8 210.6 29.1 198.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="82" y="213" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9CA3AF">埋めた答え</text>
+  <text x="82" y="242" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">拾える形が無い</text>
+  <path d="M200 68 Q252.8 68 305.6 66.7 Q306 92.8 303.6 118.8 Q252 117.8 200.4 120.7 Q200.3 94.2 201.9 67.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M200 68 Q252.8 65.4 305.6 66.7 Q303.9 92.7 303.6 118.8 Q252 119 200.4 120.7 Q199.2 93.5 199.5 66.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M211.9 84.2 Q252.4 83.8 292.9 83.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M211.9 84.2 Q252.4 85.6 292.9 83.7" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M209.4 97.9 Q243.2 98.4 277 96.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M209.4 97.9 Q243.2 96.8 277 96.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M208.6 112.7 Q233.8 110.7 259 110.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M208.6 112.7 Q233.8 111 259 110.4" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="136" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">書き出した前提</text>
+  <path d="M252.5 140.6 Q252.8 143.4 252.7 146.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M252.5 140.6 Q252.4 143.4 252.7 146.3" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M252.8 157.3 Q251.1 151.4 248.5 145.8 Q253.3 145.5 258 145.3 Q255.5 151.4 252.8 157.3 Z" fill="#1E40AF"/>
+  <path d="M200 157 Q253 155.6 305.9 156 Q306.1 169.1 303.8 182 Q252 181.3 200.3 183.1 Q199.4 170.3 200.9 157.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M200 157 Q253 155.6 305.9 156 Q305.1 169 303.8 182 Q252.1 183.6 200.3 183.1 Q199.9 169.4 197.7 155.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="174" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">RAG</text>
+  <path d="M251.2 184.8 Q252.3 186.4 253.4 187.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M251.2 184.8 Q252.2 186.4 253.4 187.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M251.7 197.9 Q250.4 192.9 249.7 187.8 Q253.9 188.8 258.1 189.1 Q255.1 193.7 251.7 197.9 Z" fill="#1E40AF"/>
+  <path d="M202 198.3 Q253.3 196.5 304.8 196.7 Q304.3 210 302.8 223.3 Q250.9 222.3 199 224.1 Q201.9 210.9 204.3 197.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M202 198.3 Q253.4 199.5 304.8 196.7 Q304.5 210 302.8 223.3 Q250.9 222.6 199 224.1 Q200.1 211.5 200.6 198.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="252" y="215" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">辿れる答え</text>
+  <text x="252" y="242" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">索引と語彙で拾える</text>
+
+  <text x="170" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">足すのは「組織の前提」</text>
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">検索の精度より先に、棚の中身がいる</text>
+</svg>
