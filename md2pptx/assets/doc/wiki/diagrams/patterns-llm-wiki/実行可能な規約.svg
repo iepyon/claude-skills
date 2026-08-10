@@ -1,30 +1,30 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">読ませる規約</text>
 
-  <rect x="26" y="46" width="104" height="58" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
-  <line x1="40" y1="66" x2="116" y2="66" stroke="#9CA3AF" stroke-width="1"/>
-  <line x1="40" y1="80" x2="104" y2="80" stroke="#9CA3AF" stroke-width="1"/>
-  <line x1="40" y1="94" x2="112" y2="94" stroke="#9CA3AF" stroke-width="1"/>
+  <path d="M26.6 46.7 Q78.6 47.5 130.6 47.2 Q130.9 75 131.4 102.9 Q78.3 103.7 25.2 102.1 Q25.8 74.7 28.3 47.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M42 67.6 Q78.6 68.6 115 66.6" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M42 67.6 Q78.5 67.6 115 66.6" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M39.1 80.6 Q71 80.7 102.9 78.6" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M39.1 80.6 Q71 80.2 102.9 78.6" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M41.5 92.1 Q76.7 92.2 111.9 92.3" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M41.5 92.1 Q76.7 93.2 111.9 92.3" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <line x1="140" y1="75" x2="180" y2="75" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <path d="M138.4 76.9 Q158.9 73.5 179.7 73.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="190" y="80" font-family="sans-serif" font-size="12" fill="#9CA3AF">守られたか不明</text>
 
-  <line x1="30" y1="126" x2="310" y2="126" stroke="#E2E8F0" stroke-width="1"/>
+  <path d="M30 126.4 Q170.3 126.8 310.6 126.5" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M30 126.4 Q170.3 125 310.6 126.5" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 
   <text x="30" y="154" font-family="sans-serif" font-size="13" fill="#1E40AF">走らせる規約</text>
 
-  <rect x="26" y="166" width="104" height="58" rx="4" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M25.1 166.7 Q78.1 165.6 131 166.4 Q129.1 195.6 130.6 224.9 Q78.7 225 26.7 225.3 Q27.1 195.9 25.1 166.7 Z" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M25.1 166.7 Q78.1 165.6 131 166.4 Q131.9 195.6 130.6 224.9 Q78.7 224.1 26.7 225.3 Q25.2 196 25.1 166.7 Z" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="78" y="190" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">検査</text>
   <text x="78" y="208" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">毎回走る</text>
 
-  <line x1="140" y1="195" x2="178" y2="195" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M138.8 197.1 Q158.7 195.2 178.6 196.8" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M138.8 197.1 Q158.7 195.3 178.6 196.8" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
   <path d="M180 195 l-9 -5 l0 10 z" fill="#1E40AF"/>
 
-  <polyline points="190,176 198,184 214,164" fill="none" stroke="#4B5563" stroke-width="2"/>
+  <path d="M190.3 173.9 Q194.1 179.2 198.7 183.9 Q206.7 173.7 214.1 163.1" fill="none" stroke="#4B5563" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M190.3 173.9 Q194.6 178.8 198.7 183.9 Q207 173.9 214.1 163.1" fill="none" stroke="#4B5563" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="226" y="182" font-family="sans-serif" font-size="12" fill="#4B5563">通った</text>
 
-  <line x1="190" y1="204" x2="210" y2="224" stroke="#1E40AF" stroke-width="2"/>
-  <line x1="210" y1="204" x2="190" y2="224" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M189.1 204.8 Q199 215.1 210.3 224" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M189.1 204.8 Q200.6 213.4 210.3 224" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212.1 205.3 Q202.1 214.1 192.2 223" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M212.1 205.3 Q202.9 215 192.2 223" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="226" y="220" font-family="sans-serif" font-size="12" fill="#1E40AF">落ちた</text>
 
   <text x="170" y="266" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">判定を人の記憶に置かない</text>

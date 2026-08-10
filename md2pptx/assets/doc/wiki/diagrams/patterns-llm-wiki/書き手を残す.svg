@@ -1,31 +1,31 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">1枚のノート</text>
 
-  <rect x="26" y="46" width="172" height="118" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M26 47 Q111.1 47.6 196.1 45.6 Q199.4 104.9 199.1 164.4 Q111.7 163.4 24.3 166.2 Q23.7 105.5 24.6 44.9" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M26 47 Q111 44.4 196.1 45.6 Q198.7 104.9 199.1 164.4 Q111.7 165.9 24.3 166.2 Q24.9 105.4 28.4 44.7" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <circle cx="42" cy="70" r="3.5" fill="#4B5563"/>
-  <line x1="54" y1="70" x2="182" y2="70" stroke="#4B5563" stroke-width="1.5"/>
-  <circle cx="42" cy="94" r="3.5" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <line x1="54" y1="94" x2="166" y2="94" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="5 3"/>
-  <circle cx="42" cy="118" r="3.5" fill="#4B5563"/>
-  <line x1="54" y1="118" x2="174" y2="118" stroke="#4B5563" stroke-width="1.5"/>
-  <circle cx="42" cy="142" r="3.5" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
-  <line x1="54" y1="142" x2="158" y2="142" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <path d="M45.5 68.6 C46.3 70.5 45.2 72.7 43.4 73.4 C41.5 74.2 39.4 73.2 38.7 71.3 C37.9 69.5 38.8 67.4 40.6 66.6 C42.5 65.9 44.5 67 45.2 68.7 Z" fill="#4B5563"/>
+  <path d="M55.3 70.3 Q117.8 72.2 180.3 71.4" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M55.3 70.3 Q117.8 69.4 180.3 71.4" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M45.1 95 C44.6 96.7 42.8 98 40.9 97.4 C39.1 96.8 38.2 94.8 38.7 93 C39.3 91.2 41.3 90.4 43 90.9 C44.7 91.5 45.9 93.2 45.3 95.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M44.8 95.7 C43.8 97.3 41.8 98.1 40.1 97 C38.4 96 38.2 93.8 39.2 92.2 C40.1 90.7 42.2 90.3 43.7 91.2 C45.3 92.2 45.7 94.2 44.7 95.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M52.9 92.8 Q110.4 93.3 167.8 95.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="5 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M45.4 119.6 C44.5 121.5 42.2 121.7 40.6 120.9 C39 120.2 38 118.2 38.9 116.5 C39.7 114.8 41.8 114 43.5 114.8 C45.3 115.7 46.2 117.7 45.4 119.6 Z" fill="#4B5563"/>
+  <path d="M53.7 117.7 Q114.1 115.7 174.4 117.3" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M53.7 117.7 Q114.1 117.8 174.4 117.3" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M45.5 141.8 C45.6 143.8 44 145.2 42.2 145.3 C40.3 145.4 38.7 144 38.6 142.2 C38.5 140.3 40.1 138.8 41.8 138.8 C43.6 138.7 45.6 139.8 45.7 141.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M45.1 139.9 C46.2 141.6 45.3 143.7 43.8 144.7 C42.3 145.7 40.2 145.6 39.1 144 C38 142.4 38.2 140.1 39.9 138.9 C41.6 137.7 43.7 138.7 44.7 140.2" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M52.4 139.9 Q104.4 142 156.3 143.9" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="5 3" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <circle cx="222" cy="66" r="3.5" fill="#4B5563"/>
+  <path d="M224.8 64.1 C225.9 65.7 225.7 67.9 224 69.1 C222.3 70.2 220.3 69.3 219.3 67.8 C218.3 66.3 218.7 64.3 220.2 63.3 C221.7 62.3 223.7 62.7 224.7 64.2 Z" fill="#4B5563"/>
   <text x="234" y="71" font-family="sans-serif" font-size="12" fill="#4B5563">人の判断</text>
-  <circle cx="222" cy="94" r="3.5" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M224.9 95.7 C223.9 97.3 221.9 98 220.2 97 C218.6 96 218.2 93.9 219.1 92.3 C220.1 90.7 222.1 89.9 223.8 91 C225.5 92 225.8 94.1 224.8 95.7" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M225.2 94.9 C224.6 96.7 222.9 98.1 221 97.5 C219 96.9 217.9 94.9 218.5 92.9 C219 91 221.1 90 223 90.6 C224.9 91.1 226 93.1 225.4 95" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="234" y="99" font-family="sans-serif" font-size="12" fill="#1E40AF">AI の整形</text>
 
-  <line x1="112" y1="172" x2="112" y2="198" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M113.9 171.2 Q112.8 185.5 113.4 199.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M113.9 171.2 Q113.9 185.5 113.4 199.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <path d="M112 200 l-5 -9 l10 0 z" fill="#1E40AF"/>
   <text x="128" y="192" font-family="sans-serif" font-size="12" fill="#1E40AF">AI の分だけ剥がす</text>
 
-  <rect x="26" y="208" width="172" height="56" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
-  <circle cx="42" cy="228" r="3.5" fill="#4B5563"/>
-  <line x1="54" y1="228" x2="182" y2="228" stroke="#4B5563" stroke-width="1.5"/>
-  <circle cx="42" cy="248" r="3.5" fill="#4B5563"/>
-  <line x1="54" y1="248" x2="174" y2="248" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M24.5 209.8 Q111.4 206.9 198.3 205.8 Q198 235.4 198.3 264.9 Q112 263.4 25.7 264.4 Q25.2 237.7 23.1 211.1" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M24.5 209.8 Q111.4 208.9 198.3 205.8 Q196.9 235.4 198.3 264.9 Q112 265.8 25.7 264.4 Q24.9 236.9 26.7 209.4" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M45 226.1 C46 227.7 45.4 229.8 43.8 230.8 C42.3 231.8 40.1 231.5 39.1 229.9 C38 228.3 38.3 226 40 224.9 C41.7 223.9 43.9 224.5 44.9 226.1 Z" fill="#4B5563"/>
+  <path d="M53 227 Q117.3 228 181.6 226.6" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M53 227 Q117.3 225.9 181.6 226.6" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M45.4 248.9 C44.9 250.8 43 252 41.1 251.5 C39.2 251 38.2 248.9 38.7 247.1 C39.2 245.3 41.1 244.3 42.9 244.7 C44.7 245.2 46.1 247 45.6 249 Z" fill="#4B5563"/>
+  <path d="M55 247.4 Q113.7 248.4 172.3 247" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M55 247.4 Q113.7 245.7 172.3 247" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="212" y="241" font-family="sans-serif" font-size="12" fill="#4B5563">判断は残る</text>
 
   <text x="170" y="296" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">誰が書いたかが、疑いどころを教える</text>

@@ -1,30 +1,30 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">ばらけた言い方</text>
 
-  <rect x="26" y="48" width="104" height="28" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M26.2 48.8 Q78.8 47.3 131.3 49.4 Q131.7 62.7 131.1 76 Q78.6 74.3 26.1 74.8 Q27 61.4 26.7 48" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="78" y="67" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">ユーザー</text>
-  <rect x="26" y="88" width="104" height="28" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M27.5 88.9 Q78.2 89.5 129 88.8 Q129.1 102.3 128.2 115.7 Q77.3 115.1 26.4 113.9 Q27.5 102.3 27.3 90.8" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="78" y="107" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">利用者</text>
-  <rect x="26" y="128" width="104" height="28" rx="4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M25.6 128 Q77.1 126.4 128.7 126.4 Q129.7 140.3 129.5 154.2 Q78.4 153.6 27.3 155 Q24.4 140.5 24.2 125.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="78" y="147" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">お客さま</text>
 
-  <line x1="136" y1="62" x2="184" y2="100" stroke="#4B5563" stroke-width="1"/>
-  <line x1="136" y1="102" x2="184" y2="102" stroke="#4B5563" stroke-width="1"/>
-  <line x1="136" y1="142" x2="184" y2="104" stroke="#4B5563" stroke-width="1"/>
+  <path d="M138.2 61 Q160.4 80.5 182.2 100.5" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M138.2 61 Q160.9 79.9 182.2 100.5" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M135.6 102 Q160.2 101.9 184.8 103.6" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M135.6 102 Q160.1 104.2 184.8 103.6" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M136.6 140 Q160.1 121.4 185.6 105.7" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M136.6 140 Q162.2 124.5 185.6 105.7" fill="none" stroke="#4B5563" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
   <path d="M186 102 l-9 -5 l0 10 z" fill="#4B5563"/>
 
-  <rect x="196" y="82" width="112" height="42" rx="4" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2"/>
+  <path d="M197.3 83.8 Q253 82.4 308.6 81.3 Q310.3 103.4 308.7 125.6 Q253.1 123.8 197.4 123.8 Q197.5 103.8 197.3 83.8 Z" fill="#F1F5F9" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M197.3 83.8 Q253 84 308.6 81.3 Q306.9 103.5 308.7 125.6 Q253.1 126.3 197.4 123.8 Q197.5 103.8 197.3 83.8 Z" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="252" y="102" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">顧客</text>
   <text x="252" y="118" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1E40AF">正の言い方</text>
 
-  <line x1="30" y1="182" x2="310" y2="182" stroke="#E2E8F0" stroke-width="1"/>
+  <path d="M29.6 182.1 Q170.4 179.8 311.2 181.5" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M29.6 182.1 Q170.4 183.3 311.2 181.5" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 
   <text x="30" y="212" font-family="sans-serif" font-size="12" fill="#4B5563">どれを正にするか</text>
-  <rect x="140" y="196" width="48" height="24" rx="4" fill="none" stroke="#4B5563" stroke-width="1.5"/>
+  <path d="M141.7 198.1 Q166 197.8 190 194.5 Q189.3 207.2 186.5 219.7 Q163.6 217.5 140.6 217.8 Q140.9 207.1 142.9 196.6" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M141.7 198.1 Q165.7 194.7 190 194.5 Q187.4 207 186.5 219.7 Q163.6 217.8 140.6 217.8 Q140.8 208.8 139.4 199.8" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="164" y="213" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">人</text>
 
   <text x="204" y="212" font-family="sans-serif" font-size="12" fill="#1E40AF">寄せる</text>
-  <rect x="256" y="196" width="48" height="24" rx="4" fill="none" stroke="#1E40AF" stroke-width="1.5"/>
+  <path d="M254.8 194.6 Q278.7 197.5 302.7 196.6 Q303.6 208.2 304.5 219.9 Q281.3 221 258 220.2 Q256.1 206.6 252.9 193.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M254.8 194.6 Q278.8 195.8 302.7 196.6 Q303.2 208.3 304.5 219.9 Q281.3 219.4 258 220.2 Q258.7 207.3 257.2 194.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="280" y="213" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">AI</text>
 
   <text x="170" y="264" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">言い方が1つなら、リンクが当たる</text>

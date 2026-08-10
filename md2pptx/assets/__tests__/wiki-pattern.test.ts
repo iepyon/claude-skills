@@ -362,6 +362,23 @@ describe("配布しているデッキの図解", () => {
     expect(svg, `${name}: xmlns が要る`).toMatch(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)
   })
 
+  /**
+   * `ラフで出す` は「粗さが『ここは決めていない』の合図になる」と言っている。
+   * 定規で引いた線でできた図は、本文が道すじと書いても「これが唯一の実装」に読まれる。
+   *
+   * だからこの決まりは文章ではなく検査で持つ（`実行可能な規約` がこのサイトのパターンで、
+   * 読ませるだけの決まりは破られて、気づくのは後だと言っている）。
+   * 揺らし直すのは `npx tsx src/tools/roughen-svg.ts`。
+   */
+  it.each(diagrams)("$name に定規で引いた線が残っていない", ({ name, svg }) => {
+    for (const tag of ["rect", "line", "circle", "polygon", "polyline"]) {
+      expect(
+        svg,
+        `${name}: <${tag}> は真っ直ぐすぎる。npx tsx src/tools/roughen-svg.ts を通す`
+      ).not.toMatch(new RegExp(`<${tag}\\b`))
+    }
+  })
+
   it.each(diagrams)("$name は実寸を名乗る", ({ name, svg }) => {
     // md から `<img>` として読まれるときの表示サイズになる。実寸が無い SVG は
     // 既定の大きさに押し込められて字が潰れる（埋め込み側では 100% に読み替わる）

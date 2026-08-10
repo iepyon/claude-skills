@@ -1,11 +1,11 @@
 <svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <rect x="22" y="76" width="122" height="110" rx="3" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
-  <rect x="38" y="92" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
-  <rect x="90" y="92" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
-  <rect x="38" y="138" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
-  <rect x="90" y="138" width="42" height="30" rx="2" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
-  <line x1="80" y1="107" x2="90" y2="107" stroke="#9CA3AF" stroke-width="1.5"/>
-  <line x1="59" y1="122" x2="59" y2="138" stroke="#9CA3AF" stroke-width="1.5"/>
+  <path d="M20.5 75.9 Q83.2 76 145.9 74.6 Q143 130 142.9 185.4 Q82.7 187.8 22.5 187.9 Q24.1 130.7 22 73.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M20.5 75.9 Q83.2 73.7 145.9 74.6 Q145.5 130 142.9 185.4 Q82.7 186.2 22.5 187.9 Q19.1 132.3 18.4 76.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M37.5 90.9 Q57.7 88.6 78 89.8 Q77.1 105.2 78.6 120.5 Q58.4 121.8 38.2 119.9 Q38.2 105.9 39.5 92" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M37.5 90.9 Q57.7 90.4 78 89.8 Q78.9 105.1 78.6 120.5 Q58.4 120 38.2 119.9 Q37.1 105.4 38.8 91" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M88 93.5 Q110.5 90.8 133.2 91.8 Q131.1 107.3 131.4 122.9 Q110 122.5 88.6 120.7 Q86.2 107.9 86.4 95" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M88 93.5 Q110.6 92.8 133.2 91.8 Q131.1 107.3 131.4 122.9 Q110 122.6 88.6 120.7 Q88.5 106.3 85.9 92.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M35.8 139 Q58.6 137.3 81.4 138.3 Q80.4 154.1 79.1 169.8 Q59.4 168.9 39.7 168.5 Q39.5 152.8 37.8 137.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M35.8 139 Q58.6 139.7 81.4 138.3 Q79.1 154 79.1 169.8 Q59.4 169.1 39.7 168.5 Q36.8 154.9 36.4 141" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M88.7 136.2 Q111.3 134.8 133.8 136.2 Q131.6 151 131.1 166 Q109.7 168.4 88.3 170.1 Q87 154.1 88.6 138.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M88.7 136.2 Q111.3 134.3 133.8 136.2 Q133.5 151.2 131.1 166 Q109.5 166.6 88.3 170.1 Q87.1 154.1 87.7 138.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M78.9 107.1 Q83.6 106.7 88.2 106" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M78.9 107.1 Q83.5 106.4 88.2 106" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M58.7 121.5 Q58.8 129.9 59.1 138.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M58.7 121.5 Q58.3 129.9 59.1 138.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="83" y="210" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">描き込んだ図</text>
   <text x="83" y="232" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">唯一の実装に読める</text>
 
