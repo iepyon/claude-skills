@@ -7,7 +7,7 @@ on:
     branches:
       - main
     paths:
-      - "md2pptx/**"
+      - "slide-wiki/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -25,7 +25,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: md2pptx/assets
+    working-directory: slide-wiki/assets
 
 jobs:
   build:
@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: npm-${{ runner.os }}-${{ hashFiles('md2pptx/assets/package.json') }}
+          key: npm-${{ runner.os }}-${{ hashFiles('slide-wiki/assets/package.json') }}
           restore-keys: npm-${{ runner.os }}-
 
       - name: Install dependencies
@@ -55,7 +55,7 @@ jobs:
         run: npm test
 
       - name: Build the slide wiki
-        run: npx tsx src/cli.ts --wiki --site-title "md2pptx Slide Wiki" doc/wiki _site/index.html
+        run: npx tsx src/cli.ts --wiki --site-title "Slide Wiki" doc/wiki _site/index.html
 
       # doc/Spec.md は全レイアウトの見本。Wiki と同じサイトに置いて
       # 「従来のページめくり」も比較できるようにする。
@@ -72,7 +72,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: md2pptx/assets/_site
+          path: slide-wiki/assets/_site
 
   deploy:
     needs: build

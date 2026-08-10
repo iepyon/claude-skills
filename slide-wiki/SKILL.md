@@ -1,9 +1,9 @@
 ---
-name: md2pptx
+name: slide-wiki
 description: Markdown to PowerPoint/HTML slide generator with layout plugins, wiki-style links and a link-navigable wiki output. Converts structured Markdown into presentation slides (.pptx, .html) using a pipeline of parse → validate → layout → render. Supports 17 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, pattern language, and wiki patterns with a required SVG diagram. Use when creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, building a linked slide wiki from several decks, or when the user wants to format content for presentation output.
 ---
 
-# md2pptx
+# slide-wiki
 
 Markdown → AST → PPTX/HTML 変換スキル。共通レイアウトエンジンで座標を計算し、PPTX と HTML 両方に出力する。
 

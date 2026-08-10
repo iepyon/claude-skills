@@ -1,10 +1,10 @@
-# md2pptx
+# slide-wiki
 
 Lightweight Markdown to PowerPoint / HTML slide generator using Effect-TS and pptxgenjs.
 
 ## Overview
 
-`md2pptx` converts Markdown directly to PPTX using a custom AST, bypassing the heavyweight
+`slide-wiki` converts Markdown directly to PPTX using a custom AST, bypassing the heavyweight
 Markdown → HTML → Playwright → PPTX pipeline used in `md2html2pptx`.
 
 A shared layout engine computes every coordinate once, and both renderers consume the same

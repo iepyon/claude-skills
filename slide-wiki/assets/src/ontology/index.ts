@@ -23,7 +23,7 @@ import type {
 
 export * from "./types.js"
 
-/** src/ontology/ から見て md2pptx/ontology.yaml */
+/** src/ontology/ から見て slide-wiki/ontology.yaml */
 const ONTOLOGY_PATH = fileURLToPath(new URL("../../../ontology.yaml", import.meta.url))
 
 let cached: Ontology | undefined
