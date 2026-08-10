@@ -111,6 +111,7 @@ LLM と、その周りの部品 — 誰が決め、何を渡すか
 ### 材料: [[patterns-solutions/RAG|RAG]]
 ### 前提: [[patterns-solutions/LLM-Wiki|LLM Wiki]]
 ### 事実: [[patterns-solutions/データ基盤|データ基盤]]
+### 手順: [[patterns-solutions/Agent-Skills|Agent Skills]]
 ### 次: [[配管|どう動かし、どう囲うか]]
 
 ---
