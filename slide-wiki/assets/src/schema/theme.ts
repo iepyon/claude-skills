@@ -96,11 +96,18 @@ export interface Theme {
   }
 }
 
-export type PartialTheme = DeepPartial<Theme>
-
-type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
-}
+/**
+ * テーマ YAML は節ごとの部分指定を許す（`contentSlide.titleSize` だけ上書きする等）。
+ *
+ * **`Theme` は2階層なので、各節に `Partial` を当てるだけで足りる。** 汎用の DeepPartial を
+ * 再帰させると `string[] extends object` が真なので**配列の要素まで省略可能**になり、
+ * `(string | undefined)[]` が `Theme` に代入できず型検査が落ちる（実際に3件落ちていた）。
+ * 再帰しなければその穴は構造的に生じない — 配列を特例で除外する必要も無い。
+ *
+ * 3階層目を足すと、その階層は部分指定できなくなる。黙って通るのではなく `mergeTheme` が
+ * コンパイルエラーになるので、そのとき直せる。
+ */
+export type PartialTheme = { [K in keyof Theme]?: Partial<Theme[K]> }
 
 export const DEFAULT_THEME: Theme = {
   fonts: {

@@ -1,0 +1,66 @@
+name: CI
+
+# PR で検査を走らせる。**pages.yml に PR トリガを足してはいけない**し、concurrency group を
+# 共有してもいけない — 理由と過去の事故は pages.yml の該当コメントにある（ここへ写すと
+# 二重管理になる）。公開と検査は別の workflow に分ける。この2点は
+# `assets/__tests__/workflows.test.ts` が落ちる形で守っている。
+#
+# main への push はここでは見ない。pages.yml が同じ `npm test` を通してから公開する。
+on:
+  pull_request:
+    # **`.github/workflows/**` まで見るのがこのフィルタの要点。** `slide-wiki/**` だけだと、
+    # pages.yml に `pull_request` を足す PR で CI が発火せず、workflows.test.ts が
+    # 「それが防ぐためにある変更」に対してだけ走らない — ガードが fail-open になる。
+    paths:
+      - "slide-wiki/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# PR ごとに1本。押し直したら古い run を捨てる。
+# group 名は pages と必ず別にする（同じにすると上記の事故が再発する）。
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: slide-wiki/assets
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # lockfile を追跡していないので setup-node の `cache: npm` と `npm ci` が使えず、
+      # ~/.npm を自前でキャッシュする。事情は pages.yml の同じステップに書いてある。
+      # key を pages.yml と同じ文字列にしているのは、PR が main のキャッシュを
+      # 復元できるようにするため（別にすると 160MB 級の entry が2つできる）。
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('slide-wiki/assets/package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # 宣言の自己点検・生成物の鮮度・宣言に照らしたデッキの検査・3者比較は、
+      # すべて __tests__ 経由で走る（ontology.test.ts / three-way-verify.test.ts）。
+      # ここで CLI をもう一度叩くと二重管理になるので足さない。
+      - name: Run tests
+        run: npm test
+
+      # vitest は esbuild で型を捨てるので、npm test では型エラーが出ない。
+      # 検査するのは src/ だけ（tsconfig の exclude どおり）。__tests__ を入れるには
+      # 別 tsconfig と 38 件の解消が要る — BACKLOG B-45 に残してある。
+      - name: Typecheck
+        run: npm run typecheck
