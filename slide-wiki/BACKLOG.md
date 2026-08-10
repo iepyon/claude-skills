@@ -1,528 +1,182 @@
 # slide-wiki 機能バックログ
 
-Claude が標準の document-skills:pptx スキル(pptxgenjs スクリプト書き下ろし + 目視修正ループ)で生成するプレゼンテーションと同等の品質を、**決定論的な Markdown → PPTX パイプライン**として実現するためのバックログ。
+Markdown のデッキを**リンクで辿れるスライド Wiki** にする。同じデッキを PPTX と HTML にも出し、
+座標は3系統で共通のレイアウトエンジンが計算する。このバックログはその順位 —
+**Wiki が主題、PPTX と HTML は同じデッキの別の出し方** — で並べる。
 
-- 調査日: 2026-08-07
-- 比較対象: `~/.claude/plugins/cache/anthropic-agent-skills/document-skills/*/skills/pptx/`(version b29e7cf65e5c)
-- slide-wiki が既に優位な点: 決定論的再現性、レビュー可能な中間表現(Markdown)、AST/HTML/PPTX の3者比較検証(`src/tools/inventory-diff.ts`)、グラデーション表現
+- 直近の見直し: 2026-08-10（スキルを `md2pptx` から `slide-wiki` に改名したのに合わせた再優先付け）
+- 起点: 2026-08-07 の調査（標準の document-skills:pptx との機能差）、
+  2026-08-08 の調査（オントロジー観点のレビュー + 動作確認）
 
-B-24 以降は別の調査（2026-08-08、オントロジー観点のレビュー + 動作確認）で追加した。
-上記の「3者比較検証」は長らく機能していなかった（AST の脚が別のキー空間を使い、
-`--verify` は食い違いを見つけても常に exit 0 だった）。2026-08-08 に修復した — [B-24](#b-24)。
-残る範囲は [B-33](#b-33)。
+**以前の版は「document-skills:pptx と同等の品質を決定論的に出す」を文書全体の目的に掲げていた。**
+改名で順位を入れ替えたので、その物差しでしか正当化できない項目は降格または削除した
+（何をなぜ削ったかは末尾の[削った項目](#dropped)）。PPTX の作り込みは無くなったわけではなく、
+Wiki に効かない範囲が P3 に下りた。
+
+## 現在の実測（2026-08-10）
+
+| 確認 | 結果 |
+|---|---|
+| `npm test` | ✅ 26 files / 642 tests |
+| `npx tsx src/ontology/selfcheck.ts` | ✅ レイアウト 17 / 注釈 3 / 語彙 4 / プラグイン 12 — 整合 |
+| `npx tsx src/tools/gen-ontology-doc.ts --check` | ✅ ドリフト無し |
+| `--lint --strict`（`doc/Spec.md` + `doc/wiki` の8デッキ） | ✅ 全通過 |
+| `--verify`（3者比較） | ✅ `three-way-verify.test.ts` が全デッキ + 非既定テーマで緑 |
+| `npx tsc --noEmit` | ❌ 3 件（`schema/theme.ts:231,235,257`）→ [B-25](#b-25) |
+
+**緑のものが緑なのは本物**（selfcheck・gen --check・lint はいずれも宣言と実装を実際に突き合わせて
+いる）。問題は、緑のチェックが**見ていない範囲**が広いこと — その範囲を項目として持っているのが
+[B-32](#b-32) / [B-33](#b-33) である。
 
 ## 一覧
 
 | ID | 優先度 | 項目 | カテゴリ |
 |---|---|---|---|
-| [B-01](#b-01) | ✅済 | ドキュメント乖離の解消 | ツール品質 |
-| [B-02](#b-02) | ✅済 | 箇条書きリスト対応(1階層) | Markdown基本 |
-| [B-03](#b-03) | P0 | スピーカーノート対応 | 表現力 |
-| [B-04](#b-04) | P1 | 画像挿入 `![alt](src)` | 表現力 |
-| [B-05](#b-05) | P1 | ネイティブチャート | 表現力 |
-| [B-06](#b-06) | P1 | テーブルのネイティブ化 | 表現力 |
-| [B-07](#b-07) | P1 | 固定要素数レイアウトの柔軟化 | ツール品質 |
-| [B-08](#b-08) | P1 | オーバーフロー処理の一般化 | ツール品質 |
-| [B-09](#b-09) | P1 | デザイン規範の反映・テーマプリセット | 表現力 |
-| [B-10](#b-10) | P2 | レンダリング検証ループ | ツール品質 |
-| [B-11](#b-11) | P2 | OOXML 検証の統合 | ツール品質 |
-| [B-12](#b-12) | P2 | テーマカバレッジ拡大 | ツール品質 |
-| [B-13](#b-13) | P2 | ページ番号・マスタースライド | 表現力 |
-| [B-14](#b-14) | ✅済 | ハイパーリンク対応 | Markdown基本 |
-| [B-15](#b-15) | P2 | テスト補強 | ツール品質 |
-| [B-16](#b-16) | P3 | Mermaid 図対応 | 表現力 |
-| [B-17](#b-17) | P3 | .potx テンプレート駆動出力 | 表現力 |
-| [B-18](#b-18) | P3 | Good/Bad/Hat レイアウト・アイコン図解 | 表現力 |
-| [B-19](#b-19) | P3 | Markdown 拡張(ネストリスト・引用ブロック等) | Markdown基本 |
-| [B-20](#b-20) | P3 | スライド寸法・マージンのテーマ化 | ツール品質 |
-| [B-21](#b-21) | P3 | HTML 出力の印刷/PDF 対応 | 表現力 |
-| [B-22](#b-22) | P2 | プラグイン内テキストのリンク対応 | Markdown基本 |
-| [B-23](#b-23) | P2 | 記法そのものの整理（宣言で洗い出した候補） | Markdown基本 |
-| [B-24](#b-24) | ✅済 | `--verify` の3者比較が壊れている | ツール品質 |
+| [B-22](#b-22) | P0 | プラグイン内テキストのリンクが効かない | Wiki |
+| [B-36](#b-36) | P0 | 折れたリンクがビルドを止めない | Wiki |
 | [B-25](#b-25) | P0 | 型検査が CI にもテストにも無い | ツール品質 |
+| [B-37](#b-37) | P1 | 絞り込みが本文を見ていない | Wiki |
 | [B-26](#b-26) | P1 | 文字数の数え方が宣言に反する | オントロジー |
 | [B-27](#b-27) | P1 | lint の盲点（タイトルスライド・`slot.body`） | オントロジー |
 | [B-28](#b-28) | P1 | 宣言の「誰が読むか」が宣言に無い | オントロジー |
 | [B-29](#b-29) | P1 | コア側の宣言駆動化 | オントロジー |
-| [B-30](#b-30) | P2 | 層ごとに名前が違う同一概念 | オントロジー |
-| [B-31](#b-31) | P2 | `LayoutPlugin` に足りないモデル | オントロジー |
-| [B-32](#b-32) | P2 | 存在しない保証を主張しているコメント・数え上げ | ツール品質 |
-| [B-33](#b-33) | P2 | 3者比較が見ていない残り | ツール品質 |
-| [B-34](#b-34) | P3 | 整理で見送った重複 | ツール品質 |
+| [B-32](#b-32) | P1 | 存在しない保証を主張しているコメント・数え上げ | ツール品質 |
+| [B-07](#b-07) | P1 | 固定要素数レイアウトの柔軟化 | ツール品質 |
+| [B-04](#b-04) | P1 | 任意のレイアウトへの画像挿入 | 表現力 |
 | [B-35](#b-35) | P2 | 読まないコードフェンスをコアで吸収する | ツール品質 |
+| [B-33](#b-33) | P2 | 3者比較が見ていない残り | ツール品質 |
+| [B-34](#b-34) | P2 | 整理で見送った重複 | ツール品質 |
+| [B-31](#b-31) | P2 | `LayoutPlugin` に足りないモデル | オントロジー |
+| [B-30](#b-30) | P2 | 層ごとに名前が違う同一概念 | オントロジー |
+| [B-23](#b-23) | P2 | 記法そのものの整理 | Markdown基本 |
+| [B-12](#b-12) | P2 | テーマカバレッジ拡大 | ツール品質 |
+| [B-15](#b-15) | P2 | テスト補強 | ツール品質 |
+| [B-19](#b-19) | P3 | Markdown 拡張（ネストリスト・引用ブロック等） | Markdown基本 |
+| [B-03](#b-03) | P3 | スピーカーノート対応 | PPTX |
+| [B-05](#b-05) | P3 | ネイティブチャート | PPTX |
+| [B-06](#b-06) | P3 | テーブルのネイティブ化 | PPTX |
+| [B-13](#b-13) | P3 | ページ番号・マスタースライド | PPTX |
+| [B-09](#b-09) | P3 | 配色プリセット | 表現力 |
+| [B-20](#b-20) | P3 | スライド寸法・マージンのテーマ化 | ツール品質 |
+| [B-21](#b-21) | P3 | HTML 出力の印刷/PDF 対応 | 表現力 |
+
+完了して畳んだ項目は[末尾](#done)、削った項目とその理由は[こちら](#dropped)。
 
 ---
 
-## P0 — 前提整備・基本要素
-
-<a id="b-01"></a>
-### B-01: ドキュメント乖離の解消
-
-**背景**: ドキュメントと実装の乖離が複数箇所ある。slide-wiki は「Claude がドキュメントを読んで機械的に使う」ツールなので、ドキュメントの誤りはそのまま生成品質の劣化・機能の不使用につながる。
-
-- 文字数制限: 実装は `MAX_CHARS_PER_SLIDE = 1000`(`assets/src/constants.ts:31`)だが、SKILL.md / CLAUDE.md / assets/README.md は「240文字」、`assets/src/schema/validation.ts` のコメントは「240文字、LeanCanvas は800文字」と3様に食い違う
-- SKILL.md のレイアウト一覧に `pattern-language`(`<!--pattern-language-a-->`)が未記載 — 実装済みなのに Claude から発見できない
-- CLAUDE.md が存在しない `renderer/layout/visual.ts` を記載(icon-layout / steps / numbered-list プラグインに移動済み)
-- CLAUDE.md のプラグインツリーが lean-canvas と customer-journey の2つのみ(実際は10プラグイン登録)
-- CLAUDE.md のテスト対応表に `inline-formatting.test.ts` / `table.test.ts` / `pattern-language.test.ts` が未記載
-- assets/README.md の Architecture 図が旧構成(`renderer/layout-engine.ts` 等)のまま
-
-**受け入れ基準**: 文字数制限の正を決めて(実装に合わせるか仕様に戻すか)3ドキュメント + validation.ts コメントを統一。SKILL.md に全12レイアウトタグが載っている。CLAUDE.md のツリー・テスト表が実態と一致。
-
-**✅ 完了（オントロジー導入）**: 個別に直すのではなく、乖離しうる事実の置き場を1つにした。
-`ontology.yaml` が md の構造の正本になり、SKILL.md のレイアウト表・注釈表・インライン記法表・
-文字数の記述は `gen-ontology-doc.ts` の生成領域になった（`--check` でドリフトを検出）。
-文字数上限と各プラグインのディレクティブはコードから消え、`src/ontology/` 経由で宣言を読む。
-`ontology.test.ts` が宣言 ⇔ 実装 ⇔ 生成物の3者を留める。CLAUDE.md / README に残った
-「数え上げ」（プラグイン件数・ファイル名・テスト表）は `docs-consistency.test.ts` が引き続き見る。
-
-<a id="b-02"></a>
-### B-02: 箇条書きリスト対応(1階層)
-
-**背景**: `- ` / `* ` / `1. ` のマッチャがコアトークナイザ(`assets/src/parser/tokenizer.ts`)に存在せず、`- foo` は BodyText として本文に混入しハイフンがそのまま描画される。Markdown の最も基本的な要素が欠落しており、Claude が自然に書く Markdown がそのまま通らない。
-
-**実装方針**: pptxgenjs の `bullet: true` + `breakLine: true` + `paraSpaceAfter` を使用(標準スキルの規範に従い、リテラル `•` の埋め込みは禁止 — 二重表示になる。`lineSpacing` ではなく `paraSpaceAfter` で間隔調整)。HTML レンダラ側は `<ul>/<li>` 相当の描画を `LayoutResult` 経由で同一座標に出す。
-
-**受け入れ基準**: `- item` が箇条書きとして PPTX/HTML 両方に描画される。番号付き `1. item` も対応。既存の pattern-language プラグインのローカル解釈(`handler.ts:367`)と衝突しない。
-
-**✅ 実装済み**。ただし置き場所は上の想定と違う — マッチャは `tokenizer.ts` ではなく
-**ブロック層の `parser/block-formatter.ts`** にある（`UNORDERED` / `ORDERED` 正規表現、
-`- ` `* ` `+ ` `N. ` を受理）。トークン層で拾わないので `*italic*` と衝突せず、
-`parseInlineFormatting` とも素直に合成できる。
-`renderer/layout/helpers.ts:357` の `buildSectionBoxes` が `hasListMarker` で分岐し、
-PPTX は `slide-builder.ts` の `bulletToPptxOption` でネイティブバレット、HTML は
-`element-renderers.ts` の `.para-bullet` / `.para-number` を CSS 疑似要素で描く
-（リテラルの `•` は書かない）。`block-formatter.test.ts` が9件で覆っている。
-
-**残っているスコープ外**: 箇条書きが効くのは `buildSectionBoxes` を通る経路
-（コアレイアウトと lean-canvas）だけ。`layout.ts` で `text:` に直接書き出す
-プラグインには届かない — B-22 と同じ範囲。
-
-<a id="b-03"></a>
-### B-03: スピーカーノート対応
-
-**背景**: `slide.addNotes()` が未使用(`assets/src` 全体で0ヒット)。標準スキルではスピーカーノートは定番機能で、「ノートをスライド上のテキストボックスに書くのは禁止」と明記されるほど基本の出力先。プレゼン原稿を Markdown で一緒に管理できると中間表現としての価値が大きく上がる。
-
-**実装方針**: 記法案 — スライド内の `<!--notes-->` 以降の本文をノートとして収集し `addNotes()`(プレーンテキスト、1スライド1回)に渡す。240/1000文字制限のカウント対象外とする。HTML 出力では `data-notes` 属性 or 表示トグルで確認可能にする。
-
-**受け入れ基準**: `<!--notes-->` 以降が PowerPoint のノートペインに表示され、スライド面には描画されない。
-
----
-
-## P1 — 表現力ギャップ
-
-<a id="b-04"></a>
-### B-04: 画像挿入 `![alt](src)`
-
-**背景**: `![alt](src)` のマッチャが存在せず、ユーザー画像を挿入する手段がゼロ。`addImage` は Material Icon の SVG 埋め込み専用(`assets/src/renderer/icon-resolver.ts`)。スクリーンショットや図版を貼れないのはプレゼンツールとして大きな欠落。
-
-**一部着手済み (2026-08-09)**: 行まるごとの `![alt](src)` は `Image` トークンとして認識され、パスは `baseDir`（md の置かれたディレクトリ）から解かれる。読み込みは `assets.ts` の1関数だけが行い、存在しないパスと宣言外の拡張子は行番号つきの ParseError で落ちる。ただし**読むのは WikiPattern の図解スロットだけ**で、対象も SVG のみ（HTML はインライン展開、PPTX は data URI で `addImage`）。残件はここで挙げた本題のほう — 任意のレイアウトに画像を置けるようにする `ImageBox` の追加と、ラスタ画像・アスペクト比保持・領域内フィット。画像を読まないレイアウトに置かれた参照は lint が「描かれない」と報告する。
-
-**実装方針**: ローカルパス/相対パスを読み込み base64 data URI で `addImage`。レイアウトエンジンに `ImageBox` を追加し PPTX/HTML 両対応。LeftRight レイアウトとの組み合わせ(左テキスト+右画像 — 標準スキルの推奨パターン)を最優先ユースケースとする。アスペクト比保持・領域内フィットを自動計算。
-
-**受け入れ基準**: `![説明](./fig.png)` が PPTX/HTML 両方に表示される。存在しないパスは ParseError/ValidationError で明確に失敗する。
-
-<a id="b-05"></a>
-### B-05: ネイティブチャート
-
-**背景**: `addChart` 未使用。`assets/README.md` の TODO「グラフ表示」の残件でもある。標準スキルは「チャートは必ずネイティブ `addChart()`、画像フォールバック禁止」を規範とする(PowerPoint 上で編集できるため)。
-
-**実装方針**: bar / line / pie から着手。記法はパイプ表 + ディレクティブ(例: `<!--chart:bar-->` + テーブル)か YAML フェンスかを設計時に決定。**pptxgenjs 固有の破損パターンを必ず回避**(標準スキル SKILL.md に列挙): stacked bar での `dataLabelPosition: "outEnd"` はファイル破損、combo チャートは `valAxes` と `catAxes` の両方が必要、16進色に `#` を付けると破損。B-11 の検証と併せて導入すると安全。
-
-**受け入れ基準**: Markdown からネイティブチャート入りの PPTX が生成され、PowerPoint で開いてチャートを編集できる。HTML 側は SVG 等で同等の見た目を描画。
-
-<a id="b-06"></a>
-### B-06: テーブルのネイティブ化
-
-**背景**: 現在の table プラグイン(`assets/src/plugins/table/`)は shape + text の自力描画で、PowerPoint 上では単なる図形の集まり。行の追加や列幅調整ができない。`addTable` を使えば編集可能なネイティブテーブルになる。
-
-**実装方針**: `addTable` への移行 or `<!--table:native-->` のようなオプトイン。注意: 標準スキルのバリデータは `<a:tblPr>` 内の重複 `<a:tableStyleId>` を「PowerPoint が拒否する致命的エラー」として検出しており、生成時に留意。自力描画には HTML との座標一致という利点があるため、レイアウトエンジンの座標計算は維持しつつ PPTX 出力のみネイティブ化する設計を検討。
-
-**受け入れ基準**: 生成された表を PowerPoint 上で行・列単位に編集できる。3者比較(`--verify`)が引き続き通る。
-
-<a id="b-07"></a>
-### B-07: 固定要素数レイアウトの柔軟化
-
-**背景**: IconColumn / IconCard は TypeScript の tuple 型で **3要素固定**(2個や4個は型エラー)。CustomerJourney も4行固定。Claude が生成するコンテンツは必ずしも3項目に収まらず、機械的生成の入力制約として厳しすぎる。
-
-**実装方針**: tuple を長さ2〜4の配列 + バリデーションに変更し、レイアウト側(`assets/src/plugins/icon-layout/layout.ts` 等)で要素数に応じた幅・フォントサイズ計算を行う(Grid の `calculateGridSpacing` と同様の段階縮小)。
-
-**受け入れ基準**: `<!--icon-cols-->` で2〜4項目が均等配置される。3項目の既存スナップショットテストが変化しない(後方互換)。
-
-<a id="b-08"></a>
-### B-08: オーバーフロー処理の一般化
-
-**背景**: 自動改ページは CustomerJourney のみ実装(converter 内ページネーション)。他レイアウトはオーバーフローしても切り詰め・縮小されず**はみ出したまま出力される**。標準スキルは「テキストのはみ出しは最優先チェック項目、はみ出したまま出荷禁止」とする。決定論的パイプラインでは目視ループがないぶん、レイアウト側での保証が必須。
-
-**実装方針**: `estimateTextHeight`(`assets/src/renderer/layout/helpers.ts`)を使い、レイアウト計算後に (1) 段階的フォント縮小 (2) それでも溢れる場合は ValidationError で明確に失敗 — の2段構え。黙ってはみ出すのが最悪。
-
-**受け入れ基準**: 全コアレイアウトで、収まらないコンテンツが「縮小されて収まる」か「エラーで弾かれる」かのどちらかになる。はみ出したまま成功終了するケースがない。
-
-<a id="b-09"></a>
-### B-09: デザイン規範の反映・テーマプリセット
-
-**背景**: 標準スキルは強いデザイン規範を持つ("Don't create boring slides"、支配色60-70% + アクセント、ダーク/ライトのサンドイッチ構造、名前付き10パレット)。同時に **Avoid リスト**があり、「装飾的なカラーバー・アクセントストライプ全面禁止(カード端の細いストライプ含む)」と明記される — **現行 IconCard の「上部アクセントバー」はこれに抵触**(`assets/src/plugins/icon-layout/`)。「カードの差別化は淡い背景ティント・ドロップシャドウ・アイコンで行う」が代替。
-
-**実装方針**:
-1. IconCard のアクセントバーをデフォルト無効化 or 背景ティント方式に変更
-2. 標準スキルの10パレット(Midnight Executive / Forest & Moss / Coral Energy 等)を `--theme` 用 YAML プリセットとして `assets/themes/` に同梱
-3. タイトル・結論スライドをダーク背景にする「サンドイッチ構造」をテーマで表現可能にする
-4. 安全フォント(Arial, Calibri, Cambria 等)をデフォルトに、Aptos をデフォルトにしない
-
-**受け入れ基準**: `--theme themes/midnight-executive.yaml` で標準スキル相当のパレットが適用される。デフォルト出力が Avoid リストに抵触しない。
-
----
-
-## P2 — 運用・信頼性
-
-<a id="b-10"></a>
-### B-10: レンダリング検証ループ
-
-**背景**: 標準スキルは「soffice で PDF 化 → pdftoppm で JPEG 化 → 全スライドを目視」を**必須ワークフロー**とし、18種のチェック項目(はみ出し・重なり・マージン不足・低コントラスト等)を規定する。slide-wiki は決定論的だが、レイアウトバグや新プラグインの検証にこのループがあると開発・利用両面で品質が上がる。
-
-**実装方針**: CLI に `--render-check` を追加し、`soffice --convert-to pdf` → `pdftoppm -jpeg -r 150` を実行してスライド画像を出力(標準スキルの `scripts/office/soffice.py` と同様、sandbox でのハング対策を考慮)。SKILL.md に「生成後に画像を確認する」手順を追記。
-
-**受け入れ基準**: `npx tsx src/cli.ts in.md out.pptx --render-check` でスライドごとの JPEG が生成される。soffice 不在時は明確なエラーメッセージでスキップ。
-
-<a id="b-11"></a>
-### B-11: OOXML 検証の統合
-
-**背景**: 標準スキルは ISO-IEC29500 XSD 一式 + 14種の検証 + 「**pptxgenjs は PowerPoint が開けないチャート XML を出すが、python-pptx も LibreOffice も XSD もそれを通す**」という他ツールで検出不能な破損パターンの検出器(`scripts/office/validators/pptx.py`)を持つ。slide-wiki の `--verify` は座標の3者比較のみで、**ファイルとしての妥当性**は検証していない。B-05(チャート)導入時には特に必須。
-
-**実装方針**: 標準スキルの `validate.py` を外部コマンドとして呼び出す統合(パスは環境依存のため設定可能に)か、最低限 SKILL.md に「チャート使用時は validate.py を実行する」手順を記載。
-
-**受け入れ基準**: 生成 PPTX に対して OOXML 検証を1コマンドで実行でき、破損パターンが検出されたら CI/テストで落ちる。
-
-<a id="b-12"></a>
-### B-12: テーマカバレッジ拡大
-
-**背景**: テーマ(`assets/src/schema/theme.ts`、約60キー)でカスタマイズできない配色が多い: lean-canvas / customer-journey / pattern-language / quote / steps の配色は各プラグインの `constants.ts` にハードコード、シンタックスハイライト配色も固定。また `mergeTheme` は全キー手書き列挙のため、テーマ項目を1つ増やすたびに interface / DEFAULT_THEME / merge の3箇所修正が必要で拡張コストが高い。
-
-**実装方針**: (1) `mergeTheme` を汎用 deep-merge に置き換え(キー列挙の廃止)、(2) プラグインが自分のテーマセクションを登録できるフックを `LayoutPlugin` インターフェース(`assets/src/plugins/types.ts`)に追加、(3) ハイライト配色のテーマ化。
-
-**受け入れ基準**: B-09 のプリセット YAML で全プラグインの配色が変わる。テーマ項目追加が1箇所の変更で済む。
-
-<a id="b-13"></a>
-### B-13: ページ番号・マスタースライド
-
-**背景**: `slideNumber` / `defineSlideMaster` が未使用。全スライドが素の白紙に絶対座標で描画されるため、PowerPoint 上でレイアウトを一括変更する手段がなく、ページ番号・フッタも出ない。
-
-**実装方針**: `defineSlideMaster` でタイトル用・コンテンツ用マスターを定義し、背景色・ページ番号・フッタをマスター側に移す。テーマからフッタテキスト・ページ番号の有無を制御。
-
-**受け入れ基準**: 生成 PPTX にページ番号が入り、マスター編集で背景を一括変更できる。既存スナップショットへの影響を確認済み。
-
-<a id="b-14"></a>
-### B-14: ハイパーリンク対応
-
-**背景**: `[text](url)` のマッチャがなく、`hyperlink` オプションも未使用。リンクは PPTX/HTML どちらにも出力されない。参考資料スライドで URL を活かせない。
-
-**実装方針**: `inline-formatter.ts` に link パターンを追加し、`InlineTextRun` に `hyperlink` プロパティを追加。PPTX は `addText` の `hyperlink` オプション、HTML は `<a>` タグで出力。文字数カウントは表示テキストのみ対象。
-
-**受け入れ基準**: `[Anthropic](https://anthropic.com)` がクリック可能なリンクとして両出力に現れる。
-
-**✅ 実装済み**。想定より広く実装した:
-
-- フィールド名は `hyperlink` ではなく `link`（`{kind:"external"|"internal"}` の判別共用体）。
-  外部 URL だけでなく `[[slide-id]]` の内部リンクも同じ経路に載せたため。
-- PPTX は外部が `hyperlink:{url}`、内部が `hyperlink:{slide:N}`（`ppaction://hlinksldjump`）。
-  解決できない内部リンクはリンクを付けない。
-- 文字数カウントは表示ラベルのみ。`validation.ts` が strip 正規表現を複製していたので
-  `stripInlineFormatting` に一本化した。
-- 副産物: スライド ID（B-14 の派生）と `--wiki` 出力（`renderer/wiki/`）。
-
-**残っているスコープ外**: 下記 B-22。
+## P0 — 看板機能の欠け
 
 <a id="b-22"></a>
-### B-22: プラグイン内テキストのリンク対応
+### B-22: プラグイン内テキストのリンクが効かない
 
-**背景**: リンクが効くのは `parseInlineFormatting` を通る箇所、すなわち `###` セクションの
+**背景**: `[[…]]` が効くのは `parseInlineFormatting` を通る箇所、すなわち `###` セクションの
 見出し・本文と takeaway だけ。スライドタイトル、タイトルスライド、および11個のプラグインが
 `layout.ts` で `text:` に直接書き出す箇所（table のセル、quote の本文、steps のラベル等）では
 `[[…]]` が生の文字列として表示される。
+
+**Wiki が主題になったので、これは表示の欠けでは済まない。** `renderer/wiki/link-graph.ts` の
+`collectRefs` は `layoutSlide(...).textBoxes` だけを走査するので、プラグインが直接描いたテキストの
+参照は**リンクグラフにも入らない**。つまり表示が生文字になるだけでなく、その参照先のスライドに
+**バックリンクが立たない**。書いた本人は「繋いだつもり」でいて、サイトのどこにも繋がりが現れない。
+
+表示側とグラフ側は**同時に直す**。片方だけ直すと、リンクは青くなるのに逆引きに出ない
+（あるいはその逆）という、より分かりにくい状態になる。
 
 **実装方針**: 各所の `text: X` を `richText: parseInlineFormatting(X)` に置き換える。
 1行ずつの機械的な変更だが、PPTX/HTML のレンダ分岐が変わるため
 `layout-engine.test.ts` のスナップショットと `snapshot-comparison.test.ts` の確認が要る。
 `ShapeBox.text` は `richText` を持たないので、型の拡張が別途必要。
 
-**受け入れ基準**: table のセルと quote の本文に書いた `[[slide-id]]` がリンクになる。
+**受け入れ基準**: table のセルと quote の本文に書いた `[[slide-id]]` がリンクになり、
+**同じ参照がリンク先のバックリンク欄にも現れる**。
 
 **一部対応済み**: agenda は対応した（目次スライドで `[[…]]` が生のまま出ると
 索引としてまったく機能しないため）。残りは table / quote / steps / icon-layout /
 numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
 
-<a id="b-15"></a>
-### B-15: テスト補強
+> この制限は `SKILL.md` と `ontology.yaml`（2箇所）が現時点の仕様として明記している。
+> 直したらその3箇所も畳む。
 
-**背景**: 専用テストファイルがないプラグインが7つ(agenda / quote / text-only / steps / icon-layout / lean-canvas / numbered-list — 後3者は `layout-engine.test.ts` で座標のみ間接カバー、パーサ経路は未テスト)。`src/batch-html.ts`(825行超)と `assets/verify-fonts.ts`、`src/tools/inventory-diff.ts` は完全に未テスト。
+<a id="b-36"></a>
+### B-36: 折れたリンクがビルドを止めない
 
-**実装方針**: `__tests__/markdown-spec/` のゴールデン入力方式を踏襲し、各プラグインにトークン化 → AST → レイアウトの経路テストを追加。batch-html.ts は最低限の E2E(drafts → htmls + index 生成)。
+**背景**: `buildLinkGraph` は解決できなかった参照を `broken`（`not-found` / `ambiguous`）に集め、
+`template.ts` がサイドバーの `<details>`「未解決リンク N 件」に並べる。**それだけである。**
+CLI は何も言わず exit 0 で終わり、CI もそのままデプロイする。折れたリンクを載せた Wiki が
+そのまま公開される経路が開いている。
 
-**受け入れ基準**: 全12レイアウトタグにパーサ経路のテストがある。`npm test` のカバレッジで主要ソースに未テストファイルがない。
+`--lint --strict` はこれを拾えない。リンクの解決はデッキをまたぐので、
+**1デッキを検査する lint には原理的に見えない**（`resolveRef` の3段目は「サイト全体でちょうど1つ」を
+条件にしているので、他のデッキが増えただけで結果が変わる）。折れを検出できるのは
+`--wiki` のビルド時だけで、その唯一の場所が黙っている。
 
----
+現時点の `doc/wiki`（7デッキ・79枚）は 0 件。**いま緑なので、赤くする仕組みを入れるなら今が安い。**
 
-## P3 — 将来検討
+**実装方針**: `--wiki` に `--strict` を効かせ、`broken` が1件でもあれば
+一覧を標準エラーに出して非ゼロ終了する。既定は現状どおり警告（外部の md をそのまま
+流し込む使い方を殺さないため）。CI の publish は `--strict` を付ける。
 
-<a id="b-16"></a>
-### B-16: Mermaid 図対応
-
-**背景**: `assets/README.md` TODO の残件。フローチャート・シーケンス図は技術プレゼンの頻出要素。PowerPoint にネイティブ形がないため画像化が許容されるケース(標準スキルも Sankey 等は画像可としている)。
-
-**実装方針**: mermaid-cli で SVG/PNG 化して `addImage`(B-04 が前提)。HTML 側はクライアントサイドレンダリング可。
-
-<a id="b-17"></a>
-### B-17: .potx テンプレート駆動出力
-
-**背景**: 標準スキルは企業テンプレートのマスター・テーマ・図版を継承して中身だけ差し替えられる(unpack → OOXML 編集 → pack、`add_slide.py` / `clean.py`)。業務利用では「会社テンプレに流し込む」需要が大きいが、slide-wiki は素の白紙に絶対座標描画のみ。
-
-**備考**: pptxgenjs の枠を超える(OOXML 直接操作が必要)ため設計インパクト大。B-13(マスタースライド)を先に済ませ、需要を見て判断。
-
-<a id="b-18"></a>
-### B-18: Good/Bad/Hat レイアウト・アイコン図解
-
-**背景**: `assets/README.md` TODO の残件(「Good/Bad/Hat」「Google マテリアルアイコンで Mermaid みたいな図解」)。プラグイン機構(`plugins/index.ts` に1行追加)で追加可能。
-
-<a id="b-19"></a>
-### B-19: Markdown 拡張
-
-**背景**: ネストリスト(`doc/Spec.md:233` も非対応と明記)、引用ブロック `> `、打ち消し線 `~~`、テーブルのアラインメント `:---:`、H5 以降などが非対応。B-02(1階層リスト)の後、需要に応じて拡張。
-
-<a id="b-20"></a>
-### B-20: スライド寸法・マージンのテーマ化
-
-**背景**: `assets/src/constants.ts` に 16:9(10×5.625インチ)固定でハードコード。4:3 や A4 縦(ドキュメント風スライド)を出せない。レイアウト全ファイルが constants を参照するため影響範囲は広いが、テーマ経由で注入する設計に改めれば対応可能。
-
-<a id="b-21"></a>
-### B-21: HTML 出力の印刷/PDF 対応
-
-**背景**: HTML テンプレート(`assets/src/renderer/html/template.ts`)に `@media print` がなく、ブラウザ印刷で1スライド1ページの PDF を作れない。PPTX を経由せず配布用 PDF を出せると用途が広がる。
-
-<a id="b-23"></a>
-### B-23: 記法そのものの整理（宣言で洗い出した候補）
-
-**背景**: `ontology.yaml` に md の構造を書き起こしたことで、「宣言はできるが素直ではない」箇所が
-輪郭を持った。今回は**記法を変えない**方針で宣言と検証だけを入れたので、以下は未着手のまま残る。
-どれも既存デッキの書き換えを伴うため、まとめて1回で行うか、やらないかを決める必要がある。
-
-- **デッキ frontmatter が無い**: 先頭の `---` がスライド区切りとして読まれるため、デッキ名・既定テーマ・
-  サイトタイトルを md 自身に書けない（`--site-title` は CLI 引数でしか渡せない）。導入するなら
-  「先頭の `---` は、直後が `key: value` なら frontmatter」という例外規則が要る
-- **暗黙の位置依存**: Steps の本文は「1行目が役割名」、Quote の `###` は著者、Agenda のディレクティブ
-  直後の行は副題。宣言で説明はできるが、`####` の名前付きラベルにするほうが読んで分かる
-- **固定件数**: IconColumns / IconCards は3件ちょうど。2件以下だと黙って Default に落ち、4件目以降は
-  捨てられる（B-07 と重なる）
-- **日本語ディレクティブ**: `<!--カスタマージャーニー:-->` だけが日本語で、末尾のコロンにも意味が無い。
-  英語 `<!--customer-journey-->` に寄せるなら旧綴りの受理期間が要る
-- **語彙の日英混在**: lean-canvas は `課題` と `problem` の両方を受理するが、pattern-language の節名は
-  日本語のみ。受理の広さが語彙ごとに違う
-
-**受け入れ基準**: 変えるものを選び、`ontology.yaml` の宣言・`doc/` のデッキ・
-`__tests__/markdown-spec/` の入力を同時に更新して、`--lint --strict` が通る。
-
-### 併せて残っている「宣言はしたが読んでいない」箇所
-
-オントロジー導入後の整理で、lean-canvas とカスタマージャーニーの語彙はコードから消して
-`resolveTerm` 経由にした（宣言に別名を足せばその場で描画にも効く）。以下は残り:
-
-> このメモは 2026-08-08 の調査で [B-28](#b-28)（読まれていない宣言の可視化）と
-> [B-29](#b-29)（コア側の宣言駆動化）に引き継いだ。下の4点はその内訳として残す。
-
-- **pattern-language の語彙**: 節名は `handler.ts` の約10箇所にリテラルで、`sub-labels` の
-  照合も handler が自前で持つ。600行の状態機械の改修になるため繰り延べた。当面は
-  `ontology.test.ts` が「宣言した節名がハンドラのソースに存在すること」を照合してドリフトを
-  赤くする（内容の一致までは見ていない）
-- **`detectLayout` の完全な宣言駆動化**: `lint.ts` の `CORE_PRECEDENCE` は
-  `parser/slide-converter.ts` の順序を手で写している。宣言側に `directives[].pattern` と
-  `kind: code-fence` があるので、行を宣言のパターンに当てれば表ごと消せる
-  （`pluginId.split(":")[0]` も一緒に消える）
-- **コアディレクティブの正規表現**: `tokenizer.ts` と `ontology.yaml` の両方にある。
-  プラグインのぶんは `registerPlugin` が宣言から導出しているが、コアはまだ手書き
-- **ビルダーへの診断チャネル**: lint がトークン列に対する2つ目のパーサになっている
-  （`lint.ts` 冒頭のコメント参照）。ビルダーが「いま落とした」と報告できれば、
-  入れ子モデルの写しが要らなくなる
-
----
-
-## オントロジー観点のレビューと動作確認（2026-08-08）
-
-`ontology.yaml` 導入後のスキルを、(1) 宣言と実装のズレ、(2) 実際に動かしての破損、の2観点で
-点検した結果。B-01〜B-23 が「標準スキルとの機能差」を見ていたのに対し、こちらは
-**「宣言したことが本当に効いているか」**と**「検証機構そのものが動いているか」**を見ている。
-
-### 動作確認の実測（`cd assets && npm install` 後）
-
-| 確認 | 結果 |
-|---|---|
-| `npm test` | ✅ 22 files / 444 tests |
-| `npx tsx src/ontology/selfcheck.ts` | ✅ レイアウト 16 / 注釈 3 / 語彙 3 / プラグイン 11 — 整合 |
-| `npx tsx src/tools/gen-ontology-doc.ts --check` | ✅ ドリフト無し |
-| `--lint --strict`（`doc/Spec.md` / `doc/wiki` / `__tests__/markdown-spec/` 全件） | ✅ 全通過 |
-| 全 20 デッキの PPTX / HTML 生成 | ✅ 全成功 |
-| `--verify`（3者比較） | ❌ 20 デッキ中 14 デッキで大量の偽陽性。常に exit 0 → [B-24](#b-24) で修復済み |
-| `npx tsc --noEmit` | ❌ 8 件のエラー。うち1件は実行時に落ちる → [B-25](#b-25)（B-24 で5件消化、残り3件） |
-
-**緑のものが緑なのは本物**（selfcheck・gen --check・lint はいずれも宣言と実装を実際に突き合わせて
-いる）。問題は、緑のチェックが**見ていない範囲**が広いことと、赤いはずのものが赤くならないこと。
-
----
-
-<a id="b-24"></a>
-### B-24: `--verify` の3者比較が壊れている
-
-**背景**: 「AST/HTML/PPTX の3者比較」はこのスキルの品質保証の看板（このファイルの冒頭にも
-優位点として書いてある）だが、**AST の脚が実質機能していない**。
-
-- `src/tools/inventory.ts` は `iconBoxes` を `icon-N`、`codeBoxes` を `code-N` というキーで出す
-  （`inventory.ts:130,138`）。一方 `pptx-inspector.ts:173` と `html-inspector.ts:279` は
-  `shape-N` の連番。キー空間が違うので、アイコンやコードを含むスライドでは全項目がずれる
-- `borderBoxes` / `shapeBoxes` は inventory に入らない（`layoutResultToSlideInventory` が
-  `textBoxes` / `iconBoxes` / `codeBoxes` しか見ていない）
-- `alignment` は TitleSlide にしか付かない（`inventory.ts:51`）ので、中央寄せするプラグインは
-  全て `expected undefined, got CENTER` になる
-- `cli.ts` の verify 分岐は結果を表示して `return` するだけで、mismatch を exit code に
-  反映しない（`cli.ts:236` 付近）
-
-実測（`__tests__/markdown-spec/` + `doc/`、20 デッキ）: `7-steps` で 298 mismatch、
-`10-numbered-list` で `0 shapes match, 102 mismatches`、`Spec.md` で 400 mismatch。
-一方 **PPTX vs HTML はほぼ全デッキで完全一致** — つまり実際に効いているのは2者比較だけ。
-
-`snapshot-comparison.test.ts` が緑のままなのは、このテストがコアレイアウト6種
-（title-only / default-layout / left-right / grid-2x2 / inline-formatting / bullet-list）の
-インライン markdown しか流しておらず、アイコン・コード・プラグインを1つも通していないため。
-
-**実装方針**: inventory 側をインスペクタのキー付け（描画順の `shape-N` 連番）に合わせ、
-`borderBoxes` / `shapeBoxes` も含める。`align` は `TextBox.align`（`layout/types.ts:40`）を
-そのまま反映する。`--verify` は mismatch があれば非ゼロ終了にする。
-
-**受け入れ基準**: `__tests__/markdown-spec/` 全件で3脚が一致する。同じ入力集合を回すテストを
-追加し、キーのずれが再発したら赤くなる。
-
-**✅ 実装済み（2026-08-08）**。方針は上と違う道を採った。
-
-インベントリをインスペクタの**描画順の連番に合わせる**と、アクセントバー・コード背景・
-テキストオーバーレイという「1ボックス → 複数図形」の展開規則をインベントリ側に写すことになる。
-写経はまた必ずずれる — B-24 が生まれたのと同じ機構をもう一度作る。そこで逆にした:
-
-- **レンダラがキーを宣言し、インスペクタは数えずに読む。** 語彙は `src/shape-keys.ts` の1本で、
-  PPTX は pptxgenjs の `objectName`（→ `<p:cNvPr name>`）、HTML は `data-shape-id` に
-  同じ文字列を書く。`pptx-inspector` は `<p:sp>` を数える代わりにこの名前を読む
-- **比較対象は「テキストを運ぶ図形」。** 境界ボックス・塗り・コード背景・SVG アイコンは
-  `deco:` を付けて除外する。これは両インスペクタの既存の実挙動でもあった
-  （テキストの無い図形は元から拾えない）。違ったのは AST の脚だけ。
-  除外が生成物の中に書かれている状態にして、拡大（B-33）を安くした
-- `--verify` は mismatch があれば**非ゼロ終了**。判定は `src/tools/verify.ts` に切り出して、
-  「食い違いを失敗と呼ぶ」こと自体をテストできるようにした
-
-**併せて見つけて直した実バグ**（比較を直したから見えた。どれも PowerPoint 上の実害がある）:
-
-- 絵文字アイコンの `addText` に `fontFace` が無く、テーマ既定の Calibri Light で
-  描かれていた（デッキの他の文字と別フォント）
-- 改行を含む run を pptxgenjs にそのまま渡すと、STEP 4-C が**共有の options** に
-  `breakLine` を立ててから全断片を push するため、最後の断片にも改行が付いて
-  後続の run が1行余計に下がる（リンクだけ次行に落ちる）
-- **末尾が改行の文字列は pptxgenjs がまったく分割しない**（`match(/\n$/g) === null` ガード）。
-  生の改行を含む1つの `<a:p>` になっていた
-- `pptx-inspector` の `extractText` が実体参照をデコードしておらず、`=>` を含むコードが
-  `=&gt;` として読み出されていた。両インスペクタで `tools/entities.ts` を共有した
-- `html-inspector` の `font_name` が `"Arial"` のリテラル。DEFAULT_THEME と偶然一致して
-  いただけで、`--theme` を使うと PPTX 側とだけ食い違う。`data-font-name` を読むようにした
-- コードテキストの座標が `padding` ぶん内側にずれていた（HTML は外枠を報告）。
-  座標から引くのをやめて pptxgenjs の `margin` に移した — 見た目は同じ
-
-**実測（修復後）**: `__tests__/markdown-spec/` 20件 + `doc/Spec.md` + `doc/wiki/` の
-**全22デッキで3脚とも mismatch 0**。`10-numbered-list` は `0 shapes match, 102 mismatches`
-から全一致、`Spec.md` は 400 件から 0 件になった。
-`__tests__/three-way-verify.test.ts` が全デッキ + 非既定テーマ + 判定そのものを見る（25件、0.7秒）。
-`npm test` は 22 files / 444 tests → 23 files / 471 tests。
-
-**整理（4観点のレビュー後）**: 差分は「同じものを同じ名前で呼ぶ」と言いながら、
-自分でも写経を残していた。書式の判定（中央寄せ・コードのフォント）を
-`src/text-style.ts` に、実体参照のデコードを `src/entities.ts` に、本文の
-エスケープを `escapeText` 1本に寄せ、`deco:` の役割名を `shape-keys.ts` に入れた。
-併せて3つ:
-
-- **HTML と PPTX が同じ要素に違う名前を書いていた**（Material アイコンは
-  HTML が `icon-N`、PPTX が `deco:icon-N`）。どちらもテキストが無いため
-  誰も気付かなかった。HTML 側も `deco()` を使い、`html-inspector` にも
-  `isDecoKey` を効かせて、`deco:` を照合される規則にした
-- **空の IconBox を根元で止めた**。アイコン注釈の無い Steps / IconColumns /
-  IconCards は `icon: ""` の箱を作り、PPTX に `addText("")` の見えない図形を
-  出荷していた。`inventory.ts` の空判定で握り潰していたのを、
-  レイアウト側で出さないように直した（参照モデルを黙らせるのは向きが逆）
-- **HTML の脚を自己記述にした**。`extractInventoryFromHtml` の
-  `defaultFontName = "Arial"` は本番の唯一の呼び出し元（`cli.ts`）が
-  渡しておらず、`--theme` 付きの `--verify` はこの脚だけ決め打ちに戻っていた。
-  PPTX が `theme1.xml` を読むのと同じく、スライド div の
-  `data-default-font-name` を読むようにして引数ごと消した
-
-**共有すると比較では守れなくなる**点は明示しておく: 3脚が同じ関数を呼ぶので、
-その関数が間違えば3脚とも揃って間違い、`--verify` は緑のまま通る
-（実際、中央寄せの規則を壊しても three-way-verify は全件通った）。
-消した冗長性のぶんの検査は `text-style.test.ts` に置き直した。
-
-**副産物**: `src/tools/index.ts` の壊れた再輸出（存在しない `inspectHtml`）も直した。
-このバレルは CLAUDE.md が検証ユーティリティの入口として案内している当のもので、
-import するだけで実行時に throw していた。B-25 の8件のうち5件（これと
-`html-inspector` の `fontSize`/`font_size` 3件、`slide-builder` の `box.text` 1件）が消え、
-残り3件は `schema/theme.ts` の配列マージのみ。
+**受け入れ基準**: 存在しない `[[…]]` を1つ足すと `--wiki --strict` が非ゼロで落ち、
+`fromId → [[ref]] (reason)` が読める形で出る。曖昧（複数一致）も同じ扱いで落ちる。
 
 <a id="b-25"></a>
 ### B-25: 型検査が CI にもテストにも無い
 
-**背景**: `npx tsc --noEmit` が 8 件のエラーで落ちる。vitest は esbuild で型を捨てるので
+**背景**: `npx tsc --noEmit` が **3 件**のエラーで落ちる（`schema/theme.ts:231,235,257` —
+配列テーマ値のマージが `(string | undefined)[]` になる）。vitest は esbuild で型を捨てるので
 `npm test` では検出できず、`package.json` に typecheck スクリプトも無い。
-
-最も重いのは **`src/tools/index.ts:3` が存在しない `inspectHtml` を再輸出している**点。
-実体は `extractInventoryFromHtml`（`html-inspector.ts:266`）で、このバレルを import すると
-型エラーではなく**実行時に throw する**:
-
-```
-BROKEN: The requested module './html-inspector.js' does not provide an export named 'inspectHtml'
-```
-
-CLAUDE.md は `src/tools/` を「検証ユーティリティ」の入口として紹介しているので、
-書かれたとおりに使うと落ちる。テストも `cli.ts` も個別ファイルを直接 import しているため、
-誰もこのバレルを踏んでおらず気付かれていない。
-
-残り7件:
-- `tools/html-inspector.ts:133,148,180` — `fontSize` と `font_size` の取り違え。
-  `parseParagraphStyle` が `Partial<ParagraphData>` を返すと宣言しているが `fontSize` を詰めている
-- `schema/theme.ts:210,214,236` — 配列テーマ値のマージが `(string｜undefined)[]` になる
-- `renderer/pptx/slide-builder.ts:308` — `box.text` が undefined のまま `addText` に渡りうる
 
 **併せて**: CI（`.github/workflows/pages.yml`）のトリガは `main` への push と手動実行だけで、
 **PR ではテストが一度も走らない**。`gen-ontology-doc --check` と `selfcheck` も
 `package.json` のスクリプトに無く、`ontology.test.ts` 経由でしか実行されない。
 
-**実装方針**: `npm run typecheck`（`tsc --noEmit`）を足して8件を潰し、CI に PR トリガと
+`__tests__` は tsconfig の `exclude` にあるので、テスト側も見るなら別 tsconfig が要る。
+
+**実装方針**: `npm run typecheck`（`tsc --noEmit`）を足して3件を潰し、CI に PR トリガと
 typecheck ステップを追加する。
 
-**一部消化（B-24 の作業中）**: `src/tools/index.ts` の壊れた再輸出と、
-`tools/html-inspector.ts:133,148,180` の `fontSize`/`font_size` 取り違え（`parseParagraphStyle` が
-`Partial<ParagraphData>` を返すと宣言していたのをやめ、専用の `ParagraphStyle` 型にした）、
-`renderer/pptx/slide-builder.ts` の `box.text` が undefined のまま渡りうる箇所を直した。
-**残り3件は `schema/theme.ts:210,214,236` の配列マージのみ。** typecheck スクリプトと
-CI トリガはまだ無い。`__tests__` は tsconfig の `exclude` にあるので、テスト側も
-見るなら別 tsconfig が要る。
-
 **受け入れ基準**: `npm run typecheck` が緑。PR で test + typecheck が走る。
-`import("./src/tools/index.js")` が throw しない。
+
+> 当初8件のうち5件は [B-24](#b-24) の作業中に消化済み（壊れた再輸出 `src/tools/index.ts`、
+> `html-inspector` の `fontSize`/`font_size` 取り違え3件、`slide-builder` の `box.text`）。
 
 ---
+
+## P1 — 宣言と実装のズレ・Wiki の使い勝手
+
+<a id="b-37"></a>
+### B-37: 絞り込みが本文を見ていない
+
+**背景**: サイドバーの絞り込みが照合する `data-search` は
+`` `${entry.title} ${entry.globalId}`.toLowerCase() ``（`renderer/wiki/template.ts:21`）、
+つまり**スライドの題と ID だけ**。本文・節見出し・takeaway は入っていない。
+
+Wiki は「読み終えたところから、また入り直す」ための道具で、入り直す手がかりは
+たいてい本文の中の語である。題を覚えていないと辿り着けないのは、索引としての取りこぼしが大きい。
+現時点で7デッキ・79枚あり、目次を上から眺めて探すのは既に実用的でない。
+
+**実装方針**: `data-search` に本文のプレーンテキストを足す。
+`layoutSlide(...).textBoxes` からテキストを集める経路は
+`link-graph.ts` の `collectRefs` と同じなので、走査を1本にまとめて両方に使う。
+サイトが自己完結（外部リソース禁止）なので、索引は HTML に埋め込む。
+分量が問題になるなら、まず「節見出し + takeaway まで」の中間案がある。
+
+**受け入れ基準**: 本文にしか現れない語で、そのスライドが絞り込みに残る。
+生成 HTML のサイズが実用の範囲に収まる（`wiki.test.ts` の自己完結性テストは引き続き通る）。
 
 <a id="b-26"></a>
 ### B-26: 文字数の数え方が宣言に反する
 
-**背景**: `ontology.yaml:762` の `limits.counts` は
+**背景**: `ontology.yaml` の `limits.counts` は
 「本文と見出し（Markdown 構文を除く）。**リンクは表示ラベルだけを数え、URL は数えない**」と宣言する。
-正本の `countPlainTextChars`（`schema/validation.ts:11`）はそのとおり `stripInlineFormatting` を
+正本の `countPlainTextChars`（`schema/validation.ts`）はそのとおり `stripInlineFormatting` を
 通し、リスト記号も落とす。
 
-ところが同名の関数が **5つのプラグインにコピーされている** —
-`plugins/{steps,lean-canvas,icon-layout,numbered-list,agenda}/index.ts` の各 `index.ts` 冒頭。
+ところが同名の関数が**6つのプラグインの `index.ts` にコピーされている**
+（agenda / icon-layout / lean-canvas / numbered-list / steps / wiki-pattern）。
 いずれも `stripInlineFormatting` もリスト記号除去も持たない弱い版で、`#`・`<!--…-->`・
 空行しか落とさない。結果、**URL とリスト記号がそのまま文字数に入る**。
+2026-08-08 の調査時点では5つだった — **新しいプラグインが増えるたびに写しが増えている。**
 
 再現（同一の本文、リンク1本、URL は 1200 文字強）:
 
@@ -532,11 +186,11 @@ CI トリガはまだ無い。`__tests__` は tsconfig の `exclude` にある�
 | `<!--lean-canvas-->` + `### 課題` + 同じ本文 | ❌ `ValidationError` `charCount: 1230` |
 
 宣言では両者とも「ラベル3文字」のはずで、レイアウトを変えただけで通らなくなるのは
-オントロジーが約束していない挙動。
+オントロジーが約束していない挙動。**Wiki のデッキはリンクを多く張るので、この差は日常的に踏む。**
 
 **実装方針**: `registry.getCharCounter` がプラグインから受け取るのは「どのフィールドを数えるか」
 だけにして、正規化は `validation.ts` の `countPlainTextChars` 1本に寄せる。
-プラグイン側の5コピーを削除する。
+プラグイン側のコピーを削除する。
 
 **受け入れ基準**: 同じ本文は、レイアウトの `max-chars` が同じなら同じ文字数になる。
 上の URL ケースを回帰テストにする。
@@ -548,15 +202,14 @@ CI トリガはまだ無い。`__tests__` は tsconfig の `exclude` にある�
 （`lint.ts` 冒頭）。その設計意図に対して、**黙って消える2つの経路が検査されていない**。
 
 1. **タイトルスライドを一切検査しない**。`detectLayout` は `##` を持たないトークン列に
-   `undefined` を返し（`lint.ts:100`）、`lintTokens` はそこで `continue` する（`lint.ts:292`）。
-   実測: タイトルスライドに書いた `### 未宣言の見出し` + 本文は出力から消えるが
-   `--lint --strict` は「✅ 宣言に沿っている」を返す。宣言側は
-   `annotations[].applies-to` に骨格要素を持っているのに、lint は `layouts[].annotations` しか
+   `undefined` を返し、`lintTokens` はそこで `continue` する。実測: タイトルスライドに書いた
+   `### 未宣言の見出し` + 本文は出力から消えるが `--lint --strict` は「✅ 宣言に沿っている」を返す。
+   宣言側は `annotations[].applies-to` に骨格要素を持っているのに、lint は `layouts[].annotations` しか
    参照していないので、この情報が使われていない
 2. **`slots[].body` の `free｜lines｜bullets-only｜none` が未強制**。
-   `gen-ontology-doc.ts:186` が文書に印字するだけで、誰も照合しない。
+   `gen-ontology-doc.ts` が文書に印字するだけで、誰も照合しない。
    実測: カスタマージャーニーの `#### タッチ` 直下に非箇条書きの行を書くと
-   `customer-journey/handler.ts:135` の `if (!token.text.startsWith('-')) return` で捨てられ、
+   `customer-journey/handler.ts` の `if (!token.text.startsWith('-')) return` で捨てられ、
    HTML にも PPTX にも現れないが `--lint --strict` は緑
 
 **実装方針**: (1) `detectLayout` が undefined を返す断片にも、TitleSlide 用の宣言
@@ -575,7 +228,7 @@ BodyText を warning）。
 
 1. プラグインのディレクティブ認識（`registry.ts` が `directiveForPlugin` から導出）
 2. 文字数上限（`validation.ts` の `maxCharsForTag` / `isCharCountExcluded`）
-3. `lean-canvas-blocks` と `journey-rows` の2語彙（`resolveTerm` 経由）
+3. `lean-canvas-blocks` と `journey-rows` の語彙（`resolveTerm` 経由）
 4. lint（`lint.ts` が layouts / vocabularies / field-sets / cardinality を読む）
 
 **宣言のみで誰も読まないもの**: `elements` 全体、`annotations[].pattern｜applies-to｜cardinality｜position｜example`、
@@ -584,10 +237,10 @@ BodyText を warning）。
 `vocabularies.pattern-sections`。
 
 どれが規範でどれが解説かが宣言自身に書かれていないので、読み手（Claude を含む）は全部を
-規範として読む。B-26 / B-27 はどちらもこの構造から出た具体例。
+規範として読む。[B-26](#b-26) / [B-27](#b-27) はどちらもこの構造から出た具体例。
 
-さらに `selfcheck` の `CONSUMED_KEYS`（`gen-ontology-doc.ts:291-300`）は**トップレベル名しか
-見ていない**。「黙って文書化されない宣言は出してはいけない」という当のコメントを持ちながら、
+さらに `selfcheck` の `CONSUMED_KEYS` は**トップレベル名しか見ていない**。
+「黙って文書化されない宣言は出してはいけない」という当のコメントを持ちながら、
 サブキーの未消費は緑のまま通る — 仕組みが防ごうとした失敗が、一段下で起きている。
 
 **実装方針**: 各フィールドに `enforced-by:` 相当の印を持たせるか、`selfcheck` に
@@ -600,29 +253,219 @@ BodyText を warning）。
 <a id="b-29"></a>
 ### B-29: コア側の宣言駆動化
 
-**背景**: B-23 末尾のメモの具体化。プラグイン側は宣言駆動になったが、コア側は手書きのままで、
+**背景**: プラグイン側は宣言駆動になったが、コア側は手書きのままで、
 しかも selfcheck がコアを見ていない。
 
 - **コアディレクティブの正規表現が二重管理**。`parser/tokenizer.ts` の
-  `matchLeftDirective`〜`matchTakeawayMarker`（8本、`tokenizer.ts:42,54,66,78,90,103,117,129`）と
-  `ontology.yaml:73,83,91,141,143,168,170,195` の `pattern:` が同じものを別々に持つ。
-  `selfcheck.ts:64-70` はパターンが**コンパイルできるか**しか見ていないので、
+  `matchLeftDirective`〜`matchTakeawayMarker`（8本）と `ontology.yaml` の `pattern:` が
+  同じものを別々に持つ。`selfcheck.ts` はパターンが**コンパイルできるか**しか見ていないので、
   どちらかを変えても赤くならない
-- **selfcheck がコアレイアウトを飛ばす**。`selfcheck.ts:216` の `if (!layout.plugin) continue` により、
+- **selfcheck がコアレイアウトを飛ばす**。`if (!layout.plugin) continue` により、
   `Default` / `LeftRight` / `TopBottom` / `Grid` / `CodeDisplay` の5つと、`produces` 側の
   `PatternLanguageDetail` は、**実クラスの `_tag` と一度も照合されていない**。
-  「宣言 ⇔ 実装を両方向で突き合わせる」と謳っているのはプラグインの11個だけ
+  「宣言 ⇔ 実装を両方向で突き合わせる」と謳っているのはプラグインの12個だけ
 - **レイアウト優先順位が4箇所**。正は `parser/slide-converter.ts`、写しが
   `lint.ts` の `CORE_PRECEDENCE`、`renderer/layout/index.ts` のディスパッチ、
-  `schema/validation.ts` の文字数分岐
+  `schema/validation.ts` の文字数分岐。宣言側に `directives[].pattern` と
+  `kind: code-fence` があるので、行を宣言のパターンに当てれば表ごと消せる
+  （`pluginId.split(":")[0]` も一緒に消える）
 - **`numbered-list` の `bar` 綴りにテストが無い**。`ontology.test.ts` は
   `directives[0]`（= `circle`）だけをトークン化する。`index.ts` の
   `circle|bar` 正規表現から `bar` を落としても緑のまま
+- **pattern-language の語彙が handler にリテラルで散っている**。節名は約10箇所、
+  `sub-labels` の照合も handler が自前で持つ。600行の状態機械の改修になるため繰り延べた。
+  当面は `ontology.test.ts` が「宣言した節名がハンドラのソースに存在すること」を照合して
+  ドリフトを赤くする（内容の一致までは見ていない）
+- **ビルダーへの診断チャネルが無い**。lint がトークン列に対する2つ目のパーサになっている。
+  ビルダーが「いま落とした」と報告できれば、入れ子モデルの写しが要らなくなる
 
 **受け入れ基準**: コアディレクティブが宣言のパターンから導出される（または両者の一致がテストで
 留まる）。selfcheck がコアレイアウトの `name` と `produces` を実クラスの `_tag` と照合する。
 
+<a id="b-32"></a>
+### B-32: 存在しない保証を主張しているコメント・数え上げ
+
+**背景**: 「乖離しうる事実の置き場を1つにした」あとも、**保証の所在についての記述**が
+乖離している。これは普通のドキュメント誤りより悪い — 読んだ人が「守られている」と信じて
+チェックを足さなくなる。
+
+**予言していた失敗が実際に起きた。** `selfcheck` は `レイアウト 17 / プラグイン 12` と言うのに、
+`SKILL.md:24` と `CLAUDE.md:14` の「**16レイアウト**」は生成領域の外の手書きのままで、
+17個目（wiki-pattern）が入った時点で黙って嘘になった。`docs-consistency.test.ts` が
+見ているのは `11ディレクトリ` / `12プラグイン登録` だけで、この2文は無防備。
+CLAUDE.md 自身が「そちらにある内容をここへ写さない（写した瞬間、四重管理とドリフトが始まる）」と
+書いている、その直後の行で写している。
+
+他:
+
+- `plugins/lean-canvas/layout.ts` の `findCellIndex` のコメントが
+  「その `key` は上の `LEAN_CANVAS_CELLS` の `name` と対応する（**selfcheck が両者を突き合わせる**）」
+  と書くが、**`selfcheck.ts` は lean-canvas を import していない**。実際に守っているのは
+  `ontology.test.ts` の描画テスト。書き換えるべきは保証の名前
+- `renderer/wiki/link-graph.ts` の `collectRefs` のコメントが
+  「1スライドにつき `layoutSlide` が2回走る（グラフ用と描画用）」と書くが、
+  実際は **3回**（`buildLinkGraph` / `buildResolutionTable` / 描画）。
+  数え間違いそのものは無害だが、「許容する」判断の根拠が実測とずれている
+
+**実装方針**: コメントを実際のガード（`ontology.test.ts`）の名前に直すか、selfcheck に
+本当に照合を足す（[B-29](#b-29) のコアレイアウト照合と同じ作業になる）。
+レイアウト件数は `gen-ontology-doc.ts` の生成領域に入れるか、`docs-consistency.test.ts` で
+宣言の件数と突き合わせる。
+
+**受け入れ基準**: コードコメントが主張する保証が全て実在する。レイアウト件数を1つ増やすと
+テストが赤くなる。
+
+<a id="b-07"></a>
+### B-07: 固定要素数レイアウトの柔軟化
+
+**背景**: IconColumn / IconCard は TypeScript の tuple 型で **3要素固定**（2個や4個は型エラー）。
+CustomerJourney も4行固定。**4件以上書くと4件目以降が黙って捨てられ、2件以下だと黙って Default に
+落ちる** — どちらも警告が出ない。Claude が生成するコンテンツは必ずしも3項目に収まらず、
+機械的生成の入力制約として厳しすぎる。
+
+**実装方針**: tuple を長さ2〜4の配列 + バリデーションに変更し、レイアウト側
+（`plugins/icon-layout/layout.ts` 等）で要素数に応じた幅・フォントサイズ計算を行う
+（Grid の `calculateGridSpacing` と同様の段階縮小）。可変化しないなら、
+せめて**捨てるときに lint が言う**のが最低線。
+
+**受け入れ基準**: `<!--icon-cols-->` で2〜4項目が均等配置される。3項目の既存スナップショット
+テストが変化しない（後方互換）。
+
+> `ontology.yaml` がこの制限を現時点の仕様として明記している。直したらそこも直す。
+
+<a id="b-04"></a>
+### B-04: 任意のレイアウトへの画像挿入
+
+**背景**: 画像を読むのは **WikiPattern の図解スロットだけ**で、対象も SVG のみ
+（HTML はインライン展開、PPTX は data URI で `addImage`）。行まるごとの `![alt](src)` は
+`Image` トークンとして認識され、パスは `baseDir`（md の置かれたディレクトリ）から解かれ、
+読み込みは `assets.ts` の1関数だけが行う。存在しないパスと宣言外の拡張子は行番号つきの
+ParseError で落ちる。
+
+**残件は本題のほう** — 任意のレイアウトに画像を置けるようにする `ImageBox` の追加と、
+ラスタ画像・アスペクト比保持・領域内フィット。いまは画像を読まないレイアウトに置かれた参照を
+lint が「描かれない」と報告するだけで、置く手段が無い。
+
+**実装方針**: レイアウトエンジンに `ImageBox` を追加し PPTX/HTML 両対応。
+LeftRight レイアウトとの組み合わせ（左テキスト + 右画像）を最優先ユースケースとする。
+**枠のほうを図の縦横比に合わせる**（`svgAspectRatio()` を使う wiki-pattern と同じ方針 —
+枠を図と違う比で置くと HTML は余白を作り PPTX は歪ませ、別々に崩れるので気づきにくい）。
+
+**受け入れ基準**: `![説明](./fig.png)` が Default / LeftRight で PPTX/HTML 両方に表示される。
+存在しないパスは ParseError で明確に失敗する。
+
 ---
+
+## P2 — 運用・信頼性
+
+<a id="b-35"></a>
+### B-35: 読まないコードフェンスをコアで吸収する
+
+**背景**: コアの `handleCodeFenceOpen`（`parser/handlers/inline.ts`）はモードを問わず走り、
+`mode` を `"code"` にする。そのためプラグインのブロックの中に無関係なコードフェンスが1つ
+あるだけで、セクションのルート先が消えてスライドが CodeDisplay として変換される。
+wiki-pattern はこれを自前の `handleCodeFenceInWikiPattern` で飲んで回避しているが、
+同じことは steps / agenda / table / quote / icon-cards などフェンス枠を宣言していない
+全レイアウトで起きる。**気づいたプラグインだけが自衛している**状態。
+
+**実装方針**: `handlers/index.ts` の `handleH4Core` と同じ位置に `handleCodeFenceCore` を置き、
+いまのモードのレイアウトがフェンス枠を宣言していない（`markerKind(slot.marker).kind !== "code-fence"`）
+ならフェンスのトークンを吸収する。`handleCodeFenceInWikiPattern` は削除できる。
+併せて lint に「…はコードフェンスを読まない」を足す — `####` と画像には既にある診断で、
+フェンスだけが吸収されるのに黙っている。
+
+**受け入れ基準**: フェンス枠を持たないレイアウトのブロックにコードフェンスを置いても
+スライドの型が変わらず、lint がその行を「描かれない」と報告する。
+
+<a id="b-33"></a>
+### B-33: 3者比較が見ていない残り
+
+**背景**: [B-24](#b-24) で3脚を揃えたが、意図的に対象外にした範囲と、直さずに
+コメントで明示した弱点が残る。「何を保証していないか」を項目として持っておく
+（[B-32](#b-32) と同じ理由 — 書いていない除外は「守られている」と読まれる）。
+
+- **幾何のみの図形が比較対象外**。境界ボックス・塗り・コード背景・SVG アイコンは
+  `deco:` で除外している。`inventory-diff.ts` の語彙がテキスト前提（`text` /
+  `font_name` / `font_size` / `bold` / `color`）なので、幾何だけの脚を足すには
+  両インスペクタが「テキストの無い `<p:sp>` / `<p:pic>` / div」を拾えるようにする必要がある。
+  名前は既に両生成物に書かれているので、緩めるのはフィルタだけ
+- **`slide-builder.ts` は codeBoxes があると borderBoxes を丸ごと描かない**。
+  HTML は常に描く。実在する PPTX/HTML の乖離だが `deco:` なので現在の比較には出ない
+- **`pptx-inspector.ts` は段落の最初の `<a:rPr>` しか読まない**。同一段落内で書式が
+  変わるデッキ（太字の途中挿入など）では2番目以降の run の書式を取りこぼす。
+  インベントリ側も「行の先頭 run」で揃えてあるので現状は一致するが、
+  両方が同じ弱点を持っているだけで、真に一致を検証しているわけではない
+- **Wiki の脚は比較に無い**。サイトのスライド DOM は `html/` の `renderSlide()` を
+  再利用するので座標は HTML と同一だが、サイト合成（ID の名前空間化・解決表・バックリンク）は
+  `wiki.test.ts` だけが見ている
+
+**受け入れ基準**: 上の各点について、直すか「直さない理由」を持つ。
+少なくとも幾何のみの図形が比較に入る。
+
+<a id="b-34"></a>
+### B-34: 整理で見送った重複
+
+**背景**: [B-24](#b-24) の差分を再利用・単純化・効率・深さの4観点でレビューし、写経は潰した。
+残りは「指摘は正しいが、直すと差分の外が主体になる」もの。まとめて1項目にしておく。
+
+- **改行 → `breakLine` の細工が複数箇所**。`slide-builder.ts` の2箇所は
+  `withBreakLines` に寄せたが、`syntax-highlighter.ts` の `codeTextRunsToPptxRuns` は
+  独立したまま。違いは末尾の空断片の扱いだけ（`"a\n"` が前者は2断片、後者は1断片）で、
+  **段落数が一致しているのは `pptx-inspector` の空段落フィルタが吸収しているから**であり、
+  構造的な保証ではない。import 1行で寄せられる状態にはなっている
+- **PPTX の `addText` は5箇所あり、2箇所が `withBreakLines` を通らない**
+  （絵文字アイコンとシェイプのテキスト）。いまは改行を含まないので実害は無いが、
+  「素の文字列を渡さない」が private 関数の doc コメントでしか表明されていない。
+  `renderer/pptx/text-runs.ts` に寄せて、型で迂回できなくするのが深い直し
+- **デッキ一覧が3つのテストに独立して書かれている**（`e2e.test.ts`、
+  `ontology.test.ts`、`three-way-verify.test.ts`）。
+  デッキを足す・除外を変えるたびに3箇所を探すことになる
+- **`snapshot-comparison.test.ts` は同じ6手順を18回書き写している**。
+  `three-way-verify.test.ts` の `threeWay` と同じ形なので、共有ヘルパにして
+  fixture のループにできる
+- **「このアイコンは装飾か」の判断が3脚に散っている**。`deco:` の綴りは
+  `shape-keys.ts` に寄せたが、`resolveIconOrFallback(...)._tag === "emoji"` は
+  各脚が独立に書いている（判別共用体の絞り込みにも使っているため、
+  述語だけ切り出すと型が緩む）。B-24 で実際に食い違ったのはこの判断のほう
+- **`iconKey(index)` の index が疎になった**。アイコン注釈の無い列を飛ばすように
+  したので、1列目にアイコンが無ければ2列目のアイコンが `icon-0` になる。
+  3脚が同じ `LayoutResult` を見るので比較は通るが、名前が出所を指さなくなった。
+  `IconBox` にキーを持たせてレイアウト時に採番するのが筋
+- **`put()` は filter のままで assertion にしていない**。空 TextBox が実在する
+  （`Spec.md` / `patterns.md`）ので、いま throw にすると落ちる。発生源を潰してから
+- **絶対値を見るテストが `text-style.test.ts` しか無い**。`snapshot-comparison.test.ts`
+  は18回とも「3脚が一致する」しか見ておらず、インベントリの中身を承認した
+  スナップショットが1つも無い。golden inventory を1つ置けば、共有規則を足すたびに
+  手書きテストを足す義務（CLAUDE.md が課している）が1回で済む
+- **`inventory-diff.ts` の `property` が2通り**（段落系は完全修飾、図形系は素の
+  `left` / `shape.exists`）。`verify.ts` の `locate` がその不揃いを吸収している。
+  `inventory-diff` 側で常に完全修飾にすれば `locate` が消える
+- **`resolveIconOrFallback` にメモが無い**。`mi:` アイコン1つにつき SVG の
+  読み込みと base64 化が走る。実測で1回 ~71µs・全デッキ ~2ms なので実害は小さいが、
+  `icon-resolver.ts` 側にメモを置けば3脚すべてが得をする
+
+**受け入れ基準**: 各項目を直すか、直さない理由を持つ。
+
+<a id="b-31"></a>
+### B-31: `LayoutPlugin` に足りないモデル
+
+**背景**: プラグイン機構が表現できない事情が、特例フォールバックとハックとして散っている。
+
+- **1プラグイン = 1タグの前提**。`pattern-language` は `PatternLanguageOverview` と
+  `PatternLanguageDetail` の2タグを出すのに `layoutTag` は1つしか持てず、
+  `registry.ts` の `getCharCounter` と `ontology/index.ts` の `getLayoutByTag` に
+  `produces` 経由の特例フォールバックが2本ある（後者のコメントに、これが無かったとき
+  Detail に 1024 ではなく 1000 が適用されていたと記録されている）。
+  `LayoutPlugin` に `producesTags` を持たせれば両方消える
+- **`titleFontSize: 1` が「タイトルを描かない」の代用**。`agenda/index.ts` と
+  `pattern-language/index.ts` が 1pt フォントで隠している。`showTitle: false` としてモデル化すべき
+- **ファイル構成が守られていない**。`customer-journey` と `text-only` は `constants.ts` を持たず、
+  `customer-journey/layout.ts` は `PRIMARY_COLOR = "0891B2"` をハードコードしている。
+  この色は `schema/theme.ts` の `iconCardAccentColors` にもある同じ値で、テーマを変えても追随しない
+  （[B-12](#b-12) と重なる）
+
+**受け入れ基準**: `registry.ts` と `ontology/index.ts` から `produces` の特例分岐が消える。
+`titleFontSize: 1` が無くなる。
 
 <a id="b-30"></a>
 ### B-30: 層ごとに名前が違う同一概念
@@ -648,140 +491,224 @@ BodyText を warning）。
 
 **受け入れ基準**: `ontology.md` に層をまたぐ対応表がある。少なくとも `element` の二義が解消する。
 
-<a id="b-31"></a>
-### B-31: `LayoutPlugin` に足りないモデル
+<a id="b-23"></a>
+### B-23: 記法そのものの整理
 
-**背景**: プラグイン機構が表現できない事情が、特例フォールバックとハックとして散っている。
+**背景**: `ontology.yaml` に md の構造を書き起こしたことで、「宣言はできるが素直ではない」箇所が
+輪郭を持った。記法を変えない方針で宣言と検証だけを入れたので、以下は未着手のまま残る。
+どれも既存デッキの書き換えを伴うため、まとめて1回で行うか、やらないかを決める必要がある。
 
-- **1プラグイン = 1タグの前提**。`pattern-language` は `PatternLanguageOverview` と
-  `PatternLanguageDetail` の2タグを出すのに `layoutTag` は1つしか持てず、
-  `registry.ts` の `getCharCounter` と `ontology/index.ts` の `getLayoutByTag` に
-  `produces` 経由の特例フォールバックが2本ある（後者のコメントに、これが無かったとき
-  Detail に 1024 ではなく 1000 が適用されていたと記録されている）。
-  `LayoutPlugin` に `producesTags` を持たせれば両方消える
-- **`titleFontSize: 1` が「タイトルを描かない」の代用**。`agenda/index.ts` と
-  `pattern-language/index.ts` が 1pt フォントで隠している。`showTitle: false` としてモデル化すべき
-- **ファイル構成が守られていない**。`customer-journey` と `text-only` は `constants.ts` を持たず、
-  `customer-journey/layout.ts` は `PRIMARY_COLOR = "0891B2"` をハードコードしている。
-  この色は `schema/theme.ts` の `iconCardAccentColors` にもある同じ値で、テーマを変えても追随しない
-  （B-12 のテーマカバレッジと重なる）
+- **デッキ frontmatter が無い**: 先頭の `---` がスライド区切りとして読まれるため、デッキ名・既定テーマ・
+  サイトタイトルを md 自身に書けない（`--site-title` は CLI 引数でしか渡せない）。導入するなら
+  「先頭の `---` は、直後が `key: value` なら frontmatter」という例外規則が要る
+- **暗黙の位置依存**: Steps の本文は「1行目が役割名」、Quote の `###` は著者、Agenda のディレクティブ
+  直後の行は副題。宣言で説明はできるが、`####` の名前付きラベルにするほうが読んで分かる
+- **固定件数**: IconColumns / IconCards は3件ちょうど（[B-07](#b-07) と重なる）
+- **日本語ディレクティブ**: `<!--カスタマージャーニー:-->` だけが日本語で、末尾のコロンにも意味が無い。
+  英語 `<!--customer-journey-->` に寄せるなら旧綴りの受理期間が要る
+- **語彙の日英混在**: lean-canvas は `課題` と `problem` の両方を受理するが、pattern-language の節名は
+  日本語のみ。受理の広さが語彙ごとに違う
 
-**受け入れ基準**: `registry.ts` と `ontology/index.ts` から `produces` の特例分岐が消える。
-`titleFontSize: 1` が無くなる。
+**受け入れ基準**: 変えるものを選び、`ontology.yaml` の宣言・`doc/` のデッキ・
+`__tests__/markdown-spec/` の入力を同時に更新して、`--lint --strict` が通る。
 
-<a id="b-32"></a>
-### B-32: 存在しない保証を主張しているコメント・数え上げ
+<a id="b-12"></a>
+### B-12: テーマカバレッジ拡大
 
-**背景**: B-01 で「乖離しうる事実の置き場を1つにした」が、**保証の所在についての記述**が
-乖離している。これは普通のドキュメント誤りより悪い — 読んだ人が「守られている」と信じて
-チェックを足さなくなる。
+**背景**: テーマ（`schema/theme.ts`）でカスタマイズできない配色が多い: lean-canvas /
+customer-journey / pattern-language / quote / steps の配色は各プラグインの `constants.ts` に
+ハードコード、シンタックスハイライト配色も固定。また `mergeTheme` は全キー手書き列挙のため、
+テーマ項目を1つ増やすたびに interface / DEFAULT_THEME / merge の3箇所修正が必要で拡張コストが高い。
 
-- `plugins/lean-canvas/layout.ts` の `findCellIndex` のコメントが
-  「その `key` は上の `LEAN_CANVAS_CELLS` の `name` と対応する（**selfcheck が両者を突き合わせる**）」
-  と書くが、**`selfcheck.ts` は lean-canvas を import していない**。実際に守っているのは
-  `ontology.test.ts` の描画テスト。書き換えるべきは保証の名前
-- `SKILL.md:24` と `CLAUDE.md:14` の「**16レイアウト**」は生成領域の外の手書き。
-  `docs-consistency.test.ts` が見ているのは `10ディレクトリ` / `11プラグイン登録` だけで、
-  この2文は無防備。17個目を足した瞬間に両方が黙って嘘になる。
-  CLAUDE.md 自身が「そちらにある内容をここへ写さない（写した瞬間、四重管理とドリフトが始まる）」と
-  書いている、その直後の行で写している
+**実装方針**: (1) `mergeTheme` を汎用 deep-merge に置き換え（キー列挙の廃止）、
+(2) プラグインが自分のテーマセクションを登録できるフックを `LayoutPlugin` インターフェース
+（`plugins/types.ts`）に追加、(3) ハイライト配色のテーマ化。
 
-**実装方針**: コメントを実際のガード（`ontology.test.ts`）の名前に直すか、selfcheck に
-本当に照合を足す（B-29 のコアレイアウト照合と同じ作業になる）。
-レイアウト件数は `gen-ontology-doc.ts` の生成領域に入れるか、`docs-consistency.test.ts` で
-宣言の件数と突き合わせる。
+**受け入れ基準**: テーマ1枚で全プラグインの配色が変わる。テーマ項目追加が1箇所の変更で済む。
 
-**受け入れ基準**: コードコメントが主張する保証が全て実在する。レイアウト件数を1つ増やすと
-テストが赤くなる。
+> `wikiPattern` / `numberedList` / `table` / `agenda` は `contentSlide` の外に
+> フォントサイズを持つ（並べて読ませるレイアウトが自動縮小に巻き込まれないため）。
+> 節を増やすときはこの区別を保つ。
 
-<a id="b-33"></a>
-### B-33: 3者比較が見ていない残り
+<a id="b-15"></a>
+### B-15: テスト補強
 
-**背景**: [B-24](#b-24) で3脚を揃えたが、意図的に対象外にした範囲と、直さずに
-コメントで明示した弱点が残る。「何を保証していないか」を項目として持っておく
-（B-32 と同じ理由 — 書いていない除外は「守られている」と読まれる）。
+**背景**: 専用テストファイルがないプラグインが残る（agenda / quote / text-only / steps /
+icon-layout / lean-canvas / numbered-list — 後3者は `layout-engine.test.ts` で座標のみ間接カバー、
+パーサ経路は未テスト）。`src/batch-html.ts` と `assets/verify-fonts.ts`、
+`src/tools/inventory-diff.ts` は完全に未テスト。
 
-- **幾何のみの図形が比較対象外**。境界ボックス・塗り・コード背景・SVG アイコンは
-  `deco:` で除外している。`inventory-diff.ts` の語彙がテキスト前提（`text` /
-  `font_name` / `font_size` / `bold` / `color`）なので、幾何だけの脚を足すには
-  両インスペクタが「テキストの無い `<p:sp>` / `<p:pic>` / div」を拾えるようにする必要がある。
-  名前は既に両生成物に書かれているので、緩めるのはフィルタだけ
-- **`slide-builder.ts` は codeBoxes があると borderBoxes を丸ごと描かない**。
-  HTML は常に描く。実在する PPTX/HTML の乖離だが `deco:` なので現在の比較には出ない
-- **`pptx-inspector.ts` は段落の最初の `<a:rPr>` しか読まない**。同一段落内で書式が
-  変わるデッキ（太字の途中挿入など）では2番目以降の run の書式を取りこぼす。
-  インベントリ側も「行の先頭 run」で揃えてあるので現状は一致するが、
-  両方が同じ弱点を持っているだけで、真に一致を検証しているわけではない
+**実装方針**: `__tests__/markdown-spec/` のゴールデン入力方式を踏襲し、各プラグインに
+トークン化 → AST → レイアウトの経路テストを追加。batch-html.ts は最低限の E2E。
 
-**受け入れ基準**: 上の3点それぞれについて、直すか「直さない理由」を持つ。
-少なくとも幾何のみの図形が比較に入る。
+**受け入れ基準**: 全17レイアウトタグにパーサ経路のテストがある。
 
-<a id="b-34"></a>
-### B-34: 整理で見送った重複
+---
 
-**背景**: B-24 の差分を再利用・単純化・効率・深さの4観点でレビューし、写経は潰した。
-残りは「指摘は正しいが、直すと差分の外が主体になる」もの。まとめて1項目にしておく。
+## P3 — 将来検討
 
-- **改行 → `breakLine` の細工が4箇所**。`slide-builder.ts` の2箇所は
-  `withBreakLines` に寄せたが、`syntax-highlighter.ts` の `codeTextRunsToPptxRuns` は
-  独立したまま。空行の扱いが両者で違い、**段落数が一致しているのは
-  `pptx-inspector` の空段落フィルタが吸収しているから**で、構造的な保証ではない。
-  `splitRunsIntoLines` を土台にした1本にまとめれば、一致が偶然でなくなる
-- **デッキ一覧が3つのテストに独立して書かれている**（`e2e.test.ts:11`、
-  `ontology.test.ts:313`、`three-way-verify.test.ts:31`）。
-  デッキを足す・除外を変えるたびに3箇所を探すことになる
-- **`snapshot-comparison.test.ts` は同じ6手順を18回書き写している**。
-  `three-way-verify.test.ts` の `threeWay` と同じ形なので、共有ヘルパにして
-  fixture のループにできる
-- **`resolveIconOrFallback` にメモが無い**。`mi:` アイコン1つにつき SVG の
-  読み込みと base64 化が走り、3脚 + スライドの再利用で何度も繰り返す。
-  実測で1回 ~71µs・全デッキ ~2ms なので実害は小さいが、
-  `icon-resolver.ts` 側にメモを置けば3脚すべてが得をする
-- **`inventory-diff.ts` の `property` が2通り**（段落系は完全修飾、図形系は素の
-  `left` / `shape.exists`）。`verify.ts` の `locate` がその不揃いを吸収している。
-  `inventory-diff` 側で常に完全修飾にすれば `locate` が消える
+<a id="b-19"></a>
+### B-19: Markdown 拡張
 
-**2回目の整理で足したもの**（同じ4観点をもう一度回した結果）:
+ネストリスト、引用ブロック `> `、打ち消し線 `~~`、テーブルのアラインメント `:---:`、
+H5 以降などが非対応。需要に応じて拡張。
 
-- **`withBreakLines` は export したが、`codeTextRunsToPptxRuns` はまだ別実装**。
-  違いは末尾の空断片の扱いだけ（`"a\n"` が前者は2断片、後者は1断片）。
-  import 1行で寄せられる状態にはなった
-- **PPTX の `addText` は5箇所あり、2箇所が `withBreakLines` を通らない**
-  （絵文字アイコンとシェイプのテキスト）。いまは改行を含まないので実害は無いが、
-  「素の文字列を渡さない」が private 関数の doc コメントでしか表明されていない。
-  `renderer/pptx/text-runs.ts` に寄せて、型で迂回できなくするのが深い直し
-- **「このアイコンは装飾か」の判断が3脚に散っている**。`deco:` の綴りは
-  `shape-keys.ts` に寄せたが、`resolveIconOrFallback(...)._tag === "emoji"` は
-  各脚が独立に書いている（判別共用体の絞り込みにも使っているため、
-  述語だけ切り出すと型が緩む）。B-24 で実際に食い違ったのはこの判断のほう
-- **`iconKey(index)` の index が疎になった**。アイコン注釈の無い列を飛ばすように
-  したので、1列目にアイコンが無ければ2列目のアイコンが `icon-0` になる。
-  3脚が同じ `LayoutResult` を見るので比較は通るが、名前が出所を指さなくなった。
-  `IconBox` にキーを持たせてレイアウト時に採番するのが筋
-- **`put()` は filter のままで assertion にしていない**。空 TextBox が実在する
-  （`Spec.md` / `patterns.md`）ので、いま throw にすると落ちる。発生源を潰してから
-- **絶対値を見るテストが `text-style.test.ts` しか無い**。`snapshot-comparison.test.ts`
-  は18回とも「3脚が一致する」しか見ておらず、インベントリの中身を承認した
-  スナップショットが1つも無い。golden inventory を1つ置けば、共有規則を足すたびに
-  手書きテストを足す義務（CLAUDE.md が課している）が1回で済む
+<a id="b-03"></a>
+### B-03: スピーカーノート対応
 
-**受け入れ基準**: 各項目を直すか、直さない理由を持つ。
+**背景**: `slide.addNotes()` が未使用。プレゼン原稿を Markdown で一緒に管理できると
+中間表現としての価値が上がる。ただし **Wiki には現れない出力**なので、順位は PPTX 側の話。
 
-<a id="b-35"></a>
-### B-35: 読まないコードフェンスをコアで吸収する
+**実装方針**: 記法案 — スライド内の `<!--notes-->` 以降の本文をノートとして収集し
+`addNotes()`（プレーンテキスト、1スライド1回）に渡す。文字数制限のカウント対象外とする。
+HTML 出力では `data-notes` 属性 or 表示トグルで確認可能にする。
 
-**背景**: コアの `handleCodeFenceOpen`（`parser/handlers/inline.ts`）はモードを問わず走り、
-`mode` を `"code"` にする。そのためプラグインのブロックの中に無関係なコードフェンスが1つ
-あるだけで、セクションのルート先が消えてスライドが CodeDisplay として変換される。
-wiki-pattern はこれを自前の `handleCodeFenceInWikiPattern` で飲んで回避しているが、
-同じことは steps / agenda / table / quote / icon-cards などフェンス枠を宣言していない
-全レイアウトで起きる。**気づいたプラグインだけが自衛している**状態。
+**受け入れ基準**: `<!--notes-->` 以降が PowerPoint のノートペインに表示され、
+スライド面には描画されない。
 
-**実装方針**: `handlers/index.ts` の `handleH4Core` と同じ位置に `handleCodeFenceCore` を置き、
-いまのモードのレイアウトがフェンス枠を宣言していない（`markerKind(slot.marker).kind !== "code-fence"`）
-ならフェンスのトークンを吸収する。`handleCodeFenceInWikiPattern` は削除できる。
-併せて lint に「…はコードフェンスを読まない」を足す — `####` と画像には既にある診断で、
-フェンスだけが吸収されるのに黙っている。
+<a id="b-05"></a>
+### B-05: ネイティブチャート
 
-**受け入れ基準**: フェンス枠を持たないレイアウトのブロックにコードフェンスを置いても
-スライドの型が変わらず、lint がその行を「描かれない」と報告する。
+**背景**: `addChart` 未使用。チャートを画像で貼ると PowerPoint 上で編集できないので、
+入れるならネイティブが筋。
+
+**実装方針**: bar / line / pie から着手。記法はパイプ表 + ディレクティブ（例: `<!--chart:bar-->`）か
+YAML フェンスかを設計時に決定。**pptxgenjs 固有の破損パターンを必ず回避**:
+stacked bar での `dataLabelPosition: "outEnd"` はファイル破損、combo チャートは
+`valAxes` と `catAxes` の両方が必要、16進色に `#` を付けると破損。
+
+**併せて必要になるもの**: pptxgenjs は **PowerPoint が開けないチャート XML を出すことがあり、
+LibreOffice も XSD もそれを通す**。`--verify` は座標の3者比較であって
+ファイルとしての妥当性は見ないので、チャートを入れるなら OOXML 検証を
+外部コマンドとして呼ぶ手当てが同時に要る。**この手当て込みで初めて着手できる項目**。
+
+**受け入れ基準**: Markdown からネイティブチャート入りの PPTX が生成され、PowerPoint で開いて
+チャートを編集できる。HTML 側は SVG 等で同等の見た目を描画。破損パターンが検出されたら
+テストで落ちる。
+
+<a id="b-06"></a>
+### B-06: テーブルのネイティブ化
+
+**背景**: 現在の table プラグインは shape + text の自力描画で、PowerPoint 上では単なる図形の
+集まり。行の追加や列幅調整ができない。`addTable` を使えば編集可能になる。
+
+**実装方針**: `addTable` への移行 or `<!--table:native-->` のようなオプトイン。
+自力描画には HTML との座標一致という利点があるため、レイアウトエンジンの座標計算は維持しつつ
+PPTX 出力のみネイティブ化する設計を検討。`<a:tblPr>` 内の重複 `<a:tableStyleId>` は
+PowerPoint が拒否するので生成時に留意。
+
+**受け入れ基準**: 生成された表を PowerPoint 上で行・列単位に編集できる。
+3者比較（`--verify`）が引き続き通る。
+
+<a id="b-13"></a>
+### B-13: ページ番号・マスタースライド
+
+**背景**: `slideNumber` / `defineSlideMaster` が未使用。全スライドが素の白紙に絶対座標で
+描画されるため、PowerPoint 上でレイアウトを一括変更する手段がなく、ページ番号・フッタも出ない。
+
+**実装方針**: `defineSlideMaster` でタイトル用・コンテンツ用マスターを定義し、背景色・
+ページ番号・フッタをマスター側に移す。テーマからフッタテキスト・ページ番号の有無を制御。
+
+<a id="b-09"></a>
+### B-09: 配色プリセット
+
+**背景**: `--theme` は動くが、同梱プリセットが1枚も無い（`doc/theme.yaml` はデッキ固有）。
+配色を変えたい人が毎回ゼロから YAML を書くことになる。
+
+**実装方針**: `assets/themes/` に数枚のプリセットを同梱する。
+[B-12](#b-12)（プラグイン配色のテーマ化）が終わっていないとプリセットの効果が
+コアレイアウトに限られるので、順序としては B-12 が先。
+
+<a id="b-20"></a>
+### B-20: スライド寸法・マージンのテーマ化
+
+`constants.ts` に 16:9（10×5.625インチ）固定でハードコード。4:3 や A4 縦を出せない。
+レイアウト全ファイルが constants を参照するため影響範囲は広い。
+
+<a id="b-21"></a>
+### B-21: HTML 出力の印刷/PDF 対応
+
+HTML テンプレート（`renderer/html/template.ts`）に `@media print` がなく、ブラウザ印刷で
+1スライド1ページの PDF を作れない。
+
+---
+
+<a id="dropped"></a>
+## 削った項目（2026-08-10）
+
+主題が Wiki に移ったことで、**根拠が「標準の document-skills:pptx がそうしているから」だけに
+なった項目**を落とした。IDは再利用しない。
+
+| 旧 ID | 項目 | 落とした理由 |
+|---|---|---|
+| B-10 | レンダリング検証ループ（soffice → JPEG で目視） | 目視ループの代わりに置いたものが揃った。はみ出しは `validate-layout.ts` がビルドを止め（旧 B-08）、3脚の食い違いは `--verify` が非ゼロで落とす（旧 B-24）。決定論的な検査が効いている場所に、非決定論的な目視工程を戻す理由が無い |
+| B-11 | OOXML 検証の統合 | 単独では価値が無く、必要になるのはネイティブチャートを入れるときだけ。[B-05](#b-05) の着手条件として本文に畳んだ |
+| B-16 | Mermaid 図対応 | **方針と正面から衝突する。** 図解は外部 SVG で持ち、`roughen-svg.ts` で線を崩す（`wiki-pattern.test.ts` が `<rect>` / `<line>` 等を禁じている）。定規で引いた線の図は「これが唯一の実装」に読まれるため排除した当のもので、Mermaid が出すのはまさにそれ |
+| B-17 | .potx テンプレート駆動出力 | pptxgenjs の枠を超えて OOXML 直接操作が要り、設計インパクトが最大。「会社テンプレに流し込む」需要は Wiki を主題にする道具の中心から遠い |
+| B-18 | Good/Bad/Hat レイアウト・アイコン図解 | 旧 README の TODO 由来。レイアウトは17種あり、必要なら宣言1つとプラグイン1つで足せる（CLAUDE.md に手順がある）。特定の1種類を項目として抱える理由が無い |
+
+---
+
+<a id="done"></a>
+## 完了
+
+要点だけ残す。詳細はコミット履歴と、下に挙げた実装・テストのファイルにある。
+
+<a id="b-01"></a>
+**B-01: ドキュメント乖離の解消** — 個別に直すのではなく、乖離しうる事実の置き場を1つにした。
+`ontology.yaml` が md の構造の正本になり、SKILL.md のレイアウト表・注釈表・インライン記法表・
+文字数の記述は `gen-ontology-doc.ts` の生成領域になった（`--check` でドリフトを検出）。
+文字数上限と各プラグインのディレクティブはコードから消え、`src/ontology/` 経由で宣言を読む。
+`ontology.test.ts` が宣言 ⇔ 実装 ⇔ 生成物の3者を留める。
+（残った手書きの数え上げは [B-32](#b-32)。）
+
+<a id="b-02"></a>
+**B-02: 箇条書きリスト対応** — マッチャはトークナイザではなく**ブロック層の
+`parser/block-formatter.ts`** に置いた（`- ` `* ` `+ ` `N. ` を受理）。トークン層で拾わないので
+`*italic*` と衝突しない。PPTX は `bulletToPptxOption` でネイティブバレット、HTML は
+`.para-bullet` / `.para-number` を CSS 疑似要素で描く（リテラルの `•` は書かない）。
+効くのは `buildSectionBoxes` を通る経路だけ — 届かない範囲は [B-22](#b-22) と同じ。
+
+<a id="b-08"></a>
+**B-08: オーバーフロー処理の一般化** — 2段構えで入った。`dispatchLayout` が
+`contentSlide` 系のフォントサイズを 0.9 → 0.6 と段階的に下げて再レイアウトし、
+それでも収まらなければ `validateLayout`（`renderer/layout/validate-layout.ts`）が
+スライド番号と理由つきの `ValidationError` でビルドを止める。`validateLayout` は
+**レイアウトを問わず全スライドを走査する**ので、「黙ってはみ出したまま出荷」は起きない。
+`overflow.test.ts` が検出・縮小・失敗の3経路を見る。
+
+<a id="b-14"></a>
+**B-14: ハイパーリンク対応** — 想定より広く実装した。フィールド名は `hyperlink` ではなく
+`link`（`{kind:"external"|"internal"}` の判別共用体）で、外部 URL と `[[slide-id]]` の内部リンクが
+同じ経路に載る。PPTX は外部が `hyperlink:{url}`、内部が `hyperlink:{slide:N}`
+（`ppaction://hlinksldjump`）。解決できない内部リンクはリンクを付けない。
+文字数カウントは表示ラベルのみ（`stripInlineFormatting` に一本化）。
+**副産物がスライド ID と `--wiki` 出力**（`renderer/wiki/`）で、いまの主題はここから出た。
+残っている範囲は [B-22](#b-22)。
+
+> この項目は公開サイト（`doc/wiki/guide.md`）が出典として指している。ID を消さない。
+
+<a id="b-24"></a>
+**B-24: `--verify` の3者比較が壊れていた** — AST の脚が別のキー空間を使っていて、
+`--verify` は食い違いを見つけても常に exit 0 だった（`Spec.md` で 400 件の偽陽性）。
+直し方は「インベントリをインスペクタに合わせる」の**逆**を採った:
+
+- **レンダラがキーを宣言し、インスペクタは数えずに読む。** 語彙は `src/shape-keys.ts` の1本で、
+  PPTX は `objectName`（→ `<p:cNvPr name>`）、HTML は `data-shape-id` に同じ文字列を書く
+- **比較対象はテキストを運ぶ図形だけ。** 境界ボックス・塗り・コード背景・SVG アイコンは
+  `deco:` を付けて除外する（除外が生成物の中に書かれている状態にした）
+- `--verify` は mismatch があれば**非ゼロ終了**。判定は `src/tools/verify.ts`
+
+**併せて見つけて直した実バグ**（比較を直したから見えた。どれも PowerPoint 上の実害がある）:
+絵文字アイコンに `fontFace` が無くテーマ既定フォントで描かれていた／改行を含む run を
+そのまま渡すと最後の断片にも `breakLine` が付いて後続が1行下がる／末尾が改行の文字列は
+pptxgenjs がまったく分割しない／`pptx-inspector` が実体参照をデコードしていなかった／
+`html-inspector` の `font_name` が `"Arial"` のリテラルで `--theme` 使用時に食い違う／
+コードテキストの座標が `padding` ぶんずれていた。
+
+**共有すると比較では守れなくなる。** 3脚が同じ関数を呼ぶので、その関数が間違えば
+3脚とも揃って間違い、`--verify` は緑のまま通る（実際、中央寄せの規則を壊しても全件通った）。
+消した冗長性のぶんの検査は `text-style.test.ts` に置き直してある。
+**共有モジュールを増やすときは同じ手当てが要る。**
+
+残っている範囲は [B-33](#b-33)（何を保証していないか）と [B-34](#b-34)（見送った重複）。
