@@ -150,7 +150,8 @@ src/tools/
 ├── html-inspector.ts  HTML data-* 属性 → JSON 抽出
 ├── pptx-inspector.ts  PPTX XML → JSON 抽出
 ├── inventory-diff.ts  2つのインベントリの差分
-└── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
+├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
+└── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
 ```
 
 **図形の名前は数えずに宣言する。** `--verify` が突き合わせる図形のキーは
@@ -214,6 +215,7 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
 - Wiki のデッキの並び順: ディレクトリ直下の `order.yaml` の `decks:`（拡張子なしのファイル名）が正本。無ければファイル名順。**並び替えのために md をリネームしない** — ファイル名はデッキの slug、つまり `[[deck/slide]]` のリンク先でもあるので、リネームするとサイト中のリンクが折れる。宣言に無いデッキは末尾に付き（追記忘れで消さないため）、宣言にあって存在しないデッキ名はビルドを止める
 - 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）。**枠のほうを図の縦横比に合わせる** — `svgAspectRatio()` が `viewBox` から比を返し、wiki-pattern はその比で下敷きを組んで縦中央に置く。枠を図と違う比で置くと、HTML は `preserveAspectRatio` で図を縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に崩れるので、生成物を見比べても気づきにくい）
+- 図解に `<rect>` / `<line>` / `<circle>` / `<polygon>` / `<polyline>` を残さない（`wiki-pattern.test.ts` が止める）。定規で引いた線の図は、本文が道すじと書いても「これが唯一の実装」に読まれる — サイトが載せている `ラフで出す` を、図の側でも守るため。崩すのは `npx tsx src/tools/roughen-svg.ts`（揺れはファイル名と要素の並び順から決まるので、走らせ直しても同じ絵が出る。`<path>` と `<text>` には触らないので**冪等**）。フィルタで粗さを出せないのは `<defs>` と `id=` が禁じられているからで、揺れは座標に焼き付けるしかない
 
 ## Plugin System
 
@@ -299,7 +301,7 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
-| `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査) |
+| `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査＝実寸・禁止要素・定規で引いた線) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |
 | `icon-resolver.test.ts` | renderer/icon-resolver.ts |

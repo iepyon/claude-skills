@@ -1,0 +1,39 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="30" y="34" font-family="sans-serif" font-size="13" fill="#9CA3AF">流れ</text>
+
+  <path d="M24.7 44.7 Q63.7 44.3 102.5 47.8 Q101.2 68.3 103.2 88.7 Q65.2 91.1 27.2 92.1 Q24 67.9 23.3 43.5" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M24.7 44.7 Q63.6 45.7 102.5 47.8 Q101.3 68.3 103.2 88.7 Q65.2 89.9 27.2 92.1 Q26.1 69.4 23.6 46.8" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="64" y="73" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">元</text>
+
+  <path d="M106.6 67.7 Q118.1 67 129.6 66.6" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M106.6 67.7 Q118.1 67.5 129.6 66.6" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M132 68 l-9 -5 l0 10 z" fill="#4B5563"/>
+
+  <path d="M137.9 44.3 Q175.5 46 213.1 46.1 Q210.9 67.4 212 88.7 Q173.6 88.4 135.3 89.8 Q137.6 66 136.1 42.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M137.9 44.3 Q175.5 44.2 213.1 46.1 Q213.4 67.4 212 88.7 Q173.6 88.4 135.3 89.8 Q137.4 66.1 137.6 42.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="174" y="73" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">生成</text>
+
+  <path d="M213.9 69.3 Q227.8 70.5 241.8 69.6" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M213.9 69.3 Q227.8 70.8 241.8 69.6" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M242 68 l-9 -5 l0 10 z" fill="#4B5563"/>
+
+  <path d="M245.1 45.9 Q279.8 46.9 314.5 46.5 Q314.4 68.2 315.3 89.9 Q281.3 91 247.3 88.7 Q244.7 67.4 245.1 45.9 Z" fill="#F1F5F9" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M245.1 45.9 Q279.8 46.2 314.5 46.5 Q314.1 68.2 315.3 89.9 Q281.3 89.4 247.3 88.7 Q246.1 67.3 245.1 45.9 Z" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="280" y="65" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4B5563">索引</text>
+  <text x="280" y="81" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4B5563">要約</text>
+
+  <path d="M30.3 112.6 Q171 113.2 311.8 111" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M30.3 112.6 Q171 113.1 311.8 111" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <text x="30" y="140" font-family="sans-serif" font-size="12" fill="#9CA3AF">鏡を拭くと</text>
+  <path d="M26.9 147.9 Q98.7 150.7 170.5 151.2 Q171.8 165.4 173.2 179.7 Q99.3 177.3 25.3 178.3 Q26.1 164.2 28.3 150.2" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="99" y="170" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">手直し</text>
+  <path d="M182.7 163.1 Q196.1 164.9 209.7 164.9" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4 4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M223.8 152.9 Q233.2 165.4 243.3 177.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M223.8 152.9 Q232.7 165.8 243.3 177.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M243.2 152.4 Q231.1 163.4 221.1 176.4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M243.2 152.4 Q231.6 164 221.1 176.4" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="256" y="170" font-family="sans-serif" font-size="11" fill="#9CA3AF">消える</text>
+
+  <text x="30" y="212" font-family="sans-serif" font-size="12" fill="#1E40AF">顔を直すと</text>
+  <path d="M24.3 220.6 Q97.8 221.9 171.3 223.3 Q170.5 236.6 170.1 250 Q97.2 248.6 24.2 251 Q25.6 235.7 25 220.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M24.3 220.6 Q97.8 220.8 171.3 223.3 Q170.2 236.6 170.1 250 Q97.2 251.4 24.2 251 Q25.3 236.4 24.4 221.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="99" y="242" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">手直し</text>
+  <path d="M183.9 237.5 Q197 235.8 210.1 236.5" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M183.9 237.5 Q197 237.2 210.1 236.5" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M212 237 l-9 -5 l0 10 z" fill="#1E40AF"/>
+  <path d="M223.5 237.9 Q226.2 241.9 229.4 245.5 Q236.7 234.4 243.9 223.2" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M223.5 237.9 Q226.2 241.9 229.4 245.5 Q237.3 234.8 243.9 223.2" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="256" y="242" font-family="sans-serif" font-size="11" fill="#1E40AF">残る</text>
+
+  <text x="170" y="292" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">拭くのは鏡ではなく、顔のほう</text>
+</svg>
