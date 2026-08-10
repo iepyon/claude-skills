@@ -137,20 +137,20 @@ const toPaths = (kept: string, pen: () => string): string => {
  * 一息で描けなかった線に見える。むしろ角を共有すると2本が重なって、
  * 崩していないのと同じになる。
  */
-const roughCircle = (next: Next, cx: number, cy: number, r: number, filled: boolean): string => {
-  const amp = Math.min(1.2, r * 0.09)
+const roughEllipse = (next: Next, cx: number, cy: number, rx: number, ry: number, filled: boolean): string => {
+  const amp = Math.min(1.2, Math.min(rx, ry) * 0.09)
   const K = 0.5523 // 90度の弧を3次ベジェで近似する取っ手の長さ
   const from = wobble(next, 0.6) // 描き始めの角。2本目がぴったり重ならないように
-  const rs = Array.from({ length: 5 }, () => r + wobble(next, amp))
+  const wob = Array.from({ length: 5 }, () => wobble(next, amp))
   const at = (i: number): Pt => {
     const a = from + (i / 4) * Math.PI * 2
-    return [cx + Math.cos(a) * rs[i]!, cy + Math.sin(a) * rs[i]!]
+    return [cx + Math.cos(a) * (rx + wob[i]!), cy + Math.sin(a) * (ry + wob[i]!)]
   }
   // 接線は半径に直交する。取っ手をその向きへ K*r 伸ばすと弧になる
   const handle = (i: number, sign: 1 | -1): Pt => {
     const a = from + (i / 4) * Math.PI * 2
     const p = at(i)
-    return [p[0] + sign * -Math.sin(a) * K * rs[i]!, p[1] + sign * Math.cos(a) * K * rs[i]!]
+    return [p[0] + sign * -Math.sin(a) * K * (rx + wob[i]!), p[1] + sign * Math.cos(a) * K * (ry + wob[i]!)]
   }
   const start = at(0)
   const segs = [1, 2, 3, 4].map((i) => {
@@ -198,25 +198,45 @@ const ROUGHENERS: ReadonlyArray<{
   {
     tag: "circle",
     drop: ["cx", "cy", "r"],
+    render: (next, tag) => {
+      const r = num(tag, "r")
+      return roughEllipse(next, num(tag, "cx"), num(tag, "cy"), r, r, hasFill(tag))
+    },
+  },
+  {
+    tag: "ellipse",
+    drop: ["cx", "cy", "rx", "ry"],
     render: (next, tag) =>
-      roughCircle(next, num(tag, "cx"), num(tag, "cy"), num(tag, "r"), hasFill(tag)),
+      roughEllipse(next, num(tag, "cx"), num(tag, "cy"), num(tag, "rx"), num(tag, "ry"), hasFill(tag)),
   },
   ...(["polygon", "polyline"] as const).map((tag) => ({
     tag,
     drop: ["points"],
-    shape: (next: Next, t: string): Shape => ({
-      pts: (attr(t, "points") ?? "")
-        .trim()
-        .split(/\s+/)
-        .map((p) => jitter(next, p.split(",").map(Number) as unknown as Pt)),
-      closed: tag === "polygon",
-    }),
+    shape: (next: Next, t: string): Shape => {
+      // `points` は "x,y x,y" とも "x y x y" とも書ける。
+      // カンマ区切りだけを見て split(",") すると、空白区切りの図が NaN になって
+      // 黙って `M NaN NaN` を吐く（生成物を開くまで気づけない）
+      const flat = (attr(t, "points") ?? "").trim().split(/[\s,]+/).filter(Boolean).map(Number)
+      const pts = Array.from({ length: Math.floor(flat.length / 2) }, (_, i) =>
+        jitter(next, [flat[i * 2]!, flat[i * 2 + 1]!])
+      )
+      return { pts, closed: tag === "polygon" }
+    },
   })),
 ]
 
+/**
+ * 拾う書き方。`<rect …/>` と `<rect …></rect>` の両方、属性が改行を挟んでいても拾う。
+ *
+ * 自己終了だけを見ていた頃は、`<rect></rect>` と書かれた図に対して**検査は止まるのに
+ * この道具は何もしなかった** —— 直し方として案内されている側が効かないので、
+ * 次に書く人が詰まる。
+ */
+const SHAPE_TAG = /<(rect|line|circle|ellipse|polygon|polyline)\b[^>]*>(?:\s*<\/\1\s*>)?/g
+
 export const roughenSvg = (svg: string, seedKey: string): string => {
   let index = 0
-  return svg.replace(/<(rect|line|circle|polygon|polyline)\b[^>]*\/?>/g, (tag, name: string) => {
+  return svg.replace(SHAPE_TAG, (tag, name: string) => {
     const r = ROUGHENERS.find((x) => x.tag === name)!
     const next = rng(hash(`${seedKey}:${index++}`))
     const kept = carryOver(tag, r.drop)

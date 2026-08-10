@@ -371,7 +371,7 @@ describe("配布しているデッキの図解", () => {
    * 揺らし直すのは `npx tsx src/tools/roughen-svg.ts`。
    */
   it.each(diagrams)("$name に定規で引いた線が残っていない", ({ name, svg }) => {
-    for (const tag of ["rect", "line", "circle", "polygon", "polyline"]) {
+    for (const tag of ["rect", "line", "circle", "ellipse", "polygon", "polyline"]) {
       expect(
         svg,
         `${name}: <${tag}> は真っ直ぐすぎる。npx tsx src/tools/roughen-svg.ts を通す`
