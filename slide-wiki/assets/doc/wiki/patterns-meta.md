@@ -1,3 +1,13 @@
+---
+type: deck
+title: パターンを書くパターン
+description: 良いパターンの質そのものを、パターンにする
+tags: [パターンランゲージ, メタ, 書き方, 出典]
+sources:
+  - resource: ../../../docs/patterns-meta-sources.md
+    title: patterns-meta の出典調査（一次資料まで辿った記録と検証度）
+---
+
 # パターンを書くパターン
 
 良いパターンの質そのものを、パターンにする

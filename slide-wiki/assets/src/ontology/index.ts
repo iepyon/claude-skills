@@ -13,7 +13,10 @@ import { fileURLToPath } from "url"
 import { parse } from "yaml"
 import type {
   Annotation,
+  FieldKind,
   FieldSet,
+  Frontmatter,
+  FrontmatterField,
   Layout,
   Limits,
   Ontology,
@@ -115,6 +118,35 @@ export function getFieldSet(name: string): FieldSet | undefined {
 
 export function getLimits(): Limits {
   return loadOntology().limits
+}
+
+export function getFrontmatter(): Frontmatter {
+  return loadOntology().frontmatter
+}
+
+export function getFrontmatterField(name: string): FrontmatterField | undefined {
+  return getFrontmatter().fields.find((f) => f.name === name)
+}
+
+/**
+ * 値が宣言された形に合っているか。**正規表現はすべて `value-patterns` から引く。**
+ *
+ * `kind` に対応するパターンが無いもの（text / object / list-*）は形を持たないので
+ * 常に true。持つはずの `kind` にパターンが無ければ selfcheck が落とす
+ * （実装だけが知っている形を作らせない）。
+ */
+export function matchesDeclaredForm(kind: FieldKind, value: string): boolean {
+  const pattern = getFrontmatter()["value-patterns"][kind]
+  return pattern === undefined || compiled(pattern).test(value)
+}
+
+/** frontmatter を認識する条件（`splitFrontmatter` の実装と突き合わせるために公開する） */
+export function frontmatterRecognition(): { firstLine: string; secondLine: RegExp } {
+  const recognition = getFrontmatter().recognition
+  return {
+    firstLine: recognition["first-line"],
+    secondLine: compiled(recognition["second-line-pattern"]),
+  }
 }
 
 /** 宣言は不変なので、コンパイル済みの正規表現は使い回してよい */

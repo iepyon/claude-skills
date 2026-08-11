@@ -56,6 +56,52 @@ const buildHtml = () =>
     )
   )
 
+describe("デッキの frontmatter がサイドバーの絞り込みに流れる", () => {
+  const WITH_META = `---
+type: deck
+title: 比喩の集まり
+description: 名前だけでは何の話か分からないスライド
+tags: [ナレッジマネジメント, 運用]
+---
+
+# 比喩の集まり
+
+---
+
+## 夜勤
+### 節
+本文
+`
+
+  const searchAttrs = (html: string): string[] =>
+    [...html.matchAll(/data-search="([^"]*)"/g)].map((m) => m[1])
+
+  it("description と tags が各スライドの検索対象に入る", async () => {
+    const html = await Effect.runPromise(
+      md2wiki([{ name: "meta-deck", markdown: WITH_META }], { siteTitle: "T" })
+    )
+    const found = searchAttrs(html).find((s) => s.includes("夜勤"))
+    // 題（夜勤）だけでなく、デッキが名乗った語でも引ける
+    expect(found).toContain("ナレッジマネジメント")
+    expect(found).toContain("名前だけでは何の話か分からないスライド")
+  })
+
+  it("frontmatter が無いデッキの検索対象は今までどおり題と ID だけ", async () => {
+    const html = await buildHtml()
+    const found = searchAttrs(html).find((s) => s.includes("種ノート"))
+    expect(found).toBe("種ノート alpha/seed")
+  })
+
+  it("frontmatter は本文として描かれない", async () => {
+    const html = await Effect.runPromise(
+      md2wiki([{ name: "meta-deck", markdown: WITH_META }], { siteTitle: "T" })
+    )
+    // 剥がし損ねると「type: deck」がスライドの文字として出る
+    expect(html).not.toContain("type: deck")
+    expect(html).toContain("夜勤")
+  })
+})
+
 describe("wiki site index", () => {
   it("should namespace slide ids by deck", async () => {
     const site = await buildSite()

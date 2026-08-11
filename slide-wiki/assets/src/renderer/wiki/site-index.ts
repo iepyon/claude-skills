@@ -55,7 +55,19 @@ export function buildSiteIndex(decks: readonly WikiDeck[]): {
       globalIndex++
     })
 
-    deckViews.push({ slug: deckSlug, title: deck.title, entryIds })
+    // デッキが名乗った言葉を1つの文字列に畳んでおく。検索は部分一致なので、
+    // 語の区切りは空白1つで足りる（テンプレート側で組み立てると、
+    // 同じ文字列をスライドの数だけ作り直すことになる）
+    const searchWords = [deck.meta?.description, ...(deck.meta?.tags ?? [])]
+      .filter((w): w is string => !!w)
+      .join(" ")
+
+    deckViews.push({
+      slug: deckSlug,
+      title: deck.title,
+      entryIds,
+      ...(searchWords ? { searchWords } : {}),
+    })
   }
 
   return { entries, deckViews, byId }

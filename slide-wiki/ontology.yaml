@@ -27,7 +27,9 @@
 # 1: 初版（md の要素・注釈・16レイアウト・語彙・メタキー・制限を宣言）
 # 2: 図解を外部ファイルにする。image 要素を足し、枠を数える marker に画像参照を加えた
 #    （WikiPattern の図解は ```pattern-diagram フェンスから `![…](….svg)` へ移した）
-version: 2
+# 3: デッキが自分について名乗る frontmatter を足した。冒頭の `---` を条件つきで
+#    スライド区切りから外し、YAML のメタとして読む（B-23）
+version: 3
 
 # ── md の骨格要素 ───────────────────────────────────────────────────
 # 行頭記号で認識される構造。ここに無い記法はすべて body（＝本文テキスト）に落ちる。
@@ -36,8 +38,10 @@ elements:
     label: デッキ
     description: 1つの Markdown ファイル。`---` で区切られたスライドの列。
     guidance: |
-      文書全体の frontmatter は持たない。先頭の `---` もスライド区切りとして読まれるので、
-      `---\nname: x\n---` と書くと1枚目が「name: x」だけのスライドになる。
+      デッキは冒頭に YAML frontmatter を持てる（→ frontmatter 節）。認識には条件があり、
+      **1行目がちょうど `---` で、2行目が `key:` の形**のときだけメタとして読む。
+      どちらかを満たさない `---` は今までどおりスライド区切りなので、
+      2行目が見出しの md（`---` の直後に `# タイトル`）は1枚目を失わない。
   slide-break:
     marker: "---"
     label: スライド区切り
@@ -74,6 +78,153 @@ elements:
     guidance: |
       PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素で記号を描く。
       **リテラルの `•` を書いてはいけない**（記号が二重に表示される）。ネストは1階層のみ。
+
+# ── デッキのメタ（frontmatter） ─────────────────────────────────────
+# md の冒頭に置く YAML。**1ファイル = 1デッキなので、ここに書くのはデッキ全体の事実**。
+frontmatter:
+  label: デッキが自分について名乗るメタ
+  description: md の1行目の `---` から次の `---` まで。中身は YAML のマップ。
+  guidance: |
+    **書くのはデッキ1本の事実であって、スライド1枚の事実ではない。**
+    スライドのメタは注釈ディレクティブ（`<!--id:-->` `<!--icon:-->` `<!--takeaway-->`）が担う。
+    1ファイルに何十枚も入っているので、frontmatter にスライドの話を書くと必ず嘘になる
+    ——「このデッキのタグ」であって「このスライドのタグ」ではないため。
+
+    `title` は本文からの派生の写しで、**表示名の正本は今までどおり1枚目の見出し**。
+    外部ツール（Obsidian の Properties・GitHub の表）に読ませるために置くだけなので、
+    食い違ったら直すのは frontmatter のほう。
+
+    人が md を開いたとき本文が下がるので、短く保つ（description は1行、tags は5個まで）。
+
+    **デッキの並び順はここに置かない。** 正本はディレクトリ直下の `order.yaml` で、
+    1本の並び列だからこそ「第1部と第2部は対なので隣り合わせに置く」という意図が
+    書けている。デッキごとの番号に散らすとその意図が消え、間に挿入するたびの
+    振り直しと、2つの宣言が食い違ったときの規則が要るようになる。
+  # 認識の条件。緩めると1行目が `---` の既存 md が巻き添えで1枚目を失う
+  recognition:
+    first-line: "---"
+    second-line-pattern: "^[A-Za-z_][A-Za-z0-9_.-]*[ \\t]*:([ \\t]|$)"
+    note: |
+      2条件の連言。__tests__/markdown-spec/ の8本は1行目が `---` だが2行目が見出しなので
+      second-line-pattern で外れ、doc/Spec.md は1行目が空行なので first-line で外れる。
+      **どちらか一方だけでも既存ファイルは全部安全側に落ちる**（二重の安全網）。
+  require: ignore # 名乗っていない md を不適合と呼ばない（フィクスチャは名乗らない）
+  unknown: ignore # 未知のキーで拒まない・捨てない（将来の拡張の余地を残す）
+  unknown-near-miss: warning # 宣言済みの名と1文字違いのキーはタイポとして報せる
+  near-miss-distance: 1
+  # 2行目がキー行なのに閉じの `---` が無い＝書こうとして失敗している、のときだけ報せる。
+  # 1行目 `---` の直後が見出しの md は「区切りから書き始めた普通のデッキ」なので黙る
+  not-recognized: warning
+  malformed: error # 読めなければ全フィールドがまとめて消えるので、これだけは止める
+  title-matches-heading: warning # title と1枚目の見出しの食い違い
+  fields:
+    - name: type
+      level: recommended
+      kind: text
+      vocabulary: deck-types
+      description: このファイルが何であるか。外部ツールが種別で絞るのに使う。
+      example: deck
+    - name: title
+      level: recommended
+      kind: text
+      description: 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。
+      example: Wiki が育つパターン
+    - name: description
+      level: recommended
+      kind: text
+      effect: search
+      description: 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。
+      example: 人が書き、AI が手入れする。育つ知識の作り方
+    - name: tags
+      level: recommended
+      kind: list-of-text
+      effect: search
+      description: デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。
+      example: "[wiki, パターンランゲージ]"
+    - name: category
+      level: optional
+      kind: text
+      description: デッキの区分。tags が主題を並べるのに対し、こちらは1つだけ選ぶ。
+      example: パターンカタログ
+    - name: status
+      level: optional
+      kind: text
+      allowed-values: [draft, stable, deprecated]
+      default: stable
+      description: 書きかけかどうか。order.yaml のコメントに書いていた「まだ無い」を機械に見せる。
+      example: draft
+    - name: author
+      level: optional
+      kind: text
+      description: 書いた人。複数なら読点で連ねる（機械に配るなら sources を使う）。
+      example: 家永
+    - name: created
+      level: optional
+      kind: date
+      description: 最初に書いた日。git が持っているが、デッキを移しても残る形で持たせる。
+      example: "2026-01-15"
+    - name: updated
+      level: optional
+      kind: date
+      description: 最後に手を入れた日。**手で書く以上ずれる**ので、ずれても困らない用途にだけ使う。
+      example: "2026-08-11"
+    - name: sources
+      level: optional
+      kind: list-of-objects
+      description: このデッキが依拠した資料。地の文に埋まっていた出典を機械可読にする。
+      sub-fields:
+        - {name: resource, required: true, kind: uri, description: パスまたは URI}
+        - {name: title, required: false, kind: text, description: 資料の題}
+        - {name: author, required: false, kind: text, description: 著者}
+        - {name: last_modified, required: false, kind: date, description: 資料側の更新日}
+    - name: verified
+      level: optional
+      kind: list-of-objects
+      description: 誰がいつ内容を確かめたか。出典の照合結果を残す場所。
+      sub-fields:
+        - {name: by, required: true, kind: actor, description: "human / ai:<model> / tool:<name>"}
+        - {name: at, required: true, kind: date, description: 確かめた日}
+    - name: generated
+      level: optional
+      kind: object
+      description: 機械が作ったデッキであることの表明。
+      sub-fields:
+        - {name: by, required: true, kind: actor, description: "ai:<model> / tool:<name>"}
+        - {name: at, required: false, kind: date, description: 生成日}
+    - name: stale_after
+      level: optional
+      kind: date
+      expired: warning
+      description: この日を過ぎたら見直す。**落ちたら直すのは日付ではなく中身**。
+      example: "2027-04-01"
+    # ── 出力制御。置き場所として宣言しただけで、まだ何も読まない ──
+    # 書けば効くと誤解されるのがいちばん困るので、effect: declared-only を
+    # 生成ドキュメントの表に列として出す（散文で言い添えると読み飛ばされる）。
+    - name: theme
+      level: optional
+      kind: uri
+      effect: declared-only
+      description: >-
+        使いたいテーマ YAML のパス。**まだ効かない** — テーマは1サイトに1つで、
+        デッキごとに違うものを選ぶと同じ座標系で描けなくなる。効かせるなら
+        「サイト全体で1つだけ宣言してよい」規則が先に要る。今は --theme が正本。
+      example: themes/dark.yaml
+    - name: site_title
+      level: optional
+      kind: text
+      effect: declared-only
+      description: >-
+        サイトのタイトル。**まだ効かない** — サイトはデッキの集合なので、
+        どの1デッキが全体の名前を名乗るかを決める規則が先に要る。今は --site-title が正本。
+      example: Slide Wiki
+  # 値の形。正規表現をコードに書かないための正本。
+  # ここに書くのは**使われている kind の分だけ** — 使われない正規表現が残っていると、
+  # 直したつもりで何も変わらない（selfcheck が未使用を落とす）。
+  value-patterns:
+    date: "^\\d{4}-\\d{2}-\\d{2}$"
+    actor: "^(human|ai:[\\w.-]+|tool:[\\w.-]+)$"
+    # 相対パスも URL も受ける。ここで見たいのは「地の文が入っていないこと」だけ
+    uri: "^\\S+$"
 
 # ── 注釈ディレクティブ ─────────────────────────────────────────────
 # レイアウトを選ばない `<!--…-->`。どのレイアウトで効くかは layouts[].annotations が正本
@@ -678,6 +829,21 @@ layouts:
 # unknown   = 語彙外の見出しをどう扱うか（warning / error / ignore）
 # sub-labels= その節の中で意味を持つ `**ラベル:**`。match は exact か contains-any。
 vocabularies:
+  deck-types:
+    label: frontmatter の type
+    unknown: warning
+    unknown-effect: 外部ツールが種別で絞れなくなる（描画には影響しない）
+    guidance: |
+      スロットの見出しではなく **frontmatter の `type` から参照される**唯一の語彙。
+      値が増えるのは「md ファイルの種類」が増えたときだけなので、
+      レイアウトや注釈のように書き手が日々選ぶものではない。
+    terms:
+      - key: deck
+        canonical: deck
+        description: スライドのデッキ（doc/wiki/*.md）
+      - key: spec
+        canonical: spec
+        description: 記法の仕様書（doc/Spec.md）
   lean-canvas-blocks:
     label: リーンキャンバスの9ブロック
     unknown: warning

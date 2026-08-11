@@ -1,10 +1,15 @@
 import { Presentation, Slide } from "../../schema/index.js"
+import type { DeckMeta } from "../../ontology/frontmatter.js"
+
+export type { DeckMeta }
 
 /** 1デッキ＝1 Markdown ファイル。 */
 export interface WikiDeck {
   readonly slug: string
   readonly title: string
   readonly presentation: Presentation
+  /** md 冒頭の frontmatter が名乗ったメタ。名乗っていなければ undefined */
+  readonly meta?: DeckMeta
 }
 
 /** サイト内の1スライド。Slide 自体は複製せず、対応づけだけをここに持つ。 */
@@ -22,6 +27,14 @@ export interface WikiDeckView {
   readonly slug: string
   readonly title: string
   readonly entryIds: readonly string[]
+  /**
+   * サイドバーの絞り込みに混ぜるデッキの語（description と tags）。
+   *
+   * 検索対象が題と ID だけだと、スライドの名前を知っている人しか引けない
+   * （「夜勤」「司書」「剪定」のような比喩の題ではとくにそうなる）。
+   * デッキが名乗った言葉を各スライドに配ると、束ごと引けるようになる。
+   */
+  readonly searchWords?: string
 }
 
 /** 未解決リンク。ビルド時の警告とビューアの表示の両方に使う。 */

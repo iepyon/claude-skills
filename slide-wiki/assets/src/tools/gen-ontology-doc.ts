@@ -14,6 +14,7 @@ import { fileURLToPath } from "url"
 import {
   getAnnotations,
   getFieldSets,
+  getFrontmatter,
   getLayouts,
   getLimits,
   getVocabularies,
@@ -85,6 +86,36 @@ function inlineTable(): string[] {
   )
   lines.push("")
   lines.push(`効くのは ${inline["effective-in"].map(code).join("・")}。${cell(inline["not-effective-in-note"])}`)
+  return lines
+}
+
+/** そのキーがいま何に効くか。宣言の effect をそのまま人の言葉にする */
+const EFFECT_LABEL: Readonly<Record<string, string>> = {
+  search: "絞り込み",
+  "declared-only": "**まだ効かない**",
+  metadata: "lint と外部ツール",
+}
+
+function frontmatterTable(): string[] {
+  const fm = getFrontmatter()
+  const lines = table(
+    ["キー", "level", "形", "効き先", "説明"],
+    fm.fields.map((f) => {
+      const kind = f["allowed-values"] ? f["allowed-values"].map(code).join(" / ") : code(f.kind)
+      return [
+        codeCell(f.name),
+        cell(f.level),
+        kind,
+        EFFECT_LABEL[f.effect ?? "metadata"],
+        cell(f.description),
+      ]
+    })
+  )
+  lines.push("")
+  lines.push(
+    `1行目がちょうど ${code(fm.recognition["first-line"])} で、2行目が ${code("key: value")} の形のときだけ` +
+      "メタとして読む（どちらかを満たさない `---` は今までどおりスライド区切り）。"
+  )
   return lines
 }
 
@@ -223,6 +254,15 @@ function buildOntologyDoc(): string {
     if (el.guidance) L.push("", `- ${code(name)} — ${cell(el.guidance)}`)
   }
 
+  const fm = getFrontmatter()
+  L.push("", "## デッキのメタ（frontmatter）", "", cell(fm.description), "", ...frontmatterTable())
+  if (fm.guidance) L.push("", ...fm.guidance.trim().split("\n").map((l) => l.trim()))
+  L.push(
+    "",
+    `名乗っていない md の扱いは ${code(fm.require)}、宣言に無いキーは ${code(fm.unknown)}、` +
+      `読めない frontmatter は ${code(fm.malformed)}。`
+  )
+
   L.push("", "## 注釈ディレクティブ", "", ...annotationsTable())
   for (const a of getAnnotations()) {
     if (a.guidance) L.push("", `- ${code(a.name)} — ${cell(a.guidance)}`)
@@ -274,6 +314,7 @@ function buildOntologyDoc(): string {
 function skillRegions(): Record<string, string[]> {
   return {
     limits: limitsBullets(),
+    frontmatter: frontmatterTable(),
     layouts: layoutsTable(),
     annotations: annotationsTable(),
     inline: inlineTable(),
@@ -291,6 +332,7 @@ function skillRegions(): Record<string, string[]> {
 export const CONSUMED_KEYS: ReadonlySet<string> = new Set([
   "version", // ヘッダの ontology-version に出る
   "elements",
+  "frontmatter",
   "annotations",
   "layouts",
   "vocabularies",

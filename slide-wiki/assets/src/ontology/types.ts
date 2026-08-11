@@ -132,6 +132,81 @@ export interface Element {
   readonly guidance?: string
 }
 
+/** frontmatter の値に許す形。形が正規表現で決まるものは `value-patterns` にキーを持つ */
+export type FieldKind =
+  | "text"
+  | "list-of-text"
+  | "date"
+  | "actor"
+  | "uri"
+  | "object"
+  | "list-of-objects"
+
+/**
+ * そのキーが**いま何に効くか**。
+ *
+ * 宣言に持たせているのは、「書いたのに何も起きない」を読み手が事前に知れるようにするため。
+ * 生成ドキュメントの表に列として出るので、散文で言い添える必要がない。
+ */
+export type FieldEffect =
+  /** サイドバーの絞り込みに流れる */
+  | "search"
+  /** 置き場所として宣言しただけで、まだ何も読まない */
+  | "declared-only"
+  /** lint と外部ツール（Obsidian の Properties・GitHub の表）だけが読む */
+  | "metadata"
+
+/** `sources[].resource` のような入れ子のキー */
+export interface SubField {
+  readonly name: string
+  readonly required: boolean
+  readonly kind: FieldKind
+  readonly description: string
+}
+
+export interface FrontmatterField {
+  readonly name: string
+  /** required は使わない（frontmatter そのものが optional なので、要求すると全部が warning になる） */
+  readonly level: "recommended" | "optional"
+  readonly kind: FieldKind
+  /** 省略時は metadata（lint と外部ツールだけが読む） */
+  readonly effect?: FieldEffect
+  readonly description: string
+  readonly vocabulary?: string
+  readonly "allowed-values"?: readonly string[]
+  readonly default?: string
+  readonly "sub-fields"?: readonly SubField[]
+  /** kind: date のとき、過去になったらどう報せるか */
+  readonly expired?: "warning" | "error" | "ignore"
+  readonly example?: string
+}
+
+/** frontmatter を認識する条件。緩めると既存 md が巻き添えになるので宣言に置く */
+export interface FrontmatterRecognition {
+  readonly "first-line": string
+  readonly "second-line-pattern": string
+  readonly note?: string
+}
+
+export interface Frontmatter {
+  readonly label: string
+  readonly description: string
+  readonly guidance?: string
+  readonly recognition: FrontmatterRecognition
+  /** frontmatter を持たない md の扱い */
+  readonly require: "warning" | "error" | "ignore"
+  /** 宣言に無いキーの扱い。OKF 同様、未知のキーは保存して拒まない */
+  readonly unknown: "warning" | "error" | "ignore"
+  readonly "unknown-near-miss": "warning" | "error" | "ignore"
+  readonly "near-miss-distance": number
+  /** 1行目が `---` なのに frontmatter と認識されなかったときの扱い */
+  readonly "not-recognized": "warning" | "error" | "ignore"
+  readonly malformed: "warning" | "error" | "ignore"
+  readonly "title-matches-heading": "warning" | "error" | "ignore"
+  readonly fields: readonly FrontmatterField[]
+  readonly "value-patterns": Readonly<Record<string, string>>
+}
+
 export interface InlineSyntax {
   readonly name: string
   readonly syntax: string
@@ -156,6 +231,7 @@ export interface Limits {
 export interface Ontology {
   readonly version: number
   readonly elements: Readonly<Record<string, Element>>
+  readonly frontmatter: Frontmatter
   readonly annotations: readonly Annotation[]
   readonly layouts: readonly Layout[]
   readonly vocabularies: Readonly<Record<string, Vocabulary>>

@@ -20,15 +20,18 @@ import { slugify } from "../parser/slide-ids.js"
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
   getFieldSet,
+  getFrontmatter,
   getLayouts,
   getVocabulary,
   isDynamicCardinality,
   markerKind,
+  matchesDeclaredForm,
   parseCardinality,
   resolveTerm,
   type MarkerKind,
 } from "./index.js"
-import type { Layout, Slot } from "./types.js"
+import { readFrontmatter, splitFrontmatter, type FrontmatterSplit } from "./frontmatter.js"
+import type { FieldKind, FrontmatterField, Layout, Slot, SubField } from "./types.js"
 
 export interface Diagnostic {
   readonly level: "error" | "warning"
@@ -382,17 +385,239 @@ function checkSlideIds(slides: readonly SlideTokens[]): Diagnostic[] {
   return out
 }
 
+// ── frontmatter ────────────────────────────────────────────────────
+
+export interface LintContext {
+  /** `splitFrontmatter` の結果。渡さなければ frontmatter は見ない */
+  readonly frontmatter?: FrontmatterSplit
+  /**
+   * `stale_after` の期限切れを判定する基準時刻。
+   *
+   * 注入できるようにしてあるのは、**これがリポジトリで唯一「md を1文字も触らずに
+   * 暦で赤くなる」診断**だから。配布デッキに warning ゼロを課しているテストが
+   * 実時刻で走ると、差分ゼロのまま ある日 npm test が落ち、publish まで止まる。
+   */
+  readonly now?: Date
+}
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
+/**
+ * 宣言された `kind` ごとの値の見方。**宣言に kind を足したらここにも足す** —
+ * 足し忘れは selfcheck が「見る実装が lint に無い」として落とす。
+ *
+ * 形の正規表現はここに書かない（`value-patterns` が正本で、`matchesDeclaredForm` が引く）。
+ */
+export const FIELD_VALIDATORS: Readonly<Record<FieldKind, (value: unknown) => boolean>> = {
+  text: (v) => typeof v === "string",
+  "list-of-text": (v) => Array.isArray(v) && v.every((x) => typeof x === "string"),
+  date: (v) => typeof v === "string" && matchesDeclaredForm("date", v),
+  actor: (v) => typeof v === "string" && matchesDeclaredForm("actor", v),
+  uri: (v) => typeof v === "string" && matchesDeclaredForm("uri", v),
+  object: isPlainObject,
+  "list-of-objects": (v) => Array.isArray(v) && v.every(isPlainObject),
+}
+
+/** 編集距離が max 以下か。タイポ検出にしか使わないので、打ち切り付きの素朴な実装でよい */
+function withinDistance(a: string, b: string, max: number): boolean {
+  if (Math.abs(a.length - b.length) > max) return false
+  let edits = 0
+  let i = 0
+  let j = 0
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i++
+      j++
+      continue
+    }
+    if (++edits > max) return false
+    if (a.length > b.length) i++
+    else if (a.length < b.length) j++
+    else {
+      i++
+      j++
+    }
+  }
+  return edits + (a.length - i) + (b.length - j) <= max
+}
+
+/**
+ * frontmatter を宣言に照らして見る。**規則はすべて宣言から引く。**
+ *
+ * error にするのは `malformed`（読めない）だけ。読めないと全フィールドがまとめて
+ * 消えるので、そこだけは止める。他は warning に倒す — 名乗り方の不備でサイトが
+ * 生成できなくなるほうが困る。
+ */
+function checkFrontmatter(
+  split: FrontmatterSplit,
+  tokens: readonly Token[],
+  now: Date
+): Diagnostic[] {
+  const decl = getFrontmatter()
+  const out: Diagnostic[] = []
+  const emit = (
+    level: "error" | "warning" | "ignore",
+    check: string,
+    line: number,
+    message: string
+  ): void => {
+    if (level !== "ignore") out.push({ level, check, line, message })
+  }
+
+  if (split.block === undefined) {
+    if (split.nearMiss) {
+      emit(
+        decl["not-recognized"],
+        "frontmatter-not-recognized",
+        1,
+        "1行目が `---` だが frontmatter と認識されなかった" +
+          "（2行目を `key: value` にし、閉じの `---` を置く。このままでは本文として描かれる）"
+      )
+    } else {
+      emit(decl.require, "frontmatter-missing", 1, "デッキが frontmatter を持っていない")
+    }
+    return out
+  }
+
+  const { data, errors, keyLines } = readFrontmatter(split.block)
+  if (!data) {
+    for (const e of errors) {
+      emit(
+        decl.malformed,
+        "frontmatter-malformed",
+        e.line,
+        `frontmatter を YAML として読めない: ${e.message}`
+      )
+    }
+    return out
+  }
+
+  const lineOf = (key: string): number => keyLines.get(key) ?? 1
+  const declared = new Map(decl.fields.map((f) => [f.name, f]))
+
+  const checkKind = (kind: FieldKind, value: unknown, at: string, line: number): boolean => {
+    if (FIELD_VALIDATORS[kind](value)) return true
+    emit("warning", "frontmatter-field", line, `${at}: ${kind} として読めない値`)
+    return false
+  }
+
+  const checkSubFields = (
+    field: FrontmatterField,
+    entry: Record<string, unknown>,
+    at: string,
+    line: number
+  ): void => {
+    for (const sub of field["sub-fields"] ?? ([] as readonly SubField[])) {
+      const value = entry[sub.name]
+      if (value === undefined || value === null) {
+        if (sub.required) {
+          emit("warning", "frontmatter-field", line, `${at}: 必須の '${sub.name}' が無い`)
+        }
+        continue
+      }
+      checkKind(sub.kind, value, `${at}.${sub.name}`, line)
+    }
+  }
+
+  for (const [key, value] of Object.entries(data)) {
+    const line = lineOf(key)
+    const field = declared.get(key)
+
+    if (!field) {
+      // 未知のキーは拒まない（宣言 unknown: ignore）。ただし1文字違いはタイポとして報せる
+      const near = decl.fields.find((f) => withinDistance(f.name, key, decl["near-miss-distance"]))
+      if (near) {
+        emit(
+          decl["unknown-near-miss"],
+          "frontmatter-unknown-key",
+          line,
+          `'${key}' は宣言に無い（'${near.name}' の書き間違い？ このままでは誰も読まない）`
+        )
+      } else {
+        emit(decl.unknown, "frontmatter-unknown-key", line, `'${key}' は宣言に無い`)
+      }
+      continue
+    }
+
+    if (value === undefined || value === null) continue
+    if (!checkKind(field.kind, value, key, line)) continue
+
+    if (field["allowed-values"] && !field["allowed-values"].includes(value as string)) {
+      emit(
+        "warning",
+        "frontmatter-field",
+        line,
+        `${key}: '${value}' は宣言に無い（${field["allowed-values"].join(" / ")} のいずれか）`
+      )
+    }
+
+    if (field.vocabulary) {
+      const vocab = getVocabulary(field.vocabulary)
+      if (vocab && !resolveTerm(vocab, String(value))) {
+        emit(
+          vocab.unknown,
+          "frontmatter-field",
+          line,
+          `${key}: '${value}' は ${vocab.label} に無い（${vocab["unknown-effect"] ?? "誰も照合しない"}）`
+        )
+      }
+    }
+
+    if (field.kind === "object") {
+      checkSubFields(field, value as Record<string, unknown>, key, line)
+    } else if (field.kind === "list-of-objects") {
+      ;(value as Record<string, unknown>[]).forEach((entry, i) => {
+        checkSubFields(field, entry, `${key}[${i}]`, line)
+      })
+    }
+
+    if (field.kind === "date" && field.expired && field.expired !== "ignore") {
+      // 日付は ISO なので文字列比較で足りる（時刻とタイムゾーンを持ち込まない）
+      const today = now.toISOString().slice(0, 10)
+      if (String(value) < today) {
+        emit(
+          field.expired,
+          "frontmatter-stale",
+          line,
+          `${key}: ${value} を過ぎている（直すのは日付ではなく中身）`
+        )
+      }
+    }
+  }
+
+  // title は本文からの派生の写し。食い違ったら直すのは frontmatter のほう
+  const heading = tokens.find((t) => t.type === "H1")
+  if (typeof data.title === "string" && heading?.type === "H1" && heading.text !== data.title) {
+    emit(
+      decl["title-matches-heading"],
+      "frontmatter-title",
+      lineOf("title"),
+      `title '${data.title}' が1枚目の見出し '${heading.text}' と違う` +
+        "（表示名の正本は見出しのほう。ここは外部ツールに読ませるための写し）"
+    )
+  }
+
+  return out
+}
+
 /** 宣言に照らして Markdown を検証する。行番号順に返す */
-export function lintSource(markdown: string): Diagnostic[] {
-  return lintTokens(tokenize(markdown))
+export function lintSource(markdown: string, options: LintContext = {}): Diagnostic[] {
+  const frontmatter = splitFrontmatter(markdown)
+  return lintTokens(tokenize(frontmatter.body), { ...options, frontmatter })
 }
 
 /**
  * トークン列を受け取る版。パイプラインはこちらを使い、同じ文字列を2度トークン化しない。
  */
-export function lintTokens(tokens: readonly Token[]): Diagnostic[] {
+export function lintTokens(tokens: readonly Token[], context: LintContext = {}): Diagnostic[] {
   const out: Diagnostic[] = []
   const slides = splitSlides(tokens)
+
+  // frontmatter はデッキに1枚なので、スライドごとのループの外で見る
+  if (context.frontmatter) {
+    out.push(...checkFrontmatter(context.frontmatter, tokens, context.now ?? new Date()))
+  }
 
   // ID はスライドをまたいで衝突するので、レイアウトごとのループの外で見る。
   // タイトルスライドも対象に入れる（`<!--id:-->` の applies-to は title-slide を含み、
