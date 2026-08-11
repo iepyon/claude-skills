@@ -27,6 +27,7 @@ import {
   WP_PANEL_BORDER,
   WP_PANEL_BORDER_WIDTH,
   WP_PANEL_PADDING,
+  WP_PANEL_SHIFT_X,
 } from "./constants.js"
 
 /**
@@ -62,14 +63,18 @@ function panelSize(
  * 図解にも掛かる注記に見える。図の下敷きは列の中で縦中央にあるので下に余地はあるが、
  * そこまで伸ばすと「このスライド全体の脚注」に読み替わる。
  *
+ * 幅は下敷きの左端で止める（`WP_PANEL_SHIFT_X` ぶん図が左へ寄ると、列の幅のままでは
+ * 下敷きの下へ 0.07in はみ出す）。列いっぱいに敷かれる図——`viewBox` を名乗らない
+ * 図がそれ——は下端まで届くので、はみ出しは重なりとして実際に見える。
+ *
  * `richText` を使わず `text` で置くのが、リンクにならない仕組み
  * （schema.ts の source の説明を見よ）。
  */
-function buildSourceBox(source: string, leftWidth: number, theme: Theme): TextBox {
+function buildSourceBox(source: string, width: number, theme: Theme): TextBox {
   return {
     x: MARGIN_X,
     y: SLIDE_HEIGHT - MARGIN_Y - WP_SOURCE_HEIGHT,
-    w: leftWidth,
+    w: width,
     h: WP_SOURCE_HEIGHT,
     text: source,
     fontSize: theme.wikiPattern.sourceSize,
@@ -122,7 +127,7 @@ export function layoutWikiPattern(
   // 伸ばすと HTML は図を縮めて帯を作り（preserveAspectRatio）、
   // PPTX は addImage が枠に引き伸ばして図を歪ませる — 同じ原因で別々に崩れる。
   const panel = panelSize(dims.rightWidth, dims.availableHeight, layout.diagramAspect)
-  const panelX = dims.rightX + (dims.rightWidth - panel.w) / 2
+  const panelX = dims.rightX + (dims.rightWidth - panel.w) / 2 - WP_PANEL_SHIFT_X
   const panelY = titleY + (dims.availableHeight - panel.h) / 2
   const shapeBoxes: ShapeBox[] = [
     {
@@ -151,7 +156,7 @@ export function layoutWikiPattern(
   // 出典は下端に接する。takeaway があればその上へ持ち上げる（重なると 4pt が隠れる）
   const sourceOffset = layout.source ? WP_SOURCE_HEIGHT : 0
   const withSource = layout.source
-    ? [...textBoxes, buildSourceBox(layout.source, dims.leftWidth, theme)]
+    ? [...textBoxes, buildSourceBox(layout.source, Math.min(dims.leftWidth, panelX - MARGIN_X), theme)]
     : textBoxes
 
   return withTakeaway(

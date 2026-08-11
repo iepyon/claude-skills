@@ -19,6 +19,7 @@ import { isDecoKey } from "../src/shape-keys.js"
 import { slidesToInventory } from "../src/tools/inventory.js"
 import { roughenSvg } from "../src/tools/roughen-svg.js"
 import { contentBox, trimSvg } from "../src/tools/trim-svg.js"
+import { WP_PANEL_SHIFT_X } from "../src/plugins/wiki-pattern/constants.js"
 import type { ContentSlide } from "../src/schema/presentation.js"
 import type { WikiPatternLayout } from "../src/plugins/wiki-pattern/schema.js"
 
@@ -217,12 +218,27 @@ describe("WikiPattern — 座標", () => {
   const svgBox = (result: LayoutResult): ShapeBox =>
     result.shapeBoxes!.find((s) => s.shapeType === "svg")!
 
-  it("図解は右半分にあり、右端は本文と同じマージンで揃う", async () => {
+  it("図解は右半分にあり、右マージンから WP_PANEL_SHIFT_X ぶん左へ寄る", async () => {
+    // 右端を右マージンに接させると、本文の行は左段を使い切らないので図だけが
+    // 右端に貼り付いて見える。寄せたぶんは右の余白になる
     const result = await layoutFor(deck())
     const svg = svgBox(result)
     expect(svg.x).toBeGreaterThan(SLIDE_WIDTH / 2)
     const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
-    expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X, 5)
+    expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X - WP_PANEL_SHIFT_X, 5)
+  })
+
+  it("寄せても、全角25字を使い切った行が図解に触らない", async () => {
+    // 寄せられる量の上限を決めているのはこれ（constants.ts の WP_PANEL_SHIFT_X）。
+    // 左段のテキストの箱の右端と下敷きの左端が、この順で並んでいること
+    const result = await layoutFor(deck())
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    // 全幅の箱（タイトル・takeaway）は左段の話ではないので外す
+    const body = result.textBoxes.filter((b) => b.w < SLIDE_WIDTH - 2 * MARGIN_X - 0.01)
+    expect(body.length).toBeGreaterThan(0)
+    for (const box of body) {
+      expect(box.x + box.w, "本文の箱が図解に食い込んでいる").toBeLessThanOrEqual(panel.x)
+    }
   })
 
   it("下敷きは図解の縦横比で組まれ、列の中で縦中央に置かれる", async () => {
@@ -250,7 +266,8 @@ describe("WikiPattern — 座標", () => {
     // 列の下端まで使い切り（高さが先に尽きる）、列の中で左右中央に来る
     expect(panel.y).toBeCloseTo(CONTENT_START_Y, 5)
     expect(panel.y + panel.h).toBeCloseTo(SLIDE_HEIGHT - MARGIN_Y, 5)
-    const columnRight = SLIDE_WIDTH - MARGIN_X
+    // 列は WP_PANEL_SHIFT_X ぶん左へ寄っているので、その位置で左右の余りを比べる
+    const columnRight = SLIDE_WIDTH - MARGIN_X - WP_PANEL_SHIFT_X
     expect(columnRight - (panel.x + panel.w)).toBeGreaterThan(0.1)
     const wide = await layoutFor(deck())
     const columnLeft = wide.shapeBoxes!.find((s) => s.shapeType === "rect")!.x
