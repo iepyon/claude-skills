@@ -1,0 +1,33 @@
+<svg width="340" height="320" viewBox="0 0 340 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    上が片道券、下が往復券。**同じ絵を2枚並べ、違いは券の枚数だけ**にしてある
+    （行きの矢印は上下で同じ位置・同じ長さ）。残る差が「帰りが売られているか」
+    だけになるので、そこが主張だと読める。
+
+    真ん中の破線は切り取り線。券が2枚に割れる合図で、行きと帰りが
+    別々に使えること（＝逆向きも独立した一枚のパターンであること）を指す。
+
+    線は rect / line で引いてから roughen-svg.ts に通す。定規の線を残すと
+    wiki-pattern.test.ts が止める（`ラフで出す` を図の側でも守るため）。
+  -->
+
+  <!-- 上: 片道券。行きの矢印しかなく、帰りの券が無い -->
+  <path d="M84.5 48.8 Q169.3 49.3 254 48.2 Q255 74.1 255.9 100 Q169.6 99.6 83.3 101.1 Q83.4 74.8 82.6 48.5" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M84.5 48.8 Q169.3 47 254 48.2 Q255.1 74.1 255.9 100 Q169.6 100 83.3 101.1 Q81.5 74.8 83.3 48.6" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="126" y="79" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">行き</text>
+  <path d="M151.4 72.3 Q185.8 73.3 220.3 73.7" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M151.4 72.3 Q185.9 71.9 220.3 73.7" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M224 74 l-9 -5 l0 10 z" fill="#9CA3AF"/>
+  <text x="170" y="122" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">帰りは売っていない</text>
+
+  <!-- 下: 往復券。切り取り線で2枚に割れ、行きと帰りが別々に使える -->
+  <path d="M59.7 146.2 Q168.8 147.3 277.9 147.9 Q279 192.4 278.9 237 Q169.2 234.9 59.6 235.9 Q58.1 192 58.2 148.1" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M59.7 146.2 Q168.8 145.4 277.9 147.9 Q280.1 192.4 278.9 237 Q169.2 237.6 59.6 235.9 Q59.1 192.2 58.2 148.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M170.3 145.8 Q170.4 191.4 168.7 236.9" fill="none" stroke="#1E40AF" stroke-width="1" stroke-dasharray="4 5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="101" y="177" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">行き</text>
+  <path d="M87.2 206.8 Q113.2 207.8 139.3 206.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M87.2 206.8 Q113.2 205.9 139.3 206.3" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M142 207 l-9 -5 l0 10 z" fill="#1E40AF"/>
+  <text x="239" y="177" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">帰り</text>
+  <path d="M250.3 207.2 Q224 206.3 197.8 209" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M250.3 207.2 Q224.1 210.1 197.8 209" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M198 207 l9 -5 l0 10 z" fill="#1E40AF"/>
+
+  <text x="170" y="262" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">向きは状況が選ぶ</text>
+  <text x="170" y="290" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">片道だけなら、それはべき論</text>
+</svg>
