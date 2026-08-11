@@ -1,3 +1,10 @@
+---
+type: deck
+title: LLM が手入れする Wiki
+description: AI が司書として入ってくる Wiki のパターン
+tags: [llm, ai, パターンランゲージ, 第2部, 運用]
+---
+
 # LLM が手入れする Wiki
 
 AI が司書として入ってくる Wiki のパターン
