@@ -24,6 +24,9 @@ import {
 import { FIELD_VALIDATORS } from "./lint.js"
 import { splitFrontmatter } from "./frontmatter.js"
 
+/** frontmatter フィールドの effect に許す綴り（gen-ontology-doc の EFFECT_LABEL と対になる） */
+const KNOWN_EFFECTS: ReadonlySet<string> = new Set(["search", "declared-only", "metadata"])
+
 /** 点検の失敗。1件ずつ集めて最後にまとめて出す（最初の1件で止めない） */
 export function selfcheckProblems(): string[] {
   const problems: string[] = []
@@ -241,6 +244,11 @@ export function selfcheckProblems(): string[] {
       fail(
         f.default === undefined || (f["allowed-values"]?.includes(f.default) ?? false),
         `${at}.${f.name}: default '${f.default}' が allowed-values に無い`
+      )
+      // 効き先は生成ドキュメントの列になるので、綴りが未知だと表に空欄が出る
+      fail(
+        f.effect === undefined || KNOWN_EFFECTS.has(f.effect),
+        `${at}.${f.name}: effect '${f.effect}' が未知`
       )
       for (const sub of f["sub-fields"] ?? []) {
         usedKinds.add(sub.kind)

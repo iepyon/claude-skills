@@ -89,13 +89,26 @@ function inlineTable(): string[] {
   return lines
 }
 
+/** そのキーがいま何に効くか。宣言の effect をそのまま人の言葉にする */
+const EFFECT_LABEL: Readonly<Record<string, string>> = {
+  search: "絞り込み",
+  "declared-only": "**まだ効かない**",
+  metadata: "lint と外部ツール",
+}
+
 function frontmatterTable(): string[] {
   const fm = getFrontmatter()
   const lines = table(
-    ["キー", "level", "形", "説明"],
+    ["キー", "level", "形", "効き先", "説明"],
     fm.fields.map((f) => {
       const kind = f["allowed-values"] ? f["allowed-values"].map(code).join(" / ") : code(f.kind)
-      return [codeCell(f.name), cell(f.level), kind, cell(f.description)]
+      return [
+        codeCell(f.name),
+        cell(f.level),
+        kind,
+        EFFECT_LABEL[f.effect ?? "metadata"],
+        cell(f.description),
+      ]
     })
   )
   lines.push("")

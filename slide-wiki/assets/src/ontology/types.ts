@@ -132,16 +132,30 @@ export interface Element {
   readonly guidance?: string
 }
 
-/** frontmatter の値に許す形。`value-patterns` のキーと1対1で対応する */
+/** frontmatter の値に許す形。形が正規表現で決まるものは `value-patterns` にキーを持つ */
 export type FieldKind =
   | "text"
+  | "int"
   | "list-of-text"
   | "date"
-  | "datetime"
   | "actor"
   | "uri"
   | "object"
   | "list-of-objects"
+
+/**
+ * そのキーが**いま何に効くか**。
+ *
+ * 宣言に持たせているのは、「書いたのに何も起きない」を読み手が事前に知れるようにするため。
+ * 生成ドキュメントの表に列として出るので、散文で言い添える必要がない。
+ */
+export type FieldEffect =
+  /** サイドバーの絞り込みに流れる */
+  | "search"
+  /** 置き場所として宣言しただけで、まだ何も読まない */
+  | "declared-only"
+  /** lint と外部ツール（Obsidian の Properties・GitHub の表）だけが読む */
+  | "metadata"
 
 /** `sources[].resource` のような入れ子のキー */
 export interface SubField {
@@ -156,6 +170,8 @@ export interface FrontmatterField {
   /** required は使わない（frontmatter そのものが optional なので、要求すると全部が warning になる） */
   readonly level: "recommended" | "optional"
   readonly kind: FieldKind
+  /** 省略時は metadata（lint と外部ツールだけが読む） */
+  readonly effect?: FieldEffect
   readonly description: string
   readonly vocabulary?: string
   readonly "allowed-values"?: readonly string[]

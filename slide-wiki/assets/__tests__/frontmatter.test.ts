@@ -173,22 +173,49 @@ describe("readDeckMeta は使える値だけを拾う", () => {
   })
 })
 
-describe("リポジトリの既存 md を1つも巻き込まない", () => {
-  const existing = [
-    join(ASSETS_DIR, "doc", "Spec.md"),
-    ...readdirSync(join(ASSETS_DIR, "__tests__", "markdown-spec"))
-      .filter((f) => f.endsWith(".md"))
-      .map((f) => join(ASSETS_DIR, "__tests__", "markdown-spec", f)),
-  ]
+describe("名乗っていないフィクスチャを1つも巻き込まない", () => {
+  // markdown-spec はレイアウトの検証用で frontmatter を持たない。うち8本は1行目が
+  // `---` なので、認識規則が緩むと最初に壊れるのがここ
+  const fixtures = readdirSync(join(ASSETS_DIR, "__tests__", "markdown-spec"))
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => join(ASSETS_DIR, "__tests__", "markdown-spec", f))
 
   it("検査対象が集まっている", () => {
-    expect(existing.length).toBeGreaterThan(10)
+    expect(fixtures.length).toBeGreaterThan(10)
   })
 
-  it.each(existing)("%s は frontmatter を持たないままである", (file) => {
+  it("うち複数が1行目 `---` で始まる（規則が緩んだら壊れる側）", () => {
+    const leading = fixtures.filter((f) => readFileSync(f, "utf-8").startsWith("---\n"))
+    expect(leading.length).toBeGreaterThan(5)
+  })
+
+  it.each(fixtures)("%s は frontmatter を持たないままである", (file) => {
     const md = readFileSync(file, "utf-8")
     const result = splitFrontmatter(md)
     expect(result.block).toBeUndefined()
     expect(result.body).toBe(md)
+  })
+})
+
+describe("名乗っているデッキは剥がされる", () => {
+  const decks = [
+    join(ASSETS_DIR, "doc", "Spec.md"),
+    ...readdirSync(join(ASSETS_DIR, "doc", "wiki"))
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => join(ASSETS_DIR, "doc", "wiki", f)),
+  ]
+
+  it.each(decks)("%s は frontmatter を持ち、行数が変わらない", (file) => {
+    const md = readFileSync(file, "utf-8")
+    const result = splitFrontmatter(md)
+    expect(result.block).toBeDefined()
+    // 剥がしても行番号がずれない＝診断が実ファイルの行を指せる
+    expect(result.body.split("\n").length).toBe(md.split("\n").length)
+    // 本文に YAML が残っていない（残ると1枚目のスライドとして描かれる）
+    expect(result.body).not.toContain("type:")
+  })
+
+  it.each(decks)("%s のメタが読める", (file) => {
+    expect(readDeckMeta(readFileSync(file, "utf-8"))?.type).toBeDefined()
   })
 })

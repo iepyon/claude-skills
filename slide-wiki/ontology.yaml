@@ -127,13 +127,20 @@ frontmatter:
     - name: description
       level: recommended
       kind: text
+      effect: search
       description: 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。
       example: 人が書き、AI が手入れする。育つ知識の作り方
     - name: tags
       level: recommended
       kind: list-of-text
+      effect: search
       description: デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。
       example: "[wiki, パターンランゲージ]"
+    - name: category
+      level: optional
+      kind: text
+      description: デッキの区分。tags が主題を並べるのに対し、こちらは1つだけ選ぶ。
+      example: パターンカタログ
     - name: status
       level: optional
       kind: text
@@ -141,6 +148,21 @@ frontmatter:
       default: stable
       description: 書きかけかどうか。order.yaml のコメントに書いていた「まだ無い」を機械に見せる。
       example: draft
+    - name: author
+      level: optional
+      kind: text
+      description: 書いた人。複数なら読点で連ねる（機械に配るなら sources を使う）。
+      example: 家永
+    - name: created
+      level: optional
+      kind: date
+      description: 最初に書いた日。git が持っているが、デッキを移しても残る形で持たせる。
+      example: "2026-01-15"
+    - name: updated
+      level: optional
+      kind: date
+      description: 最後に手を入れた日。**手で書く以上ずれる**ので、ずれても困らない用途にだけ使う。
+      example: "2026-08-11"
     - name: sources
       level: optional
       kind: list-of-objects
@@ -170,6 +192,36 @@ frontmatter:
       expired: warning
       description: この日を過ぎたら見直す。**落ちたら直すのは日付ではなく中身**。
       example: "2027-04-01"
+    # ── 出力制御。置き場所として宣言しただけで、まだ何も読まない ──
+    # 書けば効くと誤解されるのがいちばん困るので、effect: declared-only を
+    # 生成ドキュメントの表に列として出す（散文で言い添えると読み飛ばされる）。
+    - name: theme
+      level: optional
+      kind: uri
+      effect: declared-only
+      description: >-
+        使いたいテーマ YAML のパス。**まだ効かない** — テーマは1サイトに1つで、
+        デッキごとに違うものを選ぶと同じ座標系で描けなくなる。効かせるなら
+        「サイト全体で1つだけ宣言してよい」規則が先に要る。今は --theme が正本。
+      example: themes/dark.yaml
+    - name: site_title
+      level: optional
+      kind: text
+      effect: declared-only
+      description: >-
+        サイトのタイトル。**まだ効かない** — サイトはデッキの集合なので、
+        どの1デッキが全体の名前を名乗るかを決める規則が先に要る。今は --site-title が正本。
+      example: Slide Wiki
+    - name: order
+      level: optional
+      kind: int
+      effect: declared-only
+      description: >-
+        サイドバーでの位置。**まだ効かない。並び順の正本は order.yaml のまま**。
+        1本の並び列だからこそ「第1部と第2部は対なので隣り合わせに置く」という意図が書けており、
+        デッキごとの番号に散らすとその意図が消える。効かせるなら間に挿入するたびの
+        振り直しと、2つの宣言が食い違ったときの規則が要る。
+      example: "3"
   # 値の形。正規表現をコードに書かないための正本。
   # ここに書くのは**使われている kind の分だけ** — 使われない正規表現が残っていると、
   # 直したつもりで何も変わらない（selfcheck が未使用を落とす）。

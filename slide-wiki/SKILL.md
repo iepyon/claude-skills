@@ -84,17 +84,24 @@ tags: [wiki, パターンランゲージ]
 ```
 
 <!-- BEGIN GENERATED: frontmatter -->
-| キー | level | 形 | 説明 |
-|---|---|---|---|
-| `type` | recommended | `text` | このファイルが何であるか。外部ツールが種別で絞るのに使う。 |
-| `title` | recommended | `text` | 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。 |
-| `description` | recommended | `text` | 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。 |
-| `tags` | recommended | `list-of-text` | デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。 |
-| `status` | optional | `draft` / `stable` / `deprecated` | 書きかけかどうか。order.yaml のコメントに書いていた「まだ無い」を機械に見せる。 |
-| `sources` | optional | `list-of-objects` | このデッキが依拠した資料。地の文に埋まっていた出典を機械可読にする。 |
-| `verified` | optional | `list-of-objects` | 誰がいつ内容を確かめたか。出典の照合結果を残す場所。 |
-| `generated` | optional | `object` | 機械が作ったデッキであることの表明。 |
-| `stale_after` | optional | `date` | この日を過ぎたら見直す。**落ちたら直すのは日付ではなく中身**。 |
+| キー | level | 形 | 効き先 | 説明 |
+|---|---|---|---|---|
+| `type` | recommended | `text` | lint と外部ツール | このファイルが何であるか。外部ツールが種別で絞るのに使う。 |
+| `title` | recommended | `text` | lint と外部ツール | 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。 |
+| `description` | recommended | `text` | 絞り込み | 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。 |
+| `tags` | recommended | `list-of-text` | 絞り込み | デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。 |
+| `category` | optional | `text` | lint と外部ツール | デッキの区分。tags が主題を並べるのに対し、こちらは1つだけ選ぶ。 |
+| `status` | optional | `draft` / `stable` / `deprecated` | lint と外部ツール | 書きかけかどうか。order.yaml のコメントに書いていた「まだ無い」を機械に見せる。 |
+| `author` | optional | `text` | lint と外部ツール | 書いた人。複数なら読点で連ねる（機械に配るなら sources を使う）。 |
+| `created` | optional | `date` | lint と外部ツール | 最初に書いた日。git が持っているが、デッキを移しても残る形で持たせる。 |
+| `updated` | optional | `date` | lint と外部ツール | 最後に手を入れた日。**手で書く以上ずれる**ので、ずれても困らない用途にだけ使う。 |
+| `sources` | optional | `list-of-objects` | lint と外部ツール | このデッキが依拠した資料。地の文に埋まっていた出典を機械可読にする。 |
+| `verified` | optional | `list-of-objects` | lint と外部ツール | 誰がいつ内容を確かめたか。出典の照合結果を残す場所。 |
+| `generated` | optional | `object` | lint と外部ツール | 機械が作ったデッキであることの表明。 |
+| `stale_after` | optional | `date` | lint と外部ツール | この日を過ぎたら見直す。**落ちたら直すのは日付ではなく中身**。 |
+| `theme` | optional | `uri` | **まだ効かない** | 使いたいテーマ YAML のパス。**まだ効かない** — テーマは1サイトに1つで、 デッキごとに違うものを選ぶと同じ座標系で描けなくなる。効かせるなら 「サイト全体で1つだけ宣言してよい」規則が先に要る。今は --theme が正本。 |
+| `site_title` | optional | `text` | **まだ効かない** | サイトのタイトル。**まだ効かない** — サイトはデッキの集合なので、 どの1デッキが全体の名前を名乗るかを決める規則が先に要る。今は --site-title が正本。 |
+| `order` | optional | `int` | **まだ効かない** | サイドバーでの位置。**まだ効かない。並び順の正本は order.yaml のまま**。 1本の並び列だからこそ「第1部と第2部は対なので隣り合わせに置く」という意図が書けており、 デッキごとの番号に散らすとその意図が消える。効かせるなら間に挿入するたびの 振り直しと、2つの宣言が食い違ったときの規則が要る。 |
 
 1行目がちょうど `---` で、2行目が `key: value` の形のときだけメタとして読む（どちらかを満たさない `---` は今までどおりスライド区切り）。
 <!-- END GENERATED: frontmatter -->
