@@ -144,3 +144,31 @@ export function parseOkfLink(href: string): OkfLinkTarget | null {
   const slide = fragment || undefined
   return slide ? { ref: `${deck}/${slide}`, slide, canonicalHref } : { ref: deck, canonicalHref }
 }
+
+/**
+ * md のリンクを本文から拾う走査。捕獲群は href だけ。
+ *
+ * **href の綴りを扱う道具はここを通す。** 以前は `lint.ts` と移行ツールが同じ形を
+ * 別々に持っていた。行き先の判定（`parseOkfLink`）を1箇所に寄せても、**どれをリンクと
+ * 見なすか**が割れていれば同じことが起きる — 一方だけが拾う書き方が、もう一方の
+ * 検査や書き換えをすり抜ける。
+ *
+ * `[^()\s]+` は `inline-formatter.ts` の `mdHref` と同じ切り方。丸括弧と空白を
+ * 含む href はパーサがリンクと読まないので、こちらも拾わない。
+ *
+ * `matchAll` は仕様上この正規表現を複製してから回すので、`g` 付きを
+ * モジュール直下に置いても `lastIndex` は共有されない。
+ */
+export const MD_LINK = /\[[^\[\]]+?\]\(([^()\s]+)\)/g
+
+/**
+ * 本文中の href の位置。`MD_LINK` の一致から、href だけの範囲を返す。
+ *
+ * **末尾から数える。** ラベルは `[^\[\]]+?` なので丸括弧を含みうる
+ * （`[a(b](x.md)`）、`indexOf("(")` で前から探すとラベルの中の括弧に当たる。
+ * href は必ず閉じ括弧の直前にあるので、そこから長さを引くほうが常に正しい。
+ */
+export function hrefRangeOf(match: RegExpExecArray | RegExpMatchArray): { start: number; end: number } {
+  const end = match.index! + match[0].length - 1 // 閉じ `)` の直前
+  return { start: end - match[1].length, end }
+}

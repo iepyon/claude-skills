@@ -46,7 +46,7 @@ npx tsx src/cli.ts --wiki doc/wiki _site/index.html    # Wiki サイト生成
 npx tsx src/cli.ts --lint [--strict] doc/Spec.md doc/wiki  # 宣言に照らして検査
 npx tsx src/ontology/selfcheck.ts                 # 宣言の自己点検
 npx tsx src/tools/gen-ontology-doc.ts [--check]   # ontology.md / SKILL.md 生成領域
-npx tsx src/tools/migrate-wikilinks.ts [--dry-run|--check] doc/wiki  # 旧 [[…]] の一括変換
+npx tsx src/tools/migrate-wikilinks.ts [--dry-run|--check] doc/wiki  # 古い記法の一括変換
 npx tsx src/tools/gen-okf-index.ts [--check]      # バンドルの index.md / log.md
 ```
 
@@ -172,14 +172,20 @@ src/tools/
 ├── inventory-diff.ts  2つのインベントリの差分
 ├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
 ├── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
-├── migrate-wikilinks.ts  旧 `[[…]]` を OKF の相対リンクに書き換える
+├── migrate-wikilinks.ts  古い記法を今の書き方へ揃える (旧 `[[…]]` と、先頭 `/`・`./` 付きのリンク)
 └── gen-okf-index.ts   バンドルの目録 `index.md` と更新履歴 `log.md` を生成する
 ```
 
 **移行ツールはパーサに依存しない。** `migrate-wikilinks.ts` は `[[…]]` を自分の
 正規表現で拾い、解決に要るのはスライド ID の索引だけなので、パーサから旧記法を
 落としたあとも動く。他人のデッキを受け取るスキルなので、破壊的変更の移行路は
-同梱しておく（`--check` は「旧記法が紛れ込んでいないか」の恒常的な見張りにもなる）。
+同梱しておく（`--check` は「古い記法が紛れ込んでいないか」の恒常的な見張りにもなる）。
+
+**ただし「どちらの綴りが正しいか」は持たない。** 先頭 `/`・`./` 付きリンクの寄せ先は
+`parseOkfLink` が返す `canonicalHref` そのもので、接頭辞の集合を移行ツールは知らない。
+`okf.ts` が受ける綴りを増やしたときに、ここだけ古い規則で通す状態を作らないため。
+**2つの移行は残り方が違う** — `[[…]]` はサイトでも折れるので見れば分かるが、
+接頭辞つきはサイトでは当たり github.com でだけ折れる（だから `--check` が要る）。
 
 **図形の名前は数えずに宣言する。** `--verify` が突き合わせる図形のキーは
 `src/shape-keys.ts` が唯一の語彙で、PPTX は pptxgenjs の `objectName`
@@ -332,7 +338,7 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
 | `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査＝実寸・禁止要素・定規で引いた線) |
-| `migrate-wikilinks.test.ts` | tools/migrate-wikilinks.ts (旧記法の一括変換・表示テキストの不変・コード表記の据え置き) |
+| `migrate-wikilinks.test.ts` | tools/migrate-wikilinks.ts (旧記法と接頭辞つきリンクの一括変換・表示テキストの不変・コード表記の据え置き) |
 | `okf-conformance.test.ts` | `doc/wiki/` が OKF v0.2 に適合していること (§11 の3条件・§8 目録・§9 履歴・§6 リンク) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `workflows.test.ts` | `.github/workflows/` の宣言 (公開が PR で走らないこと・concurrency group が重ならないこと) |

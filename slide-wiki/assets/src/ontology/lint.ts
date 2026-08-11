@@ -17,7 +17,7 @@ import "../plugins/index.js" // side-effect: 登録が済んでいないとプ�
 // 自動 ID の綴りは採番と同じ関数で出す。ここに写すと、slug の規則を変えた日に
 // lint だけが古い綴りで衝突を判定する（`slide-ids.ts` が正本）
 import { slugify } from "../slug.js"
-import { parseOkfLink } from "../okf.js"
+import { MD_LINK, parseOkfLink } from "../okf.js"
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
   getFieldSet,
@@ -352,7 +352,7 @@ function checkLinkForm(tokens: readonly Token[]): Diagnostic[] {
       })
     }
 
-    for (const m of text.matchAll(/\[[^\[\]]+?\]\(([^()\s]+)\)/g)) {
+    for (const m of text.matchAll(MD_LINK)) {
       const href = m[1]
       if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue // http: や mailto: は外部リンク
 
