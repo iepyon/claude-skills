@@ -228,18 +228,18 @@ describe("WikiPattern — 座標", () => {
     expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X - WP_PANEL_SHIFT_X, 5)
   })
 
-  it("左段は全角27字が折り返さない幅を保つ", async () => {
-    // 27字は ontology.yaml の guidance にある書き方の規約で、左段はそれを容れる器。
+  it("左段は全角26字が折り返さない幅を保つ", async () => {
+    // 26字は ontology.yaml の guidance にある書き方の規約で、左段はそれを容れる器。
     // 図を広げるために左を削るときの下限がこれ（下回れば行が折れ、1em で数える
     // 高さの見積りと1行ずれる）。全角1字の送りはフォントで揺れるので、
     // この環境の実測 1.02em に余裕を足した 1.05em で見る
     const result = await layoutFor(deck())
     const body = result.textBoxes.find((b) => b.fontSize === DEFAULT_THEME.wikiPattern.bodySize)!
     const advance = (DEFAULT_THEME.wikiPattern.bodySize / 72) * 1.05
-    expect(body.w).toBeGreaterThanOrEqual(27 * advance)
+    expect(body.w).toBeGreaterThanOrEqual(26 * advance)
   })
 
-  it("寄せても、全角27字を使い切った行が図解に触らない", async () => {
+  it("寄せても、全角26字を使い切った行が図解に触らない", async () => {
     // 寄せられる量の上限を決めているのはこれ（constants.ts の WP_PANEL_SHIFT_X）。
     // 左段のテキストの箱の右端と下敷きの左端が、この順で並んでいること
     const result = await layoutFor(deck())
@@ -252,7 +252,7 @@ describe("WikiPattern — 座標", () => {
     }
   })
 
-  it("下敷きは図解の縦横比で組まれ、列の中で縦中央に置かれる", async () => {
+  it("下敷きは図解の縦横比で組まれ、上は左段の最初の見出しにそろう", async () => {
     // 列いっぱいに伸ばすと、HTML は preserveAspectRatio で図を縮めて上下に帯を作り、
     // PPTX は addImage が枠に引き伸ばして図を歪ませる。原因は同じ「枠と図の比の食い違い」
     const result = await layoutFor(deck())
@@ -261,9 +261,13 @@ describe("WikiPattern — 座標", () => {
     const aspect = 340 / 320 // fixtures/diagrams/sample.svg の viewBox
     expect(svg.w / svg.h).toBeCloseTo(aspect, 5)
 
-    // 上下の余りが等しい ＝ 縦中央（takeaway が無いので列の下端はスライドの下マージン）
-    const columnBottom = SLIDE_HEIGHT - MARGIN_Y
-    expect(panel.y - CONTENT_START_Y).toBeCloseTo(columnBottom - (panel.y + panel.h), 5)
+    // 縦中央に置いていた頃は、図の高さがページごとに違うと上の線もページごとに動いた。
+    // そろえる先は最初の見出しの箱（buildSectionBoxes が積み始める線）
+    const heading = result.textBoxes.find(
+      (b) => b.fontSize === DEFAULT_THEME.wikiPattern.headingSize
+    )!
+    expect(panel.y).toBeCloseTo(heading.y, 5)
+    expect(panel.y + panel.h).toBeLessThanOrEqual(SLIDE_HEIGHT - MARGIN_Y + 1e-6)
   })
 
   it("縦長の図解では下敷きが列より細くなり、左右中央に置かれる", async () => {

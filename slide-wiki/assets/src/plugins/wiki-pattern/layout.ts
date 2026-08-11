@@ -123,12 +123,16 @@ export function layoutWikiPattern(
   // **SVG の ShapeBox に text を付けてはいけない** — 比較対象になった瞬間、
   // PPTX 側は addImage でテキストを持たないため必ず食い違う。
   //
-  // 下敷きは列いっぱいには伸ばさず、図の縦横比で組んで列の中央に置く。
+  // 下敷きは列いっぱいには伸ばさず、図の縦横比で組んで置く。
   // 伸ばすと HTML は図を縮めて帯を作り（preserveAspectRatio）、
   // PPTX は addImage が枠に引き伸ばして図を歪ませる — 同じ原因で別々に崩れる。
   const panel = panelSize(dims.rightWidth, dims.availableHeight, layout.diagramAspect)
   const panelX = dims.rightX + (dims.rightWidth - panel.w) / 2 - WP_PANEL_SHIFT_X
-  const panelY = titleY + (dims.availableHeight - panel.h) / 2
+  // 上は左段の最初の見出し（`いつ・なにが困るか`）にそろえる。見出しの箱は
+  // buildSectionBoxes が titleY + WP_PADDING から積み始めるので、同じ線から始める。
+  // 縦中央に置いていた頃は、図の高さがページごとに違うと上の線もページごとに動いた。
+  // 列の下端を割るときだけ持ち上げる（縦長の図と、比の分からない図がそれ）
+  const panelY = Math.min(titleY + WP_PADDING, titleY + dims.availableHeight - panel.h)
   const shapeBoxes: ShapeBox[] = [
     {
       x: panelX,
