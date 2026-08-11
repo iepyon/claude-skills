@@ -1,6 +1,6 @@
 # patterns-meta の出典調査
 
-`assets/doc/wiki/patterns-meta.md`（パターンを書くパターン）の11パターンについて、
+`assets/doc/wiki/patterns-meta.md`（パターンを書くパターン）の12パターンについて、
 名前と主張の出どころを一次資料まで辿った記録。**実装済み** — `<!--source-->` 注釈として
 スライド下部に 6pt で刻んである（枠は3行ぶん 0.3in）。
 
@@ -17,7 +17,9 @@
 
 Meszaros & Doble, **"A Pattern Language for Pattern Writing"**
 (*Pattern Languages of Program Design 3*, Addison-Wesley, 1997, pp.529–574) が
-このデッキの正面の先行研究で、**10件のうち4件がここに名前付きで存在する**。
+このデッキの正面の先行研究で、**12件のうち4件がここに名前付きで存在する**。
+（`ドメイン言語` も Meaningful Metaphor Name の**出口条件**をこの文献に負っているが、
+名前を負っているわけではないので4件には数えない）
 
 節構成と、このデッキに対応するパターン:
 
@@ -25,7 +27,7 @@ Meszaros & Doble, **"A Pattern Language for Pattern Writing"**
 |---|---|---|
 | B. Pattern Structure | **Visible Forces** | ザワつく状況 |
 | C. Naming and Referencing | **Evocative Pattern Name** | ジワる名前 |
-| C. Naming and Referencing | **Meaningful Metaphor Name** | 借りてきた比喩 |
+| C. Naming and Referencing | **Meaningful Metaphor Name** | メタファ（＋その対の ドメイン言語） |
 | C. Naming and Referencing | **Readable References to Patterns** | 文に溶かす |
 | C. Naming and Referencing | **Relationship to Other Patterns** | でこぼこ石畳（副） |
 | D. Understandable | Understood Notations | ラフで出す（**不一致**、後述） |
@@ -67,7 +69,7 @@ Evocative Pattern Name が本当に対立させているのは **evocative 対 d
 
 > 草案: `Meszaros & Doble "Evocative Pattern Name" (PLoPD3, 1997) / まつもとゆきひろ「名前重要」`
 
-### 借りてきた比喩 ◎
+### メタファ ◎（旧名 `借りてきた比喩`）
 
 **一次**: Meszaros & Doble (1997) **Meaningful Metaphor Name**
 Problem: "How do you give your pattern a useful and memorable name?"
@@ -77,7 +79,61 @@ Solution: "Find a meaningful metaphor for the pattern, and name the pattern acco
 **ほぼ完全一致**。デッキの「覚える手間を読者に押し付けない」「借り物なら手間はゼロ」は
 この解の理由付けをそのまま日本語にしたもの。ここは安心して刻める。
 
-> 草案: `Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997)`
+**`借りてきた比喩` から `メタファ` に改名した。出典は変わらない。**
+改名の判断は下の一覧表の注記に畳んである（比喩名に戻さないこと）。
+
+**出口条件を刻むよう書き換えた。** 同じ解の中に
+"**If you have to explain the metaphor, it is not familiar enough.**" があり、
+前回の捏造チェックで逐語確認まで済ませていながら（後述の表）刻んでいなかった。
+これは**比喩の道が閉じる条件**そのもので、対の `ドメイン言語` への入口になる。
+`往復切符` に従って対を立てた以上、この一文が両者を繋ぐ蝶番なので出典行に上げる。
+
+> 草案: `Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997) ＋ "If you have to explain the metaphor, it is not familiar enough."`
+
+### ドメイン言語 ○（`メタファ` の対。一次資料の本文は未読）
+
+**主張**: 馴染みの比喩がどれも少しずつずれるなら、比喩を諦める。覚える手間を読み手に
+払わせてでも、その場だけで通じる語を作り、定義を一箇所に置いて全員で使う。
+
+**この対は `往復切符` 本体より出典が強い。** `往復切符` は「逆向きも書け」という要求自体が
+文献に無く △ だが、こちらは**比喩の道が閉じる条件を一次資料が自分で書いている**。
+Meszaros & Doble は Meaningful Metaphor Name の解の中で
+"If you have to explain the metaphor, it is not familiar enough." と述べており、
+これは前回のセッションが hillside.net の本文を curl + grep して**逐語確認済み**（◎）。
+比喩を勧めるパターン自身が、比喩が使えなくなる線を引いている。
+
+**適用例は3件そろっている**（`3ストライクで書く` の検算）。**別々の場面**であることを確認した。
+
+| # | 場面 | 内容 |
+|---|---|---|
+| 1 | Evans, DDD (2003) ユビキタス言語 | モデルを言語の骨格にし、図・文章・とりわけ話し言葉とコードで同じ語を使うことをチームに課す。`Aggregate` `Bounded Context` `Value Object` はどれも借りた比喩ではなく、覚える手間を払って使う語 |
+| 2 | CUNY Graduate Center Writing Center "Coining a New Term?" | 既存の語彙で足りないとき、または既存語が多様に使われていて特定したいときに新語を作る。**作ったら初出の直後に定義を置き、似た既存語との違いを明示せよ**。ソフトウェアの外（学術文章）の場面 |
+| 3 | このサイト自身の `ontology.yaml` | `いつ・なにが困るか` / `そこで` を閉じた語彙として宣言し、語彙外の見出しは `unknown: error` で止める。書き手は語彙を覚える手間を払い、見返りに3デッキの骨格が寸分違わない |
+
+適用例2が効いているのは、**「定義を一箇所に置く」までが打ち手に含まれる**と分かるから。
+新語を作るだけなら押し付けで終わる。デッキの「定義は一箇所に置き」はここから来ている。
+
+**検証度は ○。** この回も egress が絞られており、`hillside.net`・`domainlanguage.com`・
+Evans の PDF はいずれも CONNECT が 403 で取れなかった（`curl` も `WebFetch` も同じ）。
+通ったのは検索だけなので、**Evans については逐語引用を刻まない**。刻んだのは
+独立した複数の二次資料が一致して伝える「Therefore」の要約までで、
+`往復切符` のときと同じ線の引き方にしてある。次に外へ出られるとき確認するのは1点。
+
+- Evans, *DDD* 第2章 UBIQUITOUS LANGUAGE の囲みの "Therefore:" の逐語
+  （`domainlanguage.com` の DDD Reference が Evans 自身の手による要約版で、CC ライセンス）
+
+**Fowler『Domain-Specific Languages』(2010) は適用例に入れない。** 利用者の当初の言い方は
+「メタファとドメイン特化言語」だったが、Fowler の DSL は
+"a computing programming language of limited expressiveness focused on a particular domain"
+＝**実行可能な言語**の話で、散文で概念に名前を付ける話ではない。
+足すともっともらしい系譜になるので落とした。**名前が似ているだけで繋がない。**
+
+**「造語」と刻んではいけない。** ユビキタス言語は業務の現場に既にある語を採ることも多く、
+Evans の主眼は**語を発明すること**ではなく**チーム全員が同じ語を厳密に使うこと**にある。
+「造語しろ」と書くと Evans と衝突する。そこで本文は
+**「その場だけの語を作って全員で使う」**（作る対象は語彙であって単語ではない）にした。
+
+> 草案: `Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語 ／ Meszaros & Doble "Meaningful Metaphor Name" の "If you have to explain the metaphor, it is not familiar enough."`
 
 ### 声に出して読む ◎
 
@@ -273,6 +329,7 @@ Solution: "When referring to patterns within the body of your pattern,
 | 1 | Fowler『リファクタリング』のカタログ | 関数の抽出 ↔ 関数のインライン化、変数の抽出 ↔ 変数のインライン化 |
 | 2 | Buxton『Sketching User Experiences』 | 示唆するスケッチ ↔ 確認するプロトタイプ（**このデッキが `ラフで出す` で既に引いている一次資料**） |
 | 3 | このサイトの `patterns-wiki` | `動く北極星` ↔ `動かない物差し`。しかも本文が「[[けもの道]] と逆で、これだけは事前に置く」と逆向きの関係を散文で書いている |
+| 4 | このデッキ自身 | `メタファ` ↔ `ドメイン言語`。`往復切符` を書いた後で、片道のまま置かれていた `借りてきた比喩` に適用して立てた対 |
 
 **パターン文献側に同じ要求は見つかっていない。** いちばん近いのは Meszaros & Doble の
 **Relationship to Other Patterns** の *alternatives*（同じ問題を別に解くパターンとの関係を
@@ -428,7 +485,8 @@ Gush と刻むと、探した読者が文献に見つけられない。
 | パターン | 検証 | 出典行の草案 | 注記（草案を変えるときに壊してはいけない判断） |
 |---|---|---|---|
 | ジワる名前 | ◎ | Meszaros & Doble "Evocative Pattern Name" (PLoPD3, 1997) / まつもとゆきひろ「名前重要」（日本語版書き下ろし, 2010） | Meszaros が負うのは**説明的な名前を避ける**ところまで。「使うたびにジワジワくる」の遅効性は**どの出典にも無い**デッキの追加なので、Meszaros 単独にしない |
-| 借りてきた比喩 | ◎ | Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997) | ほぼ完全一致。単独で足りる |
+| メタファ | ◎ | Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997) ＋ "If you have to explain the metaphor, it is not familiar enough." | ほぼ完全一致。単独で足りる。**旧名は `借りてきた比喩`。利用者の判断で説明的な語に改名した** — `ジワる名前`（一度で伝わる名前は、たいてい説明である）の基準からは外れるが、`メタファ` 本来の基準＝**読者にとって既に馴染みがあるか**で測れば、このデッキの読者に学習コストはゼロで借り物として成立している。**比喩名に戻さない。** 出口条件の一文を足したのは、対の `ドメイン言語` への蝶番だから |
+| ドメイン言語 | ○ | Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語 / Meszaros の出口条件 | `メタファ` の対（`往復切符`）。**Evans の逐語を刻まない** — egress で本文に触れておらず、刻んだのは二次資料が一致して伝える Therefore の要約まで。**`Fowler の DSL を足さない`** — あれは実行可能な言語の話で、散文の命名ではない。**「造語」と書かない** — Evans の主眼は語の発明ではなく全員が同じ語を厳密に使うことなので、衝突を作る。適用例3件目はこのサイトの `ontology.yaml` |
 | 声に出して読む | ◎ | Evans『ドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」 | **Gabriel の Author Reads Selection を足さない。** あれは合評の場での手順で、このパターンは書いた直後の一人での検算。場面が違う |
 | ザワつく状況 | ◎（名前は提供された本文で確認） | Meszaros & Doble "Visible Forces" (PLoPD3, 1997) / 名前は東京科学大学 EDP の「ざわざわ感」 | EDP の記事は Alexander も forces も引いていない**独立の語彙**。「フォースの言い換え」と書くと無い系譜を作る。**名前の由来**として並べる（でこぼこ石畳と同じ扱い）。表記は「ざわざわ感」 |
 | 釣り竿を渡す | ○ | Alexander『時を超えた建設の道』(1979) の生成性 / Coplien, generative pattern (1994) | **名前の由来（魚と釣り方の格言）は書かない** — 典拠が無い。出典は内容＝生成性のほうに付ける |
@@ -445,8 +503,25 @@ Gush と刻むと、探した読者が文献に見つけられない。
 - Gush を新パターンとして立てるか → 出典は Positive Feedback First
 - `往復切符` の一次資料（refactoring.com のカタログ、Buxton の対比表）→ 外に出られる回に取り、
   △ を上げる。取れたら逐語を足せるが、**それまで刻む文字列は変えない**
+- `ドメイン言語` の Evans 逐語（DDD 第2章の "Therefore:"、または Evans 自身の DDD Reference）
+  → 外に出られる回に取り、○ を ◎ に上げる。**それまで刻む文字列は変えない**
 - `三すくみ`（第三の選択肢）を立てるか → 適用例が2件なので `3ストライクで書く` に従って保留。
-  3件目が出たら `往復切符` の隣に置く
+  3件目が出たら `往復切符` の隣に置く。**`メタファ` ↔ `ドメイン言語` は3件目に数えない** —
+  二択で書き切れており、両方を捨てる三つ目を必要としていない
+- **オノマトペで名付ける道を独立した一枚にするか → 立てない。** 比喩の一種として `メタファ` に
+  内包させる（利用者の判断）。`ジワる名前` が遅効性の側から既に押さえている
+
+`往復切符` の売り場に出ていて、まだ書いていない対（**書く義務はない**。
+「戻る義務はない。売り場にあるかを問うだけ」）:
+
+- **`ラフで出す` の対** — いちばん借金に近い。`往復切符` の出典行が既に
+  「Buxton も『示唆するスケッチ』と『確認するプロトタイプ』を対にする」と**刻んでいる**のに、
+  対の片側しか書いていない。適用例3件目はこのリポジトリ自身（崩した SVG ⇔ 寸分違わない
+  `ontology.yaml`）で立つ
+- **`黙って聴く著者` の対** — Gabriel の7ラウンドの6が「著者が質問」で、Shepherding は
+  場の外での一対一。**場では黙る ⇔ 場の外では喋る**。7ラウンドは既にこの文書に控えてある
+- `釣り竿を渡す` の対（魚も見せる）→ 「いつ完成形を見せるか」の線引きが微妙で、
+  真正面から `釣り竿を渡す` を打ち消して読まれる危険がある。急がない
 
 ---
 
@@ -502,3 +577,11 @@ Gush と刻むと、探した読者が文献に見つけられない。
 - [Pattern Naming Patterns (柴田ほか, PLoP'16)](https://hillside.net/plop/2016/papers/proceedings/papers/shibata.pdf)
 - [プログラマが知るべき97のこと「名前重要」](https://ja.wikisource.org/wiki/プログラマが知るべき97のこと/名前重要)
 - [Rule Of Three (c2 wiki)](https://wiki.c2.com/?RuleOfThree)
+
+`ドメイン言語` の回に見たもの（**いずれも本文は取れず、検索の要約どまり**。だから ○）:
+
+- [Ubiquitous Language (Martin Fowler bliki)](https://martinfowler.com/bliki/UbiquitousLanguage.html)
+- [What is Ubiquitous Language? (Agile Alliance 用語集)](https://agilealliance.org/glossary/ubiquitous-language/)
+- [Domain-Driven Design Reference (Evans 自身による要約版, CC)](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf)
+- [Coining a New Term? Introducing It Clearly and Precisely (CUNY Graduate Center Writing Center)](https://gcwritingcenter.commons.gc.cuny.edu/rs_keyterms_keytermsintroduction/rs_key-terms_evaluating-coined-terms-for-issues-of-clarity/)
+- [Domain-Specific Languages (Fowler) — **適用例には入れなかった**](https://books.google.com/books/about/Domain_Specific_Languages.html?id=ri1muolw_YwC)
