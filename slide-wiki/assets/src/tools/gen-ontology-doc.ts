@@ -21,6 +21,7 @@ import {
   getVocabularies,
   loadOntology,
   ontologyVersion,
+  EFFECT_LABEL,
 } from "../ontology/index.js"
 import type { Layout, SubLabels, Vocabulary } from "../ontology/types.js"
 
@@ -150,13 +151,6 @@ function inlineTable(): string[] {
     lines.push("", `**${s.name}**`, ...prose(s.guidance))
   }
   return lines
-}
-
-/** そのキーがいま何に効くか。宣言の effect をそのまま人の言葉にする */
-const EFFECT_LABEL: Readonly<Record<string, string>> = {
-  search: "絞り込み",
-  "declared-only": "**まだ効かない**",
-  metadata: "lint と外部ツール",
 }
 
 function frontmatterTable(): string[] {

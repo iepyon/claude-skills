@@ -200,6 +200,44 @@ ${slideBaseCss(theme)}
       box-shadow: 0 8px 40px rgba(0,0,0,.5);
       position: relative;
     }
+    /* デッキの短い呼び名。**どのパターン集を見ているか**をスライドの中で名乗る。
+       題は上のパンくずにあるが、読んでいる最中に目を上げないと分からない。
+
+       足場は position: relative の .stage-frame（.wiki-slide には position を
+       持たせない — .slide の absolute の基準がそちらへ移ってしまう）。だから
+       scaleStage() の transform に乗り、どの倍率でもスライドに対する比が変わらない。
+       枠の overflow: hidden が角丸に沿って切る。
+
+       座布団ごと置くのは .edge-zone::after と同じ理由で、スライドの地色が白にも
+       濃色にもなるため（字の色をどう選んでも、地に近い一方では沈む）。
+       pointer-events: none は必須 — バッジは右端 8% の送りゾーンの中に居るので、
+       クリックを飲むと「端を押して送る」に穴が空く（tooltip も置けない）。 */
+    .deck-badge {
+      position: absolute; top: 10px; right: 12px; z-index: 3;
+      max-width: 22%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      padding: 2px 9px; border-radius: 999px;
+      background: rgba(12,18,30,.62);
+      border: 1px solid rgba(255,255,255,.38);
+      color: #fff; font-size: 12px; line-height: 1.6; letter-spacing: .04em;
+      pointer-events: none;
+    }
+
+    /* デッキをまたぐリンクにだけ、行き先の短い名を添える。付いていること自体が
+       「またぐ」の合図なので、デッキ内のリンクには何も足さない。
+
+       ここに置くのは、これが Wiki だけの概念だから — 1枚 HTML はデッキが1つで、
+       「またぐ」に指すものが無い（.broken が slideBaseCss 側に居るのとはそこが違う）。
+       節点ではなく属性 + ::after なのは client-script の annotateLinks を見よ。
+       inline-block にすると親の下線が渡らない（原子インラインには伝播しない）ので、
+       補足が下線の続きに見えず、リンクの語との切れ目が保たれる。 */
+    a.wikilink[data-cross-deck]::after {
+      content: attr(data-cross-deck);
+      display: inline-block;
+      margin-left: .18em;
+      font-size: .68em; vertical-align: .35em;
+      opacity: .75; letter-spacing: .02em; white-space: nowrap;
+    }
+
     /* Wiki では表示中の1枚だけを stage に出す。
        .slide.active の規則は slideBaseCss 側と共有している。 */
     .wiki-slide { display: none; }

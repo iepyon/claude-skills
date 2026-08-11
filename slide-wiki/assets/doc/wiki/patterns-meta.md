@@ -1,6 +1,7 @@
 ---
 type: deck
 title: パターンを書くパターン
+short: meta
 description: 良いパターンの質そのものを、パターンにする
 tags: [パターンランゲージ, メタ, 書き方, 出典]
 sources:

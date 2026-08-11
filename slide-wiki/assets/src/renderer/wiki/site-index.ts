@@ -60,16 +60,24 @@ export function buildSiteIndex(decks: readonly WikiDeck[]): {
       globalIndex++
     })
 
+    // 名乗っていなければ slug で代替する。**代替をここ1箇所で済ませる**のが要点で、
+    // バッジとリンクの補足はこの1語を読むだけになる（`WikiDeckView.short` を見よ）。
+    // 使うのは一意化した `deckSlug` のほう — 引き当てる鍵と揃っていないと、
+    // slug が衝突したデッキだけ他人の名を名乗る
+    const short = deck.meta?.short || deckSlug
+
     // デッキが名乗った言葉を1つの文字列に畳んでおく。検索は部分一致なので、
     // 語の区切りは空白1つで足りる（テンプレート側で組み立てると、
-    // 同じ文字列をスライドの数だけ作り直すことになる）
-    const searchWords = [deck.meta?.description, ...(deck.meta?.tags ?? [])]
+    // 同じ文字列をスライドの数だけ作り直すことになる）。
+    // 呼び名も混ぜるのは、バッジが読み手に教えた語で引けないと嘘になるため
+    const searchWords = [deck.meta?.short, deck.meta?.description, ...(deck.meta?.tags ?? [])]
       .filter((w): w is string => !!w)
       .join(" ")
 
     deckViews.push({
       slug: deckSlug,
       title: deck.title,
+      short,
       entryIds,
       ...(searchWords ? { searchWords } : {}),
     })

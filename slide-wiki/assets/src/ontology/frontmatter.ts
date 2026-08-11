@@ -150,6 +150,8 @@ export function readFrontmatter(block: string): FrontmatterRead {
 export interface DeckMeta {
   readonly type?: string
   readonly title?: string
+  /** デッキの短い呼び名。Wiki の右上のバッジと、またぐリンクの補足が同じ1語を使う */
+  readonly short?: string
   readonly description?: string
   readonly tags?: readonly string[]
   readonly status?: string
@@ -172,6 +174,7 @@ export function readDeckMeta(markdown: string): DeckMeta | undefined {
   const meta: DeckMeta = {
     type: asString(data.type),
     title: asString(data.title),
+    short: asString(data.short),
     description: asString(data.description),
     tags: asStrings(data.tags),
     status: asString(data.status),

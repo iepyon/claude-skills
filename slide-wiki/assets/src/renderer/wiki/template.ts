@@ -52,6 +52,7 @@ export function generateWikiHtml(
   options: WikiOptions = {}
 ): string {
   const siteTitle = options.siteTitle ?? "Slide Wiki"
+  const deckBySlug = new Map(site.decks.map((d) => [d.slug, d]))
 
   // ビューアに渡すのは「表示に要る最小限」だけ。スライド本体は DOM にあるので
   // ここで内容を二重に持たない（持つと表示とプレビューがずれうる）。
@@ -59,10 +60,13 @@ export function generateWikiHtml(
     entries: site.entries.map((e) => ({
       id: e.globalId,
       deck: e.deckSlug,
-      deckTitle: site.decks.find((d) => d.slug === e.deckSlug)?.title ?? e.deckSlug,
+      deckTitle: deckBySlug.get(e.deckSlug)?.title ?? e.deckSlug,
       title: e.title,
       deckIndex: e.deckIndex,
     })),
+    // デッキ1本の事実はデッキ単位の表で渡す。entries に足すと、同じ短い語を
+    // スライドの数だけ書き出すことになる（`resolve` と同じ形）
+    deckShort: Object.fromEntries(site.decks.map((d) => [d.slug, d.short])),
     resolve: options.resolveTable ?? {},
     backlinks: Object.fromEntries(site.backlinks),
   }
@@ -101,7 +105,12 @@ ${renderSidebar(site)}
       <div class="stage-frame" id="stage-frame">
 ${site.entries
   .map(
-    (entry, i) => `        <div class="wiki-slide" data-wiki-id="${escapeAttr(entry.globalId)}" data-deck="${escapeAttr(entry.deckSlug)}">${slidesHtml[i]}</div>`
+    // バッジは `.slide` の**外**（兄弟）に置く。中に入れると renderSlide の出力が
+    // 変わり、`--html` と DOM が割れる（この Wiki の前提。index.ts の説明を見よ）。
+    // スライドの後ろに足すのは、`--html` と突き合わせる部分文字列を切らないため。
+    // 足場は position: relative の `.stage-frame` で、`.wiki-slide` には
+    // position を持たせない（`.slide` の absolute の基準が動く）。
+    (entry, i) => `        <div class="wiki-slide" data-wiki-id="${escapeAttr(entry.globalId)}" data-deck="${escapeAttr(entry.deckSlug)}">${slidesHtml[i]}<span class="deck-badge">${escapeHtml(deckBySlug.get(entry.deckSlug)?.short ?? entry.deckSlug)}</span></div>`
   )
   .join("\n")}
       </div>

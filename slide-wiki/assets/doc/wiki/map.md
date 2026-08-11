@@ -1,6 +1,7 @@
 ---
 type: deck
 title: 索引
+short: map
 description: 読み終えたところから、また入り直す
 tags: [索引, 目次, ナビゲーション]
 ---

@@ -1,6 +1,6 @@
 <!-- 生成物: src/tools/gen-ontology-doc.ts による ontology.yaml からの機械生成。手編集禁止。
      `npx tsx src/tools/gen-ontology-doc.ts` で再生成する。正本は ontology.yaml。
-     ontology-version: 6 -->
+     ontology-version: 7 -->
 
 # slide-wiki スライド Markdown オントロジー
 
@@ -36,6 +36,7 @@ md の1行目の `---` から次の `---` まで。中身は YAML のマップ�
 |---|---|---|---|---|
 | `type` | required | `text` | lint と外部ツール | このファイルが何であるか。**OKF が唯一必須とするキー**（SPEC.md §4.1）で、 読む側は種別で振り分ける。値は中央登録制ではないので、未知の型は 「ふつうの概念」として扱われる。 |
 | `title` | recommended | `text` | lint と外部ツール | 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。 |
+| `short` | recommended | `text` | Wiki の表示 | デッキの短い呼び名。**Wiki の各スライドの右上と、そのデッキへ渡るリンクの 末尾に、この文字列がそのまま出る**。両方に出るので短く保つ（全角4字・ 半角6字が目安）。名乗らなければデッキ名（slug）で代替するので、 欠けても壊れないが、そこへ渡るリンクだけ長い語が出て語調が揃わない。 |
 | `description` | recommended | `text` | 絞り込み | 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。 |
 | `resource` | optional | `uri` | lint と外部ツール | このデッキが説明している実体の URI（OKF の推奨キー）。 考えを書いたデッキには無い — 実在の資産を説明するときだけ名乗る。 |
 | `tags` | recommended | `list-of-text` | 絞り込み | デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。 |
@@ -64,7 +65,7 @@ md の1行目の `---` から次の `---` まで。中身は YAML のマップ�
 
 **キーの名前は OKF v0.2 に合わせてある**（`type` `title` `description` `tags`
 `resource` `status` `sources` `verified` `generated` `stale_after`）。
-`category` `author` `created` `updated` `theme` `site_title` は OKF に無い
+`short` `category` `author` `created` `updated` `theme` `site_title` は OKF に無い
 こちらの拡張で、OKF は「知らないキーは保存して拒まない」と定めているので
 バンドルとしての適合は保たれる。読む側に意味が届くのは前者だけ、と思って書く。
 

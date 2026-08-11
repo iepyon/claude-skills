@@ -158,6 +158,14 @@ describe("readDeckMeta は使える値だけを拾う", () => {
     expect(readDeckMeta("# タイトル\n")).toBeUndefined()
   })
 
+  it("短い呼び名（short）を読む", () => {
+    expect(readDeckMeta("---\ntitle: T\nshort: wiki\n---\n\n# T\n")?.short).toBe("wiki")
+  })
+
+  it("名乗らなければ short は undefined（代わりを決めるのは読む側）", () => {
+    expect(readDeckMeta(VALID)?.short).toBeUndefined()
+  })
+
   it("型に合わない値は黙って落とす（報せるのは lint の仕事）", () => {
     const md = "---\ntitle: 123\ntags: おかしい\ndescription: ok\n---\n\n# T\n"
     expect(readDeckMeta(md)).toEqual({

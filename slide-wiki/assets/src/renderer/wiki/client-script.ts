@@ -26,6 +26,7 @@ export function wikiScript(): string {
   var ENTRIES   = window.__WIKI__.entries;    // [{id, deck, deckTitle, title, deckIndex}]
   var RESOLVE   = window.__WIKI__.resolve;    // { deckSlug: { ref: globalId } }
   var BACKLINKS = window.__WIKI__.backlinks;  // { globalId: [globalId] }
+  var DECK_SHORT = window.__WIKI__.deckShort; // { deckSlug: 短い呼び名 }
 
   var byId = {};
   ENTRIES.forEach(function (e, i) { e.index = i; byId[e.id] = e; });
@@ -82,9 +83,14 @@ export function wikiScript(): string {
       host.innerHTML = '<span class="none">まだどこからもリンクされていません</span>';
       return;
     }
+    // 本文のリンクと同じ規則で、またぐものにだけ来し方の名を添える。
+    // ここは annotateLinks の1周が届かない（毎回組み直す innerHTML なので）
+    var hereDeck = byId[id] ? byId[id].deck : null;
     host.innerHTML = "<ul>" + inbound.map(function (from) {
       var e = byId[from];
-      return '<li><a class="wikilink" href="#" data-goto="' + escapeAttr(from) + '">' +
+      var cross = e && hereDeck && e.deck !== hereDeck ? (DECK_SHORT[e.deck] || e.deck) : null;
+      return '<li><a class="wikilink" href="#" data-goto="' + escapeAttr(from) + '"' +
+        (cross ? ' data-cross-deck="' + escapeAttr(cross) + '"' : "") + ">" +
         escapeHtml(e ? e.title : from) + "</a></li>";
     }).join("") + "</ul>";
   }
@@ -163,12 +169,48 @@ export function wikiScript(): string {
     return perDeck[ref] || (byId[ref] ? ref : null);
   }
 
-  function markBrokenLinks() {
+  /**
+   * そのリンクが「どのデッキの中に書かれているか」。
+   *
+   * **読むのはスライドの ID で、data-deck ではない。** targetOf が data-deck を
+   * 読んでいるのは解決表がデッキごとに引かれているためで、その鍵は落とす予定がある
+   * （BACKLOG B-47）。ここで読み手を1人増やすと、その掃除の値段が上がる。
+   * ID なら .wiki-slide も .preview-card も同じ1つの索引を引ける。
+   */
+  function scopeDeckOf(a) {
+    var scope = a.closest(".wiki-slide") || a.closest(".preview-card");
+    if (!scope) return null;
+    var entry = byId[scope.dataset.wikiId || scope.dataset.target];
+    return entry ? entry.deck : null;
+  }
+
+  /**
+   * リンクに印を付ける。**折れているか、デッキをまたぐか、どちらか一方だけ。**
+   *
+   * 同じ1回の解決から出る排他の結果なので、2周に分けない。行き先が引けない
+   * リンクに行き先の名を添えると、赤い破線が確かな行き先を名乗ることになる。
+   *
+   * 補足を DOM の節点ではなく**属性**にしてあるのは、ホバーのカードが
+   * .slide を cloneNode するため — 節点は複製に運ばれ、カードの中で足し直すと
+   * 二重になる。属性なら代入が冪等で、複製もそのまま正しい
+   * （カードが写すのは複製元のスライドで、そのスライドから見た「またぐ」は
+   * どこに置かれても変わらない）。
+   *
+   * この1周は読み込み時に1回だけ走る。スライドを後から作るようになったら、
+   * 新しい節点に対して呼び直すこと。
+   */
+  function annotateLinks() {
     Array.prototype.forEach.call(document.querySelectorAll("a.wikilink[data-wikilink]"), function (a) {
-      if (!targetOf(a)) {
+      var target = targetOf(a);
+      if (!target) {
         a.classList.add("broken");
         a.setAttribute("title", "リンク先が見つかりません: " + a.dataset.wikilink);
+        return;
       }
+      var there = byId[target];
+      var here = scopeDeckOf(a);
+      if (!there || !here || there.deck === here) return;   // 同じデッキなら素のまま
+      a.dataset.crossDeck = DECK_SHORT[there.deck] || there.deck;
     });
   }
 
@@ -407,7 +449,7 @@ export function wikiScript(): string {
   function escapeAttr(s) { return escapeHtml(s).replace(/"/g, "&quot;"); }
 
   // ---------------------------------------------------------------- init
-  markBrokenLinks();
+  annotateLinks();
   var start = idFromHash();
   if (start) {
     if (!location.hash) history.replaceState(null, "", "#" + encodeURIComponent(start));

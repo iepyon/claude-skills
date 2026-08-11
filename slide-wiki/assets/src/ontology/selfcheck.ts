@@ -23,12 +23,10 @@ import {
   loadOntology,
   markerKind,
   parseCardinality,
+  KNOWN_EFFECTS,
 } from "./index.js"
 import { FIELD_VALIDATORS } from "./lint.js"
 import { splitFrontmatter } from "./frontmatter.js"
-
-/** frontmatter フィールドの effect に許す綴り（gen-ontology-doc の EFFECT_LABEL と対になる） */
-const KNOWN_EFFECTS: ReadonlySet<string> = new Set(["search", "declared-only", "metadata"])
 
 /** 点検の失敗。1件ずつ集めて最後にまとめて出す（最初の1件で止めない） */
 export function selfcheckProblems(): string[] {

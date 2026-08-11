@@ -26,6 +26,14 @@ export interface WikiEntry {
 export interface WikiDeckView {
   readonly slug: string
   readonly title: string
+  /**
+   * デッキの短い呼び名（frontmatter の `short`）。名乗っていなければ slug。
+   *
+   * **省略可能にしない。** スライドの右上のバッジと、このデッキへ渡るリンクの補足が
+   * 同じ1語を使うので、どちらの読み手にも「無いときの代わり」を書かせないため
+   * （代替の規則が2箇所に散ると、バッジは出てリンクには出ない、が起きうる）。
+   */
+  readonly short: string
   readonly entryIds: readonly string[]
   /**
    * サイドバーの絞り込みに混ぜるデッキの語（description と tags）。
