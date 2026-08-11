@@ -413,6 +413,7 @@ export const FIELD_VALIDATORS: Readonly<Record<FieldKind, (value: unknown) => bo
   text: (v) => typeof v === "string",
   "list-of-text": (v) => Array.isArray(v) && v.every((x) => typeof x === "string"),
   date: (v) => typeof v === "string" && matchesDeclaredForm("date", v),
+  timestamp: (v) => typeof v === "string" && matchesDeclaredForm("timestamp", v),
   actor: (v) => typeof v === "string" && matchesDeclaredForm("actor", v),
   uri: (v) => typeof v === "string" && matchesDeclaredForm("uri", v),
   object: isPlainObject,
@@ -517,6 +518,21 @@ function checkFrontmatter(
         continue
       }
       checkKind(sub.kind, value, `${at}.${sub.name}`, line)
+    }
+  }
+
+  // 名乗ったからには、必須のキーは名乗る。**名乗っていない md は上で return 済み**なので、
+  // frontmatter を持たないフィクスチャを巻き込まない（OKF の必須は `type` ひとつ）
+  for (const field of decl.fields) {
+    if (field.level !== "required") continue
+    const value = data[field.name]
+    if (value === undefined || value === null || value === "") {
+      emit(
+        "warning",
+        "frontmatter-field",
+        1,
+        `必須の '${field.name}' が無い（OKF はこの1つだけを必須にしている。無いと読む側が種別で振り分けられない）`
+      )
     }
   }
 

@@ -34,9 +34,10 @@ md の1行目の `---` から次の `---` まで。中身は YAML のマップ�
 
 | キー | level | 形 | 効き先 | 説明 |
 |---|---|---|---|---|
-| `type` | recommended | `text` | lint と外部ツール | このファイルが何であるか。外部ツールが種別で絞るのに使う。 |
+| `type` | required | `text` | lint と外部ツール | このファイルが何であるか。**OKF が唯一必須とするキー**（SPEC.md §4.1）で、 読む側は種別で振り分ける。値は中央登録制ではないので、未知の型は 「ふつうの概念」として扱われる。 |
 | `title` | recommended | `text` | lint と外部ツール | 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。 |
 | `description` | recommended | `text` | 絞り込み | 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。 |
+| `resource` | optional | `uri` | lint と外部ツール | このデッキが説明している実体の URI（OKF の推奨キー）。 考えを書いたデッキには無い — 実在の資産を説明するときだけ名乗る。 |
 | `tags` | recommended | `list-of-text` | 絞り込み | デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。 |
 | `category` | optional | `text` | lint と外部ツール | デッキの区分。tags が主題を並べるのに対し、こちらは1つだけ選ぶ。 |
 | `status` | optional | `draft` / `stable` / `deprecated` | lint と外部ツール | 書きかけかどうか。order.yaml のコメントに書いていた「まだ無い」を機械に見せる。 |
@@ -58,8 +59,14 @@ md の1行目の `---` から次の `---` まで。中身は YAML のマップ�
 ——「このデッキのタグ」であって「このスライドのタグ」ではないため。
 
 `title` は本文からの派生の写しで、**表示名の正本は今までどおり1枚目の見出し**。
-外部ツール（Obsidian の Properties・GitHub の表）に読ませるために置くだけなので、
+バンドルを読む側（OKF の消費者・GitHub の表）に読ませるために置くだけなので、
 食い違ったら直すのは frontmatter のほう。
+
+**キーの名前は OKF v0.2 に合わせてある**（`type` `title` `description` `tags`
+`resource` `status` `sources` `verified` `generated` `stale_after`）。
+`category` `author` `created` `updated` `theme` `site_title` は OKF に無い
+こちらの拡張で、OKF は「知らないキーは保存して拒まない」と定めているので
+バンドルとしての適合は保たれる。読む側に意味が届くのは前者だけ、と思って書く。
 
 人が md を開いたとき本文が下がるので、短く保つ（description は1行、tags は5個まで）。
 

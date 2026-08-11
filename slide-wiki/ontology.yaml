@@ -93,8 +93,14 @@ frontmatter:
     ——「このデッキのタグ」であって「このスライドのタグ」ではないため。
 
     `title` は本文からの派生の写しで、**表示名の正本は今までどおり1枚目の見出し**。
-    外部ツール（Obsidian の Properties・GitHub の表）に読ませるために置くだけなので、
+    バンドルを読む側（OKF の消費者・GitHub の表）に読ませるために置くだけなので、
     食い違ったら直すのは frontmatter のほう。
+
+    **キーの名前は OKF v0.2 に合わせてある**（`type` `title` `description` `tags`
+    `resource` `status` `sources` `verified` `generated` `stale_after`）。
+    `category` `author` `created` `updated` `theme` `site_title` は OKF に無い
+    こちらの拡張で、OKF は「知らないキーは保存して拒まない」と定めているので
+    バンドルとしての適合は保たれる。読む側に意味が届くのは前者だけ、と思って書く。
 
     人が md を開いたとき本文が下がるので、短く保つ（description は1行、tags は5個まで）。
 
@@ -121,10 +127,13 @@ frontmatter:
   title-matches-heading: warning # title と1枚目の見出しの食い違い
   fields:
     - name: type
-      level: recommended
+      level: required
       kind: text
       vocabulary: deck-types
-      description: このファイルが何であるか。外部ツールが種別で絞るのに使う。
+      description: >-
+        このファイルが何であるか。**OKF が唯一必須とするキー**（SPEC.md §4.1）で、
+        読む側は種別で振り分ける。値は中央登録制ではないので、未知の型は
+        「ふつうの概念」として扱われる。
       example: deck
     - name: title
       level: recommended
@@ -137,6 +146,13 @@ frontmatter:
       effect: search
       description: 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。
       example: 人が書き、AI が手入れする。育つ知識の作り方
+    - name: resource
+      level: optional
+      kind: uri
+      description: >-
+        このデッキが説明している実体の URI（OKF の推奨キー）。
+        考えを書いたデッキには無い — 実在の資産を説明するときだけ名乗る。
+      example: https://example.com/docs/wiki
     - name: tags
       level: recommended
       kind: list-of-text
@@ -184,15 +200,15 @@ frontmatter:
       kind: list-of-objects
       description: 誰がいつ内容を確かめたか。出典の照合結果を残す場所。
       sub-fields:
-        - {name: by, required: true, kind: actor, description: "human / ai:<model> / tool:<name>"}
-        - {name: at, required: true, kind: date, description: 確かめた日}
+        - {name: by, required: true, kind: actor, description: "human:<id> / <producer>/<version> / process:<id>"}
+        - {name: at, required: true, kind: timestamp, description: 確かめた日時}
     - name: generated
       level: optional
       kind: object
       description: 機械が作ったデッキであることの表明。
       sub-fields:
-        - {name: by, required: true, kind: actor, description: "ai:<model> / tool:<name>"}
-        - {name: at, required: false, kind: date, description: 生成日}
+        - {name: by, required: true, kind: actor, description: "<producer>/<version> / process:<id> / human:<id>"}
+        - {name: at, required: false, kind: timestamp, description: 生成日時}
     - name: stale_after
       level: optional
       kind: date
@@ -224,7 +240,11 @@ frontmatter:
   # 直したつもりで何も変わらない（selfcheck が未使用を落とす）。
   value-patterns:
     date: "^\\d{4}-\\d{2}-\\d{2}$"
-    actor: "^(human|ai:[\\w.-]+|tool:[\\w.-]+)$"
+    # OKF の generated.at / verified[].at は RFC3339。日付だけの略記も受ける
+    timestamp: "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2}))?$"
+    # OKF §7 の actor 表記。人は `human:`、自動処理は `process:`、
+    # 作り手は `<producer>/<version>`（信頼の段は `human:` の有無で決まるので、接頭辞に意味がある）
+    actor: "^(human:[\\w.-]+|process:[\\w.-]+|[\\w.-]+/[\\w.-]+)$"
     # 相対パスも URL も受ける。ここで見たいのは「地の文が入っていないこと」だけ
     uri: "^\\S+$"
 

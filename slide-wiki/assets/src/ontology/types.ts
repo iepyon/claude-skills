@@ -137,6 +137,7 @@ export type FieldKind =
   | "text"
   | "list-of-text"
   | "date"
+  | "timestamp"
   | "actor"
   | "uri"
   | "object"
@@ -153,7 +154,7 @@ export type FieldEffect =
   | "search"
   /** 置き場所として宣言しただけで、まだ何も読まない */
   | "declared-only"
-  /** lint と外部ツール（Obsidian の Properties・GitHub の表）だけが読む */
+  /** lint とバンドルを読む側（OKF の消費者・GitHub の表）だけが読む */
   | "metadata"
 
 /** `sources[].resource` のような入れ子のキー */
@@ -166,8 +167,12 @@ export interface SubField {
 
 export interface FrontmatterField {
   readonly name: string
-  /** required は使わない（frontmatter そのものが optional なので、要求すると全部が warning になる） */
-  readonly level: "recommended" | "optional"
+  /**
+   * `required` は**名乗ったデッキにだけ**効く。frontmatter そのものは optional
+   * （`require: ignore`）なので、名乗っていない md を巻き込むことはない。
+   * OKF が必須とするのは `type` ひとつだけ（SPEC.md §11）。
+   */
+  readonly level: "required" | "recommended" | "optional"
   readonly kind: FieldKind
   /** 省略時は metadata（lint と外部ツールだけが読む） */
   readonly effect?: FieldEffect
@@ -195,7 +200,11 @@ export interface Frontmatter {
   readonly recognition: FrontmatterRecognition
   /** frontmatter を持たない md の扱い */
   readonly require: "warning" | "error" | "ignore"
-  /** 宣言に無いキーの扱い。OKF 同様、未知のキーは保存して拒まない */
+  /**
+   * 宣言に無いキーの扱い。OKF 同様、未知のキーは保存して拒まない
+   * （SPEC.md §11「Consumers MUST NOT reject a bundle because of … unknown
+   * additional frontmatter keys」— これが `category` などの拡張が許される根拠）
+   */
   readonly unknown: "warning" | "error" | "ignore"
   readonly "unknown-near-miss": "warning" | "error" | "ignore"
   readonly "near-miss-distance": number
