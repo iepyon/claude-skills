@@ -77,7 +77,7 @@ function matchToRuns(groups: Record<string, string | undefined>): InlineTextRun[
  * @example
  * parseInlineFormatting("Hello **world**, see [序](intro.md#序) and [docs](https://example.com)")
  * // → [{ text: "Hello " }, { text: "world", bold: true }, { text: ", see " },
- * //    { text: "序", link: { kind: "internal", ref: "intro/序", slide: "序", href: "/intro.md#序" } },
+ * //    { text: "序", link: { kind: "internal", ref: "intro/序", slide: "序", href: "intro.md#序" } },
  * //    { text: " and " },
  * //    { text: "docs", link: { kind: "external", href: "https://example.com" } }]
  *

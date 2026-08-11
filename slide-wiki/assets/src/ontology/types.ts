@@ -221,6 +221,8 @@ export interface InlineSyntax {
   readonly syntax: string
   readonly "counts-chars"?: string
   readonly description: string
+  /** 表に収まらない補足。`inlineTable()` が表の下に節として出す */
+  readonly guidance?: string
 }
 
 export interface Inline {

@@ -321,14 +321,14 @@ function checkUnknownDirectives(tokens: readonly Token[]): Diagnostic[] {
  *    **これがいちばん危ない** — 外部リンクとして `target="_blank"` で描かれるので、
  *    見た目はリンクであり、クリックすると別タブで存在しないパスを開く。
  *    未解決リンクの一覧にも出ない（内部リンクとして解決を試みてすらいない）
- * 3. 先頭に `/` または `./` の付いた md へのリンク。**サイトでは当たるので気づけない** —
- *    折れるのは生の md を github.com で開いたときだけで、そこでは先頭の `/` が
- *    リポジトリのルートと読まれる。1と2が「サイトで折れる」誤りなのに対し、
- *    こちらは「サイトでは当たるが GitHub で折れる」誤りなので、lint しか見つけられない
+ * 3. 読めてはいるが書く形から外れた綴り（先頭に `/` か `./` が付いている）。
+ *    **サイトでは当たるので気づけない** — 折れるのは生の md を github.com で
+ *    開いたときだけである。1と2が「サイトで折れる」誤りなのに対し、こちらは
+ *    「サイトでは当たるが GitHub で折れる」誤りなので、lint しか見つけられない
  *
- * 1と2の判定は `okf.ts` の `parseOkfLink` に任せる。lint がもう1つ正規表現を持つと、
- * 「パーサは内部リンクと読むのに lint は警告する」がいつか起きる。3だけは lint 側の規則で、
- * **パーサはこの形も解決する**（読みを広く、書きを狭く。理由は `parseOkfLink` の頭に書いた）。
+ * **判定は3つとも `okf.ts` に任せる。** lint が接頭辞の正規表現を自分で持つと、
+ * `parseOkfLink` が受ける綴りを増やしたときに 3 が黙る（許した綴りが警告も
+ * 未解決リンクの一覧も通らずにデッキへ入る）。3 は `canonicalHref` との一致で見る。
  */
 function checkLinkForm(tokens: readonly Token[]): Diagnostic[] {
   const out: Diagnostic[] = []
@@ -356,19 +356,18 @@ function checkLinkForm(tokens: readonly Token[]): Diagnostic[] {
       const href = m[1]
       if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue // http: や mailto: は外部リンク
 
-      // **`parseOkfLink` より先に見る。** パーサはこの形も解決するので、
-      // 後ろに置くと `continue` で通り抜けてしまう（通る形のうち、書いてよいものを絞る検査）
-      if (/^(?:\/|\.\/)/.test(href) && parseOkfLink(href)) {
+      const target = parseOkfLink(href)
+      if (target) {
+        if (href === target.canonicalHref) continue // 書く形どおり
         out.push({
           level: "warning",
           check: "link-form",
           line: token.line,
-          message: `'${href}' の先頭の \`/\`・\`./\` は外す（サイトでは当たるので気づけないが、生の md を github.com で開くと先頭の \`/\` はリポジトリのルートと読まれて折れる）`,
+          message: `'${href}' は \`${target.canonicalHref}\` と書く（サイトでは当たるので気づけないが、生の md を github.com で開くと先頭の \`/\` はリポジトリのルートと読まれて折れる）`,
         })
         continue
       }
 
-      if (parseOkfLink(href)) continue
       if (!href.includes(".md") && !href.startsWith("#")) continue // 画像やその他の資産
       out.push({
         level: "warning",

@@ -84,24 +84,13 @@ export function findDeckSlugCollisions(
 }
 
 /**
- * 内部リンクの形。**デッキ名だけの相対パス**を受ける（SPEC.md §6.1 は相対も絶対も許す）。
+ * 内部リンクの形。読むのは `デッキ名.md#スライドID` と、先頭に `/`・`./` の付いた綴り。
+ * パス区切りを含む形（`sub/x.md` `../x.md`）と裸の `#スライドID` は受けない
+ * （捕獲群が `/` を含まないことで、前者を型の側から落としてある）。
  *
- * 書く形は `デッキ名.md#スライドID` の1つに絞る。理由は GitHub で当たること —
- * 生の md を github.com で開くと先頭の `/` はリポジトリのルートと読まれるので、
- * バンドルがリポジトリの深い場所にあるかぎり絶対形のリンクは必ず折れる。
- * 相対形は深さに依存しないので、サイトでも GitHub でも同じ1つの綴りで当たる。
- *
- * **読むほうは `./` と先頭 `/` も受ける。** 綴りを1つに保つのは lint の仕事で、
- * ここで蹴ると `[ラベル](/x.md)` が外部リンクとして `target="_blank"` で描かれ、
- * しかも未解決リンクの一覧にも出ない（`lint.ts` の `checkLinkForm` が
- * 「いちばん危ない」と呼んでいる壊れ方）。読みを広く、書きを狭く。
- *
- * **パス区切りを含む形は受けない**（`sub/x.md` `../x.md`）。バンドルは平坦なので
- * 行き先が無く、捕獲群が `/` を含まないことで型の側から保証しておく。
- * ここで basename だけを採ると、同名の最上位デッキに**黙って当たって**しまう。
- *
- * 裸の `#スライドID` も受けない。解決に「どのデッキに書かれたリンクか」が要るので、
- * この関数が href だけを受ける純関数でなくなる（同じデッキの中でもデッキ名を書く）。
+ * **宣言は ontology.yaml の `inline` 節の `internal-link`。** 書く形を1つに絞る理由と、
+ * 読みを広く取る理由はそちらが持つ。ここに写すと規則が2箇所になる。
+ * 絞りを留めるのは lint の `link-form` で、判定には下の `canonicalHref` を使う。
  *
  * `#スライドID` は OKF の規定外で、この道具の拡張（1ファイルに何十枚も入るため）。
  */
@@ -112,6 +101,16 @@ export interface OkfLinkTarget {
   readonly ref: string
   /** デッキ内のスライド ID。単体 HTML と PPTX はこちらを引く。省略時はデッキ先頭 */
   readonly slide?: string
+  /**
+   * 同じ行き先を指す**書いてよい綴り**。`href` がこれと違えば、読めてはいるが
+   * 書く形から外れている（先頭に `/` か `./` が付いている）。
+   *
+   * **これを返すのは、lint に「どの接頭辞を許しているか」を持たせないため。**
+   * lint が接頭辞の正規表現を自分で持つと、ここが受ける綴りを増やしたときに
+   * 「パーサは読むのに lint は黙る」が起きる — サイトでは当たり、GitHub でだけ
+   * 折れる綴りが、警告も未解決リンクの一覧も通らずにデッキへ入る。
+   */
+  readonly canonicalHref: string
 }
 
 /**
@@ -120,10 +119,11 @@ export interface OkfLinkTarget {
  * デッキ slug は `deckSlug(拡張子を除いたファイル名)` — サイトを組む側が使うのと**同じ関数**。
  * したがって `patterns-wiki.md#種ノート` は `patterns-wiki/種ノート` を指す。
  * 参照側とサイト側で別々に slug を綴ると、書いたリンクが当たらない形の食い違いになる。
+ * 一致は `selfcheck` が `okf.deck-slug.examples` を両側に通して留める。
  *
- * **相対の解決に元ドキュメントの位置が要らないのは、バンドルが平坦だからである。**
- * デッキは全部が兄弟なので、`x.md` の行き先はどのデッキから書かれても同じ1枚に決まる。
- * 階層を許すとこの性質が消え、この関数は href だけでは答えを出せなくなる。
+ * **相対の解決に元ドキュメントの位置が要らないのは、バンドルが平坦だからである**
+ * （→ ontology.yaml の `okf` 節）。デッキは全部が兄弟なので、`x.md` の行き先は
+ * どのデッキから書かれても同じ1枚に決まる。
  */
 export function parseOkfLink(href: string): OkfLinkTarget | null {
   const match = OKF_INTERNAL_LINK.exec(href)
@@ -136,6 +136,11 @@ export function parseOkfLink(href: string): OkfLinkTarget | null {
 
   const deck = deckSlug(path.replace(/\.md$/, ""))
 
-  const slide = match[2]
-  return slide ? { ref: `${deck}/${slide}`, slide } : { ref: deck }
+  // `undefined` はフラグメント無し、`""` は `#` だけ。canonicalHref は接頭辞だけを
+  // 落として綴りを写すので、この2つを畳むと `x.md#` が「書く形から外れている」に化ける
+  const fragment = match[2]
+  const canonicalHref = fragment === undefined ? path : `${path}#${fragment}`
+
+  const slide = fragment || undefined
+  return slide ? { ref: `${deck}/${slide}`, slide, canonicalHref } : { ref: deck, canonicalHref }
 }

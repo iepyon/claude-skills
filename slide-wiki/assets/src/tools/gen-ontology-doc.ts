@@ -141,6 +141,14 @@ function inlineTable(): string[] {
   )
   lines.push("")
   lines.push(`効くのは ${inline["effective-in"].map(code).join("・")}。${cell(inline["not-effective-in-note"])}`)
+
+  // 表に収まらない補足は表の下へ。**出さないと宣言に書いた説明が誰にも届かない** —
+  // 書き手（と md を書く Claude）が読むのは SKILL.md なので、そこに載らない
+  // guidance は、コード側のコメントに写された分だけが生き残る形になる
+  for (const s of inline.syntaxes) {
+    if (!s.guidance) continue
+    lines.push("", `**${s.name}**`, ...prose(s.guidance))
+  }
   return lines
 }
 

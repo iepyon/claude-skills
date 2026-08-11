@@ -310,10 +310,10 @@ describe("parseInlineFormatting - OKF internal links", () => {
   it("should treat the OKF reserved files as external, not as decks", () => {
     // index.md / log.md は目録と更新履歴でスライドを持たない。内部リンクにすると
     // サイトの目録へのリンクが軒並み「未解決リンク」の一覧に出てしまう
-    expect(linkOf("[目録](index.md)")).toEqual({ kind: "external", href: "index.md" })
-    expect(linkOf("[履歴](log.md)")).toEqual({ kind: "external", href: "log.md" })
     // 先頭 `/` の綴りでも予約ファイルは予約ファイル（パーサが受ける形が増えても変わらない）
-    expect(linkOf("[目録](/index.md)")).toEqual({ kind: "external", href: "/index.md" })
+    for (const href of ["index.md", "log.md", "/index.md"]) {
+      expect(linkOf(`[a](${href})`), href).toEqual({ kind: "external", href })
+    }
   })
 
   it("should treat non-md bundle paths as external", () => {

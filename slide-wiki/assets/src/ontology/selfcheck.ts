@@ -8,7 +8,7 @@
 import "../plugins/index.js" // side-effect: プラグインの自己登録
 import { readFileSync } from "fs"
 import { getPlugins } from "../plugins/registry.js"
-import { OKF_VERSION, RESERVED_OKF_FILES, deckSlug, isReservedOkfFile } from "../okf.js"
+import { OKF_VERSION, RESERVED_OKF_FILES, deckSlug, isReservedOkfFile, parseOkfLink } from "../okf.js"
 import { DECK_ORDER_FILE } from "../deck-order.js"
 import { CONSUMED_KEYS, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
@@ -331,11 +331,24 @@ export function selfcheckProblems(): string[] {
     okf["deck-set"]["order-file"] === DECK_ORDER_FILE,
     `okf.deck-set.order-file が src/deck-order.ts の綴りと違う`
   )
-  // 規則そのものは宣言に写さない（写しは照合できない）代わりに、例のほうを実装に通す
+  // 規則そのものは宣言に写さない（写しは照合できない）代わりに、例のほうを実装に通す。
+  // **通すのは2つの入口**で、`deckSlug` は `order.yaml` の照合が使う側、`parseOkfLink` は
+  // リンクを読む側。両者が同じ slug に着くことは、リンクがパス区切りを受けなくなって以来
+  // ただの偶然（どちらも「拡張子を落として `deckSlug` に通す」だけ）なので、
+  // コメントで一致を語らずにここで留める
   for (const e of okf["deck-slug"].examples) {
     fail(
       deckSlug(e.name) === e.slug,
       `okf.deck-slug.examples: '${e.name}' は実装では '${deckSlug(e.name)}' になる（宣言は '${e.slug}'）`
+    )
+    // 空白を含む名前は除く。**markdown のリンクの行き先に空白は書けない**ので
+    // （`<…>` で囲まないかぎり。inline-formatter の走査も `[^()\s]+` で切る）、
+    // `Wiki の作り方.md` はリンクとして書きようがなく、`parseOkfLink` が読めないのが正しい。
+    // 例表の「リンクの書き方」の欄がその名前にも綴りを示しているのは宣言側の誤り（未修正）
+    if (/\s/.test(e.name)) continue
+    fail(
+      parseOkfLink(`${e.name}.md`)?.ref === e.slug,
+      `okf.deck-slug.examples: リンク '${e.name}.md' は '${parseOkfLink(`${e.name}.md`)?.ref}' を指す（宣言は '${e.slug}'）`
     )
   }
   fail(

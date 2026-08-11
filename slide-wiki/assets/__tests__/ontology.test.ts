@@ -422,6 +422,7 @@ describe("link form", () => {
     `---\ntype: deck\n---\n\n# あ\n\n---\n\n## か\n<!--id:か-->\n### さ\n${body}\n`
 
   const checks = (body: string): string[] => lintSource(deck(body)).map((d) => d.check)
+  const messages = (body: string): string => lintSource(deck(body)).map((d) => d.message).join("\n")
 
   it("旧 [[…]] 記法を error にする", () => {
     expect(lintSource(deck("見よ [[か]]"))).toContainEqual(
@@ -429,16 +430,21 @@ describe("link form", () => {
     )
   })
 
+  // **2つの診断は文面で見分ける。** どちらも check は `link-form` なので、
+  // check だけを見ていると「解決しない」と「書く形から外れている」が入れ替わっても
+  // 気づけない（読み手に見せる文面だけが違い、そこがこの検査の値打ちである）
   it("内部リンクにならない md へのリンクを報せる", () => {
     for (const href of ["sub/b.md#c", "../b.md", "/sub/b.md", "#か"]) {
       expect(checks(`見よ [x](${href})`), href).toContain("link-form")
+      expect(messages(`見よ [x](${href})`), href).toMatch(/内部リンクにならない/)
     }
   })
 
-  it("先頭の / と ./ を報せる（サイトでは当たるので lint しか見つけられない）", () => {
-    for (const href of ["/a.md#か", "/a.md", "./a.md#か", "./a.md"]) {
-      expect(checks(`見よ [x](${href})`), href).toContain("link-form")
-    }
+  it("書く形から外れた綴りには、正しい綴りを見せて報せる", () => {
+    // 断り書き: フラグメントの有無はこの検査に効かない（`canonicalHref` が写す）ので
+    // 2形で足りる。効くのは先頭の `/` と `./` の2通りだけである
+    expect(messages("見よ [x](/a.md#か)")).toContain("`a.md#か` と書く")
+    expect(messages("見よ [x](./a.md)")).toContain("`a.md` と書く")
   })
 
   it("正しい内部リンクと外部リンクには何も言わない", () => {

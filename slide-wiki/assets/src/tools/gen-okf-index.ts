@@ -83,7 +83,9 @@ function loadDecks(dir: string): { decks: Deck[]; groups: readonly DeckGroup[] }
  *
  * frontmatter は `okf_version` だけ。§8 が「index files contain no frontmatter,
  * with one exception」と定めているので、`type` すら置いてはいけない。
- * リンクは §8 の例に合わせて相対 URL にする（本文中のリンクの推奨形＝絶対とは別の話）。
+ * リンクは §8 の例に合わせて相対 URL にする。**目録のほうが先に正しかった** —
+ * 本文中のリンクが絶対形だったころ、この目録だけが相対形を吐いていて、
+ * `parseOkfLink` は自分のバンドルの目録のリンクを読めなかった（版 6 で本文が寄せた）。
  */
 function buildIndex(decks: readonly Deck[], groups: readonly DeckGroup[]): string {
   // 照合は `orderDeckFiles` と同じ**デッキ slug**。ここだけ生のファイル名で引くと、
