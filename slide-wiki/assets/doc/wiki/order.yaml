@@ -25,14 +25,6 @@ groups:
       - intro-wiki # 第1部: なぜ Wiki を育てるのか
       - patterns-wiki # 第2部: 人が育てる Wiki のパターン
 
-  # この2デッキは、いまは索引から直接指していない。サイドバーと ←→ では辿れるが、
-  # 索引の入口には出てこない。表に戻すときは map.md に「任せる」「手入れ」の2枚を戻し、
-  # 狙う→書く の送りを繋ぎ直す（「入口」の intro-llm-wiki 行と、「語彙」の数え上げも一緒に）。
-  - title: AI が手入れする Wiki
-    decks:
-      - intro-llm-wiki # 第1部: なぜ AI に手入れを任せるのか
-      - patterns-llm-wiki # 第2部: LLM が手入れする Wiki のパターン
-
   - title: パターンを書く
     decks:
       - patterns-meta # パターンを書くパターン。第1部はまだ無い（対の intro-meta を書いたら隣へ）

@@ -11,11 +11,6 @@ okf_version: "0.2"
 * [なぜ Wiki を育てるのか](intro-wiki.md) - 第1部 — メモは増えていくのに、あとから役に立たない。その理由と、直し方の話
 * [Wiki が育つパターン](patterns-wiki.md) - 人が書き、AI が手入れする。育つ知識の作り方
 
-# AI が手入れする Wiki
-
-* [なぜ AI に手入れを任せるのか](intro-llm-wiki.md) - 第1部 — 育った Wiki は人手だけでは維持できない。AI に何を任せ、何を任せないかの話
-* [LLM が手入れする Wiki](patterns-llm-wiki.md) - AI が司書として入ってくる Wiki のパターン
-
 # パターンを書く
 
 * [パターンを書くパターン](patterns-meta.md) - 良いパターンの質そのものを、パターンにする

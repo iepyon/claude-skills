@@ -24,7 +24,6 @@ tags: [wiki, パターンランゲージ, 第2部, 人が育てる]
 ### 手入れ: [剪定](/patterns-wiki.md#剪定)
 ### 束ねる: [収穫](/patterns-wiki.md#収穫)
 ### 狙い: [動く北極星](/patterns-wiki.md#動く北極星) / [物差し](/patterns-wiki.md#動かない物差し) / [街灯の外へ](/patterns-wiki.md#街灯の外へ)
-### AI: [LLM Wiki](/patterns-llm-wiki.md#LLM-Wiki)
 ### 背景: [第1部 なぜ育てるのか](/intro-wiki.md#育てる理由)
 
 ---
@@ -223,6 +222,6 @@ Wiki は育ったが、人に見せられる形ではない。
 ### そこで
 **街灯の外へ出る。まだ答えを持たない話を取る。**
 結論が読めない一枚ほど、目的を試す材料になる。
-答えられない問いは、[種ノート](/patterns-wiki.md#種ノート) にして [置く](/patterns-llm-wiki.md#問いを置く)。
+答えられない問いは、そのまま [種ノート](/patterns-wiki.md#種ノート) にして置く。
 
 ![街灯の外へ](diagrams/patterns-wiki/街灯の外へ.svg)
