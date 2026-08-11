@@ -18,6 +18,7 @@ import { SLIDE_WIDTH, SLIDE_HEIGHT, MARGIN_X, MARGIN_Y, CONTENT_START_Y } from "
 import { isDecoKey } from "../src/shape-keys.js"
 import { slidesToInventory } from "../src/tools/inventory.js"
 import { roughenSvg } from "../src/tools/roughen-svg.js"
+import { contentBox, trimSvg } from "../src/tools/trim-svg.js"
 import type { ContentSlide } from "../src/schema/presentation.js"
 import type { WikiPatternLayout } from "../src/plugins/wiki-pattern/schema.js"
 
@@ -238,6 +239,24 @@ describe("WikiPattern — 座標", () => {
     expect(panel.y - CONTENT_START_Y).toBeCloseTo(columnBottom - (panel.y + panel.h), 5)
   })
 
+  it("縦長の図解では下敷きが列より細くなり、左右中央に置かれる", async () => {
+    // 高さだけを比に合わせると、列いっぱいの幅のまま縦だけ縮む＝下敷きのほうが横長になる。
+    // 幅でも収めているので、余るのは左右になり、その余りは等しく割れる
+    const result = await layoutFor(deck({ diagram: "diagrams/tall.svg" }))
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    const svg = svgBox(result)
+    expect(svg.w / svg.h).toBeCloseTo(240 / 400, 5) // fixtures/diagrams/tall.svg の viewBox
+
+    // 列の下端まで使い切り（高さが先に尽きる）、列の中で左右中央に来る
+    expect(panel.y).toBeCloseTo(CONTENT_START_Y, 5)
+    expect(panel.y + panel.h).toBeCloseTo(SLIDE_HEIGHT - MARGIN_Y, 5)
+    const columnRight = SLIDE_WIDTH - MARGIN_X
+    expect(columnRight - (panel.x + panel.w)).toBeGreaterThan(0.1)
+    const wide = await layoutFor(deck())
+    const columnLeft = wide.shapeBoxes!.find((s) => s.shapeType === "rect")!.x
+    expect(panel.x - columnLeft).toBeCloseTo(columnRight - (panel.x + panel.w), 5)
+  })
+
   it("viewBox の無い図解では下敷きが列いっぱいのままになる", async () => {
     // 形が分からない図を勝手な比の枠に入れると、かえって余白が増える
     const result = await layoutFor(deck({ diagram: "diagrams/no-viewbox.svg" }))
@@ -364,6 +383,73 @@ describe("図解を崩す道具", () => {
   })
 })
 
+describe("図解の枠を詰める道具", () => {
+  /** 200x200 の枠の真ん中あたりに 40x40 だけ描いた図。周りは全部あき */
+  const spacious = (inner = `<path d="M80 80 L120 80 L120 120 L80 120 Z" fill="none" stroke="#000" stroke-width="2"/>`) =>
+    `<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`
+
+  const viewBoxOf = (svg: string) =>
+    svg
+      .match(/viewBox="([^"]+)"/)![1]
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+
+  it("枠を中身まで詰め、絵が何倍になるかを返す", () => {
+    const { svg, scale } = trimSvg(spacious())
+    const [, , w, h] = viewBoxOf(svg)
+    expect(w).toBeLessThan(60) // 40 + 余白ぶん
+    expect(scale).toBeCloseTo(200 / w!, 5)
+    expect(h).toBeGreaterThan(0)
+  })
+
+  it("縦横比は変えない（下敷きの形がページごとに変わらないように）", () => {
+    const { svg } = trimSvg(spacious())
+    const [, , w, h] = viewBoxOf(svg)
+    expect(w! / h!).toBeCloseTo(1, 2)
+  })
+
+  it("実寸（width / height）も一緒に書き換える", () => {
+    const { svg } = trimSvg(spacious())
+    const [, , w, h] = viewBoxOf(svg)
+    expect(svg).toContain(`width="${w}"`)
+    expect(svg).toContain(`height="${h}"`)
+  })
+
+  it("詰めた結果をもう一度通しても変わらない（冪等）", () => {
+    const once = trimSvg(spacious()).svg
+    expect(trimSvg(once).svg).toBe(once)
+  })
+
+  it("枠からはみ出した中身は、枠を広げて収める", () => {
+    // 切れている図は、生成物を開いても端の線が消えているだけで気づきにくい
+    const clipped = spacious(
+      `<path d="M-40 100 L240 100" fill="none" stroke="#000" stroke-width="2"/>`
+    )
+    const [x, , w] = viewBoxOf(trimSvg(clipped).svg)
+    expect(x).toBeLessThanOrEqual(-40)
+    expect(x! + w!).toBeGreaterThanOrEqual(240)
+  })
+
+  it("字は書いてある幅より広く見て、切らない側に外す", () => {
+    // 読む人のフォントは測った環境より広いことがある。狭く見積もると字が切れる
+    const text = `<text x="100" y="100" text-anchor="middle" font-family="sans-serif" font-size="10">あいうえお</text>`
+    const [x, , w] = viewBoxOf(trimSvg(spacious(text)).svg)
+    expect(x).toBeLessThan(100 - 25) // 全角5字 = 50 の半分より外
+    expect(x! + w!).toBeGreaterThan(100 + 25)
+  })
+
+  it("viewBox を名乗らない図には触らない", () => {
+    const noViewBox = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><path d="M80 80 L120 120" stroke="#000"/></svg>`
+    expect(trimSvg(noViewBox).svg).toBe(noViewBox)
+  })
+
+  it("中身の無い図には触らない", () => {
+    const empty = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"></svg>`
+    expect(trimSvg(empty).svg).toBe(empty)
+  })
+})
+
 describe("配布しているデッキの図解", () => {
   const WIKI_DIR = join(__dirname, "..", "doc", "wiki")
   const DIAGRAMS_DIR = join(WIKI_DIR, "diagrams")
@@ -436,6 +522,34 @@ describe("配布しているデッキの図解", () => {
 
     expect(Number(open.match(/\swidth="(\d+)"/)?.[1]), `${name}: width が viewBox と食い違う`).toBe(vw)
     expect(Number(open.match(/\sheight="(\d+)"/)?.[1]), `${name}: height が viewBox と食い違う`).toBe(vh)
+  })
+
+  /**
+   * 図は下敷きいっぱいに描かれるので、**枠に残した余白はそのまま絵の小ささになる。**
+   * 340x320 の canvas に 283x248 しか描いていない図は、同じ場所に 12% 小さく出る。
+   *
+   * 詰め直すのは `npx tsx src/tools/trim-svg.ts`（中身から枠を決めるので冪等）。
+   * 枠を広げる側にも効くので、**中身が枠からはみ出して切れている図もここで落ちる**。
+   */
+  it.each(diagrams)("$name は枠が中身に寄っている", ({ name, svg }) => {
+    expect(
+      trimSvg(svg).svg,
+      `${name}: 枠と中身がずれている。npx tsx src/tools/trim-svg.ts を通す`
+    ).toBe(svg)
+  })
+
+  it.each(diagrams)("$name は中身が枠に収まっている", ({ name, svg }) => {
+    // 切れているかどうかは生成物を開いても分かりにくい（端の線や字が静かに消える）
+    const box = contentBox(svg)!
+    const [vx, vy, vw, vh] = svg
+      .match(/viewBox="([^"]+)"/)![1]
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+    expect(box.minX, `${name}: 中身が枠の左に出ている`).toBeGreaterThanOrEqual(vx!)
+    expect(box.minY, `${name}: 中身が枠の上に出ている`).toBeGreaterThanOrEqual(vy!)
+    expect(box.maxX, `${name}: 中身が枠の右に出ている`).toBeLessThanOrEqual(vx! + vw!)
+    expect(box.maxY, `${name}: 中身が枠の下に出ている`).toBeLessThanOrEqual(vy! + vh!)
   })
 
   /**

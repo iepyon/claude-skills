@@ -30,19 +30,29 @@ import {
 } from "./constants.js"
 
 /**
- * 下敷きの高さを図の縦横比に合わせる。列に収まらない比なら列いっぱいのまま。
+ * 下敷きの寸法を図の縦横比に合わせる。**幅と高さの両方で列に収める。**
+ *
+ * 横長の図は列の幅で決まって高さが余り、縦長の図は列の高さで決まって幅が余る。
+ * 余ったほうの向きに寄せる（置き場所は呼び出し側が中央に取る）。
+ *
+ * 高さだけを合わせて幅は列いっぱい、としないのは、縦長の図で下敷きが図より
+ * 横長になるため — その食い違いは HTML では左右の帯、PPTX では引き伸ばしとして
+ * 別々の壊れ方で出る（生成物を見比べても気づきにくい）。今の図は 340x320 の
+ * 横長ばかりで幅のほうが先に尽きるので、この分岐は将来の縦長の図のために効く。
  *
  * `viewBox` を名乗っていない図（`aspect` が undefined）は形が分からないので、
  * 従来どおり列いっぱいに敷く。
  */
-function panelHeight(
-  width: number,
+function panelSize(
+  columnWidth: number,
   availableHeight: number,
   aspect: number | undefined
-): number {
-  if (aspect === undefined || aspect <= 0) return availableHeight
-  const inner = width - 2 * WP_PANEL_PADDING
-  return Math.min(availableHeight, inner / aspect + 2 * WP_PANEL_PADDING)
+): { w: number; h: number } {
+  if (aspect === undefined || aspect <= 0) return { w: columnWidth, h: availableHeight }
+  const innerW = columnWidth - 2 * WP_PANEL_PADDING
+  const innerH = availableHeight - 2 * WP_PANEL_PADDING
+  const w = Math.min(innerW, innerH * aspect)
+  return { w: w + 2 * WP_PANEL_PADDING, h: w / aspect + 2 * WP_PANEL_PADDING }
 }
 
 /**
@@ -108,17 +118,18 @@ export function layoutWikiPattern(
   // **SVG の ShapeBox に text を付けてはいけない** — 比較対象になった瞬間、
   // PPTX 側は addImage でテキストを持たないため必ず食い違う。
   //
-  // 下敷きは列いっぱいには伸ばさず、図の縦横比で組んで縦中央に置く。
-  // 伸ばすと HTML は図を縮めて上下に帯を作り（preserveAspectRatio）、
+  // 下敷きは列いっぱいには伸ばさず、図の縦横比で組んで列の中央に置く。
+  // 伸ばすと HTML は図を縮めて帯を作り（preserveAspectRatio）、
   // PPTX は addImage が枠に引き伸ばして図を歪ませる — 同じ原因で別々に崩れる。
-  const panelH = panelHeight(dims.rightWidth, dims.availableHeight, layout.diagramAspect)
-  const panelY = titleY + (dims.availableHeight - panelH) / 2
+  const panel = panelSize(dims.rightWidth, dims.availableHeight, layout.diagramAspect)
+  const panelX = dims.rightX + (dims.rightWidth - panel.w) / 2
+  const panelY = titleY + (dims.availableHeight - panel.h) / 2
   const shapeBoxes: ShapeBox[] = [
     {
-      x: dims.rightX,
+      x: panelX,
       y: panelY,
-      w: dims.rightWidth,
-      h: panelH,
+      w: panel.w,
+      h: panel.h,
       shapeType: "rect",
       // 同じ役割（内容の後ろに敷く淡いカード）の色がテーマにあるので、そこから採る。
       // ここに hex を書くと --theme でアイコンカードだけ色が変わって並びがずれる
@@ -128,10 +139,10 @@ export function layoutWikiPattern(
       borderWidth: WP_PANEL_BORDER_WIDTH,
     },
     {
-      x: dims.rightX + WP_PANEL_PADDING,
+      x: panelX + WP_PANEL_PADDING,
       y: panelY + WP_PANEL_PADDING,
-      w: dims.rightWidth - 2 * WP_PANEL_PADDING,
-      h: panelH - 2 * WP_PANEL_PADDING,
+      w: panel.w - 2 * WP_PANEL_PADDING,
+      h: panel.h - 2 * WP_PANEL_PADDING,
       shapeType: "svg",
       svgContent: layout.diagram,
     },
