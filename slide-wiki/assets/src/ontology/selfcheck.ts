@@ -263,6 +263,11 @@ export function selfcheckProblems(): string[] {
     for (const kind of Object.keys(frontmatter["value-patterns"])) {
       fail(usedKinds.has(kind), `${at}.value-patterns.${kind}: どのフィールドの kind でもない`)
     }
+    // 逆向き。フィールドを1つ消したときに置き去りになった実装を拾う
+    // （`kind: int` は order を宣言から外したあと、これが無いと残り続けた）
+    for (const kind of Object.keys(FIELD_VALIDATORS)) {
+      fail(usedKinds.has(kind), `${at}: kind '${kind}' の実装はあるが、どのフィールドも使っていない`)
+    }
     // 認識の条件 ⇔ 実装。宣言だけ書き替えて実装が古いまま、を作らせない
     const fence = frontmatter.recognition["first-line"]
     fail(

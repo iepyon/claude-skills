@@ -135,7 +135,6 @@ export interface Element {
 /** frontmatter の値に許す形。形が正規表現で決まるものは `value-patterns` にキーを持つ */
 export type FieldKind =
   | "text"
-  | "int"
   | "list-of-text"
   | "date"
   | "actor"

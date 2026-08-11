@@ -411,7 +411,6 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
  */
 export const FIELD_VALIDATORS: Readonly<Record<FieldKind, (value: unknown) => boolean>> = {
   text: (v) => typeof v === "string",
-  int: (v) => Number.isInteger(v),
   "list-of-text": (v) => Array.isArray(v) && v.every((x) => typeof x === "string"),
   date: (v) => typeof v === "string" && matchesDeclaredForm("date", v),
   actor: (v) => typeof v === "string" && matchesDeclaredForm("actor", v),
