@@ -63,7 +63,7 @@ LLM が手入れする Wiki — 原則6つと、日々の実務6つ
 <!--agenda-->
 LLM が手入れする Wiki — 毎日の手入れで効いてくること
 
-### 語彙: [[patterns-llm-wiki/語彙を寄せる|語彙を寄せる]]
+### 語彙: [[patterns-llm-wiki/名寄せ|名寄せ]]
 ### 文脈: [[patterns-llm-wiki/同姓同名|同姓同名]]
 ### 検査: [[patterns-llm-wiki/実行可能な規約|実行可能な規約]]
 ### 導出: [[patterns-llm-wiki/鏡は拭かない|鏡は拭かない]]
