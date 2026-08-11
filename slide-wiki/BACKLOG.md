@@ -23,15 +23,17 @@ Wiki に効かない範囲が P3 に下りた。
 
 | 確認 | 結果 |
 |---|---|
-| `npm test` | ✅ 29 files / 754 tests |
+| `npm test` | ✅ 30 files / 792 tests |
 | `npx tsx src/ontology/selfcheck.ts` | ✅ レイアウト 17 / 注釈 4 / 語彙 5 / プラグイン 12 — 整合 |
 | `npx tsx src/tools/gen-ontology-doc.ts --check` | ✅ ドリフト無し |
-| `--lint --strict`（`doc/Spec.md` + `doc/wiki` の8デッキ） | ✅ 全通過 |
+| `--lint --strict`（`doc/Spec.md` + `doc/wiki` の7デッキ） | ✅ 全通過 |
+| `npx tsx src/tools/gen-okf-index.ts --check` | ✅ 目録がバンドルと一致 |
+| `okf-conformance.test.ts` | ✅ `doc/wiki/` は OKF v0.2 §11 に適合 |
 | `--verify`（3者比較） | ✅ `three-way-verify.test.ts` が全デッキ + 非既定テーマで緑 |
 | `npm run typecheck`（`src/`） | ✅ 0 件 |
 | 同（`__tests__` も含めた場合） | ⚠️ 38 件（`SlideLayout` の絞り込み漏れ）→ [B-45](#b-45) |
 | PR の CI | ✅ `ci.yml` が `npm test` + `npm run typecheck` を走らせる |
-| `--wiki doc/wiki`（7デッキ・79枚） | ✅ 2.1秒 / 820KB / 未解決リンク 0 件 |
+| `--wiki doc/wiki`（7デッキ・79枚） | ✅ 865KB / 未解決リンク 0 件 |
 | 被リンクゼロのスライド | ⚠️ 11枚（表紙6・`guide` の本文4・`map` の表紙1）→ [B-42](#b-42) |
 | サイトの内訳 | スライドの DOM 590KB / 図解 SVG 148KB / CSS 13KB / ブートストラップ 20KB → [B-43](#b-43) |
 | **書いた内部リンクのうち、実際にリンクになった数** | **238 / 238**（`guide` が記法を見せる2件はコード表記なので分母に入らない）|
@@ -1043,6 +1045,39 @@ HTML テンプレート（`renderer/html/template.ts`）に `@media print` が�
 ## 完了
 
 要点だけ残す。詳細はコミット履歴と、下に挙げた実装・テストのファイルにある。
+
+<a id="b-46"></a>
+**B-46: 記法が Obsidian 由来のままで、LLM Wiki の標準から外れていた** —
+`[[…]]` は Obsidian の綴りで、`inline-formatter.ts` のコメントが自分でそう名乗っていた。
+一方 Google Cloud の [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+は、まさにこの道具がやっていること —「YAML frontmatter を持つ md のディレクトリで
+知識を持ち回る」— を標準化していて、**`[[wikilink]]` に一言も触れていない**。
+§6.1 が規定するのは通常の markdown リンクだけで、推奨形はバンドル相対の絶対パスである。
+
+つまり「LLM Wiki の作り方を教えるスキル」が、その標準から外れた独自方言で書かれていた。
+`ontology/types.ts` は既に `OKF 同様、未知のキーは保存して拒まない` と OKF を
+引き合いに出しており、片足だけ突っ込んだ状態だった。
+
+**畳み方として効いたのは「書き方を1つに絞ると、規則のほうが要らなくなる」ことである。**
+内部リンクを `/デッキ名.md#スライドID` の1本にしたら、4段階あった解決順が1段になり、
+「候補が2つあって決められない」という失敗モードが**原理的に消えた**（型からも落とした）。
+[B-41](#b-41) が数えていた「3箇所に手書きされた解決順」は、解決順ごと無くなっている。
+
+238箇所の書き換えは `src/tools/migrate-wikilinks.ts` が行った。**表示テキストを
+1文字も変えない**ことを不変条件にしてあり、変換前後の md 1437 行を
+`stripInlineFormatting` で突き合わせて差 0 を確かめた — そのぶんレイアウトの
+スナップショットも3者比較も動いていない。ツールは同梱して残す（他人のデッキを
+受け取るスキルなので移行路が要る。旧記法の綴りと4段階の解決順は、いまやこのファイルだけが持つ）。
+
+frontmatter は、キー名がもともと OKF と同名のものが多く、ずれていたのは値の形だった
+（actor の接頭辞・`at` が RFC3339）。`index.md` / `log.md` は予約名なのでデッキから外し、
+目録は `order.yaml` の `groups:` から生成する。`category` などの独自キーはそのまま残した
+— OKF が「知らないキーは保存して拒まない」と定めているので、拡張が通ること自体が適合の裏返しになる。
+
+実装は `src/okf.ts`（予約名とリンクの形の正本）・`src/tools/gen-okf-index.ts`、
+検査は `__tests__/okf-conformance.test.ts`（§11 の3条件をそのまま並べたもの）と
+lint の `legacy-wikilink` / `link-form`。**「準拠した」を誰も確かめていない言葉にしない**
+ためのもので、これが無いと次にデッキを1本足した人が黙って外れる。
 
 <a id="b-25"></a>
 **B-25: 型検査が CI にもテストにも無かった** — 直したのは2つで、**大きいのは後者**である。
