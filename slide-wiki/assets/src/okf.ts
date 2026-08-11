@@ -39,6 +39,51 @@ export function listDeckFiles(dir: string): string[] {
 }
 
 /**
+ * デッキ名（拡張子を除いたファイル名）→ デッキ slug。**この計算の唯一の入口。**
+ *
+ * 要るのは4箇所ある — サイトを組むパイプライン・`order.yaml` の照合・リンクの解決・
+ * 目録の生成。`slugify` を各所で直に呼ぶと、そのぶん綴りが割れる（B-40 は、それが
+ * 2つに割れて「どのファイル名にも `order.yaml` にも現れないデッキ名」を
+ * 黙って作っていた話である）。
+ *
+ * 記号だけの名前は slug が空になるので `deck` に落とす。**この逃げ場自体が衝突源**
+ * （空になる2本がどちらも `deck` になる）なので、`findDeckSlugCollisions` が
+ * 必ずこの関数の結果を見るようにしてある。
+ */
+export const deckSlug = (deckName: string): string => slugify(deckName) || "deck"
+
+/**
+ * デッキ slug の衝突を見つける。1件につき1つの誤りの文面を返す（無ければ空）。
+ *
+ * バンドルの中で slug が重なると、リンクの `/デッキ名.md` がどちらを指すか決まらない。
+ * **一意化して先へ進んではいけない** — 連番を振ると、どのファイル名にも `order.yaml` にも
+ * 現れない名前（`my-deck-2`）でしか指せないデッキができ、しかも exit 0 で通る。
+ * デッキはファイルなので書き手が改名できる（一意化するしかないスライド ID とはそこが違う）。
+ *
+ * 宣言は ontology.yaml の `okf.deck-slug.collision`。呼ぶのは `--wiki` の入口と
+ * 移行ツールで、**どちらもファイル名を持っている場所**である（サイト合成まで下ると
+ * ファイル名が残っていないので、誰を直せばよいか言えなくなる）。
+ */
+export function findDeckSlugCollisions(
+  decks: ReadonlyArray<{ readonly fileName: string; readonly slug: string }>
+): string[] {
+  const bySlug = new Map<string, string[]>()
+  for (const d of decks) {
+    const bucket = bySlug.get(d.slug)
+    if (bucket) bucket.push(d.fileName)
+    else bySlug.set(d.slug, [d.fileName])
+  }
+
+  return [...bySlug]
+    .filter(([, names]) => names.length > 1)
+    .map(
+      ([slug, names]) =>
+        `デッキ slug "${slug}" が ${names.join(" と ")} で衝突している。` +
+        `リンクはファイル名で書かれるので、どちらを指しているか決められない。片方を改名せよ`
+    )
+}
+
+/**
  * 内部リンクの形。**バンドル相対の絶対パスだけ**を受ける（SPEC.md §6.1 の推奨形）。
  *
  * OKF は相対パス（`./x.md`）も合法としているが、この道具は解決しない。
@@ -60,9 +105,9 @@ export interface OkfLinkTarget {
 /**
  * markdown リンクの href を内部リンクとして読む。内部リンクでなければ null。
  *
- * デッキ slug は `slugify(拡張子を除いたパス)` で、`pipeline.ts` がファイル名から
- * デッキ slug を作るのと同じ規則。したがって `/patterns-wiki.md#種ノート` は
- * `patterns-wiki/種ノート` を指す。
+ * デッキ slug は `deckSlug(拡張子を除いたパス)` — サイトを組む側が使うのと**同じ関数**。
+ * したがって `/patterns-wiki.md#種ノート` は `patterns-wiki/種ノート` を指す。
+ * 参照側とサイト側で別々に slug を綴ると、書いたリンクが当たらない形の食い違いになる。
  *
  * サブディレクトリ（`/sub/deck.md`）はパスまるごとを slug 化するので
  * `sub-deck` になり、平坦なディレクトリしか読まない現状では未解決として報告される。
@@ -77,8 +122,7 @@ export function parseOkfLink(href: string): OkfLinkTarget | null {
   // リンクが軒並み「未解決」の一覧に出てしまう
   if (isReservedOkfFile(path)) return null
 
-  const deck = slugify(path.replace(/\.md$/, ""))
-  if (!deck) return null
+  const deck = deckSlug(path.replace(/\.md$/, ""))
 
   const slide = match[2]
   return slide ? { ref: `${deck}/${slide}`, slide } : { ref: deck }

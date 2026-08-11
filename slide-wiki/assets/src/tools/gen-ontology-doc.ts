@@ -17,6 +17,7 @@ import {
   getFrontmatter,
   getLayouts,
   getLimits,
+  getOkf,
   getVocabularies,
   loadOntology,
   ontologyVersion,
@@ -76,6 +77,60 @@ function annotationsTable(): string[] {
       return [codeCell(a.name), codeCell(a.syntax), cell(where), cell(a.description)]
     })
   )
+}
+
+/**
+ * バンドル（サイトの階層）。予約ファイルは表、規則は箇条書き。
+ *
+ * `deck-slug.rule` は**在り処を指す文字列**であって規則の写しではない。
+ * ここで正規化を展開して見せると、宣言に無いものが文書にだけ現れることになる。
+ */
+function okfSection(): string[] {
+  const okf = getOkf()
+  const deckSet = okf["deck-set"]
+  const slug = okf["deck-slug"]
+  const ids = okf["slide-id-scope"]
+
+  return [
+    `${cell(okf.description)}版は ${code(okf["okf-version"])}（[SPEC.md](${okf.spec})）。`,
+    "",
+    "**予約ファイル名**",
+    "",
+    ...table(
+      ["ファイル名", "役割", "説明"],
+      okf["reserved-files"].map((f) => [codeCell(f.name), cell(f.role), cell(f.description)])
+    ),
+    ...prose(okf["reserved-files-note"]),
+    "",
+    "**デッキの集合と並び**",
+    "",
+    `- デッキ集合: ${cell(deckSet.source)}`,
+    `- 並び順の正本: ${code(deckSet["order-file"])}（${code(deckSet["order-shape"])}）`,
+    ...prose(deckSet.note),
+    "",
+    "**デッキ slug**",
+    "",
+    `- もと: ${cell(slug.from)}`,
+    `- 綴りの規則: ${cell(slug.rule)}`,
+    `- 衝突したときの扱い: ${code(slug.collision)}`,
+    "",
+    ...table(
+      ["ファイル名", "デッキ slug", "リンクの書き方"],
+      slug.examples.map((e) => [
+        codeCell(`${e.name}.md`),
+        codeCell(e.slug),
+        codeCell(`/${e.name}.md#スライドID`),
+      ])
+    ),
+    ...prose(slug.note),
+    "",
+    "**スライド ID の一意性**",
+    "",
+    `- 一意な範囲: ${cell(ids["unique-in"])}`,
+    `- サイト全体での綴り: ${code(ids["namespaced-as"])}`,
+    ...prose(ids.note),
+    ...prose(okf.guidance),
+  ]
 }
 
 function inlineTable(): string[] {
@@ -301,6 +356,8 @@ function buildOntologyDoc(): string {
     )
   }
 
+  // 内部リンクの綴りがバンドルの構造に依るので、構造を先に読ませる
+  L.push("", `## ${getOkf().label}`, "", ...okfSection())
   L.push("", "## インライン記法", "", ...inlineTable())
   L.push("", "## 制限", "", ...limitsBullets())
   L.push("", ...prose(getLimits().guidance))
@@ -318,6 +375,7 @@ function skillRegions(): Record<string, string[]> {
     layouts: layoutsTable(),
     annotations: annotationsTable(),
     inline: inlineTable(),
+    okf: okfSection(),
   }
 }
 
@@ -337,6 +395,7 @@ export const CONSUMED_KEYS: ReadonlySet<string> = new Set([
   "layouts",
   "vocabularies",
   "field-sets",
+  "okf",
   "inline",
   "limits",
 ])
@@ -362,7 +421,11 @@ export function applySkillRegions(skill: string): string {
     if (start < 0 || stop < 0 || stop < start) {
       throw new Error(`SKILL.md に生成領域 '${name}' のマーカー（${begin} … ${end}）が無い`)
     }
-    out = out.slice(0, start + begin.length) + "\n" + lines.join("\n") + "\n" + out.slice(stop)
+    // 空行の畳み方は ontology.md 側（buildOntologyDoc の末尾）と揃える。
+    // `prose()` は前後に空行を足すので、続けて並べた節はそのままだと空行が2つ空く —
+    // 畳むのを各節に任せると、次に `prose` を使う領域が同じ手当てを忘れて見た目だけずれる
+    const body = lines.join("\n").replace(/\n{3,}/g, "\n\n")
+    out = out.slice(0, start + begin.length) + "\n" + body + "\n" + out.slice(stop)
   }
   return out
 }

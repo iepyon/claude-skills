@@ -237,6 +237,75 @@ export interface Limits {
   readonly guidance?: string
 }
 
+/** バンドルが予約している1ファイル。デッキとしては読まない */
+export interface OkfReservedFile {
+  readonly name: string
+  readonly role: string
+  readonly description: string
+}
+
+/** デッキ集合の定め方と、その並びの宣言の在り処 */
+export interface OkfDeckSet {
+  readonly source: string
+  /** 並び順の宣言のファイル名。`src/deck-order.ts` の DECK_ORDER_FILE と一致する */
+  readonly "order-file": string
+  readonly "order-shape": string
+  readonly note?: string
+}
+
+/**
+ * デッキ slug の作り方。
+ *
+ * **正規化の規則そのものはここに無い**（`rule` は在り処を指すだけ）。綴りが1箇所である
+ * ことが「リンクの両側が同じ規則で作られる」保証なので、写すとその保証が消える。
+ */
+/** デッキ名 → slug の実例。規則の写しの代わりに置く（selfcheck が実装に通す） */
+export interface OkfDeckSlugExample {
+  readonly name: string
+  readonly slug: string
+}
+
+export interface OkfDeckSlug {
+  readonly from: string
+  readonly rule: string
+  /** 宣言が「見せる」規則。`src/okf.ts` の `deckSlug` に通して一致することを selfcheck が見る */
+  readonly examples: readonly OkfDeckSlugExample[]
+  /**
+   * slug が衝突したときの扱い。
+   *
+   * **`"error"` の1値しか取らない** — 兄弟の `unknown` / `require` と違い、これは
+   * lint が読む設定ではなく、実装が常に止めるという事実の宣言である。union にすると
+   * `ignore` と書いても全部緑のまま実装は止め続ける、という嘘をつける宣言になる。
+   */
+  readonly collision: "error"
+  readonly note?: string
+}
+
+/** スライド ID がどこまで一意か */
+export interface OkfSlideIdScope {
+  readonly "unique-in": string
+  readonly "namespaced-as": string
+  readonly note?: string
+}
+
+/**
+ * バンドル（サイトの階層）。他の節と違い、ここだけが1つの md ファイルの外側を宣言する。
+ * 予約ファイル名と版の綴りは `src/okf.ts` が持ち、ontology.test.ts が両者を照合する。
+ */
+export interface Okf {
+  readonly label: string
+  readonly description: string
+  readonly spec: string
+  /** `src/okf.ts` の OKF_VERSION と一致する */
+  readonly "okf-version": string
+  readonly guidance?: string
+  readonly "reserved-files": readonly OkfReservedFile[]
+  readonly "reserved-files-note"?: string
+  readonly "deck-set": OkfDeckSet
+  readonly "deck-slug": OkfDeckSlug
+  readonly "slide-id-scope": OkfSlideIdScope
+}
+
 export interface Ontology {
   readonly version: number
   readonly elements: Readonly<Record<string, Element>>
@@ -245,6 +314,7 @@ export interface Ontology {
   readonly layouts: readonly Layout[]
   readonly vocabularies: Readonly<Record<string, Vocabulary>>
   readonly "field-sets": Readonly<Record<string, FieldSet>>
+  readonly okf: Okf
   readonly inline: Inline
   readonly limits: Limits
 }

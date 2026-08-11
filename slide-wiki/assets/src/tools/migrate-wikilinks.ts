@@ -4,8 +4,7 @@ import { join, basename, extname } from "path"
 import { Effect } from "effect"
 
 import { parseMarkdown } from "../parser/index.js"
-import { slugify } from "../slug.js"
-import { isReservedOkfFile, listDeckFiles } from "../okf.js"
+import { deckSlug, findDeckSlugCollisions, isReservedOkfFile, listDeckFiles } from "../okf.js"
 import { buildSiteIndex } from "../renderer/wiki/site-index.js"
 import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
 
@@ -164,8 +163,9 @@ function collectFiles(paths: readonly string[]): { files: string[]; skipped: str
 /**
  * デッキ集合を読み、参照を解決するための索引を作る。
  *
- * slug → ファイル名の逆引きは**ここで控える**。`slugify` は非可逆で、
- * `buildSiteIndex` は衝突時に `-2` を足すので、slug から名前は復元できない。
+ * slug → ファイル名の逆引きは**ここで控える**。`deckSlug` は非可逆なので、
+ * slug だけからファイル名は復元できない（衝突そのものは下で誤りとして弾くが、
+ * 弾けるのは「同じ slug が2つある」ことだけで、元の綴りは戻らない）。
  */
 function loadDecks(files: readonly string[]): {
   deckFiles: DeckFile[]
@@ -183,25 +183,15 @@ function loadDecks(files: readonly string[]): {
     const pres = Effect.runSync(
       parseMarkdown(markdown, { baseDir: path.slice(0, path.lastIndexOf("/")) || "." })
     )
-    const slug = slugify(name) || "deck"
+    const slug = deckSlug(name)
     deckFiles.push({ path, fileName: basename(path), slug })
     decks.push({ slug, title: name, presentation: pres })
   }
 
-  const collisions = new Map<string, string[]>()
-  for (const d of deckFiles) {
-    const bucket = collisions.get(d.slug)
-    if (bucket) bucket.push(d.fileName)
-    else collisions.set(d.slug, [d.fileName])
-  }
-  for (const [slug, names] of collisions) {
-    if (names.length > 1) {
-      throw new Error(
-        `デッキ slug "${slug}" が ${names.join(" と ")} で衝突している。` +
-          `リンクはファイル名で書かれるので、どちらを指しているか決められない。片方を改名せよ`
-      )
-    }
-  }
+  // 判定は okf.ts が持つ（`--wiki` の入口と同じもの。ここが写しを持つと、
+  // 移行ツールだけが古い規則で通す状態が作れてしまう）
+  const collisions = findDeckSlugCollisions(deckFiles)
+  if (collisions.length > 0) throw new Error(collisions.join("\n"))
 
   const { entries, byId } = buildSiteIndex(decks)
   return { deckFiles, entries, byId }

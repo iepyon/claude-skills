@@ -8,6 +8,8 @@
 import "../plugins/index.js" // side-effect: プラグインの自己登録
 import { readFileSync } from "fs"
 import { getPlugins } from "../plugins/registry.js"
+import { OKF_VERSION, RESERVED_OKF_FILES, deckSlug, isReservedOkfFile } from "../okf.js"
+import { DECK_ORDER_FILE } from "../deck-order.js"
 import { CONSUMED_KEYS, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
   getAnnotations,
@@ -15,6 +17,7 @@ import {
   getFrontmatter,
   getLayouts,
   getLimits,
+  getOkf,
   getVocabularies,
   isDynamicCardinality,
   loadOntology,
@@ -310,6 +313,35 @@ export function selfcheckProblems(): string[] {
       `plugin '${p.id}' が ontology.yaml の layouts に宣言されていない（ドキュメントにも lint にも現れない）`
     )
   }
+
+  // --- バンドル（宣言 ⇔ src/okf.ts・src/deck-order.ts） ---
+  // 予約名・版・並びの宣言のファイル名は、規則を宣言が持ち綴りをコードが持つ。
+  // 分けているのはパーサ・CLI・lint・生成器が宣言の読み込みを挟まずに綴りを引けるように
+  // するためで、layouts[].plugin ⇔ registry と同じ双方向の突き合わせで縛る
+  const okf = getOkf()
+  const declaredReserved = okf["reserved-files"].map((f) => f.name)
+  for (const name of declaredReserved) {
+    fail(isReservedOkfFile(name), `okf.reserved-files: '${name}' を src/okf.ts が予約名として知らない`)
+  }
+  for (const name of RESERVED_OKF_FILES) {
+    fail(declaredReserved.includes(name), `okf.reserved-files: src/okf.ts の予約名 '${name}' が宣言に無い`)
+  }
+  fail(okf["okf-version"] === OKF_VERSION, `okf.okf-version が src/okf.ts の OKF_VERSION と違う`)
+  fail(
+    okf["deck-set"]["order-file"] === DECK_ORDER_FILE,
+    `okf.deck-set.order-file が src/deck-order.ts の綴りと違う`
+  )
+  // 規則そのものは宣言に写さない（写しは照合できない）代わりに、例のほうを実装に通す
+  for (const e of okf["deck-slug"].examples) {
+    fail(
+      deckSlug(e.name) === e.slug,
+      `okf.deck-slug.examples: '${e.name}' は実装では '${deckSlug(e.name)}' になる（宣言は '${e.slug}'）`
+    )
+  }
+  fail(
+    okf["deck-slug"].examples.some((e) => e.name !== e.slug),
+    `okf.deck-slug.examples: 変換が起きる例が1つも無い（読み手に規則が伝わらない）`
+  )
 
   // --- 宣言 ⇔ 生成物 ---
   // 宣言したのにドキュメントへ出ないキーは、生成物どうしを比べる --check では見つからない
