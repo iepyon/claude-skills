@@ -47,7 +47,7 @@ const deck = (
       "",
       "**困りごと。**",
       "### そこで",
-      "打ち手は [別のパターン](/d.md#別のパターン)。",
+      "打ち手は [別のパターン](d.md#別のパターン)。",
     ].join("\n")
   const image = opts.diagram === false ? "" : `\n![種ノート](${opts.diagram ?? SAMPLE})\n`
   const takeaway = opts.takeaway ? `\n<!--takeaway-->\n${opts.takeaway}\n` : ""
@@ -113,7 +113,7 @@ describe("WikiPattern — 2見出しの左段", () => {
     expect(layout.sections.map((s) => s.body)).toEqual([
       "きっかけ。",
       "**困りごと。**",
-      "打ち手は [別のパターン](/d.md#別のパターン)。",
+      "打ち手は [別のパターン](d.md#別のパターン)。",
     ])
   })
 
@@ -249,7 +249,7 @@ describe("WikiPattern — 座標", () => {
   it("どのテキストも図解の矩形に食い込まない", async () => {
     // タイトルと takeaway は全幅なので「左半分に収まる」では言えない。
     // 言いたいのは重ならないこと — 縦か横のどちらかで必ず離れている
-    const result = await layoutFor(deck({ takeaway: "関連: [別のパターン2](/d.md#別のパターン2)" }))
+    const result = await layoutFor(deck({ takeaway: "関連: [別のパターン2](d.md#別のパターン2)" }))
     const svg = svgBox(result)
     expect(result.textBoxes.length).toBeGreaterThanOrEqual(7) // タイトル + 見出し2 + 段落3 + takeaway
     for (const box of result.textBoxes) {
@@ -263,7 +263,7 @@ describe("WikiPattern — 座標", () => {
   })
 
   it("takeaway があると図解はその上で止まる", async () => {
-    const result = await layoutFor(deck({ takeaway: "関連: [別のパターン](/d.md#別のパターン)" }))
+    const result = await layoutFor(deck({ takeaway: "関連: [別のパターン](d.md#別のパターン)" }))
     const svg = svgBox(result)
     const takeaway = result.textBoxes[result.textBoxes.length - 1]
     expect(svg.y + svg.h).toBeLessThanOrEqual(takeaway.y)
@@ -291,7 +291,7 @@ describe("WikiPattern — Wiki との接続", () => {
   it("本文と takeaway のリンクが参照として拾われる", async () => {
     // 拾えるのは buildSectionBoxes が richText を作るから。自前で TextBox を組むと
     // 見た目は同じままリンクだけが消える
-    const pres = await present(deck({ takeaway: "関連: [別のパターン2](/d.md#別のパターン2)" }))
+    const pres = await present(deck({ takeaway: "関連: [別のパターン2](d.md#別のパターン2)" }))
     const refs = mapRefs(collectRefs(
       {
         globalId: "d/種ノート",
@@ -610,7 +610,7 @@ describe("WikiPattern — 出典", () => {
     // 両方とも「下端に置く」ので、素朴に足すと重なる。重なりは生成物を見ても
     // 気づきにくい（4pt の文字が 20pt の裏に隠れる）
     const result = await layoutFor(
-      deck({ source: SOURCE, takeaway: "関連: [別のパターン2](/d.md#別のパターン2)" })
+      deck({ source: SOURCE, takeaway: "関連: [別のパターン2](d.md#別のパターン2)" })
     )
     const source = result.textBoxes.find((b) => b.text === SOURCE)!
     const takeaway = result.textBoxes.find((b) => b.richText !== undefined && b.isBold)!
@@ -620,7 +620,7 @@ describe("WikiPattern — 出典", () => {
   it("出典は Wiki のリンクを作らない（参照ではなく典拠なので、グラフに載せない）", async () => {
     // takeaway と違って richText にしない。出典にリンクを書いても
     // バックリンクが増えないほうが、「関連」と「典拠」が混ざらない
-    const pres = await present(deck({ source: `${SOURCE} [別のパターン3](/d.md#別のパターン3)` }))
+    const pres = await present(deck({ source: `${SOURCE} [別のパターン3](d.md#別のパターン3)` }))
     const refs = mapRefs(collectRefs(
       {
         globalId: "d/種ノート",

@@ -13,13 +13,13 @@ const ALPHA = `# アルファ集
 ## 種ノート
 <!--id:seed-->
 ### まず置く
-育て方は [育つ見出し](/alpha.md#育つ見出し)、繋ぎ方は [つなぎ直し](/bravo.md#つなぎ直し) を見よ。
+育て方は [育つ見出し](alpha.md#育つ見出し)、繋ぎ方は [つなぎ直し](bravo.md#つなぎ直し) を見よ。
 
 ---
 
 ## 育つ見出し
 ### 見出しが先に伸びる
-[種ノート](/alpha.md#seed) から始まる。
+[種ノート](alpha.md#seed) から始まる。
 `
 
 const BRAVO = `# ブラボー集
@@ -28,7 +28,7 @@ const BRAVO = `# ブラボー集
 
 ## つなぎ直し
 ### 既存に繋ぐ
-繋ぎ先は [種ノート](/alpha.md#seed)。存在しない [どこにもない](/alpha.md#どこにもない) も混ぜる。
+繋ぎ先は [種ノート](alpha.md#seed)。存在しない [どこにもない](alpha.md#どこにもない) も混ぜる。
 `
 
 const buildSite = async () => {
@@ -181,7 +181,7 @@ describe("wiki link resolution", () => {
   it("should report an unresolvable reference instead of guessing", async () => {
     const site = await buildSite()
     expect(site.broken).toEqual([
-      { fromId: "bravo/つなぎ直し", href: "/alpha.md#どこにもない" },
+      { fromId: "bravo/つなぎ直し", href: "alpha.md#どこにもない" },
     ])
   })
 
@@ -189,7 +189,7 @@ describe("wiki link resolution", () => {
     // 未解決の一覧に出すのは原文の綴り。解決の鍵（`deck/slide`）は内部表現で、
     // md のどこを直せばよいかを教えてくれない
     const site = await buildSite()
-    expect(site.broken[0].href).toBe("/alpha.md#どこにもない")
+    expect(site.broken[0].href).toBe("alpha.md#どこにもない")
   })
 
   it("should not be able to be ambiguous at all", async () => {
@@ -199,7 +199,7 @@ describe("wiki link resolution", () => {
     // それぞれ別の行き先として解決する — 曖昧という状態が作れない
     const dup = await Effect.runPromise(parseMarkdown("## X\n<!--id:dup-->\n### H\nbody"))
     const src = await Effect.runPromise(
-      parseMarkdown("## A\n### H\n[一](/one.md#dup) と [二](/two.md#dup)")
+      parseMarkdown("## A\n### H\n[一](one.md#dup) と [二](two.md#dup)")
     )
 
     const site = buildWikiSite(
@@ -302,7 +302,7 @@ describe("rich text layout", () => {
     // 語の途中で改行される。子を1つに保つことでインラインフローに戻す。
     // 本文は行ごとの <p> にまとめる（PPTX が改行ごとに段落を出すのに合わせる）。
     const html = await Effect.runPromise(
-      md2html("## T\n### H\nこれは**強調**と[a](/d.md#a)を含む文", {})
+      md2html("## T\n### H\nこれは**強調**と[a](d.md#a)を含む文", {})
     )
     expect(html).toContain('<div class="para-stack">')
     expect(html).toMatch(/<div class="para-stack"><p class="para-plain"[^>]*>[^<]*<strong>/)
@@ -489,11 +489,11 @@ describe("text must never be clipped", () => {
     // 索引ページからどこへも飛べない。
     const html = await Effect.runPromise(
       md2wiki(
-        [{ name: "d", markdown: "## 読み方\n<!--agenda-->\nサブ\n### 置く: [種ノート](/d.md#種ノート)\n\n---\n\n## 種ノート\n### H\nbody" }],
+        [{ name: "d", markdown: "## 読み方\n<!--agenda-->\nサブ\n### 置く: [種ノート](d.md#種ノート)\n\n---\n\n## 種ノート\n### H\nbody" }],
         {}
       )
     )
     expect(html).toContain('data-wikilink="d/種ノート"')
-    expect(html).not.toContain("](/d.md#種ノート)")
+    expect(html).not.toContain("](d.md#種ノート)")
   })
 })

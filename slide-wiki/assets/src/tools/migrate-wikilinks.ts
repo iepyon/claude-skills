@@ -9,11 +9,11 @@ import { buildSiteIndex } from "../renderer/wiki/site-index.js"
 import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
 
 /**
- * 旧 `[[…]]` 記法を OKF v0.2 のバンドル相対リンクに書き換える。
+ * 旧 `[[…]]` 記法を OKF v0.2 の相対リンクに書き換える。
  *
- *   [[種ノート]]              → [種ノート](/patterns-wiki.md#種ノート)
- *   [[patterns-wiki/剪定]]     → [patterns-wiki/剪定](/patterns-wiki.md#剪定)
- *   [[動く北極星|北極星]]      → [北極星](/patterns-wiki.md#動く北極星)
+ *   [[種ノート]]              → [種ノート](patterns-wiki.md#種ノート)
+ *   [[patterns-wiki/剪定]]     → [patterns-wiki/剪定](patterns-wiki.md#剪定)
+ *   [[動く北極星|北極星]]      → [北極星](patterns-wiki.md#動く北極星)
  *
  * **表示テキストは1文字も変えない。** ラベルは旧記法の表示規則（縦棒の右、
  * 無ければ参照そのもの）のまま写す。整形したくなるが、そうすると `stripInlineFormatting` の出力が変わり、
@@ -276,7 +276,7 @@ function migrate(files: readonly string[]): FileResult[] {
         failures.push({ file: deck.fileName, line: c.line, ref: c.ref, reason: "deck-not-a-file" })
         continue
       }
-      const href = `/${target}#${encodeFragment(entry.localId)}`
+      const href = `${target}#${encodeFragment(entry.localId)}`
       const text = `[${c.label}](${href})`
       edits.push({ start: c.start, end: c.end, text })
       changes.push({ line: c.line, from: source.slice(c.start, c.end), to: text })

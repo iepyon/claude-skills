@@ -7,7 +7,7 @@ import { main } from "../src/tools/migrate-wikilinks.js"
 import { stripInlineFormatting } from "../src/parser/inline-formatter.js"
 
 /**
- * 旧 `[[…]]` 記法 → OKF のバンドル相対リンクへの一括変換。
+ * 旧 `[[…]]` 記法 → OKF の相対リンクへの一括変換。
  *
  * このツールの約束は2つ。**解決順は本体と同じものを使う**ことと、
  * **表示テキストを1文字も変えない**こと。後者は他の全テストを守る性質なので
@@ -74,10 +74,10 @@ describe("migrate-wikilinks", () => {
     expect(main([dir])).toBe(0)
 
     const alpha = read("alpha.md")
-    expect(alpha).toContain("[出口](/alpha.md#出口)")
-    expect(alpha).toContain("[そと](/alpha.md#出口)")
-    expect(alpha).toContain("[bravo/剪定](/bravo.md#剪定)")   // ラベル省略時は表示のまま
-    expect(alpha).toContain("[収穫](/bravo.md#収穫)")          // サイト全体で一意なので当たる
+    expect(alpha).toContain("[出口](alpha.md#出口)")
+    expect(alpha).toContain("[そと](alpha.md#出口)")
+    expect(alpha).toContain("[bravo/剪定](bravo.md#剪定)")   // ラベル省略時は表示のまま
+    expect(alpha).toContain("[収穫](bravo.md#収穫)")          // サイト全体で一意なので当たる
     expect(alpha).not.toContain("[[")
   })
 
@@ -120,7 +120,7 @@ describe("migrate-wikilinks", () => {
     const alpha = read("alpha.md")
     expect(alpha).toContain("`[[入口]]` と書く")           // インラインコードは据え置き
     expect(alpha).toContain("```markdown\n[[入口]]\n```")  // フェンスも据え置き
-    expect(alpha).toContain("本物は [書き方](/alpha.md#書き方)")
+    expect(alpha).toContain("本物は [書き方](alpha.md#書き方)")
   })
 
   it("should not touch frontmatter", () => {
@@ -190,7 +190,7 @@ describe("migrate-wikilinks", () => {
     write("alpha.md", deck("アルファ", "\n---\n\n## a (b)\n\n### 本文\n[[a-b]]\n"))
     expect(main([dir])).toBe(0)
     const alpha = read("alpha.md")
-    expect(alpha).toContain("[a-b](/alpha.md#a-b)")
+    expect(alpha).toContain("[a-b](alpha.md#a-b)")
   })
 })
 

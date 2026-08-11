@@ -29,12 +29,12 @@ See [../BACKLOG.md](../BACKLOG.md) for the feature backlog (prioritized, with ac
 - Effect-TS functional pipeline with typed errors (`ParseError`, `ValidationError`, `RenderError`)
 - Direct pptxgenjs API calls — no browser dependency
 - Three outputs from one source: `.pptx`, a self-contained `.html` deck (arrow-key navigation), and a linked wiki site (`--wiki`)
-- Wiki mode: several decks in one page, `[label](/deck.md#slide)` navigation, hover previews of the target slide, backlinks, hash routing with browser back/forward
+- Wiki mode: several decks in one page, `[label](deck.md#slide)` navigation, hover previews of the target slide, backlinks, hash routing with browser back/forward
 - 3-way verification (`--verify`): AST vs HTML vs PPTX coordinate/text comparison, exits non-zero on any mismatch
 - Per-slide character validation and structural lint, both declared in `../ontology.yaml`
 - Bullet and numbered lists rendered as native PPTX bullets / CSS pseudo-elements
 - Inline formatting (`**bold**`, `*italic*`, `` `code` ``) and syntax-highlighted code blocks
-- Links: one syntax, `[label](target)`. A bundle-relative `/deck.md#slide-id` is an internal link (resolving to a slide jump in PPTX too); anything else is external. This is the Open Knowledge Format (OKF) v0.2 shape
+- Links: one syntax, `[label](target)`. A relative `deck.md#slide-id` is an internal link (resolving to a slide jump in PPTX too); anything else is external. This is the Open Knowledge Format (OKF) v0.2 shape, in its relative form — so the same link also works when the raw md is opened on github.com
 - Stable slide ids via `<!--id:foo-->`, or auto-derived from the slide title
 - Material Icons (SVG) and emoji icons
 - YAML themes (`--theme`)
@@ -68,7 +68,7 @@ npx tsx src/cli.ts input.md output.pptx --compress
 |--------|-------------|
 | `--html` | Generate HTML instead of PPTX |
 | `--verify` | Generate PPTX + HTML, then compare both against the AST inventory. Exits non-zero if the three disagree |
-| `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory). A directory's deck order comes from its `order.yaml` (`groups:` — a list of `{title, decks}`, deck names being file names without the extension); without it, decks are ordered by file name. Group titles become the headings of the generated `index.md`. Renaming a deck to reorder it would break `/deck.md#slide` links, so declare the order instead. `index.md` and `log.md` are OKF reserved names and are not read as decks |
+| `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory). A directory's deck order comes from its `order.yaml` (`groups:` — a list of `{title, decks}`, deck names being file names without the extension); without it, decks are ordered by file name. Group titles become the headings of the generated `index.md`. Renaming a deck to reorder it would break `deck.md#slide` links, so declare the order instead. `index.md` and `log.md` are OKF reserved names and are not read as decks |
 | `--site-title <text>` | Title of the wiki site (with `--wiki`) |
 | `--theme <path>`, `-t <path>` | YAML theme file (falls back to `DEFAULT_THEME`) |
 | `--compress`, `-c` | Enable ZIP compression in pptxgenjs (default: off) |

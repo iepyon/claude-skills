@@ -43,7 +43,7 @@ export interface DeckOrderResult {
  *
  * **拡張子を落とすだけでは足りない。** リンクの行き先になる slug は `deckSlug` を
  * 通るので、生のファイル名で照合すると、`My_Deck.md` を `order.yaml` には `My_Deck` と
- * 書き `/My_Deck.md` と指すのにサイトの slug は `my-deck` になる、という
+ * 書き `My_Deck.md` と指すのにサイトの slug は `my-deck` になる、という
  * **同じものを指す2つの綴り**ができる（BACKLOG B-40）。宣言（`ontology.yaml` の
  * `okf.deck-slug`）は3つが同じ規則を通ると言っているので、ここも同じ関数を通す。
  *

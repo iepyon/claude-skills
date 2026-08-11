@@ -110,7 +110,7 @@ describe("deck order", () => {
   //
   // 宣言に書く名前・リンクに書くファイル名・サイトの slug は同じものを指す。
   // 照合が生のファイル名だったころ、`My_Deck.md` は order.yaml には `My_Deck` と
-  // 書きながら `/My_Deck.md` はサイトの `my-deck` に着く、という2つの綴りを持っていた。
+  // 書きながら `My_Deck.md` はサイトの `my-deck` に着く、という2つの綴りを持っていた。
 
   it("matches order.yaml against the deck slug, not the raw file name", () => {
     deck("My_Deck")

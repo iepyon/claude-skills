@@ -408,10 +408,14 @@ describe("generated docs are fresh", () => {
 /**
  * リンクの書き方の検査。
  *
- * 守っているのは「**黙って通ってしまう**間違いを黙らせない」ことだけ。
- * とくに `./x.md` は外部リンクとして `target="_blank"` で描かれるので、
- * 見た目はリンクのままクリックすると別タブで存在しないパスを開く —
- * 未解決リンクの一覧にも出ない（内部リンクとして解決を試みてすらいない）。
+ * 守っているのは「**黙って通ってしまう**間違いを黙らせない」ことで、種類が2つある。
+ *
+ * `sub/x.md` `#か` は外部リンクとして `target="_blank"` で描かれるので、見た目は
+ * リンクのままクリックすると別タブで存在しないパスを開く — 未解決リンクの一覧にも
+ * 出ない（内部リンクとして解決を試みてすらいない）。
+ *
+ * 一方 `/x.md` `./x.md` は**パーサが解決するのでサイトでは当たる**。折れるのは生の md を
+ * github.com で開いたときだけなので、サイトを目で追っても気づけない。lint しか見つけられない。
  */
 describe("link form", () => {
   const deck = (body: string): string =>
@@ -426,13 +430,19 @@ describe("link form", () => {
   })
 
   it("内部リンクにならない md へのリンクを報せる", () => {
-    for (const href of ["./b.md#c", "../b.md", "b.md#c", "#か"]) {
+    for (const href of ["sub/b.md#c", "../b.md", "/sub/b.md", "#か"]) {
+      expect(checks(`見よ [x](${href})`), href).toContain("link-form")
+    }
+  })
+
+  it("先頭の / と ./ を報せる（サイトでは当たるので lint しか見つけられない）", () => {
+    for (const href of ["/a.md#か", "/a.md", "./a.md#か", "./a.md"]) {
       expect(checks(`見よ [x](${href})`), href).toContain("link-form")
     }
   })
 
   it("正しい内部リンクと外部リンクには何も言わない", () => {
-    for (const href of ["/a.md#か", "/a.md", "https://example.com", "mailto:a@example.com"]) {
+    for (const href of ["a.md#か", "a.md", "https://example.com", "mailto:a@example.com"]) {
       expect(checks(`見よ [x](${href})`), href).not.toContain("link-form")
     }
   })

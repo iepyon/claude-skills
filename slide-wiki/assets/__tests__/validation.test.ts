@@ -136,7 +136,7 @@ describe("validatePresentation", () => {
         new ContentSlide({
           title: "T",
           layout: new DefaultLayout({
-            sections: [new TextBlock({ heading: "H", body: `[短](/d.md#${longId})` })],
+            sections: [new TextBlock({ heading: "H", body: `[短](d.md#${longId})` })],
           }),
         }),
       ],

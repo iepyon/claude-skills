@@ -172,7 +172,7 @@ src/tools/
 ├── inventory-diff.ts  2つのインベントリの差分
 ├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
 ├── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
-├── migrate-wikilinks.ts  旧 `[[…]]` を OKF のバンドル相対リンクに書き換える
+├── migrate-wikilinks.ts  旧 `[[…]]` を OKF の相対リンクに書き換える
 └── gen-okf-index.ts   バンドルの目録 `index.md` と更新履歴 `log.md` を生成する
 ```
 

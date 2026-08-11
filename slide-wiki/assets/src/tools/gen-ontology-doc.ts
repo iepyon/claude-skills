@@ -119,7 +119,7 @@ function okfSection(): string[] {
       slug.examples.map((e) => [
         codeCell(`${e.name}.md`),
         codeCell(e.slug),
-        codeCell(`/${e.name}.md#スライドID`),
+        codeCell(`${e.name}.md#スライドID`),
       ])
     ),
     ...prose(slug.note),

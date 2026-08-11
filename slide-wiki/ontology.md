@@ -1,6 +1,6 @@
 <!-- 生成物: src/tools/gen-ontology-doc.ts による ontology.yaml からの機械生成。手編集禁止。
      `npx tsx src/tools/gen-ontology-doc.ts` で再生成する。正本は ontology.yaml。
-     ontology-version: 5 -->
+     ontology-version: 6 -->
 
 # slide-wiki スライド Markdown オントロジー
 
@@ -81,7 +81,7 @@ md の1行目の `---` から次の `---` まで。中身は YAML のマップ�
 
 | 注釈 | 記法 | 効くレイアウト | 説明 |
 |---|---|---|---|
-| `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`/デッキ名.md#…` の解決先であり HTML の `#hash` でもある。 |
+| `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`デッキ名.md#…` の解決先であり HTML の `#hash` でもある。 |
 | `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
 | `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
 | `source` | `<!--source-->` | WikiPattern | そのスライドの主張の典拠。マーカーの次の行以降が本文になる。 |
@@ -565,12 +565,12 @@ SVG 側は `viewBox` と、それに合った `width` / `height` を**実寸で*
 ### そこで
 **一文でよいから置く。** 見出しだけでもよい。
 書きかけのままでも、読み返せれば資産になる。
-育てるのは後の自分に。育て方は [育つ見出し](/patterns-wiki.md#育つ見出し)。
+育てるのは後の自分に。育て方は [育つ見出し](patterns-wiki.md#育つ見出し)。
 
 ![種ノート](diagrams/patterns-wiki/種ノート.svg)
 
 <!--takeaway-->
-関連: [一枚一義](/patterns-wiki.md#一枚一義)
+関連: [一枚一義](patterns-wiki.md#一枚一義)
 ```
 
 ## 語彙
@@ -740,13 +740,13 @@ SVG 側は `viewBox` と、それに合った `width` / `height` を**実寸で*
 
 | ファイル名 | デッキ slug | リンクの書き方 |
 |---|---|---|
-| `patterns-wiki.md` | `patterns-wiki` | `/patterns-wiki.md#スライドID` |
-| `My_Deck.md` | `my-deck` | `/My_Deck.md#スライドID` |
-| `Wiki の作り方.md` | `wiki-の作り方` | `/Wiki の作り方.md#スライドID` |
-| `種ノート.md` | `種ノート` | `/種ノート.md#スライドID` |
+| `patterns-wiki.md` | `patterns-wiki` | `patterns-wiki.md#スライドID` |
+| `My_Deck.md` | `my-deck` | `My_Deck.md#スライドID` |
+| `Wiki の作り方.md` | `wiki-の作り方` | `Wiki の作り方.md#スライドID` |
+| `種ノート.md` | `種ノート` | `種ノート.md#スライドID` |
 
 **`order.yaml` に書く名前・リンクに書くファイル名・サイトの slug は同じものを指す。**
-3つが同じ規則を通るからそう言える。ファイル名は `/デッキ名.md#スライドID` の
+3つが同じ規則を通るからそう言える。ファイル名は `デッキ名.md#スライドID` の
 行き先そのものなので、並び替えのためにリネームするとサイト中のリンクが折れる。
 
 slug が衝突する2つの md は誤りとして止める。デッキはファイルなので書き手が改名できる
@@ -764,8 +764,14 @@ ID であってほしいため。サイトにまとめる段で `deck-slug/` を
 呼ばれるので、検査の範囲と一意性の範囲がそのまま一致する。
 
 **バンドルは平坦である。** 読むのはディレクトリ直下の md だけで、サブディレクトリは
-降りない。リンクの解決がパス全体を slug 化する以上（`/sub/deck.md` は `sub-deck`）、
-階層を許すと「同名の最上位デッキに黙って当たる」形の誤りが入り込む。
+降りない。内部リンクがパス区切りを含む形を受けないのはそのためで、`sub/deck.md` は
+内部リンクにならない。ここで basename だけを採ると、`deck.md` と `sub/deck.md` が
+同じ slug に落ちて「同名の最上位デッキに黙って当たる」形の誤りが入り込む。
+
+**平坦だから、相対リンクの解決に元ドキュメントの位置が要らない。** デッキは全部が
+兄弟なので、`x.md` はどのデッキから書かれても同じ1枚を指す。階層を許すとこの性質が
+消え、リンクを読む側が「どのファイルに書かれたリンクか」を持ち歩くことになる
+（→ `inline` 節の `internal-link`）。
 
 **この節が宣言するのは綴りと規則だけで、正規化の中身は持たない。**
 デッキ slug の作り方は `deck-slug` が「見出し → ID と同じ1つの規則を通る」と
@@ -783,7 +789,7 @@ SKILL.md が、実装の入口は CLAUDE.md が持つ。
 | `*text*` | 斜体 |
 | `` `text` `` | インラインコード |
 | `[ラベル](https://example.com)` | 外部リンク。HTML は `<a>`、PPTX はハイパーリンク。 |
-| `[ラベル](/デッキ名.md#スライドID)` | 内部リンク。**バンドル相対の絶対パスだけ**を内部リンクとして解決する （OKF v0.2 §6.1 の推奨形）。同じデッキの中でも同じ形で書く。 フラグメントを省くとそのデッキの1枚目に着く。解決できなければ未解決として報告する。 |
+| `[ラベル](デッキ名.md#スライドID)` | 内部リンク。**デッキ名だけの相対パス**で書く。同じデッキの中でもデッキ名を書く。 フラグメントを省くとそのデッキの1枚目に着く。解決できなければ未解決として報告する。 |
 
 効くのは `section-heading`・`section-body`・`takeaway`。プラグインがテキストを直接描く箇所（テーブルのセル・引用本文・ステップのラベル等）では リンクはそのままの文字として出る（BACKLOG B-22）。
 

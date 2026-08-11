@@ -25,7 +25,7 @@ const INLINE_PATTERN = new RegExp(
 /**
  * 装飾の中をもう一度走査し、内側で見つかった run に装飾を載せる。
  *
- * `**強調した [リンク](/deck.md#id)**` のような書き方は、結論の一行を太字にしてから
+ * `**強調した [リンク](deck.md#id)**` のような書き方は、結論の一行を太字にしてから
  * そこに参照を張る、という自然な順序で出てくる。再帰しないと `bold` の交替が
  * 内側のリンクごと飲むので、**リンクが黙って消える**（`stripInlineFormatting` は
  * 中を剥がすので文字数だけは正しく数えられ、表示と数え方が食い違う）。
@@ -40,7 +40,7 @@ const decorate = (inner: string, decoration: Partial<InlineTextRun>): InlineText
  * マッチ1件を InlineTextRun に変換する。
  *
  * 装飾（bold / italic）の中だけ再帰する。**リンクのラベルの中は再帰しない** —
- * ラベルは表示テキストなので、`[**強調**](/deck.md#id)` の `**` はリテラルとして残る。
+ * ラベルは表示テキストなので、`[**強調**](deck.md#id)` の `**` はリテラルとして残る。
  * 必要になったらここも `decorate` を通せばよい。
  */
 function matchToRuns(groups: Record<string, string | undefined>): InlineTextRun[] {
@@ -75,14 +75,14 @@ function matchToRuns(groups: Record<string, string | undefined>): InlineTextRun[
  * 旧記法の md は `src/tools/migrate-wikilinks.ts` が書き換える。
  *
  * @example
- * parseInlineFormatting("Hello **world**, see [序](/intro.md#序) and [docs](https://example.com)")
+ * parseInlineFormatting("Hello **world**, see [序](intro.md#序) and [docs](https://example.com)")
  * // → [{ text: "Hello " }, { text: "world", bold: true }, { text: ", see " },
  * //    { text: "序", link: { kind: "internal", ref: "intro/序", slide: "序", href: "/intro.md#序" } },
  * //    { text: " and " },
  * //    { text: "docs", link: { kind: "external", href: "https://example.com" } }]
  *
  * @example
- * parseInlineFormatting("**結論は [種ノート](/patterns-wiki.md#種ノート) にある**")
+ * parseInlineFormatting("**結論は [種ノート](patterns-wiki.md#種ノート) にある**")
  * // → [{ text: "結論は ", bold: true },
  * //    { text: "種ノート", bold: true, link: { kind: "internal", ref: "patterns-wiki/種ノート", … } },
  * //    { text: " にある", bold: true }]
