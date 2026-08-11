@@ -586,7 +586,7 @@ describe("WikiPattern — 出典", () => {
     await expect(Effect.runPromise(validateLayout(pres, DEFAULT_THEME))).rejects.toThrow()
   })
 
-  it("配布中の patterns-meta.md は10枚すべてに出典があり、どれも収まる", async () => {
+  it("配布中の patterns-meta.md は11枚すべてに出典があり、どれも収まる", async () => {
     const dir = join(__dirname, "..", "doc", "wiki")
     const md = readFileSync(join(dir, "patterns-meta.md"), "utf-8")
     const pres = await Effect.runPromise(
@@ -595,7 +595,7 @@ describe("WikiPattern — 出典", () => {
     const patterns = pres.slides.filter(
       (s) => (s as ContentSlide).layout?._tag === "WikiPattern"
     )
-    expect(patterns.length).toBe(10)
+    expect(patterns.length).toBe(11)
     for (const slide of patterns) {
       const layout = (slide as ContentSlide).layout as unknown as WikiPatternLayout
       expect(layout.source, `${(slide as ContentSlide).title} に出典が無い`).toBeTruthy()
