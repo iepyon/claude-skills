@@ -149,12 +149,7 @@ describe("wiki link resolution", () => {
   it("should report an unresolvable reference instead of guessing", async () => {
     const site = await buildSite()
     expect(site.broken).toEqual([
-      {
-        fromId: "bravo/つなぎ直し",
-        ref: "alpha/どこにもない",
-        href: "/alpha.md#どこにもない",
-        reason: "not-found",
-      },
+      { fromId: "bravo/つなぎ直し", href: "/alpha.md#どこにもない" },
     ])
   })
 

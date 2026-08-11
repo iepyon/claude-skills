@@ -5,6 +5,7 @@ import { Effect } from "effect"
 
 import { parseMarkdown } from "../src/parser/index.js"
 import { readFrontmatter, splitFrontmatter } from "../src/ontology/frontmatter.js"
+import { lintSource } from "../src/ontology/lint.js"
 import { RESERVED_OKF_FILES, OKF_VERSION, listDeckFiles, parseOkfLink } from "../src/okf.js"
 import { main as genOkfIndex } from "../src/tools/gen-okf-index.js"
 
@@ -108,25 +109,15 @@ describe("OKF v0.2 §6 リンク", () => {
       .map((m) => ({ label: m[1], href: m[2] }))
   }
 
-  it("旧 [[…]] 記法はバンドルのどこにも残っていない（コード表記の見本を除く）", () => {
+  it("旧記法も、内部リンクにならない書き方も残っていない", () => {
+    // **判定は lint に委ねる。** ここで2本目の走査を書くと、フェンスの扱いや
+    // `https://…/SPEC.md` のような外部 URL の除外が本体と割れる
+    // （割れたとき直されるのはテストのほうで、書き手が実際に走らせる lint は古いまま残る）
     for (const path of deckFiles) {
-      const source = read(path)
-      const code = [...source.matchAll(/`[^`]+?`/g)].map((m) => [m.index, m.index + m[0].length])
-      const live = [...source.matchAll(/\[\[/g)].filter(
-        (m) => !code.some(([a, b]) => m.index >= a && m.index < b)
-      )
-      expect(live, `${basename(path)} に旧記法が残っている`).toHaveLength(0)
-    }
-  })
-
-  it("md へのリンクはすべてバンドル相対の絶対パスである", () => {
-    // 相対パスは OKF では合法だがこの道具は解決しない＝外部リンクとして
-    // 静かに描かれる。バンドル側では書かせない
-    for (const path of deckFiles) {
-      for (const { href } of linksOf(read(path))) {
-        if (!href.includes(".md")) continue
-        expect(href, `${basename(path)}: ${href}`).toMatch(/^\//)
-      }
+      const found = lintSource(read(path))
+        .filter((d) => d.check === "legacy-wikilink" || d.check === "link-form")
+        .map((d) => `${basename(path)}:${d.line} ${d.message}`)
+      expect(found).toEqual([])
     }
   })
 

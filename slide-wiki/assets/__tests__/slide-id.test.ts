@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { Effect } from "effect"
 import { parseMarkdown } from "../src/parser/index.js"
-import { slugify } from "../src/parser/slide-ids.js"
+import { slugify } from "../src/slug.js"
 import { md2html } from "../src/index.js"
 import "../src/plugins/index.js"
 

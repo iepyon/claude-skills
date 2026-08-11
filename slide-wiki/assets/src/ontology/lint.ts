@@ -16,7 +16,7 @@
 import "../plugins/index.js" // side-effect: 登録が済んでいないとプラグインのディレクティブが本文に落ちる
 // 自動 ID の綴りは採番と同じ関数で出す。ここに写すと、slug の規則を変えた日に
 // lint だけが古い綴りで衝突を判定する（`slide-ids.ts` が正本）
-import { slugify } from "../parser/slide-ids.js"
+import { slugify } from "../slug.js"
 import { parseOkfLink } from "../okf.js"
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {

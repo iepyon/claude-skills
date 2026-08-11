@@ -4,7 +4,8 @@ import { basename, extname, join } from "path"
 import { Effect } from "effect"
 
 import { parseMarkdown } from "../parser/index.js"
-import { readDeckMeta, type DeckMeta } from "../ontology/frontmatter.js"
+import { readFrontmatter, splitFrontmatter } from "../ontology/frontmatter.js"
+import { matchesDeclaredForm } from "../ontology/index.js"
 import { OKF_VERSION, listDeckFiles } from "../okf.js"
 import { orderDeckFiles, type DeckGroup } from "../deck-order.js"
 
@@ -30,10 +31,14 @@ interface Deck {
   readonly updated?: string
 }
 
-/** frontmatter が名乗った日付。宣言に無い形は読まない（lint の仕事なのでここでは黙る） */
+/**
+ * frontmatter が名乗った日付。宣言に無い形は読まない（lint の仕事なのでここでは黙る）。
+ * 形の正規表現は書かない — `ontology.yaml` の `value-patterns.date` が正本で、
+ * 宣言を緩めたときにここだけが古い形を要求し続けるのを避ける。
+ */
 const dateOf = (meta: Record<string, unknown> | undefined, key: string): string | undefined => {
   const value = meta?.[key]
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined
+  return typeof value === "string" && matchesDeclaredForm("date", value) ? value : undefined
 }
 
 function loadDecks(dir: string): { decks: Deck[]; groups: readonly DeckGroup[] } {
@@ -42,10 +47,12 @@ function loadDecks(dir: string): { decks: Deck[]; groups: readonly DeckGroup[] }
 
   const decks = files.map((path) => {
     const markdown = readFileSync(path, "utf-8")
-    const meta = readDeckMeta(markdown) as (DeckMeta & Record<string, unknown>) | undefined
-    // 生の YAML も見る。readDeckMeta が返すのは描画側が使う5キーだけで、
-    // created / updated はそこに入っていない
-    const raw = rawFrontmatter(markdown)
+
+    // frontmatter は**1回だけ**読む。`readDeckMeta` が返すのは描画側が使う5キーだけなので、
+    // created / updated まで要るここは1つ下の `readFrontmatter` を直に呼ぶ
+    // （手で YAML を読み直すと、認識規則が本体と割れる）
+    const block = splitFrontmatter(markdown).block
+    const meta = block ? readFrontmatter(block).data : undefined
 
     // 表示名の正本は1枚目の見出し。frontmatter の title はその写しなので、
     // 食い違ったときに目録が古いほうを載せることのないよう、見出しを先に採る
@@ -53,32 +60,22 @@ function loadDecks(dir: string): { decks: Deck[]; groups: readonly DeckGroup[] }
     const first = pres.slides[0]
     const heading = (first?._tag === "TitleSlide" ? first.title : undefined) || first?.title
 
+    const text = (key: string): string | undefined => {
+      const value = meta?.[key]
+      return typeof value === "string" ? value : undefined
+    }
+
     return {
       name: basename(path, extname(path)),
       fileName: basename(path),
-      title: heading || meta?.title || basename(path, extname(path)),
-      description: meta?.description,
-      created: dateOf(raw, "created"),
-      updated: dateOf(raw, "updated"),
+      title: heading || text("title") || basename(path, extname(path)),
+      description: text("description"),
+      created: dateOf(meta, "created"),
+      updated: dateOf(meta, "updated"),
     }
   })
 
   return { decks, groups }
-}
-
-/** frontmatter を素の map として読む（宣言されたキー以外も要るため） */
-function rawFrontmatter(markdown: string): Record<string, unknown> | undefined {
-  const lines = markdown.split("\n")
-  if (lines[0]?.replace(/\r$/, "") !== "---") return undefined
-  const close = lines.slice(1).findIndex((l) => l.replace(/\r$/, "") === "---")
-  if (close < 0) return undefined
-  const body = lines.slice(1, close + 1).join("\n")
-  const out: Record<string, unknown> = {}
-  for (const line of body.split("\n")) {
-    const m = /^([A-Za-z_][A-Za-z0-9_.-]*)[ \t]*:[ \t]*(.*)$/.exec(line)
-    if (m) out[m[1]] = m[2].trim().replace(/^["']|["']$/g, "")
-  }
-  return out
 }
 
 /**

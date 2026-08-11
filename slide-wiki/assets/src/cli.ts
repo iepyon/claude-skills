@@ -52,29 +52,39 @@ for (let i = 0; i < args.length; i++) {
  * ディレクトリなら *.md をソートして展開、ファイルならそれ自身。重複は落とす。
  * ディレクトリに `order.yaml` があれば、その宣言がファイル名順より優先する
  * （Wiki のデッキの並びは、リンク先を兼ねるファイル名ではなく宣言で決める）。
+ *
+ * **誤りは返す。終わらせるかどうかは呼び手が決める**（`orderDeckFiles` と同じ形）。
+ * 集める関数の中から `process.exit` すると、「警告して飛ばす」を選べなくなるうえ、
+ * プロセスを起こさないとテストから触れなくなる。
  */
-function collectMarkdownFiles(paths: readonly string[]): string[] {
+function collectMarkdownFiles(paths: readonly string[]): { files: string[]; errors: string[] } {
   const files: string[] = []
+  const errors: string[] = []
   for (const path of paths) {
     if (statSync(path).isDirectory()) {
-      const { files: ordered, errors } = orderDeckFiles(listDeckFiles(path), path)
-      if (errors.length > 0) {
-        for (const e of errors) console.error(`${join(path, DECK_ORDER_FILE)}: ${e}`)
-        process.exit(1)
-      }
+      const { files: ordered, errors: declErrors } = orderDeckFiles(listDeckFiles(path), path)
+      declErrors.forEach((e) => errors.push(`${join(path, DECK_ORDER_FILE)}: ${e}`))
       ordered.forEach((f) => files.push(f))
-    } else {
+    } else if (isReservedOkfFile(basename(path))) {
       // 名指しされた予約ファイルは黙って飛ばさない。飛ばすと `--lint doc/wiki/index.md` が
       // 「問題なし」と読める（何も検査していないだけなのに）
-      if (isReservedOkfFile(basename(path))) {
-        console.error(`${path}: OKF の予約ファイルなのでデッキとして読めない`)
-        process.exit(1)
-      }
+      errors.push(`${path}: OKF の予約ファイルなのでデッキとして読めない`)
+    } else {
       files.push(path)
     }
   }
   const seen = new Set<string>()
-  return files.filter((f) => !seen.has(f) && (seen.add(f), true))
+  return { files: files.filter((f) => !seen.has(f) && (seen.add(f), true)), errors }
+}
+
+/** 集めた結果を受け取り、誤りがあればそこで終わる。exit を持つのは入口の役目 */
+function collectOrExit(paths: readonly string[]): string[] {
+  const { files, errors } = collectMarkdownFiles(paths)
+  if (errors.length > 0) {
+    for (const e of errors) console.error(e)
+    process.exit(1)
+  }
+  return files
 }
 
 /** 宣言違反の表示。パイプラインは出力を持たないので、見せ方は CLI が決める */
@@ -84,7 +94,7 @@ const reportDiagnostics = (diagnostics: readonly Diagnostic[], where: string): v
 
 // --lint は検査だけなので出力先を取らない
 if (lintOnly) {
-  const files = nonFlagArgs.length > 0 ? collectMarkdownFiles(nonFlagArgs) : []
+  const files = nonFlagArgs.length > 0 ? collectOrExit(nonFlagArgs) : []
   if (files.length === 0) {
     console.error("Usage: tsx src/cli.ts --lint [--strict] <input.md|dir> [more...]")
     process.exit(1)
@@ -144,7 +154,7 @@ const lintOpts = {
 }
 
 function collectWikiSources(paths: readonly string[]): WikiSource[] {
-  return collectMarkdownFiles(paths).map((f) => ({
+  return collectOrExit(paths).map((f) => ({
     name: basename(f, extname(f)),
     markdown: readFileSync(f, "utf-8"),
     // 図解の `![…](….svg)` はその md からの相対で書かれている

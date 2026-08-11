@@ -146,23 +146,6 @@ describe("migrate-wikilinks", () => {
     expect(read("alpha.md")).toBe(before)
   })
 
-  it("should convert the rest when --leave-unresolved is given", () => {
-    write("alpha.md", deck("アルファ", `
----
-
-## 入口
-<!--id:入口-->
-
-### 本文
-生きている [[入口]] と、死んでいる [[存在しない]]
-`))
-
-    expect(main([dir, "--leave-unresolved"])).toBe(1)
-    const alpha = read("alpha.md")
-    expect(alpha).toContain("[入口](/alpha.md#入口)")
-    expect(alpha).toContain("[[存在しない]]")
-  })
-
   it("should refuse a bundle whose deck slugs collide", () => {
     // リンクはファイル名で書かれるので、2つのファイルが同じ slug になると
     // どちらを指しているか決められない
@@ -181,6 +164,17 @@ describe("migrate-wikilinks", () => {
     expect(main([dir])).toBe(0)
     expect(read("alpha.md")).toBe(once)      // 2回目は何も変えない
     expect(main([dir, "--check"])).toBe(0)   // もう残っていない
+  })
+
+  it("should not read the OKF reserved files as decks", () => {
+    // 生成された index.md をデッキとして解析すると、その見出しが旧記法の
+    // 解決先になってしまう（集める場所は listDeckFiles 1つに寄せてある）
+    write("alpha.md", deck("アルファ", "\n---\n\n## 入口\n<!--id:入口-->\n\n### 本文\n[[入口]]\n"))
+    writeFileSync(join(dir, "index.md"), "---\nokf_version: \"0.2\"\n---\n\n# 目録\n\n* [ア](alpha.md)\n", "utf-8")
+    const before = read("index.md")
+
+    expect(main([dir])).toBe(0)
+    expect(read("index.md")).toBe(before)
   })
 
   it("should not write anything on --dry-run", () => {

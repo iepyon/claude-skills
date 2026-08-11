@@ -9,12 +9,12 @@ import { generateWikiHtml } from "./template.js"
 
 export type { WikiDeck, WikiSite, WikiEntry, BrokenLink, WikiOptions } from "./types.js"
 export { buildSiteIndex } from "./site-index.js"
-export { buildLinkGraph, collectRefs, resolveRef } from "./link-graph.js"
+export { buildLinkGraph, collectRefs } from "./link-graph.js"
 
 /** 複数デッキから1つの WikiSite（索引＋リンクグラフ）を組む。 */
 export function buildWikiSite(decks: readonly WikiDeck[], theme: Theme = DEFAULT_THEME): WikiSite {
   const { entries, deckViews, byId } = buildSiteIndex(decks)
-  const { forward, backlinks, broken } = buildLinkGraph(entries, byId, theme)
+  const { forward, backlinks, broken } = buildLinkGraph(entries, theme)
 
   return { decks: deckViews, entries, byId, forward, backlinks, broken }
 }
@@ -33,7 +33,7 @@ export function renderToWiki(
 ): Effect.Effect<string, RenderError> {
   return Effect.gen(function* () {
     const site = buildWikiSite(decks, theme)
-    const resolveTable = buildResolutionTable(site.entries, site.byId, theme)
+    const resolveTable = buildResolutionTable(site.entries, theme)
 
     const slidesHtml = site.entries.map((entry) =>
       renderSlide(entry.slide, theme, entry.globalIndex)

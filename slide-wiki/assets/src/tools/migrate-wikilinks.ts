@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, statSync, readdirSync } from "fs"
+import { readFileSync, writeFileSync, statSync } from "fs"
 import { join, basename, extname } from "path"
 import { Effect } from "effect"
 
 import { parseMarkdown } from "../parser/index.js"
 import { slugify } from "../slug.js"
+import { isReservedOkfFile, listDeckFiles } from "../okf.js"
 import { buildSiteIndex } from "../renderer/wiki/site-index.js"
 import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
 
@@ -32,8 +33,13 @@ import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
 const WIKILINK = /\[\[([^\[\]|]+?)(?:\|([^\[\]]+?))?\]\]/g
 /** インラインコード。綴りは `inline-formatter.ts` の `code` 交替と同じ */
 const INLINE_CODE = /`[^`]+?`/g
-/** フェンス。`tokenizer.ts` の判定（行頭が ``` ）と同じ */
-const FENCE = /^```/
+/**
+ * フェンス。**開きと閉じで規則が違う**（`tokenizer.ts` の `matchCodeFence` と同じ）:
+ * 開きは ``` で始まる行（言語名が続いてよい）、閉じは**ちょうど** ``` の行。
+ * 対称に書くと ```ts のような行が閉じと解釈され、フェンスの途中から保護が外れる。
+ */
+const isFenceOpen = (line: string): boolean => line.trim().startsWith("```")
+const isFenceClose = (line: string): boolean => line.trim() === "```" 
 
 interface Candidate {
   readonly start: number
@@ -72,12 +78,11 @@ function protectedRanges(source: string): Range[] {
   let offset = 0
   let fenceStart: number | null = null
   for (const line of lines) {
-    if (FENCE.test(line.trim())) {
-      if (fenceStart === null) fenceStart = offset
-      else {
-        ranges.push({ start: fenceStart, end: offset + line.length })
-        fenceStart = null
-      }
+    if (fenceStart === null) {
+      if (isFenceOpen(line)) fenceStart = offset
+    } else if (isFenceClose(line)) {
+      ranges.push({ start: fenceStart, end: offset + line.length })
+      fenceStart = null
     }
     offset += line.length + 1
   }
@@ -133,20 +138,27 @@ interface DeckFile {
   readonly slug: string
 }
 
-/** ディレクトリまたはファイルの列から md を集める（order.yaml は見ない。並びは要らない） */
-function collectFiles(paths: readonly string[]): string[] {
+/**
+ * ディレクトリまたはファイルの列から md を集める（order.yaml は見ない。並びは要らない）。
+ *
+ * 集めるのは `listDeckFiles` に任せる。**自前で `.md` を拾うと予約ファイルが混ざる** —
+ * 生成された `index.md` がデッキとして解析され、その見出しが旧記法の解決先になってしまう
+ * （`okf.ts` が「集める場所が複数あるとどれか1つが取り残される」と言っているのはこのこと）。
+ */
+function collectFiles(paths: readonly string[]): { files: string[]; skipped: string[] } {
   const files: string[] = []
+  const skipped: string[] = []
   for (const path of paths) {
     if (statSync(path).isDirectory()) {
-      readdirSync(path)
-        .filter((f) => f.endsWith(".md"))
-        .sort()
-        .forEach((f) => files.push(join(path, f)))
+      listDeckFiles(path).forEach((f) => files.push(f))
+    } else if (isReservedOkfFile(basename(path))) {
+      // 名指しされたら黙って飛ばさない。飛ばすと「旧記法は無かった」と読める
+      skipped.push(path)
     } else {
       files.push(path)
     }
   }
-  return files
+  return { files, skipped }
 }
 
 /**
@@ -237,7 +249,6 @@ interface Failure {
 
 interface FileResult {
   readonly path: string
-  readonly source: string
   readonly rewritten: string
   readonly changes: { line: number; from: string; to: string }[]
   readonly skipped: Candidate[]
@@ -287,7 +298,7 @@ function migrate(files: readonly string[]): FileResult[] {
       rewritten = rewritten.slice(0, e.start) + e.text + rewritten.slice(e.end)
     }
 
-    return { path: deck.path, source, rewritten, changes, skipped, failures }
+    return { path: deck.path, rewritten, changes, skipped, failures }
   })
 }
 
@@ -297,14 +308,12 @@ const USAGE = `Usage: tsx src/tools/migrate-wikilinks.ts [options] <dir|file...>
 
   --dry-run            書き換えずに差分だけ出す
   --check              [[…]] が残っていれば非ゼロ終了（書き換えはしない）
-  --leave-unresolved   解決できない参照は [[…]] のまま残し、残りだけ書き換える
 
 終了コード: 0 = 問題なし / 1 = 未解決あり（--check では残存あり） / 2 = 使い方・入出力の誤り`
 
 export function main(argv: readonly string[]): number {
   const dryRun = argv.includes("--dry-run")
   const check = argv.includes("--check")
-  const leaveUnresolved = argv.includes("--leave-unresolved")
   const paths = argv.filter((a) => !a.startsWith("--"))
 
   if (paths.length === 0) {
@@ -312,9 +321,14 @@ export function main(argv: readonly string[]): number {
     return 2
   }
 
+  const { files, skipped: skippedFiles } = collectFiles(paths)
+  for (const path of skippedFiles) {
+    console.error(`${basename(path)}: OKF の予約ファイルなので走査しない`)
+  }
+
   let results: FileResult[]
   try {
-    results = migrate(collectFiles(paths))
+    results = migrate(files)
   } catch (e) {
     console.error(e instanceof Error ? e.message : String(e))
     return 2
@@ -351,13 +365,11 @@ export function main(argv: readonly string[]): number {
     for (const f of failures) {
       console.error(`${f.file}:${f.line}: [[${f.ref}]] を解決できない (${f.reason})`)
     }
-    if (!leaveUnresolved) {
-      console.error(
-        `\n未解決が ${failures.length} 件あるので何も書き換えなかった。` +
-          `半分だけ移した md はいちばん直しにくい状態になる（--leave-unresolved で強行できる）`
-      )
-      return 1
-    }
+    console.error(
+      `\n未解決が ${failures.length} 件あるので何も書き換えなかった。` +
+        `半分だけ移した md はいちばん直しにくい状態になる`
+    )
+    return 1
   }
 
   if (!dryRun) {

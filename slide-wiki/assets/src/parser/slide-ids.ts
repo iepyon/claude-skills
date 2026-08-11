@@ -2,9 +2,6 @@ import { Slide, withSlideId } from "../schema/presentation.js"
 import { RawSlide } from "./builder-types.js"
 import { rawSlideToSlide } from "./slide-converter.js"
 
-// slug の綴りは `src/slug.ts` が正本（リンクを読む側も同じ規則を要るため）。
-// ここから re-export するのは、既存の呼び出し元の import を変えないため。
-export { slugify } from "../slug.js"
 import { slugify } from "../slug.js"
 
 /** 1つの RawSlide が生む2枚目以降の ID。`--2`, `--3` と数える */

@@ -93,7 +93,7 @@ src/parser/
 ├── slide-converter.ts  RawSlide → Slide 変換
 ├── block-formatter.ts  body → Paragraph[] 変換 (箇条書き・番号付きリストの解釈)
 ├── inline-formatter.ts インライン装飾 (**bold**, *italic*, `code`, [ラベル](url)) → InlineTextRun[]
-├── slide-ids.ts        slug 生成 + スライド ID の一括採番 (ast-builder から呼ぶ)
+├── slide-ids.ts        スライド ID の一括採番 (ast-builder から呼ぶ。slug の綴りは src/slug.ts)
 └── handlers/           トークンハンドラ (structural, layout-directives, inline, body-text)
 ```
 
@@ -242,7 +242,7 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 - スライド ID の採番: `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
 - HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` と `data-default-font-name` は `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
-- Wiki のデッキの並び順: ディレクトリ直下の `order.yaml` の `decks:`（拡張子なしのファイル名）が正本。無ければファイル名順。**並び替えのために md をリネームしない** — ファイル名はデッキの slug、つまり `/デッキ名.md#…` のリンク先そのものなので、リネームするとサイト中のリンクが折れる。宣言に無いデッキは末尾に付き（追記忘れで消さないため）、宣言にあって存在しないデッキ名はビルドを止める。`index.md` / `log.md` は OKF の予約名なのでデッキとして読み込まない（`src/okf.ts` が正本）
+- Wiki のデッキの並び順: ディレクトリ直下の `order.yaml` の `groups:`（`{title, decks}` の配列。デッキ名は拡張子なしのファイル名）が正本。グループ名は生成される `index.md` の見出しになる。無ければファイル名順。**並び替えのために md をリネームしない** — ファイル名はデッキの slug、つまり `/デッキ名.md#…` のリンク先そのものなので、リネームするとサイト中のリンクが折れる。宣言に無いデッキは末尾に付き（追記忘れで消さないため）、宣言にあって存在しないデッキ名はビルドを止める。`index.md` / `log.md` は OKF の予約名なのでデッキとして読み込まない（`src/okf.ts` が正本）
 - 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）。**枠のほうを図の縦横比に合わせる** — `svgAspectRatio()` が `viewBox` から比を返し、wiki-pattern はその比で下敷きを組んで縦中央に置く。枠を図と違う比で置くと、HTML は `preserveAspectRatio` で図を縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に崩れるので、生成物を見比べても気づきにくい）
 - 図解に `<rect>` / `<line>` / `<circle>` / `<polygon>` / `<polyline>` を残さない（`wiki-pattern.test.ts` が止める）。定規で引いた線の図は、本文が道すじと書いても「これが唯一の実装」に読まれる — サイトが載せている `ラフで出す` を、図の側でも守るため。崩すのは `npx tsx src/tools/roughen-svg.ts`（揺れはファイル名と要素の並び順から決まるので、走らせ直しても同じ絵が出る。`<path>` と `<text>` には触らないので**冪等**）。フィルタで粗さを出せないのは `<defs>` と `id=` が禁じられているからで、揺れは座標に焼き付けるしかない
 
