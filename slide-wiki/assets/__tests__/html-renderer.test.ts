@@ -550,7 +550,20 @@ describe("html-renderer - links", () => {
 
   it("should render an internal link as an in-page anchor carrying its target", async () => {
     const html = await renderHtml(deckWithBody("[[intro|はじめに]]"))
-    expect(html).toContain('<a class="wikilink" href="#intro" data-wikilink="intro">はじめに</a>')
+    expect(html).toContain(
+      '<a class="wikilink" href="#intro" data-wikilink="intro" data-slide-ref="intro">はじめに</a>'
+    )
+  })
+
+  it("should keep the local slide id addressable when the ref names another deck", async () => {
+    // **単体 HTML の内部リンクが死ぬのを止める1本。** ビューアは data-wikilink
+    // （サイト全体の参照）で解決表を引くが、単体 HTML は1デッキしか知らないので
+    // data-slide-ref（ローカルの ID）でスライド番号を引く。1属性に畳むと
+    // Wiki だけ動いて単体 HTML と PPTX のリンクが黙って死ぬ
+    const html = await renderHtml(deckWithBody("[剪定](/patterns-wiki.md#剪定)"))
+    expect(html).toContain('data-wikilink="patterns-wiki/剪定"')
+    expect(html).toContain('data-slide-ref="剪定"')
+    expect(html).toContain('href="#剪定"')
   })
 
   it("should never leak raw link syntax into the rendered slide", async () => {

@@ -98,24 +98,29 @@ ${slidesHtml.join("\n")}
     nextBtn.addEventListener('click', nextSlide);
     prevBtn.addEventListener('click', prevSlide);
 
-    // 内部リンク（[[slide-id]]）。data-slide-key から番号を引いてジャンプする。
+    // 内部リンク。data-slide-key から番号を引いてジャンプする。
     // 解決できないリンクは .broken を付けて見た目で分かるようにするだけで、
     // 遷移はしない（存在しないスライドへ飛ばすより気づける方がよい）。
+    //
+    // **引くのは data-slide-ref（デッキ内のローカル ID）で、data-wikilink ではない。**
+    // 単体 HTML は1デッキしか知らないので、サイト全体の参照（deck/slide）では当たらない。
     const slideIndexByKey = new Map();
     slides.forEach((slide, i) => {
       const key = slide.dataset.slideKey;
       if (key && !slideIndexByKey.has(key)) slideIndexByKey.set(key, i);
     });
 
+    const localRef = (a) => a.dataset.slideRef;
+
     document.querySelectorAll('a.wikilink').forEach((a) => {
-      if (!slideIndexByKey.has(a.dataset.wikilink)) a.classList.add('broken');
+      if (!slideIndexByKey.has(localRef(a))) a.classList.add('broken');
     });
 
     document.addEventListener('click', (e) => {
       const a = e.target.closest ? e.target.closest('a.wikilink') : null;
       if (!a) return;
       e.preventDefault();
-      const index = slideIndexByKey.get(a.dataset.wikilink);
+      const index = slideIndexByKey.get(localRef(a));
       if (index === undefined) return;
       currentSlide = index;
       showSlide(currentSlide);

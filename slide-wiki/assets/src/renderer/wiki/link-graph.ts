@@ -18,7 +18,7 @@ export function collectRefs(entry: WikiEntry, theme: Theme): string[] {
       ? box.paragraphs.flatMap((para) => para.runs)
       : box.richText ?? []
     for (const run of runs) {
-      if (run.link?.kind === "internal") refs.push(run.link.target)
+      if (run.link?.kind === "internal") refs.push(run.link.ref)
     }
   }
 
@@ -27,23 +27,54 @@ export function collectRefs(entry: WikiEntry, theme: Theme): string[] {
 }
 
 /**
- * [[ref]] を globalId に解決する。書き手が短く書けることを優先した4段階:
+ * 参照を解決するための索引。**3箇所（グラフ・解決表・移行ツール）が同じものを要る**ので、
+ * 組み立てを1つにまとめてある（以前は同じ5行が2箇所に写されていた）。
+ */
+export interface RefIndex {
+  readonly byId: ReadonlyMap<string, WikiEntry>
+  readonly byLocalId: ReadonlyMap<string, readonly WikiEntry[]>
+  /** デッキ slug → そのデッキの1枚目の globalId。フラグメント無しのリンクの行き先 */
+  readonly firstOfDeck: ReadonlyMap<string, string>
+}
+
+export function buildRefIndex(entries: readonly WikiEntry[], byId: ReadonlyMap<string, WikiEntry>): RefIndex {
+  const byLocalId = new Map<string, WikiEntry[]>()
+  const firstOfDeck = new Map<string, string>()
+  for (const entry of entries) {
+    const bucket = byLocalId.get(entry.localId)
+    if (bucket) bucket.push(entry)
+    else byLocalId.set(entry.localId, [entry])
+
+    if (!firstOfDeck.has(entry.deckSlug)) firstOfDeck.set(entry.deckSlug, entry.globalId)
+  }
+  return { byId, byLocalId, firstOfDeck }
+}
+
+/**
+ * 参照を globalId に解決する。
  *
- * 1. `deck/slide` 形式でそのまま当たる（デッキをまたぐ明示的な参照）
- * 2. 自デッキ内の `slide`（最も普通のケース。書き手は短い ID だけ書けばよい）
- * 3. デッキを問わず localId が一致するものがサイト全体でちょうど1つ
- * 4. それ以外は未解決（見つからない、または曖昧）
+ * 1. `deck/slide` 形式でそのまま当たる（OKF リンク `/deck.md#slide` が作る形）
+ * 2. `deck` だけ = フラグメント無しの `/deck.md`。そのデッキの1枚目に着く
+ * 3. 自デッキ内の `slide`（旧 `[[…]]` 記法の短い書き方）
+ * 4. デッキを問わず localId が一致するものがサイト全体でちょうど1つ（同上）
+ * 5. それ以外は未解決（見つからない、または曖昧）
  *
- * 3 で複数一致したときに黙って先頭を選ばないのは、デッキが増えた瞬間に
+ * **3 と 4 は旧記法のためだけに残っている。** OKF リンクは常にデッキを名指しするので
+ * 1 か 2 で解決し、`fromDeckSlug` を見ない。`[[…]]` を落とすときに一緒に畳む。
+ *
+ * 4 で複数一致したときに黙って先頭を選ばないのは、デッキが増えた瞬間に
  * リンク先が変わる壊れ方をするため。曖昧は曖昧として報告する。
  */
 export function resolveRef(
   ref: string,
   fromDeckSlug: string,
-  byId: ReadonlyMap<string, WikiEntry>,
-  byLocalId: ReadonlyMap<string, readonly WikiEntry[]>
+  index: RefIndex
 ): { globalId: string } | { reason: "not-found" | "ambiguous" } {
+  const { byId, byLocalId, firstOfDeck } = index
   if (byId.has(ref)) return { globalId: ref }
+
+  const deckHead = firstOfDeck.get(ref)
+  if (deckHead) return { globalId: deckHead }
 
   const sameDeck = `${fromDeckSlug}/${ref}`
   if (byId.has(sameDeck)) return { globalId: sameDeck }
@@ -61,12 +92,7 @@ export interface LinkGraph {
 }
 
 export function buildLinkGraph(entries: readonly WikiEntry[], byId: ReadonlyMap<string, WikiEntry>, theme: Theme): LinkGraph {
-  const byLocalId = new Map<string, WikiEntry[]>()
-  for (const entry of entries) {
-    const bucket = byLocalId.get(entry.localId)
-    if (bucket) bucket.push(entry)
-    else byLocalId.set(entry.localId, [entry])
-  }
+  const index = buildRefIndex(entries, byId)
 
   const forward = new Map<string, string[]>()
   const backlinks = new Map<string, string[]>()
@@ -76,7 +102,7 @@ export function buildLinkGraph(entries: readonly WikiEntry[], byId: ReadonlyMap<
     const targets: string[] = []
 
     for (const ref of collectRefs(entry, theme)) {
-      const resolved = resolveRef(ref, entry.deckSlug, byId, byLocalId)
+      const resolved = resolveRef(ref, entry.deckSlug, index)
 
       if ("reason" in resolved) {
         broken.push({ fromId: entry.globalId, ref, reason: resolved.reason })
@@ -112,17 +138,12 @@ export function buildResolutionTable(
   byId: ReadonlyMap<string, WikiEntry>,
   theme: Theme
 ): Record<string, Record<string, string>> {
-  const byLocalId = new Map<string, WikiEntry[]>()
-  for (const entry of entries) {
-    const bucket = byLocalId.get(entry.localId)
-    if (bucket) bucket.push(entry)
-    else byLocalId.set(entry.localId, [entry])
-  }
+  const index = buildRefIndex(entries, byId)
 
   const table: Record<string, Record<string, string>> = {}
   for (const entry of entries) {
     for (const ref of collectRefs(entry, theme)) {
-      const resolved = resolveRef(ref, entry.deckSlug, byId, byLocalId)
+      const resolved = resolveRef(ref, entry.deckSlug, index)
       if ("reason" in resolved) continue
       const perDeck = (table[entry.deckSlug] ??= {})
       perDeck[ref] = resolved.globalId

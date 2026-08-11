@@ -2,12 +2,27 @@ import { CodeTextRun } from "../syntax-highlighter.js"
 
 // --- Box types (output primitives) ---
 
-// インラインリンク。external は URL、internal はスライド ID を指す。
-// internal の解決先は「サイト内の別スライド」なので、解決はレンダラ側の責務
-// （HTML は #<target>、PPTX は hyperlink:{slide:N}、Wiki はリンクグラフ経由）。
+// インラインリンク。external は URL、internal はサイト内の別スライドを指す。
+// 解決はレンダラ側の責務（HTML は #<slide>、PPTX は hyperlink:{slide:N}、
+// Wiki はリンクグラフ経由）。
+//
+// **internal が ref と slide の2つを持つ理由。** 3脚は違う粒度で索引を作っている:
+// Wiki はサイト全体を束ねるので `deck/slide` で引くが、単体 HTML
+// (`html/template.ts` の slideIndexByKey) と PPTX (`pptx/index.ts` の
+// slideNumberById) は1ファイルしか知らないので**ローカルの ID** で引く。
+// 1本の文字列に畳むと、どちらかが黙って解決できなくなる
+// （Wiki だけ動いて単体 HTML と PPTX のリンクが死ぬ、という気づきにくい壊れ方をする）。
 export type InlineLink =
   | { kind: "external"; href: string }
-  | { kind: "internal"; target: string }
+  | {
+      kind: "internal"
+      /** サイト全体で一意な参照。`resolveRef` が引く鍵 */
+      ref: string
+      /** デッキ内のスライド ID。省略時はデッキ先頭を指す */
+      slide?: string
+      /** 原文の綴り。診断（未解決リンクの一覧）で書き手に見せる */
+      href: string
+    }
 
 export interface InlineTextRun {
   text: string

@@ -1,4 +1,5 @@
 import type { InlineTextRun } from "../renderer/layout/types.js"
+import { parseOkfLink } from "../okf.js"
 
 /**
  * インライン書式の一括マッチャ。
@@ -49,14 +50,24 @@ function matchToRuns(groups: Record<string, string | undefined>): InlineTextRun[
     return [{ text: groups.codeText!, code: true }]
   }
   if (groups.wiki !== undefined) {
-    const target = groups.wikiTarget!.trim()
-    // ラベル省略時は ID をそのまま表示する（Obsidian の [[Note Name]] と同じ）。
+    const ref = groups.wikiTarget!.trim()
+    // ラベル省略時は ID をそのまま表示する。
     // 実行時にタイトルへ差し替えないのは、レイアウトが見積もった文字幅と
     // 実際の描画幅がずれるのを避けるため。別の文言にしたいなら [[id|表示]] と書く。
-    return [{ text: (groups.wikiLabel ?? groups.wikiTarget)!.trim(), link: { kind: "internal", target } }]
+    return [{
+      text: (groups.wikiLabel ?? groups.wikiTarget)!.trim(),
+      link: { kind: "internal", ref, slide: ref.split("/").pop()!, href: groups.wiki },
+    }]
   }
   if (groups.md !== undefined) {
-    return [{ text: groups.mdLabel!, link: { kind: "external", href: groups.mdHref! } }]
+    const href = groups.mdHref!
+    const internal = parseOkfLink(href)
+    return [{
+      text: groups.mdLabel!,
+      link: internal
+        ? { kind: "internal", ref: internal.ref, slide: internal.slide, href }
+        : { kind: "external", href },
+    }]
   }
   if (groups.bold !== undefined) {
     return decorate(groups.boldText!, { bold: true })
@@ -70,16 +81,20 @@ function matchToRuns(groups: Record<string, string | undefined>): InlineTextRun[
  * 対応: `code`、**bold**、*italic*、[label](url)、[[slide-id]]、[[slide-id|表示テキスト]]
  * 装飾の中の記法は効く（`matchToRuns` が再帰する）ので、1つのマッチが複数の run になりうる。
  *
+ * `[…](…)` は href の形で内部/外部に分かれる（`okf.ts` の `parseOkfLink` が正本）。
+ * `[[…]]` は移行のあいだだけ残している旧記法で、`migrate-wikilinks.ts` が書き換える。
+ *
  * @example
- * parseInlineFormatting("Hello **world**, see [[intro]] and [docs](https://example.com)")
+ * parseInlineFormatting("Hello **world**, see [序](/intro.md#序) and [docs](https://example.com)")
  * // → [{ text: "Hello " }, { text: "world", bold: true }, { text: ", see " },
- * //    { text: "intro", link: { kind: "internal", target: "intro" } }, { text: " and " },
+ * //    { text: "序", link: { kind: "internal", ref: "intro/序", slide: "序", href: "/intro.md#序" } },
+ * //    { text: " and " },
  * //    { text: "docs", link: { kind: "external", href: "https://example.com" } }]
  *
  * @example
- * parseInlineFormatting("**結論は [[種ノート]] にある**")
+ * parseInlineFormatting("**結論は [種ノート](/patterns-wiki.md#種ノート) にある**")
  * // → [{ text: "結論は ", bold: true },
- * //    { text: "種ノート", bold: true, link: { kind: "internal", target: "種ノート" } },
+ * //    { text: "種ノート", bold: true, link: { kind: "internal", ref: "patterns-wiki/種ノート", … } },
  * //    { text: " にある", bold: true }]
  */
 export function parseInlineFormatting(text: string): InlineTextRun[] {

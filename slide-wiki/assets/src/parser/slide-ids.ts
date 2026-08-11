@@ -2,22 +2,10 @@ import { Slide, withSlideId } from "../schema/presentation.js"
 import { RawSlide } from "./builder-types.js"
 import { rawSlideToSlide } from "./slide-converter.js"
 
-/**
- * 見出しから ID を作る。
- *
- * 日本語の見出しをそのまま残すのは、この Wiki のデッキが日本語で書かれるため。
- * `[[種ノート]]` と書けることに価値があるので、ラテン文字に潰さない。
- * URL のフラグメントは UTF-8 を許すので、これで困らない。
- */
-export function slugify(text: string): string {
-  return text
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/[\s/\\_]+/g, "-")        // 空白・パス区切り → ハイフン
-    .replace(/[^\p{L}\p{N}-]/gu, "")   // 文字・数字・ハイフン以外を落とす
-    .replace(/-{2,}/g, "-")            // ハイフンの連続を畳む
-    .replace(/^-+|-+$/g, "")           // 端のハイフンを落とす
-}
+// slug の綴りは `src/slug.ts` が正本（リンクを読む側も同じ規則を要るため）。
+// ここから re-export するのは、既存の呼び出し元の import を変えないため。
+export { slugify } from "../slug.js"
+import { slugify } from "../slug.js"
 
 /** 1つの RawSlide が生む2枚目以降の ID。`--2`, `--3` と数える */
 const derive = (base: string, offset: number): string =>
