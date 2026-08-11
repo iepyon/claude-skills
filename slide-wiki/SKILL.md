@@ -67,6 +67,38 @@ npx tsx src/cli.ts --lint input.md                   # 構造の検査だけ
 - `CodeDisplay` は文字数を数えない（タイトルのみ）
 <!-- END GENERATED: limits -->
 
+### デッキのメタ（frontmatter）
+
+md の冒頭に YAML を置くと、デッキが自分について名乗れる。**書くのはデッキ1本の事実**で、
+スライド1枚のメタは注釈ディレクティブ（`<!--id:-->` など）が担う。
+
+```markdown
+---
+type: deck
+title: Wiki が育つパターン
+description: 人が書き、AI が手入れする。育つ知識の作り方
+tags: [wiki, パターンランゲージ]
+---
+
+# Wiki が育つパターン
+```
+
+<!-- BEGIN GENERATED: frontmatter -->
+| キー | level | 形 | 説明 |
+|---|---|---|---|
+| `type` | recommended | `text` | このファイルが何であるか。外部ツールが種別で絞るのに使う。 |
+| `title` | recommended | `text` | 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。 |
+| `description` | recommended | `text` | 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。 |
+| `tags` | recommended | `list-of-text` | デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。 |
+| `status` | optional | `draft` / `stable` / `deprecated` | 書きかけかどうか。order.yaml のコメントに書いていた「まだ無い」を機械に見せる。 |
+| `sources` | optional | `list-of-objects` | このデッキが依拠した資料。地の文に埋まっていた出典を機械可読にする。 |
+| `verified` | optional | `list-of-objects` | 誰がいつ内容を確かめたか。出典の照合結果を残す場所。 |
+| `generated` | optional | `object` | 機械が作ったデッキであることの表明。 |
+| `stale_after` | optional | `date` | この日を過ぎたら見直す。**落ちたら直すのは日付ではなく中身**。 |
+
+1行目がちょうど `---` で、2行目が `key: value` の形のときだけメタとして読む（どちらかを満たさない `---` は今までどおりスライド区切り）。
+<!-- END GENERATED: frontmatter -->
+
 ### 箇条書き
 
 ```markdown

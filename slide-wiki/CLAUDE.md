@@ -66,9 +66,15 @@ src/pipeline.ts     パイプラインの組み立て: prepare()（tokenize → 
 src/ontology/
 ├── types.ts        ontology.yaml の宣言に対応する型（YAML のキーは kebab-case のまま）
 ├── index.ts        ローダ + 導出ルックアップ（registry / validation / lint / 生成器の唯一の入口）
+├── frontmatter.ts  デッキ冒頭の YAML の分割と読み取り（依存は yaml だけ＝どこからでも呼べる）
 ├── selfcheck.ts    宣言そのものの点検（宣言 ⇔ 実装の両方向を突き合わせる）
 └── lint.ts         書かれた md を宣言に照らして検査（トークン層で見る）
 ```
+
+**frontmatter は生の md を受け取る3つの入口すべてで剥がす** — `pipeline.ts` の `prepare()`、
+`parser/index.ts` の `parseMarkdown()`、`ontology/lint.ts` の `lintSource()`。
+片方だけだと同じデッキから違うトークン列が出て、3者比較が原因の分かりにくい形で落ちる。
+剥がし方は**同じ行数の空行への置換**で、切り落とすと以降の診断の行番号が実ファイルとずれる。
 
 `lint.ts` がトークン層を見るのは、語彙外の `###` や未宣言のメタキーが **AST に変換される時点で
 もう失われている**ため（消えたブロックは AST に痕跡を残さない）。
@@ -302,6 +308,7 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `deck-order.test.ts` | deck-order.ts (order.yaml の宣言順・未宣言デッキの扱い・宣言の誤り) |
 | `validation.test.ts` | schema/validation.ts (文字数制限) |
 | `ontology.test.ts` | ontology.yaml + src/ontology/ (宣言の自己整合・宣言⇔実装・lint・生成物の鮮度) |
+| `frontmatter.test.ts` | ontology/frontmatter.ts (冒頭 YAML の認識規則・行番号の保存・既存 md を巻き込まないこと) |
 | `layout-engine.test.ts` | renderer/layout/ (座標計算・スナップショット) |
 | `overflow.test.ts` | renderer/layout/overflow.ts + validate-layout.ts (はみ出し検出・縮小・失敗) |
 | `html-renderer.test.ts` | renderer/html/ (HTML 生成・data 属性) |

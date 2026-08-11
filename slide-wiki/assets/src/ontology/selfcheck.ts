@@ -12,6 +12,7 @@ import { CONSUMED_KEYS, SKILL_MD, staleSkillRegions } from "../tools/gen-ontolog
 import {
   getAnnotations,
   getFieldSets,
+  getFrontmatter,
   getLayouts,
   getLimits,
   getVocabularies,
@@ -20,6 +21,8 @@ import {
   markerKind,
   parseCardinality,
 } from "./index.js"
+import { FIELD_VALIDATORS } from "./lint.js"
+import { splitFrontmatter } from "./frontmatter.js"
 
 /** 点検の失敗。1件ずつ集めて最後にまとめて出す（最初の1件で止めない） */
 export function selfcheckProblems(): string[] {
@@ -34,6 +37,7 @@ export function selfcheckProblems(): string[] {
   const vocabularies = getVocabularies()
   const fieldSets = getFieldSets()
   const limits = getLimits()
+  const frontmatter = getFrontmatter()
 
   fail(Number.isInteger(onto.version) && onto.version > 0, "version が正の整数でない")
   fail(layouts.length > 0, "layouts が空")
@@ -183,10 +187,13 @@ export function selfcheckProblems(): string[] {
         }
       }
     }
-    // どのスロットからも参照されない語彙は、宣言しても誰も照合しない
+    // どこからも参照されない語彙は、宣言しても誰も照合しない。
+    // 参照元はスロットの見出しだけではない — frontmatter のフィールドも語彙を指す
+    // （deck-types はスロットを持たないので、スロットだけを見ると存在できない）
     fail(
-      layouts.some((l) => l.slots.some((s) => s.vocabulary === name)),
-      `${at}: どのスロットからも参照されていない`
+      layouts.some((l) => l.slots.some((s) => s.vocabulary === name)) ||
+        frontmatter.fields.some((f) => f.vocabulary === name),
+      `${at}: どのスロット・frontmatter フィールドからも参照されていない`
     )
   }
 
@@ -209,6 +216,55 @@ export function selfcheckProblems(): string[] {
         `${at}.${k.name}: kind: list なのに separator が無い`
       )
     }
+  }
+
+  // --- frontmatter ---
+  {
+    const at = "frontmatter"
+    fail(frontmatter.fields.length > 0, `${at}: fields が空`)
+    const seenFields = new Set<string>()
+    const usedKinds = new Set<string>()
+    for (const f of frontmatter.fields) {
+      fail(!seenFields.has(f.name), `${at}: フィールド '${f.name}' が重複している`)
+      seenFields.add(f.name)
+      usedKinds.add(f.kind)
+      fail(!!f.description, `${at}.${f.name}: description が無い`)
+      // 宣言した kind を見る実装が無ければ、その形は誰も検査しない
+      fail(
+        FIELD_VALIDATORS[f.kind] !== undefined,
+        `${at}.${f.name}: kind '${f.kind}' を見る実装が lint に無い`
+      )
+      fail(
+        !f.vocabulary || !!vocabularies[f.vocabulary],
+        `${at}.${f.name}: 未宣言の語彙 '${f.vocabulary}' を指している`
+      )
+      fail(
+        f.default === undefined || (f["allowed-values"]?.includes(f.default) ?? false),
+        `${at}.${f.name}: default '${f.default}' が allowed-values に無い`
+      )
+      for (const sub of f["sub-fields"] ?? []) {
+        usedKinds.add(sub.kind)
+        fail(!!sub.description, `${at}.${f.name}.${sub.name}: description が無い`)
+        fail(
+          FIELD_VALIDATORS[sub.kind] !== undefined,
+          `${at}.${f.name}.${sub.name}: kind '${sub.kind}' を見る実装が lint に無い`
+        )
+      }
+    }
+    // 使われない正規表現が宣言に残っていると、直したつもりで何も変わらない
+    for (const kind of Object.keys(frontmatter["value-patterns"])) {
+      fail(usedKinds.has(kind), `${at}.value-patterns.${kind}: どのフィールドの kind でもない`)
+    }
+    // 認識の条件 ⇔ 実装。宣言だけ書き替えて実装が古いまま、を作らせない
+    const fence = frontmatter.recognition["first-line"]
+    fail(
+      splitFrontmatter(`${fence}\ntype: deck\n${fence}\n\n# T\n`).block !== undefined,
+      `${at}.recognition: 宣言どおりに書いた frontmatter を実装が認識しない`
+    )
+    fail(
+      splitFrontmatter(`${fence}\n# T\n${fence}\n`).block === undefined,
+      `${at}.recognition: 2行目が見出しの md を実装が frontmatter と誤認する`
+    )
   }
 
   // --- 制限 ---

@@ -1,0 +1,194 @@
+import { describe, it, expect } from "vitest"
+import { readFileSync, readdirSync } from "fs"
+import { join } from "path"
+import { tokenize } from "../src/parser/tokenizer.js"
+import {
+  readDeckMeta,
+  readFrontmatter,
+  splitFrontmatter,
+} from "../src/ontology/frontmatter.js"
+
+/**
+ * frontmatter の認識規則を守るテスト。
+ *
+ * ここで守っているのは2つ。**既存の md を1つも巻き込まないこと**と、
+ * **剥がしても行番号がずれないこと**。前者を落とすと、1行目が `---` の
+ * フィクスチャ8本が黙って1枚目を失う。後者を落とすと、lint の指摘が
+ * 数行手前を指すようになる（どちらもテストが無ければ気づきにくい）。
+ */
+
+const ASSETS_DIR = join(import.meta.dirname, "..")
+
+const VALID = `---
+type: deck
+title: テスト
+tags: [a, b]
+---
+
+# テスト
+
+本文
+`
+
+describe("splitFrontmatter は冒頭の frontmatter だけを剥がす", () => {
+  it("frontmatter が無い md はそのまま返す", () => {
+    const md = "# タイトル\n\n本文\n"
+    const result = splitFrontmatter(md)
+    expect(result.block).toBeUndefined()
+    expect(result.body).toBe(md)
+    expect(result.nearMiss).toBe(false)
+  })
+
+  it("正しい frontmatter を中身だけ取り出す", () => {
+    const { block } = splitFrontmatter(VALID)
+    expect(block).toBe("type: deck\ntitle: テスト\ntags: [a, b]")
+  })
+
+  it("1行目が --- でも2行目が見出しなら frontmatter ではない", () => {
+    // __tests__/markdown-spec/ の8本がこの形。剥がしたら1枚目が消える
+    const md = "---\n# Title\n\n本文\n"
+    const result = splitFrontmatter(md)
+    expect(result.block).toBeUndefined()
+    expect(result.body).toBe(md)
+    // 「区切りから書き始めた普通のデッキ」であって、frontmatter の書き損じではない。
+    // ここを立てると markdown-spec の8本が一斉に warning になる
+    expect(result.nearMiss).toBe(false)
+  })
+
+  it("先頭が空行なら（2行目が ---でも）frontmatter ではない", () => {
+    // doc/Spec.md がこの形
+    const md = "\n---\n\n# Title\n"
+    const result = splitFrontmatter(md)
+    expect(result.block).toBeUndefined()
+    expect(result.body).toBe(md)
+    // 1行目が --- ですらないので、書き損じの疑いすら立てない
+    expect(result.nearMiss).toBe(false)
+  })
+
+  it("閉じの --- が無ければ frontmatter ではない", () => {
+    const md = "---\ntype: deck\n\n# Title\n"
+    const result = splitFrontmatter(md)
+    expect(result.block).toBeUndefined()
+    expect(result.body).toBe(md)
+    expect(result.nearMiss).toBe(true)
+  })
+
+  it("日本語の見出しをキー行と読み違えない", () => {
+    const md = "---\n概要: これは見出しであってキーではない\n---\n\n# Title\n"
+    expect(splitFrontmatter(md).block).toBeUndefined()
+  })
+
+  it("壊れた YAML でも throw せず、剥がすところまでは進む", () => {
+    const md = "---\ntype: [壊れている\n---\n\n# Title\n"
+    const { block } = splitFrontmatter(md)
+    expect(block).toBe("type: [壊れている")
+    expect(readFrontmatter(block!).errors.length).toBeGreaterThan(0)
+    expect(readFrontmatter(block!).data).toBeUndefined()
+  })
+
+  it("マップでない frontmatter は読めなかったことにする", () => {
+    const read = readFrontmatter("a: 1\n")
+    expect(read.data).toEqual({ a: 1 })
+    expect(readFrontmatter("- a\n- b").data).toBeUndefined()
+  })
+})
+
+describe("剥がしても行番号がずれない", () => {
+  it("本文の行数が元の md と同じ", () => {
+    const { body } = splitFrontmatter(VALID)
+    expect(body.split("\n").length).toBe(VALID.split("\n").length)
+  })
+
+  it("frontmatter の跡は空行になる", () => {
+    const { body } = splitFrontmatter(VALID)
+    expect(body.split("\n").slice(0, 5)).toEqual(["", "", "", "", ""])
+  })
+
+  it("剥がした後のトークンの行番号が実ファイルの行番号と一致する", () => {
+    const { body } = splitFrontmatter(VALID)
+    const heading = tokenize(body).find((t) => t.type === "H1")
+    // VALID の "# テスト" は7行目
+    expect(VALID.split("\n")[6]).toBe("# テスト")
+    expect(heading?.line).toBe(7)
+  })
+
+  it("剥がしても区切り（---）の数が変わらない", () => {
+    const md = `---
+type: deck
+---
+
+# 表紙
+
+---
+
+## 2枚目
+`
+    const before = tokenize(md).filter((t) => t.type === "HorizontalRule").length
+    const after = tokenize(splitFrontmatter(md).body).filter(
+      (t) => t.type === "HorizontalRule"
+    ).length
+    // 剥がす前は frontmatter の2本も区切りに見えている
+    expect(before).toBe(3)
+    expect(after).toBe(1)
+  })
+
+  it("キーの行番号は実ファイルの行を指す", () => {
+    const { block } = splitFrontmatter(VALID)
+    const { keyLines } = readFrontmatter(block!)
+    expect(keyLines.get("type")).toBe(2)
+    expect(keyLines.get("title")).toBe(3)
+    expect(keyLines.get("tags")).toBe(4)
+  })
+})
+
+describe("readDeckMeta は使える値だけを拾う", () => {
+  it("宣言どおりの値を読む", () => {
+    expect(readDeckMeta(VALID)).toEqual({
+      type: "deck",
+      title: "テスト",
+      description: undefined,
+      tags: ["a", "b"],
+      status: undefined,
+    })
+  })
+
+  it("frontmatter が無ければ undefined", () => {
+    expect(readDeckMeta("# タイトル\n")).toBeUndefined()
+  })
+
+  it("型に合わない値は黙って落とす（報せるのは lint の仕事）", () => {
+    const md = "---\ntitle: 123\ntags: おかしい\ndescription: ok\n---\n\n# T\n"
+    expect(readDeckMeta(md)).toEqual({
+      type: undefined,
+      title: undefined,
+      description: "ok",
+      tags: undefined,
+      status: undefined,
+    })
+  })
+
+  it("配列の中の非文字列だけを落とす", () => {
+    const md = "---\ntags: [a, 1, b]\n---\n\n# T\n"
+    expect(readDeckMeta(md)?.tags).toEqual(["a", "b"])
+  })
+})
+
+describe("リポジトリの既存 md を1つも巻き込まない", () => {
+  const existing = [
+    join(ASSETS_DIR, "doc", "Spec.md"),
+    ...readdirSync(join(ASSETS_DIR, "__tests__", "markdown-spec"))
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => join(ASSETS_DIR, "__tests__", "markdown-spec", f)),
+  ]
+
+  it("検査対象が集まっている", () => {
+    expect(existing.length).toBeGreaterThan(10)
+  })
+
+  it.each(existing)("%s は frontmatter を持たないままである", (file) => {
+    const md = readFileSync(file, "utf-8")
+    const result = splitFrontmatter(md)
+    expect(result.block).toBeUndefined()
+    expect(result.body).toBe(md)
+  })
+})

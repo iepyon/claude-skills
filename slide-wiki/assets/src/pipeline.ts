@@ -2,6 +2,7 @@ import "./plugins/index.js"
 import { Effect } from "effect"
 import { Md2PptxError, ValidationError } from "./errors.js"
 import { lintTokens, shouldFail, type Diagnostic } from "./ontology/lint.js"
+import { splitFrontmatter, type FrontmatterSplit } from "./ontology/frontmatter.js"
 import { parseTokens, type ParseOptions } from "./parser/index.js"
 import { tokenize, type Token } from "./parser/tokenizer.js"
 import { validatePresentation, Presentation, Theme, DEFAULT_THEME } from "./schema/index.js"
@@ -31,11 +32,12 @@ export interface LintOptions {
 function lintStage(
   tokens: readonly Token[],
   options: LintOptions,
-  deck?: string
+  deck?: string,
+  frontmatter?: FrontmatterSplit
 ): Effect.Effect<void, ValidationError> {
   return Effect.gen(function* () {
     if (!options.onDiagnostic && !options.strict) return
-    const diagnostics = lintTokens(tokens)
+    const diagnostics = lintTokens(tokens, { frontmatter })
     if (diagnostics.length === 0) return
     options.onDiagnostic?.(diagnostics, deck)
     if (shouldFail(diagnostics, options.strict ?? false)) {
@@ -66,11 +68,14 @@ function prepare(
   deck?: string
 ): Effect.Effect<Presentation, Md2PptxError> {
   return Effect.gen(function* () {
-    // Stage 0: MD → トークン列
-    const tokens = tokenize(markdown)
+    // Stage 0: 冒頭の frontmatter を剥がして MD → トークン列。
+    // lint の on/off に関わらず**無条件に**割る（読む人が居なくても、
+    // 剥がさなければ frontmatter が1枚目のスライドとして描かれてしまう）
+    const frontmatter = splitFrontmatter(markdown)
+    const tokens = tokenize(frontmatter.body)
 
     // Stage 1: 宣言（ontology.yaml）に照らした構造の検査
-    yield* lintStage(tokens, options, deck)
+    yield* lintStage(tokens, options, deck, frontmatter)
 
     // Stage 2: トークン列 → 生AST（`![…](…)` の参照先はここで読み込まれる）
     const raw = yield* parseTokens(tokens, { baseDir: options.baseDir })
