@@ -17,6 +17,7 @@ import {
   getFrontmatter,
   getLayouts,
   getLimits,
+  getOkf,
   getVocabularies,
   loadOntology,
   ontologyVersion,
@@ -76,6 +77,55 @@ function annotationsTable(): string[] {
       return [codeCell(a.name), codeCell(a.syntax), cell(where), cell(a.description)]
     })
   )
+}
+
+/**
+ * バンドル（サイトの階層）。予約ファイルは表、規則は箇条書き。
+ *
+ * `deck-slug.rule` は**在り処を指す文字列**であって規則の写しではない。
+ * ここで正規化を展開して見せると、宣言に無いものが文書にだけ現れることになる。
+ */
+function okfSection(): string[] {
+  const okf = getOkf()
+  const deckSet = okf["deck-set"]
+  const slug = okf["deck-slug"]
+  const ids = okf["slide-id-scope"]
+
+  const lines = [
+    `${cell(okf.description)}版は ${code(okf["okf-version"])}（[SPEC.md](${okf.spec})）。`,
+    "",
+    "**予約ファイル名** — デッキとして読み込まず、内部リンクの行き先にもしない。",
+    "",
+    ...table(
+      ["ファイル名", "役割", "説明"],
+      okf["reserved-files"].map((f) => [codeCell(f.name), cell(f.role), cell(f.description)])
+    ),
+    ...prose(okf["reserved-files-note"]),
+    "",
+    "**デッキの集合と並び**",
+    "",
+    `- デッキ集合: ${cell(deckSet.source)}`,
+    `- 並び順の正本: ${code(deckSet["order-file"])}（${code(deckSet["order-shape"])}）`,
+    ...prose(deckSet.note),
+    "",
+    "**デッキ slug**",
+    "",
+    `- もと: ${cell(slug.from)}`,
+    `- 綴りの規則: ${cell(slug.rule)}`,
+    `- 衝突したときの扱い: ${code(slug.collision)}`,
+    ...prose(slug.note),
+    "",
+    "**スライド ID の一意性**",
+    "",
+    `- 一意な範囲: ${cell(ids["unique-in"])}`,
+    `- サイト全体での綴り: ${code(ids["namespaced-as"])}`,
+    ...prose(ids.note),
+    ...prose(okf.guidance),
+  ]
+  // `prose` は前後に空行を足すので、続けて並べると空行が2つになる。ontology.md 側は
+  // buildOntologyDoc がまとめて畳むが、SKILL.md の生成領域はそのまま差し込まれるので
+  // ここで畳んでおく（2つの出口で見た目が変わらないようにする）
+  return lines.filter((line, i) => line !== "" || lines[i - 1] !== "")
 }
 
 function inlineTable(): string[] {
@@ -301,6 +351,8 @@ function buildOntologyDoc(): string {
     )
   }
 
+  // 内部リンクの綴りがバンドルの構造に依るので、構造を先に読ませる
+  L.push("", "## バンドル（サイトの階層）", "", ...okfSection())
   L.push("", "## インライン記法", "", ...inlineTable())
   L.push("", "## 制限", "", ...limitsBullets())
   L.push("", ...prose(getLimits().guidance))
@@ -318,6 +370,7 @@ function skillRegions(): Record<string, string[]> {
     layouts: layoutsTable(),
     annotations: annotationsTable(),
     inline: inlineTable(),
+    okf: okfSection(),
   }
 }
 
@@ -337,6 +390,7 @@ export const CONSUMED_KEYS: ReadonlySet<string> = new Set([
   "layouts",
   "vocabularies",
   "field-sets",
+  "okf",
   "inline",
   "limits",
 ])

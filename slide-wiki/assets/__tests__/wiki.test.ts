@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { Effect } from "effect"
+import { Effect, Exit } from "effect"
 import { md2wiki, md2html } from "../src/index.js"
 import { buildWikiSite } from "../src/renderer/wiki/index.js"
 import { parseMarkdown } from "../src/parser/index.js"
@@ -125,6 +125,38 @@ describe("wiki site index", () => {
     )
     const ids = site.entries.map((e) => e.globalId)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  // ── デッキ slug の衝突（B-40）────────────────────────────────────
+  //
+  // スライド ID は連番で逃がすが、デッキ slug は逃がさない。デッキはファイルなので
+  // 書き手が改名できる。連番を振ると、どのファイル名にも order.yaml にも現れない
+  // 名前（`my-deck-2`）でしか2本目を指せなくなり、しかも exit 0 で通っていた。
+
+  it("should reject decks whose slugs collide instead of numbering them", async () => {
+    const exit = await Effect.runPromiseExit(
+      md2wiki([
+        { name: "My_Deck", markdown: ALPHA },
+        { name: "my-deck", markdown: BRAVO },
+      ])
+    )
+
+    expect(Exit.isFailure(exit)).toBe(true)
+    const message = JSON.stringify(exit)
+    expect(message).toContain("My_Deck.md")
+    expect(message).toContain("my-deck.md")
+    // 誰も書いていない名前を作らないこと
+    expect(message).not.toContain("my-deck-2")
+  })
+
+  it("should still let two decks keep their own slugs when they differ", async () => {
+    const html = await Effect.runPromise(
+      md2wiki([
+        { name: "alpha", markdown: ALPHA },
+        { name: "bravo", markdown: BRAVO },
+      ])
+    )
+    expect(html).toContain("alpha/seed")
   })
 
   it("should number slides globally but track deck position separately", async () => {

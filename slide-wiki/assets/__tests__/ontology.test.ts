@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { listDeckFiles } from "../src/okf.js"
+import { OKF_VERSION, RESERVED_OKF_FILES, listDeckFiles } from "../src/okf.js"
+import { DECK_ORDER_FILE } from "../src/deck-order.js"
 import { Effect } from "effect"
 import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
@@ -13,6 +14,7 @@ import { selfcheckProblems } from "../src/ontology/selfcheck.js"
 import {
   getLayouts,
   getLimits,
+  getOkf,
   getVocabulary,
   isDynamicCardinality,
   maxCharsForTag,
@@ -52,6 +54,25 @@ describe("ontology declaration", () => {
       .sort()
     expect(declared).toEqual(registered)
     expect(registered.length).toBeGreaterThan(0)
+  })
+
+  // ── バンドルの宣言 ⇔ コードの綴り（B-41）──────────────────────────
+  //
+  // 予約名・版・並び順の宣言のファイル名は、規則を ontology.yaml が持ち、綴りを
+  // src/ 側が持つ。分けているのは、パーサ・CLI・lint・生成器が宣言の読み込みを
+  // 挟まずに綴りを引けるようにするため。**分けたぶん、ここで縛らないとドリフトする。**
+
+  it("declares the same reserved OKF file names that src/okf.ts spells", () => {
+    const declared = getOkf()["reserved-files"].map((f) => f.name).sort()
+    expect(declared).toEqual([...RESERVED_OKF_FILES].sort())
+  })
+
+  it("declares the same OKF version that src/okf.ts spells", () => {
+    expect(getOkf()["okf-version"]).toBe(OKF_VERSION)
+  })
+
+  it("declares the order file that deck-order.ts actually reads", () => {
+    expect(getOkf()["deck-set"]["order-file"]).toBe(DECK_ORDER_FILE)
   })
 
   it("declares a directive that the tokenizer actually recognizes", () => {

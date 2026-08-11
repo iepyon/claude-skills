@@ -106,6 +106,37 @@ describe("deck order", () => {
     expect(errors[0]).toContain("予約ファイル名")
   })
 
+  // ── デッキ名の語彙は1つ（B-40）────────────────────────────────────
+  //
+  // 宣言に書く名前・リンクに書くファイル名・サイトの slug は同じものを指す。
+  // 照合が生のファイル名だったころ、`My_Deck.md` は order.yaml には `My_Deck` と
+  // 書きながら `/My_Deck.md` はサイトの `my-deck` に着く、という2つの綴りを持っていた。
+
+  it("matches order.yaml against the deck slug, not the raw file name", () => {
+    deck("My_Deck")
+    declare("groups:\n  - title: 全部\n    decks: [my-deck]\n")
+
+    const { files, errors } = orderDeckFiles(decksIn(dir), dir)
+
+    expect(errors).toEqual([])
+    expect(names(files)[0]).toBe("My_Deck")
+  })
+
+  it("reports two md files whose slugs collide, naming both files", () => {
+    // 衝突は `order.yaml` の誤りではなくディレクトリの誤りなので、宣言が無くても報せる。
+    // 黙って連番にすると、どのファイル名にも宣言にも現れない名前でしか指せなくなる
+    deck("My_Deck")
+    deck("my-deck")
+
+    const { files, errors } = orderDeckFiles(decksIn(dir), dir)
+
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toContain("My_Deck.md")
+    expect(errors[0]).toContain("my-deck.md")
+    // 誤りがあってもファイルは失わない（呼び手が止めるまで並びは返す）
+    expect(files).toHaveLength(5)
+  })
+
   it("the distributed doc/wiki declaration covers every deck in the directory", () => {
     // 宣言に無いデッキは末尾へ回るだけなので、鮮度はここで見る
     const groups: DeckGroup[] = parse(readFileSync(join(WIKI_DIR, DECK_ORDER_FILE), "utf-8")).groups

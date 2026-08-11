@@ -10,7 +10,7 @@ import { inspectPptx } from "./tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "./tools/html-inspector.js"
 import { verifyInventories, printVerifyReport } from "./tools/verify.js"
 import { formatDiagnostic, lintSource, shouldFail, type Diagnostic } from "./ontology/lint.js"
-import { orderDeckFiles, DECK_ORDER_FILE } from "./deck-order.js"
+import { orderDeckFiles } from "./deck-order.js"
 
 const args = process.argv.slice(2)
 
@@ -63,7 +63,10 @@ function collectMarkdownFiles(paths: readonly string[]): { files: string[]; erro
   for (const path of paths) {
     if (statSync(path).isDirectory()) {
       const { files: ordered, errors: declErrors } = orderDeckFiles(listDeckFiles(path), path)
-      declErrors.forEach((e) => errors.push(`${join(path, DECK_ORDER_FILE)}: ${e}`))
+      // 所在は `orderDeckFiles` が付ける。ここで一律に前置していたころは、
+      // `order.yaml` が無くても起きる誤り（デッキ slug の衝突）にまで
+      // その名前が付いて、実在しないファイルを指していた
+      declErrors.forEach((e) => errors.push(e))
       ordered.forEach((f) => files.push(f))
     } else if (isReservedOkfFile(basename(path))) {
       // 名指しされた予約ファイルは黙って飛ばさない。飛ばすと `--lint doc/wiki/index.md` が

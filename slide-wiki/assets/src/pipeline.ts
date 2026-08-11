@@ -9,7 +9,7 @@ import { validatePresentation, Presentation, Theme, DEFAULT_THEME } from "./sche
 import { renderPresentation, renderToHtml, RenderOptions } from "./renderer/index.js"
 import { renderToWiki, WikiDeck } from "./renderer/wiki/index.js"
 import { validateLayout } from "./renderer/layout/validate-layout.js"
-import { slugify } from "./slug.js"
+import { deckSlug, findDeckSlugCollisions } from "./okf.js"
 
 /** 宣言（ontology.yaml）に照らした検査の受け取り方 */
 export interface LintOptions {
@@ -163,6 +163,16 @@ export function md2wiki(
   return Effect.gen(function* () {
     const theme = options.theme ?? DEFAULT_THEME
 
+    // **デッキを1本も読む前に slug の衝突を見る。** ここが `source.name`（＝拡張子を
+    // 除いたファイル名）と slug の両方を持つ最後の場所で、この先へ進むと WikiDeck は
+    // slug しか運ばないので「どのファイルを改名すればよいか」が言えなくなる。
+    const collisions = findDeckSlugCollisions(
+      sources.map((s) => ({ fileName: `${s.name}.md`, slug: deckSlug(s.name) }))
+    )
+    if (collisions.length > 0) {
+      return yield* Effect.fail(new ValidationError({ message: collisions.join("\n") }))
+    }
+
     const decks: WikiDeck[] = []
     for (const source of sources) {
       const pres = yield* prepare(
@@ -185,7 +195,7 @@ export function md2wiki(
       const meta = readDeckMeta(source.markdown)
 
       decks.push({
-        slug: slugify(source.name) || "deck",
+        slug: deckSlug(source.name),
         title,
         presentation: pres,
         ...(meta ? { meta } : {}),

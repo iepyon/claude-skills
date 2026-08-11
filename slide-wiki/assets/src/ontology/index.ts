@@ -19,6 +19,7 @@ import type {
   FrontmatterField,
   Layout,
   Limits,
+  Okf,
   Ontology,
   VocabTerm,
   Vocabulary,
@@ -122,6 +123,17 @@ export function getLimits(): Limits {
 
 export function getFrontmatter(): Frontmatter {
   return loadOntology().frontmatter
+}
+
+/**
+ * バンドル（サイトの階層）の宣言。
+ *
+ * 予約ファイル名と版の**綴り**は `src/okf.ts` にある（パーサ・CLI・lint・生成器が
+ * 同じものを見る必要があり、宣言の読み込みを挟むと依存が増えるため）。
+ * こちらが持つのは規則と理由で、両者の一致は `ontology.test.ts` が留める。
+ */
+export function getOkf(): Okf {
+  return loadOntology().okf
 }
 
 export function getFrontmatterField(name: string): FrontmatterField | undefined {

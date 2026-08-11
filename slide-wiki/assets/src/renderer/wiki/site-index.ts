@@ -27,6 +27,10 @@ export function buildSiteIndex(decks: readonly WikiDeck[]): {
   let globalIndex = 0
 
   for (const deck of decks) {
+    // デッキ slug の衝突は `md2wiki` が入口で誤りにするので、通常ここへは届かない
+    // （宣言は ontology.yaml の `okf.deck-slug.collision`）。それでも一意化を残すのは、
+    // この関数が `buildWikiSite` を直に組み立てる呼び手からも使われるためで、
+    // 外すと**重複した globalId が出る**という、黙って別名になるより悪い状態になる。
     const deckSlug = unique(usedDeckSlugs, deck.slug)
     const entryIds: string[] = []
 

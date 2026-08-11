@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "fs"
 import { basename, extname, join } from "path"
 import { parse } from "yaml"
-import { isReservedOkfFile } from "./okf.js"
+import { deckSlug, findDeckSlugCollisions, isReservedOkfFile } from "./okf.js"
 
 /**
  * デッキの並び順の宣言。Wiki のディレクトリ直下に置く。
@@ -29,12 +29,25 @@ export interface DeckOrderResult {
   readonly files: string[]
   /** 宣言されたグループ。宣言が無ければ空 */
   readonly groups: readonly DeckGroup[]
-  /** 宣言の誤り（壊れた YAML・存在しないデッキ名・予約名）。1件でもあれば呼び出し側が止める */
+  /**
+   * 誤り。1件でもあれば呼び出し側が止める。
+   *
+   * 2種類ある — 宣言の誤り（壊れた YAML・存在しないデッキ名・予約名。宣言の場所を
+   * 前置してある）と、ディレクトリの誤り（デッキ slug の衝突。宣言が無くても起きる）。
+   */
   readonly errors: string[]
 }
 
-/** 拡張子を除いたファイル名 — 宣言に書くデッキ名であり、slug のもとでもある */
-const deckName = (file: string): string => basename(file, extname(file))
+/**
+ * 宣言に書くデッキ名と、リンクの行き先になる slug を突き合わせるための鍵。
+ *
+ * **拡張子を落とすだけでは足りない。** リンクの行き先になる slug は `deckSlug` を
+ * 通るので、生のファイル名で照合すると、`My_Deck.md` を `order.yaml` には `My_Deck` と
+ * 書き `/My_Deck.md` と指すのにサイトの slug は `my-deck` になる、という
+ * **同じものを指す2つの綴り**ができる（BACKLOG B-40）。宣言（`ontology.yaml` の
+ * `okf.deck-slug`）は3つが同じ規則を通ると言っているので、ここも同じ関数を通す。
+ */
+const deckKey = (file: string): string => deckSlug(basename(file, extname(file)))
 
 /** 宣言を読む。`groups:` が `{title, decks}` の配列でなければ誤りとして返す */
 function parseDeckOrder(source: string): { groups: DeckGroup[]; errors: string[] } {
@@ -82,39 +95,63 @@ function parseDeckOrder(source: string): { groups: DeckGroup[]; errors: string[]
  *
  * 宣言に無いデッキは末尾へ回す。落とすと、宣言への追記を忘れたデッキが
  * サイトから黙って消えてしまう。
+ *
+ * **照合はデッキ slug で行う**（リンクの行き先と同じ語彙）。生のファイル名で引くと、
+ * 同じデッキを指す綴りが宣言用とリンク用の2つできる（BACKLOG B-40）。
+ * 宣言が無くてもデッキ slug の衝突だけは見る — 理由は本体のコメント。
  */
 export function orderDeckFiles(files: readonly string[], dir: string): DeckOrderResult {
+  // **並びより先にデッキ集合そのものを検める。宣言の有無に関わらず見る** —
+  // slug の衝突は `order.yaml` の誤りではなくディレクトリの誤りなので、
+  // 宣言が無いときだけ黙るのは筋が通らない。加えて、この先の照合は1つの鍵に
+  // 2つのファイルを載せることになり、宣言が拾った1本を取り除いたあと残りの
+  // フィルタもすり抜けて、**もう片方がサイトから丸ごと落ちる。**
+  const collisions = findDeckSlugCollisions(
+    files.map((f) => ({ fileName: basename(f), slug: deckKey(f) }))
+  )
+  if (collisions.length > 0) return { files: [...files], groups: [], errors: collisions }
+
   const declPath = join(dir, DECK_ORDER_FILE)
   if (!existsSync(declPath)) return { files: [...files], groups: [], errors: [] }
 
-  const { groups, errors } = parseDeckOrder(readFileSync(declPath, "utf-8"))
-  if (errors.length > 0) return { files: [...files], groups: [], errors }
+  // 誤りの所在は**ここが持つ**。呼び手が一律に前置していたころは、`order.yaml` が
+  // 無くても起きる誤り（上の衝突）にまで `order.yaml:` と付いて、実在しないファイルを
+  // 指していた。宣言そのものの誤りだけに宣言の場所を付ける
+  const at = (message: string): string => `${declPath}: ${message}`
 
-  const remaining = new Map(files.map((f) => [deckName(f), f]))
-  const ordered: string[] = []
+  const { groups, errors } = parseDeckOrder(readFileSync(declPath, "utf-8"))
+  if (errors.length > 0) return { files: [...files], groups: [], errors: errors.map(at) }
+
   const problems: string[] = []
+  const remaining = new Map<string, string>()
+  for (const f of files) remaining.set(deckKey(f), f)
+
+  const ordered: string[] = []
 
   for (const group of groups) {
     for (const name of group.decks) {
       // 予約名はデッキとして読み込まれないので、宣言に書いても必ず「見つからない」に
       // なる。理由を取り違えないよう、先に名指しで止める
       if (isReservedOkfFile(`${name}.md`)) {
-        problems.push(`${name} は OKF の予約ファイル名なのでデッキにできない`)
+        problems.push(at(`${name} は OKF の予約ファイル名なのでデッキにできない`))
         continue
       }
-      const file = remaining.get(name)
+      // 宣言に書かれた名前も同じ規則を通してから引く。誤りの文面には**書かれたまま**の
+      // 名前を出す — slug 化した綴りを見せると、書き手が自分の書いた行を探せない
+      const key = deckKey(name)
+      const file = remaining.get(key)
       // 既に取り出した名前（宣言内の重複）も、存在しない名前と同じく誤りにする
       if (!file) {
-        problems.push(`宣言にあるデッキが見つからない: ${name}`)
+        problems.push(at(`宣言にあるデッキが見つからない: ${name}`))
         continue
       }
       ordered.push(file)
-      remaining.delete(name)
+      remaining.delete(key)
     }
   }
 
   return {
-    files: [...ordered, ...files.filter((f) => remaining.has(deckName(f)))],
+    files: [...ordered, ...files.filter((f) => remaining.has(deckKey(f)))],
     groups,
     errors: problems,
   }
