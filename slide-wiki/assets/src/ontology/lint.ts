@@ -17,6 +17,7 @@ import "../plugins/index.js" // side-effect: 登録が済んでいないとプ�
 // 自動 ID の綴りは採番と同じ関数で出す。ここに写すと、slug の規則を変えた日に
 // lint だけが古い綴りで衝突を判定する（`slide-ids.ts` が正本）
 import { slugify } from "../parser/slide-ids.js"
+import { parseOkfLink } from "../okf.js"
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
   getFieldSet,
@@ -307,6 +308,60 @@ function checkUnknownDirectives(tokens: readonly Token[]): Diagnostic[] {
       line: t.line,
       message: `'${"text" in t ? t.text : ""}' はどのディレクティブ・注釈の宣言にも一致しない（本文として描かれる）`,
     }))
+}
+
+/**
+ * リンクの書き方。
+ *
+ * 見るのは2つで、どちらも**黙って通ってしまう**種類の間違いである。
+ *
+ * 1. 旧 `[[…]]` 記法。パーサが読まなくなったので、書くとただの文字として出る。
+ *    表示に出るだけまだましだが、書き手はリンクのつもりでいる
+ * 2. 内部リンクにならない md へのリンク（`./x.md` `x.md#a` `#a`）。
+ *    **これがいちばん危ない** — 外部リンクとして `target="_blank"` で描かれるので、
+ *    見た目はリンクであり、クリックすると別タブで存在しないパスを開く。
+ *    未解決リンクの一覧にも出ない（内部リンクとして解決を試みてすらいない）
+ *
+ * 判定は `okf.ts` の `parseOkfLink` に任せる。lint がもう1つ正規表現を持つと、
+ * 「パーサは内部リンクと読むのに lint は警告する」がいつか起きる。
+ */
+function checkLinkForm(tokens: readonly Token[]): Diagnostic[] {
+  const out: Diagnostic[] = []
+  let inFence = false
+
+  for (const token of tokens) {
+    if (token.type === "CodeFenceOpen") inFence = true
+    else if (token.type === "CodeFenceClose") inFence = false
+    if (inFence) continue
+    if (!("text" in token) || token.type === "CodeFenceLine") continue
+
+    // 記法の見本はインラインコードに入れて書く（guide デッキがそうしている）
+    const text = token.text.replace(/`[^`]+?`/g, "")
+
+    for (const _ of text.matchAll(/\[\[/g)) {
+      out.push({
+        level: "error",
+        check: "legacy-wikilink",
+        line: token.line,
+        message: "`[[…]]` は廃止した記法。`[ラベル](/デッキ名.md#スライドID)` と書く（`src/tools/migrate-wikilinks.ts` が一括変換する）",
+      })
+    }
+
+    for (const m of text.matchAll(/\[[^\[\]]+?\]\(([^()\s]+)\)/g)) {
+      const href = m[1]
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue // http: や mailto: は外部リンク
+      if (parseOkfLink(href)) continue
+      if (!href.includes(".md") && !href.startsWith("#")) continue // 画像やその他の資産
+      out.push({
+        level: "warning",
+        check: "link-form",
+        line: token.line,
+        message: `'${href}' は内部リンクにならない（先頭の \`/\` から書く。このままでは外部リンクとして別タブで開かれ、未解決リンクの一覧にも出ない）`,
+      })
+    }
+  }
+
+  return out
 }
 
 /**
@@ -639,6 +694,9 @@ export function lintTokens(tokens: readonly Token[], context: LintContext = {}):
   // タイトルスライドも対象に入れる（`<!--id:-->` の applies-to は title-slide を含み、
   // 表紙の自動 slug が本文スライドの明示 ID とぶつかりうる）
   out.push(...checkSlideIds(slides))
+
+  // リンクの書き方はスライドをまたがないが、レイアウトとも無関係なのでここで見る
+  out.push(...checkLinkForm(tokens))
 
   for (const slide of slides) {
     out.push(...checkUnknownDirectives(slide.tokens))
