@@ -2,7 +2,7 @@ import "./plugins/index.js"
 import { Effect } from "effect"
 import { Md2PptxError, ValidationError } from "./errors.js"
 import { lintTokens, shouldFail, type Diagnostic } from "./ontology/lint.js"
-import { splitFrontmatter, type FrontmatterSplit } from "./ontology/frontmatter.js"
+import { readDeckMeta, splitFrontmatter, type FrontmatterSplit } from "./ontology/frontmatter.js"
 import { parseTokens, type ParseOptions } from "./parser/index.js"
 import { tokenize, type Token } from "./parser/tokenizer.js"
 import { validatePresentation, Presentation, Theme, DEFAULT_THEME } from "./schema/index.js"
@@ -180,10 +180,15 @@ export function md2wiki(
         first?.title ||
         source.name
 
+      // prepare() も内部で frontmatter を剥がすが、そちらは Presentation しか返さない。
+      // メタを別に1回読むほうが、3つの入口が共有する prepare() の形を変えずに済む
+      const meta = readDeckMeta(source.markdown)
+
       decks.push({
         slug: slugify(source.name) || "deck",
         title,
         presentation: pres,
+        ...(meta ? { meta } : {}),
       })
     }
 

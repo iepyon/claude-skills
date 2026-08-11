@@ -18,7 +18,11 @@ function renderSidebar(site: WikiSite): string {
       const links = deck.entryIds
         .map((id) => {
           const entry = site.byId.get(id)!
-          const search = `${entry.title} ${entry.globalId}`.toLowerCase()
+          // 題と ID に、デッキが frontmatter で名乗った語（description / tags）を足す。
+          // 題が比喩のスライドは、その名前を知らないと引けなかった
+          const search = `${entry.title} ${entry.globalId} ${deck.searchWords ?? ""}`
+            .trim()
+            .toLowerCase()
           return `        <a class="toc-link" href="#${encodeURIComponent(id)}" data-id="${escapeAttr(id)}" data-search="${escapeAttr(search)}">${escapeHtml(entry.title)}</a>`
         })
         .join("\n")
