@@ -47,6 +47,7 @@ npx tsx src/cli.ts --lint [--strict] doc/Spec.md doc/wiki  # 宣言に照らし�
 npx tsx src/ontology/selfcheck.ts                 # 宣言の自己点検
 npx tsx src/tools/gen-ontology-doc.ts [--check]   # ontology.md / SKILL.md 生成領域
 npx tsx src/tools/migrate-wikilinks.ts [--dry-run|--check] doc/wiki  # 旧 [[…]] の一括変換
+npx tsx src/tools/gen-okf-index.ts [--check]      # バンドルの index.md / log.md
 ```
 
 ## Code Reading Order
@@ -171,7 +172,8 @@ src/tools/
 ├── inventory-diff.ts  2つのインベントリの差分
 ├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
 ├── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
-└── migrate-wikilinks.ts  旧 `[[…]]` を OKF のバンドル相対リンクに書き換える
+├── migrate-wikilinks.ts  旧 `[[…]]` を OKF のバンドル相対リンクに書き換える
+└── gen-okf-index.ts   バンドルの目録 `index.md` と更新履歴 `log.md` を生成する
 ```
 
 **移行ツールはパーサに依存しない。** `migrate-wikilinks.ts` は `[[…]]` を自分の
@@ -331,6 +333,7 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
 | `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査＝実寸・禁止要素・定規で引いた線) |
 | `migrate-wikilinks.test.ts` | tools/migrate-wikilinks.ts (旧記法の一括変換・表示テキストの不変・コード表記の据え置き) |
+| `okf-conformance.test.ts` | `doc/wiki/` が OKF v0.2 に適合していること (§11 の3条件・§8 目録・§9 履歴・§6 リンク) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `workflows.test.ts` | `.github/workflows/` の宣言 (公開が PR で走らないこと・concurrency group が重ならないこと) |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |

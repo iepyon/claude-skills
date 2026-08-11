@@ -1,18 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { mkdtempSync, rmSync, writeFileSync, readdirSync, readFileSync } from "fs"
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "fs"
 import { tmpdir } from "os"
 import { join, basename } from "path"
 import { parse } from "yaml"
-import { orderDeckFiles, DECK_ORDER_FILE } from "../src/deck-order.js"
+import { orderDeckFiles, DECK_ORDER_FILE, type DeckGroup } from "../src/deck-order.js"
+import { listDeckFiles } from "../src/okf.js"
 
 const WIKI_DIR = join(__dirname, "..", "doc", "wiki")
 
-/** ファイル名順（＝宣言が無いときの既定）で md のパスを作る */
-const decksIn = (dir: string): string[] =>
-  readdirSync(dir)
-    .filter((f) => f.endsWith(".md"))
-    .sort()
-    .map((f) => join(dir, f))
+/** ファイル名順（＝宣言が無いときの既定）で md のパスを作る。予約ファイルは外れる */
+const decksIn = (dir: string): string[] => listDeckFiles(dir)
 
 const names = (files: readonly string[]): string[] => files.map((f) => basename(f, ".md"))
 
@@ -42,7 +39,7 @@ describe("deck order", () => {
   })
 
   it("orders decks as declared", () => {
-    declare("decks:\n  - charlie\n  - alpha\n  - bravo\n")
+    declare("groups:\n  - title: 全部\n    decks: [charlie, alpha, bravo]\n")
 
     const { files, errors } = orderDeckFiles(decksIn(dir), dir)
 
@@ -52,7 +49,7 @@ describe("deck order", () => {
 
   it("appends undeclared decks in file-name order instead of dropping them", () => {
     // 宣言への追記を忘れたデッキがサイトから黙って消えないこと
-    declare("decks:\n  - charlie\n")
+    declare("groups:\n  - title: 一部\n    decks: [charlie]\n")
 
     const { files, errors } = orderDeckFiles(decksIn(dir), dir)
 
@@ -61,7 +58,7 @@ describe("deck order", () => {
   })
 
   it("reports a declared deck that does not exist", () => {
-    declare("decks:\n  - charlie\n  - delta\n")
+    declare("groups:\n  - title: 全部\n    decks: [charlie, delta]\n")
 
     const { files, errors } = orderDeckFiles(decksIn(dir), dir)
 
@@ -72,7 +69,7 @@ describe("deck order", () => {
   })
 
   it("reports a deck declared twice", () => {
-    declare("decks:\n  - alpha\n  - alpha\n")
+    declare("groups:\n  - title: 全部\n    decks: [alpha, alpha]\n")
 
     const { errors } = orderDeckFiles(decksIn(dir), dir)
 
@@ -81,7 +78,7 @@ describe("deck order", () => {
   })
 
   it("reports a declaration that is not a list of deck names", () => {
-    declare("decks: charlie\n")
+    declare("groups: charlie\n")
 
     const { files, errors } = orderDeckFiles(decksIn(dir), dir)
 
@@ -91,19 +88,41 @@ describe("deck order", () => {
   })
 
   it("reports a declaration that is not valid YAML", () => {
-    declare("decks:\n  - alpha\n   - bravo\n")
+    declare("groups:\n  - title: a\n   - title: b\n")
 
     const { errors } = orderDeckFiles(decksIn(dir), dir)
 
     expect(errors).toHaveLength(1)
   })
 
+  it("rejects an OKF reserved name declared as a deck", () => {
+    // 予約名はデッキとして読み込まれないので、書いても必ず「見つからない」になる。
+    // 理由を取り違えないよう、名指しで止める
+    declare("groups:\n  - title: 全部\n    decks: [alpha, index]\n")
+
+    const { errors } = orderDeckFiles(decksIn(dir), dir)
+
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toContain("予約ファイル名")
+  })
+
   it("the distributed doc/wiki declaration covers every deck in the directory", () => {
     // 宣言に無いデッキは末尾へ回るだけなので、鮮度はここで見る
-    const declared: string[] = parse(readFileSync(join(WIKI_DIR, DECK_ORDER_FILE), "utf-8")).decks
+    const groups: DeckGroup[] = parse(readFileSync(join(WIKI_DIR, DECK_ORDER_FILE), "utf-8")).groups
+    const declared = groups.flatMap((g) => g.decks)
     const { files, errors } = orderDeckFiles(decksIn(WIKI_DIR), WIKI_DIR)
 
     expect(errors).toEqual([])
     expect(names(files)).toEqual(declared)
+  })
+
+  it("the groups become the headings of the generated OKF index", () => {
+    // グループ名は目録の見出しになるので、空のグループや無題は置けない
+    const groups: DeckGroup[] = parse(readFileSync(join(WIKI_DIR, DECK_ORDER_FILE), "utf-8")).groups
+    expect(groups.length).toBeGreaterThan(1)
+    for (const g of groups) {
+      expect(g.title).not.toBe("")
+      expect(g.decks.length).toBeGreaterThan(0)
+    }
   })
 })

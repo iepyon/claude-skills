@@ -212,18 +212,26 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 `← →` で送る順。送りはデッキの境界を越える）。無ければファイル名順。
 
 ```yaml
-decks: # 拡張子を除いたファイル名
-  - guide
-  - intro-wiki
-  - patterns-wiki
+groups: # グループ名は生成される index.md の見出しになる
+  - title: ガイド
+    decks: [guide] # 拡張子を除いたファイル名
+  - title: 人が育てる Wiki
+    decks: [intro-wiki, patterns-wiki] # 第1部と第2部は対なので同じグループへ
 ```
+
+送りの順はグループを平坦に均した順なので、1本の列だったころと変わらない。
 
 ファイル名は `/デッキ名.md#…` のリンク先そのものなので、
 並び替えのためにリネームしない — リンクが折れる。宣言に無いデッキは末尾に付き、
 宣言にあるのに存在しないデッキ名はビルドを止める。
 
-**`index.md` と `log.md` は使えない。** OKF がバンドルの目録と更新履歴として
-予約している名前で、デッキとしては読み込まない（→ [ontology.md](ontology.md)）。
+**`index.md` と `log.md` はデッキ名に使えない。** OKF がバンドルの目録と更新履歴として
+予約している名前で、デッキとしては読み込まない。目録のほうは
+`npx tsx src/tools/gen-okf-index.ts` が `order.yaml` の `groups:` から生成し、
+バンドルに置いて追跡する（`--check` で鮮度を見る）。
+これで `doc/wiki/` は、そのまま配っても他のエージェントが読める
+[OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) の
+バンドルになっている。
 
 旧 `[[…]]` 記法で書かれた md は `npx tsx src/tools/migrate-wikilinks.ts <dir>` が
 一括で書き換える（`--dry-run` で下見、`--check` で残存の検査）。

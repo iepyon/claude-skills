@@ -8,6 +8,7 @@ import {
   splitFrontmatter,
 } from "../src/ontology/frontmatter.js"
 import { lintSource } from "../src/ontology/lint.js"
+import { listDeckFiles } from "../src/okf.js"
 
 /**
  * frontmatter の認識規則を守るテスト。
@@ -201,9 +202,7 @@ describe("名乗っていないフィクスチャを1つも巻き込まない", 
 describe("名乗っているデッキは剥がされる", () => {
   const decks = [
     join(ASSETS_DIR, "doc", "Spec.md"),
-    ...readdirSync(join(ASSETS_DIR, "doc", "wiki"))
-      .filter((f) => f.endsWith(".md"))
-      .map((f) => join(ASSETS_DIR, "doc", "wiki", f)),
+    ...listDeckFiles(join(ASSETS_DIR, "doc", "wiki")),
   ]
 
   it.each(decks)("%s は frontmatter を持ち、行数が変わらない", (file) => {

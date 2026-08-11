@@ -1,3 +1,5 @@
+import { readdirSync } from "fs"
+import { join } from "path"
 import { slugify } from "./slug.js"
 
 /**
@@ -18,6 +20,23 @@ export const RESERVED_OKF_FILES = ["index.md", "log.md"] as const
 
 export const isReservedOkfFile = (fileName: string): boolean =>
   (RESERVED_OKF_FILES as readonly string[]).includes(fileName)
+
+/** バンドルが宣言する OKF の版（バンドル直下の index.md だけが名乗れる。SPEC.md §12） */
+export const OKF_VERSION = "0.2"
+
+/**
+ * ディレクトリからデッキの md を集める。**予約ファイルは外す。**
+ *
+ * `index.md` と `log.md` はバンドルの目録と更新履歴なので、デッキとして読むと
+ * 「型を名乗っていない md」としてサイトに混ざる。集める場所が複数あると
+ * どれか1つが取り残されるので、CLI もテストもここを通る。
+ */
+export function listDeckFiles(dir: string): string[] {
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".md") && !isReservedOkfFile(f))
+    .sort()
+    .map((f) => join(dir, f))
+}
 
 /**
  * 内部リンクの形。**バンドル相対の絶対パスだけ**を受ける（SPEC.md §6.1 の推奨形）。

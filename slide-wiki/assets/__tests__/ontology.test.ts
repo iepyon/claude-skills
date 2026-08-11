@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import { listDeckFiles } from "../src/okf.js"
 import { Effect } from "effect"
 import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
@@ -349,9 +350,7 @@ describe("the decks in this repository satisfy the declaration", () => {
   // 宣言が実装とずれたらここで落ちる — 実際に動いているデッキが反例になる
   const decks = [
     join(ASSETS_DIR, "doc", "Spec.md"),
-    ...readdirSync(join(ASSETS_DIR, "doc", "wiki"))
-      .filter((f) => f.endsWith(".md"))
-      .map((f) => join(ASSETS_DIR, "doc", "wiki", f)),
+    ...listDeckFiles(join(ASSETS_DIR, "doc", "wiki")),
     ...readdirSync(join(ASSETS_DIR, "__tests__", "markdown-spec"))
       .filter((f) => f.endsWith(".md") && f !== "README.md")
       .map((f) => join(ASSETS_DIR, "__tests__", "markdown-spec", f)),
