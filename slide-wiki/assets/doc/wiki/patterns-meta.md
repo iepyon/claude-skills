@@ -265,6 +265,32 @@ Buxton『Sketching User Experiences』(2007) "Appropriate Degree of Refinement"�
 
 ---
 
+
+---
+
+## 文に溶かす
+<!--id:文に溶かす-->
+<!--pattern-->
+### いつ・なにが困るか
+関連パターンを、末尾の「関連」欄にまとめている。
+一箇所に集まっていたほうが、整って見える。
+
+**末尾の欄は読み飛ばされる。**
+読み終えた読み手は、もう次のページを見ている。
+辿られないリンクは、[[patterns-wiki/収穫|収穫]] されない。
+
+### そこで
+**関連は、本文の文の中に溶かして書く。**
+「ここで [[でこぼこ石畳]] が効く」と書けば目に入る。
+それが [[ジワる名前]] なら、辿らずとも通る。
+
+![文に溶かす](diagrams/patterns-meta/文に溶かす.svg)
+
+<!--source-->
+Meszaros & Doble "Readable References to Patterns"（PLoPD3, 1997）＝他のパターンを参照するときは、パターン名を本文の語りに織り込め（weave the pattern names into the narrative）。
+
+---
+
 ## 声に出して読む
 <!--id:声に出して読む-->
 <!--pattern-->
@@ -308,32 +334,6 @@ Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユ�
 
 <!--source-->
 Gabriel "Fly on the Wall"（A Pattern Language for Writers' Workshops）＝著者を破壊的な存在にせずに場へ留める。合評の大半で著者は「見えない」ままでいる。
-
----
-
-
----
-
-## 文に溶かす
-<!--id:文に溶かす-->
-<!--pattern-->
-### いつ・なにが困るか
-関連パターンを、末尾の「関連」欄にまとめている。
-一箇所に集まっていたほうが、整って見える。
-
-**末尾の欄は読み飛ばされる。**
-読み終えた読み手は、もう次のページを見ている。
-辿られないリンクは、[[patterns-wiki/収穫|収穫]] されない。
-
-### そこで
-**関連は、本文の文の中に溶かして書く。**
-「ここで [[でこぼこ石畳]] が効く」と書けば目に入る。
-それが [[ジワる名前]] なら、辿らずとも通る。
-
-![文に溶かす](diagrams/patterns-meta/文に溶かす.svg)
-
-<!--source-->
-Meszaros & Doble "Readable References to Patterns"（PLoPD3, 1997）＝他のパターンを参照するときは、パターン名を本文の語りに織り込め（weave the pattern names into the narrative）。
 
 ---
 
