@@ -37,7 +37,7 @@ ${links}
     ? `      <details class="broken-report">
         <summary>未解決リンク ${site.broken.length} 件</summary>
         <ul>
-${site.broken.map((b) => `          <li>${escapeHtml(b.fromId)} → [[${escapeHtml(b.ref)}]] (${b.reason})</li>`).join("\n")}
+${site.broken.map((b) => `          <li>${escapeHtml(b.fromId)} → ${escapeHtml(b.href)}</li>`).join("\n")}
         </ul>
       </details>`
     : ""

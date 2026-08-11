@@ -304,7 +304,7 @@ describe("lint", () => {
   })
 
   it("flags the same explicit id on two slides, naming both lines", () => {
-    // 折れたリンクより見つけにくい壊れ方。[[seed]] は解決する（常に1枚目へ）ので
+    // 折れたリンクより見つけにくい壊れ方。#seed は解決する（常に1枚目へ）ので
     // 未解決リンクの一覧にも出ず、2枚目が誰からも指せないまま公開される
     const deck = ["## 一枚目", "<!--id:seed-->", "本文", "", "---", "", "## 二枚目", "<!--id:seed-->", "本文"]
     const diagnostics = lintSource(deck.join("\n"))

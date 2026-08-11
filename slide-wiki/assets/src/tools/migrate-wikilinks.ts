@@ -6,7 +6,6 @@ import { Effect } from "effect"
 import { parseMarkdown } from "../parser/index.js"
 import { slugify } from "../slug.js"
 import { buildSiteIndex } from "../renderer/wiki/site-index.js"
-import { buildRefIndex, resolveRef } from "../renderer/wiki/link-graph.js"
 import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
 
 /**
@@ -16,8 +15,8 @@ import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
  *   [[patterns-wiki/剪定]]     → [patterns-wiki/剪定](/patterns-wiki.md#剪定)
  *   [[動く北極星|北極星]]      → [北極星](/patterns-wiki.md#動く北極星)
  *
- * **表示テキストは1文字も変えない。** ラベルは今の表示規則（`wikiLabel ?? wikiTarget`）
- * のまま写す。整形したくなるが、そうすると `stripInlineFormatting` の出力が変わり、
+ * **表示テキストは1文字も変えない。** ラベルは旧記法の表示規則（縦棒の右、
+ * 無ければ参照そのもの）のまま写す。整形したくなるが、そうすると `stripInlineFormatting` の出力が変わり、
  * 文字数・高さ見積り・レイアウトのスナップショット・3者比較が一斉に動く。
  * 記法の移行と見た目の変更を1つのコミットに混ぜると、どちらが原因か分からなくなる。
  *
@@ -25,11 +24,13 @@ import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
  * スライド ID の索引（見出しと `<!--id:-->` から作られる）だけなので、
  * パーサから `[[…]]` を落としたあともこのツールは動き続ける
  * — 他人のデッキを受け取るスキルとして、移行路は同梱しておく必要がある。
+ *
+ * **旧記法の綴りと解決順を持っているのは、いまやこのファイルだけである。**
  */
 
-/** 旧記法。**パーサの `INLINE_PATTERN` と同じ綴り**（`inline-formatter.ts` を見よ） */
+/** 旧記法。パーサから消したので、綴りの正本はここになった */
 const WIKILINK = /\[\[([^\[\]|]+?)(?:\|([^\[\]]+?))?\]\]/g
-/** インラインコード。同上 */
+/** インラインコード。綴りは `inline-formatter.ts` の `code` 交替と同じ */
 const INLINE_CODE = /`[^`]+?`/g
 /** フェンス。`tokenizer.ts` の判定（行頭が ``` ）と同じ */
 const FENCE = /^```/
@@ -194,6 +195,39 @@ function loadDecks(files: readonly string[]): {
   return { deckFiles, entries, byId }
 }
 
+/**
+ * **旧記法の解決順。ここが唯一の置き場所になった。**
+ *
+ * `[[…]]` は短く書けることを売りにしていたので、参照だけでは行き先が決まらず、
+ * 4段階を順に試す必要があった:
+ *
+ *   1. `deck/slide` の明示
+ *   2. 自デッキ内の `slide`
+ *   3. デッキを問わずサイト全体で `slide` がちょうど1つ
+ *   4. それ以外は未解決（見つからない、または曖昧）
+ *
+ * 本体（`link-graph.ts` の `resolveRef`）はこの段をもう持たない。リンクが常に
+ * ファイルを名指しするようになり、表を1回引けば済むようになったため。
+ * **規則を本体から消してもここに残す**のは、旧記法の md を読めるのが
+ * このツールだけになったからで、写しではなく移譲である。
+ */
+function resolveLegacyRef(
+  ref: string,
+  fromDeckSlug: string,
+  byId: ReadonlyMap<string, WikiEntry>,
+  byLocalId: ReadonlyMap<string, readonly WikiEntry[]>
+): { globalId: string } | { reason: "not-found" | "ambiguous" } {
+  if (byId.has(ref)) return { globalId: ref }
+
+  const sameDeck = `${fromDeckSlug}/${ref}`
+  if (byId.has(sameDeck)) return { globalId: sameDeck }
+
+  const candidates = byLocalId.get(ref) ?? []
+  if (candidates.length === 1) return { globalId: candidates[0].globalId }
+  if (candidates.length > 1) return { reason: "ambiguous" }
+  return { reason: "not-found" }
+}
+
 interface Failure {
   readonly file: string
   readonly line: number
@@ -212,8 +246,14 @@ interface FileResult {
 
 function migrate(files: readonly string[]): FileResult[] {
   const { deckFiles, entries, byId } = loadDecks(files)
-  const index = buildRefIndex(entries, byId)
   const fileBySlug = new Map(deckFiles.map((d) => [d.slug, d.fileName]))
+
+  const byLocalId = new Map<string, WikiEntry[]>()
+  for (const entry of entries) {
+    const bucket = byLocalId.get(entry.localId)
+    if (bucket) bucket.push(entry)
+    else byLocalId.set(entry.localId, [entry])
+  }
 
   return deckFiles.map((deck) => {
     const source = readFileSync(deck.path, "utf-8")
@@ -224,7 +264,7 @@ function migrate(files: readonly string[]): FileResult[] {
     const edits: { start: number; end: number; text: string }[] = []
 
     for (const c of candidates) {
-      const resolved = resolveRef(c.ref, deck.slug, index)
+      const resolved = resolveLegacyRef(c.ref, deck.slug, byId, byLocalId)
       if ("reason" in resolved) {
         failures.push({ file: deck.fileName, line: c.line, ref: c.ref, reason: resolved.reason })
         continue

@@ -6,7 +6,7 @@ import { parse } from "yaml"
  * デッキの並び順の宣言。Wiki のディレクトリ直下に置く。
  *
  * ディレクトリを `--wiki` に渡したときの既定はファイル名順だが、ファイル名は
- * `[[deck/slide]]` のリンク先（＝デッキの slug）でもあるので、順序を変えるために
+ * `/deck.md#slide` のリンク先そのものでもあるので、順序を変えるために
  * リネームするとサイト中のリンクが折れる。順序はここで宣言して変える。
  */
 export const DECK_ORDER_FILE = "order.yaml"

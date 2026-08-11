@@ -549,9 +549,9 @@ describe("html-renderer - links", () => {
   })
 
   it("should render an internal link as an in-page anchor carrying its target", async () => {
-    const html = await renderHtml(deckWithBody("[[intro|はじめに]]"))
+    const html = await renderHtml(deckWithBody("[はじめに](/d.md#intro)"))
     expect(html).toContain(
-      '<a class="wikilink" href="#intro" data-wikilink="intro" data-slide-ref="intro">はじめに</a>'
+      '<a class="wikilink" href="#intro" data-wikilink="d/intro" data-slide-ref="intro">はじめに</a>'
     )
   })
 
@@ -567,7 +567,7 @@ describe("html-renderer - links", () => {
   })
 
   it("should never leak raw link syntax into the rendered slide", async () => {
-    const html = await renderHtml(deckWithBody("[[intro]] と [x](https://e.com)"))
+    const html = await renderHtml(deckWithBody("[intro](/d.md#intro) と [x](https://e.com)"))
     const slideMarkup = html.slice(
       html.indexOf('<div class="slide content-slide"'),
       html.indexOf('<div class="slide-counter">')
@@ -602,7 +602,7 @@ describe("html-renderer - links", () => {
   it("should emit no id attribute inside slide markup (clone safety for previews)", async () => {
     // Wiki のホバープレビューはスライド DOM を cloneNode する。
     // スライド内に id= があると、プレビューを開いた瞬間に id が重複する。
-    const html = await renderHtml(deckWithBody("[[a]] plain body"))
+    const html = await renderHtml(deckWithBody("[a](/d.md#a) plain body"))
     const slideMarkup = html.slice(
       html.indexOf('<div class="slide content-slide"'),
       html.indexOf('<div class="slide-counter">')

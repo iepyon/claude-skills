@@ -95,7 +95,7 @@ describe("migrate-wikilinks", () => {
 
     expect(after).not.toBe(before)
     for (const [b, a] of zipLines(before, after)) {
-      expect(stripInlineFormatting(a)).toBe(stripInlineFormatting(b))
+      expect(stripInlineFormatting(a)).toBe(stripLegacy(b))
     }
   })
 
@@ -199,6 +199,20 @@ describe("migrate-wikilinks", () => {
     expect(alpha).toContain("[a-b](/alpha.md#a-b)")
   })
 })
+
+/**
+ * 旧記法から表示テキストを取り出す。
+ *
+ * 本体の `stripInlineFormatting` はもう `[[…]]` を知らない（廃止したので当然である）。
+ * 変換**前**の md から表示テキストを得られるのはこの3行だけなので、
+ * 不変条件を書くためにここに置く。綴りは `migrate-wikilinks.ts` の `WIKILINK` と同じ。
+ */
+const stripLegacy = (text: string): string =>
+  stripInlineFormatting(
+    text
+      .replace(/\[\[[^\[\]|]+?\|([^\[\]]+?)\]\]/g, "$1")
+      .replace(/\[\[([^\[\]|]+?)\]\]/g, "$1")
+  )
 
 /** 行ごとに突き合わせる（行数は変換で変わらない — 1行の中だけを書き換えるため） */
 function zipLines(before: string, after: string): [string, string][] {

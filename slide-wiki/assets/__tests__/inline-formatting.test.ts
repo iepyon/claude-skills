@@ -245,37 +245,8 @@ describe("parseInlineFormatting - links", () => {
     ])
   })
 
-  it("should parse a bare wikilink and display the id", () => {
-    expect(parseInlineFormatting("go to [[intro]]")).toEqual([
-      { text: "go to " },
-      { text: "intro", link: { kind: "internal", ref: "intro", slide: "intro", href: "[[intro]]" } },
-    ])
-  })
-
-  it("should parse a labelled wikilink and display the label", () => {
-    expect(parseInlineFormatting("[[intro|はじめに]] を読む")).toEqual([
-      { text: "はじめに", link: { kind: "internal", ref: "intro", slide: "intro", href: "[[intro|はじめに]]" } },
-      { text: " を読む" },
-    ])
-  })
-
-  it("should keep a wikilink inside backticks literal", () => {
-    expect(parseInlineFormatting("`[[intro]]` と書く")).toEqual([
-      { text: "[[intro]]", code: true },
-      { text: " と書く" },
-    ])
-  })
-
-  it("should not confuse a wikilink with a markdown link", () => {
-    expect(parseInlineFormatting("[[a]] and [b](c)")).toEqual([
-      { text: "a", link: { kind: "internal", ref: "a", slide: "a", href: "[[a]]" } },
-      { text: " and " },
-      { text: "b", link: { kind: "external", href: "c" } },
-    ])
-  })
-
-  it("should leave an unterminated wikilink as plain text", () => {
-    expect(parseInlineFormatting("[[broken")).toEqual([{ text: "[[broken" }])
+  it("should leave an unterminated link as plain text", () => {
+    expect(parseInlineFormatting("[broken](")).toEqual([{ text: "[broken](" }])
   })
 
   it("should omit the link key entirely on undecorated runs", () => {
@@ -283,10 +254,11 @@ describe("parseInlineFormatting - links", () => {
     expect("link" in run).toBe(false)
   })
 
-  it("should support CJK slide ids", () => {
-    expect(parseInlineFormatting("[[種ノート]]")).toEqual([
-      { text: "種ノート", link: { kind: "internal", ref: "種ノート", slide: "種ノート", href: "[[種ノート]]" } },
-    ])
+  it("should leave the retired [[…]] syntax as literal text", () => {
+    // **黙って消えるのではなく、字として出る。** 旧記法の md を通したときに
+    // 書き手が気づける壊れ方はこちらしかない（リンクにならないだけだと、
+    // 消えたことに気づくのはサイトを目で追ったときになる）
+    expect(parseInlineFormatting("go to [[intro]]")).toEqual([{ text: "go to [[intro]]" }])
   })
 })
 
@@ -377,16 +349,12 @@ describe("stripInlineFormatting - links", () => {
     expect(stripInlineFormatting("See [Anthropic](https://anthropic.com)")).toBe("See Anthropic")
   })
 
-  it("should keep the id of a bare wikilink", () => {
-    expect(stripInlineFormatting("go to [[intro]]")).toBe("go to intro")
-  })
-
-  it("should keep only the label of a labelled wikilink", () => {
-    expect(stripInlineFormatting("[[intro|はじめに]] を読む")).toBe("はじめに を読む")
+  it("should keep only the label of an internal link", () => {
+    expect(stripInlineFormatting("[はじめに](/intro.md#序) を読む")).toBe("はじめに を読む")
   })
 
   it("should strip links mixed with other decorations", () => {
-    expect(stripInlineFormatting("**太字**と[[a|リンク]]と`code`")).toBe("太字とリンクとcode")
+    expect(stripInlineFormatting("**太字**と[リンク](/a.md#b)と`code`")).toBe("太字とリンクとcode")
   })
 })
 
@@ -394,23 +362,31 @@ describe("stripInlineFormatting - links", () => {
  * 装飾の中の記法。
  *
  * パターンの「そこで」の一行目のように、**結論を太字にしてから参照を張る**書き方は
- * 自然に出てくる。再帰しないと bold の交替が内側の `[[…]]` ごと飲むので、リンクが
+ * 自然に出てくる。再帰しないと bold の交替が内側のリンクごと飲むので、リンクが
  * 黙って消える — しかも stripInlineFormatting は中を剥がすため、文字数だけは正しく
  * 数えられて表示と食い違う。実際に配布デッキの `切れない鎖` で1本死んでいた。
  */
 describe("parseInlineFormatting - decorations nest", () => {
-  it("should keep a wikilink alive inside bold", () => {
-    expect(parseInlineFormatting("**主張から [[原本と写し|原本]] まで**")).toEqual([
+  it("should keep an internal link alive inside bold", () => {
+    expect(parseInlineFormatting("**主張から [原本](/m.md#原本と写し) まで**")).toEqual([
       { text: "主張から ", bold: true },
-      { text: "原本", bold: true, link: { kind: "internal", ref: "原本と写し", slide: "原本と写し", href: "[[原本と写し|原本]]" } },
+      {
+        text: "原本",
+        bold: true,
+        link: { kind: "internal", ref: "m/原本と写し", slide: "原本と写し", href: "/m.md#原本と写し" },
+      },
       { text: " まで", bold: true },
     ])
   })
 
-  it("should keep a wikilink alive inside italic", () => {
-    expect(parseInlineFormatting("*斜体の [[接ぎ木]]*")).toEqual([
+  it("should keep an internal link alive inside italic", () => {
+    expect(parseInlineFormatting("*斜体の [接ぎ木](/p.md#接ぎ木)*")).toEqual([
       { text: "斜体の ", italic: true },
-      { text: "接ぎ木", italic: true, link: { kind: "internal", ref: "接ぎ木", slide: "接ぎ木", href: "[[接ぎ木]]" } },
+      {
+        text: "接ぎ木",
+        italic: true,
+        link: { kind: "internal", ref: "p/接ぎ木", slide: "接ぎ木", href: "/p.md#接ぎ木" },
+      },
     ])
   })
 
@@ -423,8 +399,8 @@ describe("parseInlineFormatting - decorations nest", () => {
 
   it("should stack decorations instead of replacing them", () => {
     // code は交替の先頭なので中身を書式として解釈しない。装飾は積み上がる
-    expect(parseInlineFormatting("**`[[種ノート]]` は記法**")).toEqual([
-      { text: "[[種ノート]]", bold: true, code: true },
+    expect(parseInlineFormatting("**`[種ノート](/p.md#種ノート)` は記法**")).toEqual([
+      { text: "[種ノート](/p.md#種ノート)", bold: true, code: true },
       { text: " は記法", bold: true },
     ])
   })
@@ -432,7 +408,7 @@ describe("parseInlineFormatting - decorations nest", () => {
   it("should not nest italic into bold (a limit of the star grammar, not of the recursion)", () => {
     // `*` の交替が `**` を先に割るので、`*` と `**` は互いに入れ子にできない。
     // 再帰を入れても変わらない（内側に届く前に外側の切り方が決まっている）。
-    // 記録しておくのは、`[[…]]` が効くようになったぶん「装飾も入れ子になった」と
+    // 記録しておくのは、リンクが効くようになったぶん「装飾も入れ子になった」と
     // 読まれうるため — なったのはリンクとコードだけである。
     expect(parseInlineFormatting("*斜体の中に **太字** がある*")).toEqual([
       { text: "斜体の中に ", italic: true },
@@ -448,8 +424,8 @@ describe("parseInlineFormatting - decorations nest", () => {
 
   it("should not recurse into a link label", () => {
     // ラベルは表示テキスト。`**` はリテラルとして残す（現時点の仕様）
-    expect(parseInlineFormatting("[[id|**強調**]]")).toEqual([
-      { text: "**強調**", link: { kind: "internal", ref: "id", slide: "id", href: "[[id|**強調**]]" } },
+    expect(parseInlineFormatting("[**強調**](/a.md#id)")).toEqual([
+      { text: "**強調**", link: { kind: "internal", ref: "a/id", slide: "id", href: "/a.md#id" } },
     ])
   })
 })

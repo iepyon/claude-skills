@@ -316,7 +316,7 @@ function checkUnknownDirectives(tokens: readonly Token[]): Diagnostic[] {
  * （重複するとサイトのリンクが解決できない）。だから機械は連番で先に進むしかなく、
  * 「どちらかが間違っている」と言えるのは書き手だけ。採番が跡を残し、lint がそれを読む。
  *
- * **折れたリンクより見つけにくい。** `<!--id:seed-->` を2枚に書くと `[[seed]]` は
+ * **折れたリンクより見つけにくい。** `<!--id:seed-->` を2枚に書くと `#seed` へのリンクは
  * 解決する — 常に1枚目へ。2枚目は誰からも指されないスライドとしてサイトに残り、
  * 書き手は繋いだつもりでいる。未解決リンクの一覧にも出ない。
  *
@@ -361,7 +361,7 @@ function checkSlideIds(slides: readonly SlideTokens[]): Diagnostic[] {
         line,
         message:
           `<!--id:${id}--> が ${lines.length} 枚にある（${others} 行目にも）。` +
-          `[[${id}]] は常に最初の1枚に解決し、残りは誰からも指せなくなる`,
+          `#${id} は常に最初の1枚に解決し、残りは誰からも指せなくなる`,
       })
     }
   }

@@ -8,15 +8,13 @@ import { parseOkfLink } from "../okf.js"
  * 別の分岐に落ちる事故を構造的に防ぐため（記法を足すときは分岐を1つ書くだけ）。
  *
  * 交替の順序には意味がある:
- *   code → wikilink → mdlink → bold → italic
+ *   code → mdlink → bold → italic
  * - `code` が先頭 … バッククォート内の記号を書式として解釈しない
- * - `wikilink` が `mdlink` より前 … `[[a]]` を `[…](…)` 側に食わせない
  * - `bold` が `italic` より前 … `**x**` を `*` 2連発と読まない
  */
 const INLINE_PATTERN = new RegExp(
   [
     "(?<code>`(?<codeText>[^`]+?)`)",
-    "(?<wiki>\\[\\[(?<wikiTarget>[^\\[\\]|]+?)(?:\\|(?<wikiLabel>[^\\[\\]]+?))?\\]\\])",
     "(?<md>\\[(?<mdLabel>[^\\[\\]]+?)\\]\\((?<mdHref>[^()\\s]+)\\))",
     "(?<bold>\\*\\*(?<boldText>.+?)\\*\\*)",
     "(?<italic>\\*(?<italicText>.+?)\\*)",
@@ -27,9 +25,9 @@ const INLINE_PATTERN = new RegExp(
 /**
  * 装飾の中をもう一度走査し、内側で見つかった run に装飾を載せる。
  *
- * `**強調した [[リンク]]**` のような書き方は、結論の一行を太字にしてから
+ * `**強調した [リンク](/deck.md#id)**` のような書き方は、結論の一行を太字にしてから
  * そこに参照を張る、という自然な順序で出てくる。再帰しないと `bold` の交替が
- * 内側の `[[…]]` ごと飲むので、**リンクが黙って消える**（`stripInlineFormatting` は
+ * 内側のリンクごと飲むので、**リンクが黙って消える**（`stripInlineFormatting` は
  * 中を剥がすので文字数だけは正しく数えられ、表示と数え方が食い違う）。
  *
  * 終わりは保証される — inner は必ずマッチ全体より短い（`**` のぶん）。
@@ -42,22 +40,12 @@ const decorate = (inner: string, decoration: Partial<InlineTextRun>): InlineText
  * マッチ1件を InlineTextRun に変換する。
  *
  * 装飾（bold / italic）の中だけ再帰する。**リンクのラベルの中は再帰しない** —
- * ラベルは表示テキストなので、`[[id|**強調**]]` の `**` はリテラルとして残る。
+ * ラベルは表示テキストなので、`[**強調**](/deck.md#id)` の `**` はリテラルとして残る。
  * 必要になったらここも `decorate` を通せばよい。
  */
 function matchToRuns(groups: Record<string, string | undefined>): InlineTextRun[] {
   if (groups.code !== undefined) {
     return [{ text: groups.codeText!, code: true }]
-  }
-  if (groups.wiki !== undefined) {
-    const ref = groups.wikiTarget!.trim()
-    // ラベル省略時は ID をそのまま表示する。
-    // 実行時にタイトルへ差し替えないのは、レイアウトが見積もった文字幅と
-    // 実際の描画幅がずれるのを避けるため。別の文言にしたいなら [[id|表示]] と書く。
-    return [{
-      text: (groups.wikiLabel ?? groups.wikiTarget)!.trim(),
-      link: { kind: "internal", ref, slide: ref.split("/").pop()!, href: groups.wiki },
-    }]
   }
   if (groups.md !== undefined) {
     const href = groups.mdHref!
@@ -78,11 +66,13 @@ function matchToRuns(groups: Record<string, string | undefined>): InlineTextRun[
 /**
  * Markdownテキストからインライン書式を解析
  *
- * 対応: `code`、**bold**、*italic*、[label](url)、[[slide-id]]、[[slide-id|表示テキスト]]
+ * 対応: `code`、**bold**、*italic*、[ラベル](url)
  * 装飾の中の記法は効く（`matchToRuns` が再帰する）ので、1つのマッチが複数の run になりうる。
  *
- * `[…](…)` は href の形で内部/外部に分かれる（`okf.ts` の `parseOkfLink` が正本）。
- * `[[…]]` は移行のあいだだけ残している旧記法で、`migrate-wikilinks.ts` が書き換える。
+ * リンクは1種類しかない。href の形で内部/外部に分かれる（`okf.ts` の `parseOkfLink` が正本）。
+ * かつてあった `[[…]]` は廃止した — OKF v0.2 は通常の markdown リンクだけを規定しており、
+ * 独自記法は「md をそのまま他の道具に渡せる」という Wiki の前提そのものを壊す。
+ * 旧記法の md は `src/tools/migrate-wikilinks.ts` が書き換える。
  *
  * @example
  * parseInlineFormatting("Hello **world**, see [序](/intro.md#序) and [docs](https://example.com)")
@@ -131,9 +121,7 @@ export function parseInlineFormatting(text: string): InlineTextRun[] {
 export function stripInlineFormatting(text: string): string {
   return text
     .replace(/`([^`]+?)`/g, "$1")                                  // `code` → code
-    .replace(/\[\[[^\[\]|]+?\|([^\[\]]+?)\]\]/g, "$1")             // [[id|表示]] → 表示
-    .replace(/\[\[([^\[\]|]+?)\]\]/g, "$1")                        // [[id]] → id
-    .replace(/\[([^\[\]]+?)\]\([^()\s]+\)/g, "$1")                 // [label](url) → label
+    .replace(/\[([^\[\]]+?)\]\([^()\s]+\)/g, "$1")                 // [ラベル](url) → ラベル
     .replace(/\*\*(.+?)\*\*/g, "$1")                               // **bold** → bold
     .replace(/\*(.+?)\*/g, "$1")                                   // *italic* → italic
 }
