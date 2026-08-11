@@ -9,7 +9,7 @@ import { validatePresentation, Presentation, Theme, DEFAULT_THEME } from "./sche
 import { renderPresentation, renderToHtml, RenderOptions } from "./renderer/index.js"
 import { renderToWiki, WikiDeck } from "./renderer/wiki/index.js"
 import { validateLayout } from "./renderer/layout/validate-layout.js"
-import { slugify } from "./parser/slide-ids.js"
+import { slugify } from "./slug.js"
 
 /** 宣言（ontology.yaml）に照らした検査の受け取り方 */
 export interface LintOptions {

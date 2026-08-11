@@ -45,8 +45,22 @@ function parseDeckOrder(source: string): { groups: DeckGroup[]; errors: string[]
     return { groups: [], errors: [`YAML として読めない: ${(e as Error).message}`] }
   }
 
-  const groups = (doc as { groups?: unknown } | null)?.groups
+  const root = doc as { groups?: unknown; decks?: unknown } | null
+  const groups = root?.groups
   if (!Array.isArray(groups)) {
+    // 旧形式をそのまま受けはしない（2つの綴りが並ぶのは避ける）が、
+    // **何が変わったかは言う。** ツールは旧綴りの存在を知っているのだから、
+    // 「groups: を書け」とだけ言って黙るのは不親切
+    if (Array.isArray(root?.decks)) {
+      return {
+        groups: [],
+        errors: [
+          "`decks:` は `groups:` になった。" +
+            "`groups: [{title: <グループ名>, decks: [<デッキ名>, …]}]` と書く" +
+            "（グループ名は生成される index.md の見出しになる）",
+        ],
+      }
+    }
     return { groups: [], errors: ["groups: に `{title, decks}` の配列を書く"] }
   }
 

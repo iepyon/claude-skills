@@ -68,7 +68,7 @@ npx tsx src/cli.ts input.md output.pptx --compress
 |--------|-------------|
 | `--html` | Generate HTML instead of PPTX |
 | `--verify` | Generate PPTX + HTML, then compare both against the AST inventory. Exits non-zero if the three disagree |
-| `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory). A directory's deck order comes from its `order.yaml` (`decks:` — file names without the extension); without it, decks are ordered by file name. Renaming a deck to reorder it would break `/deck.md#slide` links, so declare the order instead. `index.md` and `log.md` are OKF reserved names and are not read as decks |
+| `--wiki` | Build one linked wiki site from one or more decks (file, files, or a directory). A directory's deck order comes from its `order.yaml` (`groups:` — a list of `{title, decks}`, deck names being file names without the extension); without it, decks are ordered by file name. Group titles become the headings of the generated `index.md`. Renaming a deck to reorder it would break `/deck.md#slide` links, so declare the order instead. `index.md` and `log.md` are OKF reserved names and are not read as decks |
 | `--site-title <text>` | Title of the wiki site (with `--wiki`) |
 | `--theme <path>`, `-t <path>` | YAML theme file (falls back to `DEFAULT_THEME`) |
 | `--compress`, `-c` | Enable ZIP compression in pptxgenjs (default: off) |

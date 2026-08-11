@@ -40,14 +40,13 @@ export interface WikiDeckView {
 /**
  * 未解決リンク。ビルド時の警告とビューアの表示の両方に使う。
  *
- * `href` を別に持つのは、**書き手に見せるのは原文の綴り**だから
- * （`ref` は解決の鍵で、`/deck.md#slide` から作られた内部表現にすぎない）。
+ * 持つのは**書き手に見せるものだけ** — どのスライドから、どう書かれたリンクか。
+ * 解決の鍵（`deck/slide`）は内部表現で、md のどこを直せばよいかを教えてくれない。
+ * 理由も持たない: 失敗は「引けなかった」の1種類しかなくなった。
  */
 export interface BrokenLink {
   readonly fromId: string
-  readonly ref: string
   readonly href: string
-  readonly reason: "not-found"
 }
 
 export interface WikiSite {

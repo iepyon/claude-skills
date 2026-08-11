@@ -79,7 +79,6 @@ sources:
 ### 対: [往復切符](/patterns-meta.md#往復切符)
 ### 検算: [声に出して読む](/patterns-meta.md#声に出して読む)
 ### 戻る: [読み方](/patterns-meta.md#読み方)
-### 隣: [LLM Wiki](/patterns-llm-wiki.md#LLM-Wiki)
 
 ---
 
@@ -134,7 +133,7 @@ Meszaros & Doble "Evocative Pattern Name"（PLoPD3, 1997）＝説明的な名前
 <!--pattern-->
 ### いつ・なにが困るか
 新しい概念なので、新しい言葉を作りたくなる。
-既存の語に [寄せる](/patterns-llm-wiki.md#名寄せ) と、誤解されそうに思える。
+既存の語に寄せると、誤解されそうに思える。
 
 **新語は、覚える手間を読者に押し付ける。**
 払ってもらえない名前は、読むまで分からない。
