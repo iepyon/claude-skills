@@ -14,7 +14,7 @@
   <path d="M186.2 176.3 Q247.3 174.6 308.4 175.8 Q308 196.7 308.6 217.5 Q247.5 219.6 186.4 218.8 Q186.8 197.6 187.5 176.3" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   <text x="247" y="202" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">説明が要る比喩</text>
   <path d="M195.9 216.4 C230.8 206.3 263.6 190.9 298.3 180.1" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <text x="247" y="240" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">借りずに作る側へ</text>
+  <text x="247" y="240" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4B5563">内側の語彙へ</text>
 
   <text x="170" y="286" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">説明が要るなら、馴染んでいない</text>
 </svg>

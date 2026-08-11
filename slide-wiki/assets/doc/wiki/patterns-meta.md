@@ -138,14 +138,14 @@ Meszaros & Doble "Meaningful Metaphor Name"（PLoPD3, 1997）＝読者に馴染�
 ずれたまま会話に載り、後からは直せない。
 
 ### そこで
-**その場だけの語を作り、全員で使う。**
-覚える手間は取る。代わりに寸分違わない。
+**ドメイン専門家が使う語彙を、全員で使う。**
+作るのではなく、聞いて拾う。手間は残る。
 定義は一箇所に置き、[[声に出して読む]]。
 
 ![ドメイン言語](diagrams/patterns-meta/ドメイン言語.svg)
 
 <!--source-->
-Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語＝図・文章・話し言葉・コードで、チーム全員が同じ語を使い続ける。出口は Meszaros & Doble "Meaningful Metaphor Name"（PLoPD3, 1997）の "If you have to explain the metaphor, it is not familiar enough."＝説明が要る比喩は、馴染んでいない。
+Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語＝ドメイン専門家と開発者が同じ語彙を、図・文章・話し言葉・コードで使い続ける。語は発明せず、現場で使われている語を採る。出口は Meszaros & Doble "Meaningful Metaphor Name"（PLoPD3, 1997）の "If you have to explain the metaphor, it is not familiar enough."
 
 ---
 
