@@ -228,18 +228,18 @@ describe("WikiPattern — 座標", () => {
     expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X - WP_PANEL_SHIFT_X, 5)
   })
 
-  it("左段は全角25字が折り返さない幅を保つ", async () => {
-    // 25字は ontology.yaml の guidance にある書き方の規約で、左段はそれを容れる器。
+  it("左段は全角27字が折り返さない幅を保つ", async () => {
+    // 27字は ontology.yaml の guidance にある書き方の規約で、左段はそれを容れる器。
     // 図を広げるために左を削るときの下限がこれ（下回れば行が折れ、1em で数える
     // 高さの見積りと1行ずれる）。全角1字の送りはフォントで揺れるので、
     // この環境の実測 1.02em に余裕を足した 1.05em で見る
     const result = await layoutFor(deck())
     const body = result.textBoxes.find((b) => b.fontSize === DEFAULT_THEME.wikiPattern.bodySize)!
     const advance = (DEFAULT_THEME.wikiPattern.bodySize / 72) * 1.05
-    expect(body.w).toBeGreaterThanOrEqual(25 * advance)
+    expect(body.w).toBeGreaterThanOrEqual(27 * advance)
   })
 
-  it("寄せても、全角25字を使い切った行が図解に触らない", async () => {
+  it("寄せても、全角27字を使い切った行が図解に触らない", async () => {
     // 寄せられる量の上限を決めているのはこれ（constants.ts の WP_PANEL_SHIFT_X）。
     // 左段のテキストの箱の右端と下敷きの左端が、この順で並んでいること
     const result = await layoutFor(deck())
