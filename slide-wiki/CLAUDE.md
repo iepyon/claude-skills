@@ -172,6 +172,7 @@ src/tools/
 ├── inventory-diff.ts  2つのインベントリの差分
 ├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
 ├── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
+├── trim-svg.ts        図解の枠を中身に寄せる (枠に残した余白がそのまま絵の小ささになる)
 ├── migrate-wikilinks.ts  古い記法を今の書き方へ揃える (旧 `[[…]]` と、先頭 `/`・`./` 付きのリンク)
 └── gen-okf-index.ts   バンドルの目録 `index.md` と更新履歴 `log.md` を生成する
 ```
@@ -249,8 +250,9 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 - HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` と `data-default-font-name` は `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
 - バンドル（デッキ集合・`order.yaml` の並び・デッキ slug・予約ファイル名・ID の一意性の範囲）の規則は [ontology.yaml](ontology.yaml) の `okf` 節が正本で、実装は `src/deck-order.ts` と `src/okf.ts`。**ここに規則を写さない。** コード側が持つのは綴りだけ（`RESERVED_OKF_FILES` / `OKF_VERSION` / `DECK_ORDER_FILE`）で、宣言との一致は `ontology.test.ts` が留める
-- 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）。**枠のほうを図の縦横比に合わせる** — `svgAspectRatio()` が `viewBox` から比を返し、wiki-pattern はその比で下敷きを組んで縦中央に置く。枠を図と違う比で置くと、HTML は `preserveAspectRatio` で図を縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に崩れるので、生成物を見比べても気づきにくい）
+- 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）。**枠のほうを図の縦横比に合わせる** — `svgAspectRatio()` が `viewBox` から比を返し、wiki-pattern はその比で下敷きを組み、上を左段の最初の見出しにそろえて置く（幅と高さの両方で列に収めるので、縦長の図では下敷きが列より細くなる。列の下端を割るときだけ持ち上げる）。枠を図と違う比で置くと、HTML は `preserveAspectRatio` で図を縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に崩れるので、生成物を見比べても気づきにくい）
 - 図解に `<rect>` / `<line>` / `<circle>` / `<polygon>` / `<polyline>` を残さない（`wiki-pattern.test.ts` が止める）。定規で引いた線の図は、本文が道すじと書いても「これが唯一の実装」に読まれる — サイトが載せている `ラフで出す` を、図の側でも守るため。崩すのは `npx tsx src/tools/roughen-svg.ts`（揺れはファイル名と要素の並び順から決まるので、走らせ直しても同じ絵が出る。`<path>` と `<text>` には触らないので**冪等**）。フィルタで粗さを出せないのは `<defs>` と `id=` が禁じられているからで、揺れは座標に焼き付けるしかない
+- 図解の `viewBox` は中身に寄せる。図は下敷きいっぱいに描かれるので、**枠に残した余白はそのまま絵の小ささになる**（340x320 に 283x248 しか描いていない図は、同じ場所に 12% 小さく出る）。寄せるのは `npx tsx src/tools/trim-svg.ts`（`--dry-run` / `--check` あり。中身から枠を決めるので**冪等**、`width` / `height` も実寸のまま揃える）。逆に**中身がはみ出した図は枠を広げて収める** — 切れた線や字は生成物を開いても消えているだけで気づけないため。中身の測り方は大きめに寄せてある（`<text>` の幅は読む人のフォントで変わる）。どちらも `wiki-pattern.test.ts` が配布中の図で見張る
 
 ## Plugin System
 

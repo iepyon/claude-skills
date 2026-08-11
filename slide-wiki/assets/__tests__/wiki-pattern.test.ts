@@ -18,6 +18,8 @@ import { SLIDE_WIDTH, SLIDE_HEIGHT, MARGIN_X, MARGIN_Y, CONTENT_START_Y } from "
 import { isDecoKey } from "../src/shape-keys.js"
 import { slidesToInventory } from "../src/tools/inventory.js"
 import { roughenSvg } from "../src/tools/roughen-svg.js"
+import { contentBox, trimSvg } from "../src/tools/trim-svg.js"
+import { WP_PANEL_SHIFT_X } from "../src/plugins/wiki-pattern/constants.js"
 import type { ContentSlide } from "../src/schema/presentation.js"
 import type { WikiPatternLayout } from "../src/plugins/wiki-pattern/schema.js"
 
@@ -216,15 +218,41 @@ describe("WikiPattern — 座標", () => {
   const svgBox = (result: LayoutResult): ShapeBox =>
     result.shapeBoxes!.find((s) => s.shapeType === "svg")!
 
-  it("図解は右半分にあり、右端は本文と同じマージンで揃う", async () => {
+  it("図解は右半分にあり、右マージンから WP_PANEL_SHIFT_X ぶん左へ寄る", async () => {
+    // 右端を右マージンに接させると、本文の行は左段を使い切らないので図だけが
+    // 右端に貼り付いて見える。寄せたぶんは右の余白になる
     const result = await layoutFor(deck())
     const svg = svgBox(result)
     expect(svg.x).toBeGreaterThan(SLIDE_WIDTH / 2)
     const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
-    expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X, 5)
+    expect(panel.x + panel.w).toBeCloseTo(SLIDE_WIDTH - MARGIN_X - WP_PANEL_SHIFT_X, 5)
   })
 
-  it("下敷きは図解の縦横比で組まれ、列の中で縦中央に置かれる", async () => {
+  it("左段は全角26字が折り返さない幅を保つ", async () => {
+    // 26字は ontology.yaml の guidance にある書き方の規約で、左段はそれを容れる器。
+    // 図を広げるために左を削るときの下限がこれ（下回れば行が折れ、1em で数える
+    // 高さの見積りと1行ずれる）。全角1字の送りはフォントで揺れるので、
+    // この環境の実測 1.02em に余裕を足した 1.05em で見る
+    const result = await layoutFor(deck())
+    const body = result.textBoxes.find((b) => b.fontSize === DEFAULT_THEME.wikiPattern.bodySize)!
+    const advance = (DEFAULT_THEME.wikiPattern.bodySize / 72) * 1.05
+    expect(body.w).toBeGreaterThanOrEqual(26 * advance)
+  })
+
+  it("寄せても、全角26字を使い切った行が図解に触らない", async () => {
+    // 寄せられる量の上限を決めているのはこれ（constants.ts の WP_PANEL_SHIFT_X）。
+    // 左段のテキストの箱の右端と下敷きの左端が、この順で並んでいること
+    const result = await layoutFor(deck())
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    // 全幅の箱（タイトル・takeaway）は左段の話ではないので外す
+    const body = result.textBoxes.filter((b) => b.w < SLIDE_WIDTH - 2 * MARGIN_X - 0.01)
+    expect(body.length).toBeGreaterThan(0)
+    for (const box of body) {
+      expect(box.x + box.w, "本文の箱が図解に食い込んでいる").toBeLessThanOrEqual(panel.x)
+    }
+  })
+
+  it("下敷きは図解の縦横比で組まれ、上は左段の最初の見出しにそろう", async () => {
     // 列いっぱいに伸ばすと、HTML は preserveAspectRatio で図を縮めて上下に帯を作り、
     // PPTX は addImage が枠に引き伸ばして図を歪ませる。原因は同じ「枠と図の比の食い違い」
     const result = await layoutFor(deck())
@@ -233,9 +261,32 @@ describe("WikiPattern — 座標", () => {
     const aspect = 340 / 320 // fixtures/diagrams/sample.svg の viewBox
     expect(svg.w / svg.h).toBeCloseTo(aspect, 5)
 
-    // 上下の余りが等しい ＝ 縦中央（takeaway が無いので列の下端はスライドの下マージン）
-    const columnBottom = SLIDE_HEIGHT - MARGIN_Y
-    expect(panel.y - CONTENT_START_Y).toBeCloseTo(columnBottom - (panel.y + panel.h), 5)
+    // 縦中央に置いていた頃は、図の高さがページごとに違うと上の線もページごとに動いた。
+    // そろえる先は最初の見出しの箱（buildSectionBoxes が積み始める線）
+    const heading = result.textBoxes.find(
+      (b) => b.fontSize === DEFAULT_THEME.wikiPattern.headingSize
+    )!
+    expect(panel.y).toBeCloseTo(heading.y, 5)
+    expect(panel.y + panel.h).toBeLessThanOrEqual(SLIDE_HEIGHT - MARGIN_Y + 1e-6)
+  })
+
+  it("縦長の図解では下敷きが列より細くなり、左右中央に置かれる", async () => {
+    // 高さだけを比に合わせると、列いっぱいの幅のまま縦だけ縮む＝下敷きのほうが横長になる。
+    // 幅でも収めているので、余るのは左右になり、その余りは等しく割れる
+    const result = await layoutFor(deck({ diagram: "diagrams/tall.svg" }))
+    const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
+    const svg = svgBox(result)
+    expect(svg.w / svg.h).toBeCloseTo(240 / 400, 5) // fixtures/diagrams/tall.svg の viewBox
+
+    // 列の下端まで使い切り（高さが先に尽きる）、列の中で左右中央に来る
+    expect(panel.y).toBeCloseTo(CONTENT_START_Y, 5)
+    expect(panel.y + panel.h).toBeCloseTo(SLIDE_HEIGHT - MARGIN_Y, 5)
+    // 列は WP_PANEL_SHIFT_X ぶん左へ寄っているので、その位置で左右の余りを比べる
+    const columnRight = SLIDE_WIDTH - MARGIN_X - WP_PANEL_SHIFT_X
+    expect(columnRight - (panel.x + panel.w)).toBeGreaterThan(0.1)
+    const wide = await layoutFor(deck())
+    const columnLeft = wide.shapeBoxes!.find((s) => s.shapeType === "rect")!.x
+    expect(panel.x - columnLeft).toBeCloseTo(columnRight - (panel.x + panel.w), 5)
   })
 
   it("viewBox の無い図解では下敷きが列いっぱいのままになる", async () => {
@@ -364,6 +415,73 @@ describe("図解を崩す道具", () => {
   })
 })
 
+describe("図解の枠を詰める道具", () => {
+  /** 200x200 の枠の真ん中あたりに 40x40 だけ描いた図。周りは全部あき */
+  const spacious = (inner = `<path d="M80 80 L120 80 L120 120 L80 120 Z" fill="none" stroke="#000" stroke-width="2"/>`) =>
+    `<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`
+
+  const viewBoxOf = (svg: string) =>
+    svg
+      .match(/viewBox="([^"]+)"/)![1]
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+
+  it("枠を中身まで詰め、絵が何倍になるかを返す", () => {
+    const { svg, scale } = trimSvg(spacious())
+    const [, , w, h] = viewBoxOf(svg)
+    expect(w).toBeLessThan(60) // 40 + 余白ぶん
+    expect(scale).toBeCloseTo(200 / w!, 5)
+    expect(h).toBeGreaterThan(0)
+  })
+
+  it("縦横比は変えない（下敷きの形がページごとに変わらないように）", () => {
+    const { svg } = trimSvg(spacious())
+    const [, , w, h] = viewBoxOf(svg)
+    expect(w! / h!).toBeCloseTo(1, 2)
+  })
+
+  it("実寸（width / height）も一緒に書き換える", () => {
+    const { svg } = trimSvg(spacious())
+    const [, , w, h] = viewBoxOf(svg)
+    expect(svg).toContain(`width="${w}"`)
+    expect(svg).toContain(`height="${h}"`)
+  })
+
+  it("詰めた結果をもう一度通しても変わらない（冪等）", () => {
+    const once = trimSvg(spacious()).svg
+    expect(trimSvg(once).svg).toBe(once)
+  })
+
+  it("枠からはみ出した中身は、枠を広げて収める", () => {
+    // 切れている図は、生成物を開いても端の線が消えているだけで気づきにくい
+    const clipped = spacious(
+      `<path d="M-40 100 L240 100" fill="none" stroke="#000" stroke-width="2"/>`
+    )
+    const [x, , w] = viewBoxOf(trimSvg(clipped).svg)
+    expect(x).toBeLessThanOrEqual(-40)
+    expect(x! + w!).toBeGreaterThanOrEqual(240)
+  })
+
+  it("字は書いてある幅より広く見て、切らない側に外す", () => {
+    // 読む人のフォントは測った環境より広いことがある。狭く見積もると字が切れる
+    const text = `<text x="100" y="100" text-anchor="middle" font-family="sans-serif" font-size="10">あいうえお</text>`
+    const [x, , w] = viewBoxOf(trimSvg(spacious(text)).svg)
+    expect(x).toBeLessThan(100 - 25) // 全角5字 = 50 の半分より外
+    expect(x! + w!).toBeGreaterThan(100 + 25)
+  })
+
+  it("viewBox を名乗らない図には触らない", () => {
+    const noViewBox = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><path d="M80 80 L120 120" stroke="#000"/></svg>`
+    expect(trimSvg(noViewBox).svg).toBe(noViewBox)
+  })
+
+  it("中身の無い図には触らない", () => {
+    const empty = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"></svg>`
+    expect(trimSvg(empty).svg).toBe(empty)
+  })
+})
+
 describe("配布しているデッキの図解", () => {
   const WIKI_DIR = join(__dirname, "..", "doc", "wiki")
   const DIAGRAMS_DIR = join(WIKI_DIR, "diagrams")
@@ -436,6 +554,34 @@ describe("配布しているデッキの図解", () => {
 
     expect(Number(open.match(/\swidth="(\d+)"/)?.[1]), `${name}: width が viewBox と食い違う`).toBe(vw)
     expect(Number(open.match(/\sheight="(\d+)"/)?.[1]), `${name}: height が viewBox と食い違う`).toBe(vh)
+  })
+
+  /**
+   * 図は下敷きいっぱいに描かれるので、**枠に残した余白はそのまま絵の小ささになる。**
+   * 340x320 の canvas に 283x248 しか描いていない図は、同じ場所に 12% 小さく出る。
+   *
+   * 詰め直すのは `npx tsx src/tools/trim-svg.ts`（中身から枠を決めるので冪等）。
+   * 枠を広げる側にも効くので、**中身が枠からはみ出して切れている図もここで落ちる**。
+   */
+  it.each(diagrams)("$name は枠が中身に寄っている", ({ name, svg }) => {
+    expect(
+      trimSvg(svg).svg,
+      `${name}: 枠と中身がずれている。npx tsx src/tools/trim-svg.ts を通す`
+    ).toBe(svg)
+  })
+
+  it.each(diagrams)("$name は中身が枠に収まっている", ({ name, svg }) => {
+    // 切れているかどうかは生成物を開いても分かりにくい（端の線や字が静かに消える）
+    const box = contentBox(svg)!
+    const [vx, vy, vw, vh] = svg
+      .match(/viewBox="([^"]+)"/)![1]
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+    expect(box.minX, `${name}: 中身が枠の左に出ている`).toBeGreaterThanOrEqual(vx!)
+    expect(box.minY, `${name}: 中身が枠の上に出ている`).toBeGreaterThanOrEqual(vy!)
+    expect(box.maxX, `${name}: 中身が枠の右に出ている`).toBeLessThanOrEqual(vx! + vw!)
+    expect(box.maxY, `${name}: 中身が枠の下に出ている`).toBeLessThanOrEqual(vy! + vh!)
   })
 
   /**
