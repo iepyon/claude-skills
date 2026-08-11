@@ -1087,7 +1087,7 @@ field-sets:
 # 主題が Wiki に移ったのに、宣言の輪郭が主題より1段小さいままだった。宣言が無い層では
 # lint も selfcheck も足場を持てないので、そこで起きる食い違いはどれも緑のまま通る。
 okf:
-  label: バンドル
+  label: バンドル（サイトの階層）
   description: >-
     デッキを収めたディレクトリ1つ。そのまま配れば他のエージェントが読める
     Open Knowledge Format のバンドルになる。
@@ -1133,6 +1133,13 @@ okf:
     from: 拡張子を除いたファイル名
     rule: 見出し → スライド ID と同じ1つの規則（`src/slug.ts`）
     collision: error # 連番で一意化すると、どのファイル名にも order.yaml にも無い名前ができる
+    # 規則そのものを写さない代わりに置く実例。**selfcheck が実物の deckSlug に通して
+    # 突き合わせる**ので、規則が変わればここが赤くなる。写しは照合できないが、例は照合できる
+    examples:
+      - {name: patterns-wiki, slug: patterns-wiki} # 既にその形なら素通し
+      - {name: My_Deck, slug: my-deck} # 大文字と `_` が落ちる
+      - {name: Wiki の作り方, slug: wiki-の作り方} # 空白はハイフン、日本語は残る
+      - {name: 種ノート, slug: 種ノート} # ラテン文字に潰さない
     note: |
       **`order.yaml` に書く名前・リンクに書くファイル名・サイトの slug は同じものを指す。**
       3つが同じ規則を通るからそう言える。ファイル名は `/デッキ名.md#スライドID` の

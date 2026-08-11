@@ -122,6 +122,19 @@ describe("deck order", () => {
     expect(names(files)[0]).toBe("My_Deck")
   })
 
+  it("matches a deck name containing a dot", () => {
+    // 宣言に書く名前は拡張子を持たないので、`extname` を通すと最後のドット以降が
+    // 拡張子と見なされて落ちる（`v1.2-intro` → `v1`）。実在するデッキが
+    // 「宣言にあるデッキが見つからない」になる形の取り違え
+    deck("v1.2-intro")
+    declare("groups:\n  - title: 全部\n    decks: [v1.2-intro]\n")
+
+    const { files, errors } = orderDeckFiles(decksIn(dir), dir)
+
+    expect(errors).toEqual([])
+    expect(names(files)[0]).toBe("v1.2-intro")
+  })
+
   it("reports two md files whose slugs collide, naming both files", () => {
     // 衝突は `order.yaml` の誤りではなくディレクトリの誤りなので、宣言が無くても報せる。
     // 黙って連番にすると、どのファイル名にも宣言にも現れない名前でしか指せなくなる

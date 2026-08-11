@@ -39,15 +39,19 @@ export interface DeckOrderResult {
 }
 
 /**
- * 宣言に書くデッキ名と、リンクの行き先になる slug を突き合わせるための鍵。
+ * md のパス → 照合の鍵。
  *
  * **拡張子を落とすだけでは足りない。** リンクの行き先になる slug は `deckSlug` を
  * 通るので、生のファイル名で照合すると、`My_Deck.md` を `order.yaml` には `My_Deck` と
  * 書き `/My_Deck.md` と指すのにサイトの slug は `my-deck` になる、という
  * **同じものを指す2つの綴り**ができる（BACKLOG B-40）。宣言（`ontology.yaml` の
  * `okf.deck-slug`）は3つが同じ規則を通ると言っているので、ここも同じ関数を通す。
+ *
+ * **受けるのはパスだけ。** 宣言に書かれた名前は拡張子を持たないので、こちらに通すと
+ * `extname` が最後のドット以降を拡張子と見なして削る（`v1.2-intro` → `v1`）。
+ * 名前の側は `deckSlug` を直に呼ぶ。
  */
-const deckKey = (file: string): string => deckSlug(basename(file, extname(file)))
+const deckKeyOfFile = (file: string): string => deckSlug(basename(file, extname(file)))
 
 /** 宣言を読む。`groups:` が `{title, decks}` の配列でなければ誤りとして返す */
 function parseDeckOrder(source: string): { groups: DeckGroup[]; errors: string[] } {
@@ -107,7 +111,7 @@ export function orderDeckFiles(files: readonly string[], dir: string): DeckOrder
   // 2つのファイルを載せることになり、宣言が拾った1本を取り除いたあと残りの
   // フィルタもすり抜けて、**もう片方がサイトから丸ごと落ちる。**
   const collisions = findDeckSlugCollisions(
-    files.map((f) => ({ fileName: basename(f), slug: deckKey(f) }))
+    files.map((f) => ({ fileName: basename(f), slug: deckKeyOfFile(f) }))
   )
   if (collisions.length > 0) return { files: [...files], groups: [], errors: collisions }
 
@@ -116,7 +120,9 @@ export function orderDeckFiles(files: readonly string[], dir: string): DeckOrder
 
   // 誤りの所在は**ここが持つ**。呼び手が一律に前置していたころは、`order.yaml` が
   // 無くても起きる誤り（上の衝突）にまで `order.yaml:` と付いて、実在しないファイルを
-  // 指していた。宣言そのものの誤りだけに宣言の場所を付ける
+  // 指していた。宣言そのものの誤りだけに宣言の場所を付ける。
+  // **付けるのは境界の1箇所だけ** — push のたびに包むと、次に足した診断が
+  // 所在を落としても誰も気づけない
   const at = (message: string): string => `${declPath}: ${message}`
 
   const { groups, errors } = parseDeckOrder(readFileSync(declPath, "utf-8"))
@@ -124,7 +130,7 @@ export function orderDeckFiles(files: readonly string[], dir: string): DeckOrder
 
   const problems: string[] = []
   const remaining = new Map<string, string>()
-  for (const f of files) remaining.set(deckKey(f), f)
+  for (const f of files) remaining.set(deckKeyOfFile(f), f)
 
   const ordered: string[] = []
 
@@ -133,16 +139,16 @@ export function orderDeckFiles(files: readonly string[], dir: string): DeckOrder
       // 予約名はデッキとして読み込まれないので、宣言に書いても必ず「見つからない」に
       // なる。理由を取り違えないよう、先に名指しで止める
       if (isReservedOkfFile(`${name}.md`)) {
-        problems.push(at(`${name} は OKF の予約ファイル名なのでデッキにできない`))
+        problems.push(`${name} は OKF の予約ファイル名なのでデッキにできない`)
         continue
       }
       // 宣言に書かれた名前も同じ規則を通してから引く。誤りの文面には**書かれたまま**の
       // 名前を出す — slug 化した綴りを見せると、書き手が自分の書いた行を探せない
-      const key = deckKey(name)
+      const key = deckSlug(name)
       const file = remaining.get(key)
       // 既に取り出した名前（宣言内の重複）も、存在しない名前と同じく誤りにする
       if (!file) {
-        problems.push(at(`宣言にあるデッキが見つからない: ${name}`))
+        problems.push(`宣言にあるデッキが見つからない: ${name}`)
         continue
       }
       ordered.push(file)
@@ -151,8 +157,8 @@ export function orderDeckFiles(files: readonly string[], dir: string): DeckOrder
   }
 
   return {
-    files: [...ordered, ...files.filter((f) => remaining.has(deckKey(f)))],
+    files: [...ordered, ...files.filter((f) => remaining.has(deckKeyOfFile(f)))],
     groups,
-    errors: problems,
+    errors: problems.map(at),
   }
 }

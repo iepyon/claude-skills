@@ -709,7 +709,7 @@ SVG 側は `viewBox` と、それに合った `width` / `height` を**実寸で*
 
 デッキを収めたディレクトリ1つ。そのまま配れば他のエージェントが読める Open Knowledge Format のバンドルになる。版は `0.2`（[SPEC.md](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)）。
 
-**予約ファイル名** — デッキとして読み込まず、内部リンクの行き先にもしない。
+**予約ファイル名**
 
 | ファイル名 | 役割 | 説明 |
 |---|---|---|
@@ -737,6 +737,13 @@ SVG 側は `viewBox` と、それに合った `width` / `height` を**実寸で*
 - もと: 拡張子を除いたファイル名
 - 綴りの規則: 見出し → スライド ID と同じ1つの規則（`src/slug.ts`）
 - 衝突したときの扱い: `error`
+
+| ファイル名 | デッキ slug | リンクの書き方 |
+|---|---|---|
+| `patterns-wiki.md` | `patterns-wiki` | `/patterns-wiki.md#スライドID` |
+| `My_Deck.md` | `my-deck` | `/My_Deck.md#スライドID` |
+| `Wiki の作り方.md` | `wiki-の作り方` | `/Wiki の作り方.md#スライドID` |
+| `種ノート.md` | `種ノート` | `/種ノート.md#スライドID` |
 
 **`order.yaml` に書く名前・リンクに書くファイル名・サイトの slug は同じものを指す。**
 3つが同じ規則を通るからそう言える。ファイル名は `/デッキ名.md#スライドID` の

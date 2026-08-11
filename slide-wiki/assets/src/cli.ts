@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync, statSync, readdirSync, mkdirSync } from "fs"
-import { join, basename, extname, dirname } from "path"
+import { basename, extname, dirname } from "path"
 import { Effect, Exit } from "effect"
 import { md2pptx, md2html, md2wiki, loadThemeFile, parseMarkdown, validatePresentation, DEFAULT_THEME } from "./index.js"
 import type { WikiSource } from "./index.js"

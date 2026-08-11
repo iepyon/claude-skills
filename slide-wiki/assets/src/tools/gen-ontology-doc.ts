@@ -91,10 +91,10 @@ function okfSection(): string[] {
   const slug = okf["deck-slug"]
   const ids = okf["slide-id-scope"]
 
-  const lines = [
+  return [
     `${cell(okf.description)}版は ${code(okf["okf-version"])}（[SPEC.md](${okf.spec})）。`,
     "",
-    "**予約ファイル名** — デッキとして読み込まず、内部リンクの行き先にもしない。",
+    "**予約ファイル名**",
     "",
     ...table(
       ["ファイル名", "役割", "説明"],
@@ -113,6 +113,15 @@ function okfSection(): string[] {
     `- もと: ${cell(slug.from)}`,
     `- 綴りの規則: ${cell(slug.rule)}`,
     `- 衝突したときの扱い: ${code(slug.collision)}`,
+    "",
+    ...table(
+      ["ファイル名", "デッキ slug", "リンクの書き方"],
+      slug.examples.map((e) => [
+        codeCell(`${e.name}.md`),
+        codeCell(e.slug),
+        codeCell(`/${e.name}.md#スライドID`),
+      ])
+    ),
     ...prose(slug.note),
     "",
     "**スライド ID の一意性**",
@@ -122,10 +131,6 @@ function okfSection(): string[] {
     ...prose(ids.note),
     ...prose(okf.guidance),
   ]
-  // `prose` は前後に空行を足すので、続けて並べると空行が2つになる。ontology.md 側は
-  // buildOntologyDoc がまとめて畳むが、SKILL.md の生成領域はそのまま差し込まれるので
-  // ここで畳んでおく（2つの出口で見た目が変わらないようにする）
-  return lines.filter((line, i) => line !== "" || lines[i - 1] !== "")
 }
 
 function inlineTable(): string[] {
@@ -352,7 +357,7 @@ function buildOntologyDoc(): string {
   }
 
   // 内部リンクの綴りがバンドルの構造に依るので、構造を先に読ませる
-  L.push("", "## バンドル（サイトの階層）", "", ...okfSection())
+  L.push("", `## ${getOkf().label}`, "", ...okfSection())
   L.push("", "## インライン記法", "", ...inlineTable())
   L.push("", "## 制限", "", ...limitsBullets())
   L.push("", ...prose(getLimits().guidance))
@@ -416,7 +421,11 @@ export function applySkillRegions(skill: string): string {
     if (start < 0 || stop < 0 || stop < start) {
       throw new Error(`SKILL.md に生成領域 '${name}' のマーカー（${begin} … ${end}）が無い`)
     }
-    out = out.slice(0, start + begin.length) + "\n" + lines.join("\n") + "\n" + out.slice(stop)
+    // 空行の畳み方は ontology.md 側（buildOntologyDoc の末尾）と揃える。
+    // `prose()` は前後に空行を足すので、続けて並べた節はそのままだと空行が2つ空く —
+    // 畳むのを各節に任せると、次に `prose` を使う領域が同じ手当てを忘れて見た目だけずれる
+    const body = lines.join("\n").replace(/\n{3,}/g, "\n\n")
+    out = out.slice(0, start + begin.length) + "\n" + body + "\n" + out.slice(stop)
   }
   return out
 }

@@ -6,7 +6,7 @@ import { Effect } from "effect"
 import { parseMarkdown } from "../parser/index.js"
 import { readFrontmatter, splitFrontmatter } from "../ontology/frontmatter.js"
 import { matchesDeclaredForm } from "../ontology/index.js"
-import { OKF_VERSION, deckSlug as deckKey, listDeckFiles } from "../okf.js"
+import { OKF_VERSION, deckSlug, listDeckFiles } from "../okf.js"
 import { orderDeckFiles, type DeckGroup } from "../deck-order.js"
 
 /**
@@ -89,7 +89,7 @@ function buildIndex(decks: readonly Deck[], groups: readonly DeckGroup[]): strin
   // 照合は `orderDeckFiles` と同じ**デッキ slug**。ここだけ生のファイル名で引くと、
   // 並びのほうは当たったデッキが目録では引けず、黙って「その他」へ落ちる
   // （B-40 が直したのと同じ壊れ方を、直した側が作ることになる）
-  const bySlug = new Map(decks.map((d) => [deckKey(d.name), d]))
+  const bySlug = new Map(decks.map((d) => [deckSlug(d.name), d]))
   const grouped = new Set<string>()
 
   const section = (title: string, members: readonly Deck[]): string => {
@@ -102,16 +102,16 @@ function buildIndex(decks: readonly Deck[], groups: readonly DeckGroup[]): strin
   const sections: string[] = []
   for (const group of groups) {
     const members = group.decks
-      .map((n) => bySlug.get(deckKey(n)))
+      .map((n) => bySlug.get(deckSlug(n)))
       .filter((d): d is Deck => d !== undefined)
     if (members.length === 0) continue
-    members.forEach((d) => grouped.add(deckKey(d.name)))
+    members.forEach((d) => grouped.add(deckSlug(d.name)))
     sections.push(section(group.title, members))
   }
 
   // 宣言に無いデッキも必ず載せる。目録から漏れると、バンドルを読む側からは
   // 存在しないのと同じになる
-  const rest = decks.filter((d) => !grouped.has(deckKey(d.name)))
+  const rest = decks.filter((d) => !grouped.has(deckSlug(d.name)))
   if (rest.length > 0) sections.push(section("その他", rest))
 
   return `---\nokf_version: "${OKF_VERSION}"\n---\n\n${sections.join("\n")}`

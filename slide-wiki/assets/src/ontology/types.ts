@@ -259,11 +259,25 @@ export interface OkfDeckSet {
  * **正規化の規則そのものはここに無い**（`rule` は在り処を指すだけ）。綴りが1箇所である
  * ことが「リンクの両側が同じ規則で作られる」保証なので、写すとその保証が消える。
  */
+/** デッキ名 → slug の実例。規則の写しの代わりに置く（selfcheck が実装に通す） */
+export interface OkfDeckSlugExample {
+  readonly name: string
+  readonly slug: string
+}
+
 export interface OkfDeckSlug {
   readonly from: string
   readonly rule: string
-  /** slug が衝突したときの扱い。連番で一意化せず止める */
-  readonly collision: "warning" | "error" | "ignore"
+  /** 宣言が「見せる」規則。`src/okf.ts` の `deckSlug` に通して一致することを selfcheck が見る */
+  readonly examples: readonly OkfDeckSlugExample[]
+  /**
+   * slug が衝突したときの扱い。
+   *
+   * **`"error"` の1値しか取らない** — 兄弟の `unknown` / `require` と違い、これは
+   * lint が読む設定ではなく、実装が常に止めるという事実の宣言である。union にすると
+   * `ignore` と書いても全部緑のまま実装は止め続ける、という嘘をつける宣言になる。
+   */
+  readonly collision: "error"
   readonly note?: string
 }
 

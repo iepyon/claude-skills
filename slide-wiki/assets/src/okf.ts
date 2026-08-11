@@ -68,7 +68,11 @@ export function findDeckSlugCollisions(
   decks: ReadonlyArray<{ readonly fileName: string; readonly slug: string }>
 ): string[] {
   const bySlug = new Map<string, string[]>()
-  for (const d of decks) bySlug.set(d.slug, [...(bySlug.get(d.slug) ?? []), d.fileName])
+  for (const d of decks) {
+    const bucket = bySlug.get(d.slug)
+    if (bucket) bucket.push(d.fileName)
+    else bySlug.set(d.slug, [d.fileName])
+  }
 
   return [...bySlug]
     .filter(([, names]) => names.length > 1)
