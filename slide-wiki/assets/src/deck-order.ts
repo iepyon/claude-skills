@@ -7,7 +7,7 @@ import { deckSlug, findDeckSlugCollisions, isReservedOkfFile } from "./okf.js"
  * デッキの並び順の宣言。Wiki のディレクトリ直下に置く。
  *
  * ディレクトリを `--wiki` に渡したときの既定はファイル名順だが、ファイル名は
- * `/deck.md#slide` のリンク先そのものでもあるので、順序を変えるために
+ * `deck.md#slide` のリンク先そのものでもあるので、順序を変えるために
  * リネームするとサイト中のリンクが折れる。順序はここで宣言して変える。
  *
  * **並びはグループに分けて書く。** サイドバーと ←→ の送りはグループを平坦に
@@ -43,7 +43,7 @@ export interface DeckOrderResult {
  *
  * **拡張子を落とすだけでは足りない。** リンクの行き先になる slug は `deckSlug` を
  * 通るので、生のファイル名で照合すると、`My_Deck.md` を `order.yaml` には `My_Deck` と
- * 書き `/My_Deck.md` と指すのにサイトの slug は `my-deck` になる、という
+ * 書き `My_Deck.md` と指すのにサイトの slug は `my-deck` になる、という
  * **同じものを指す2つの綴り**ができる（BACKLOG B-40）。宣言（`ontology.yaml` の
  * `okf.deck-slug`）は3つが同じ規則を通ると言っているので、ここも同じ関数を通す。
  *

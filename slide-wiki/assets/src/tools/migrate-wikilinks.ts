@@ -4,21 +4,47 @@ import { join, basename, extname } from "path"
 import { Effect } from "effect"
 
 import { parseMarkdown } from "../parser/index.js"
-import { deckSlug, findDeckSlugCollisions, isReservedOkfFile, listDeckFiles } from "../okf.js"
+import {
+  MD_LINK,
+  deckSlug,
+  findDeckSlugCollisions,
+  hrefRangeOf,
+  isReservedOkfFile,
+  listDeckFiles,
+  parseOkfLink,
+} from "../okf.js"
 import { buildSiteIndex } from "../renderer/wiki/site-index.js"
 import type { WikiDeck, WikiEntry } from "../renderer/wiki/types.js"
 
 /**
- * 旧 `[[…]]` 記法を OKF v0.2 のバンドル相対リンクに書き換える。
+ * 内部リンクの記法を、いまの書き方へ揃える。**過去2回の破壊的変更ぶんを持つ。**
  *
- *   [[種ノート]]              → [種ノート](/patterns-wiki.md#種ノート)
- *   [[patterns-wiki/剪定]]     → [patterns-wiki/剪定](/patterns-wiki.md#剪定)
- *   [[動く北極星|北極星]]      → [北極星](/patterns-wiki.md#動く北極星)
+ * 1. 旧 `[[…]]` 記法 → md のリンク（宣言の版 4）
  *
- * **表示テキストは1文字も変えない。** ラベルは旧記法の表示規則（縦棒の右、
- * 無ければ参照そのもの）のまま写す。整形したくなるが、そうすると `stripInlineFormatting` の出力が変わり、
- * 文字数・高さ見積り・レイアウトのスナップショット・3者比較が一斉に動く。
- * 記法の移行と見た目の変更を1つのコミットに混ぜると、どちらが原因か分からなくなる。
+ *      [[種ノート]]              → [種ノート](patterns-wiki.md#種ノート)
+ *      [[patterns-wiki/剪定]]     → [patterns-wiki/剪定](patterns-wiki.md#剪定)
+ *      [[動く北極星|北極星]]      → [北極星](patterns-wiki.md#動く北極星)
+ *
+ * 2. 先頭に `/`・`./` の付いた綴り → デッキ名だけの相対パス（版 6）
+ *
+ *      [剪定](/patterns-wiki.md#剪定)   → [剪定](patterns-wiki.md#剪定)
+ *      [剪定](./patterns-wiki.md#剪定)  → [剪定](patterns-wiki.md#剪定)
+ *
+ * **2つは難しさが違う。** 1 は参照だけでは行き先が決まらないのでスライド ID の
+ * 索引と4段階の解決順が要り、解決に失敗しうる。2 は接頭辞を落とすだけで、
+ * 行き先は変わらないので失敗しない — だから `--check` の目的も違う。
+ * 1 の残存は「サイトで折れているリンク」、2 の残存は「サイトでは当たるが
+ * github.com で折れるリンク」であり、後者は走らせないと誰も気づけない。
+ *
+ * **どちらの綴りが正しいかは持たない。** 2 の書き換え先は `parseOkfLink` が返す
+ * `canonicalHref` そのもので、接頭辞の集合をこのファイルが知ることはない
+ * （知ると、`okf.ts` が受ける綴りを増やしたときにここだけ古い規則で通す）。
+ *
+ * **表示テキストは1文字も変えない。** 1 のラベルは旧記法の表示規則（縦棒の右、
+ * 無ければ参照そのもの）のまま写し、2 は href だけを差し替える。整形したくなるが、
+ * そうすると `stripInlineFormatting` の出力が変わり、文字数・高さ見積り・
+ * レイアウトのスナップショット・3者比較が一斉に動く。記法の移行と見た目の変更を
+ * 1つのコミットに混ぜると、どちらが原因か分からなくなる。
  *
  * **パーサには依存しない。** `[[…]]` を自分で正規表現で拾い、解決に要るのは
  * スライド ID の索引（見出しと `<!--id:-->` から作られる）だけなので、
@@ -46,6 +72,12 @@ interface Candidate {
   readonly line: number
   readonly ref: string
   readonly label: string
+}
+
+/** 据え置いた箇所（コード表記の中）。2つの記法を同じ形で報告するために綴りだけ持つ */
+interface Skipped {
+  readonly line: number
+  readonly text: string
 }
 
 interface Range {
@@ -98,24 +130,62 @@ function protectedRanges(source: string): Range[] {
 const lineOf = (source: string, index: number): number =>
   source.slice(0, index).split("\n").length
 
-/** 書き換え候補と、保護されて見送った箇所を分けて返す */
-function scan(source: string): { candidates: Candidate[]; skipped: Candidate[] } {
-  const ranges = protectedRanges(source)
-  const isProtected = (i: number): boolean => ranges.some((r) => i >= r.start && i < r.end)
-
+/**
+ * 旧 `[[…]]` の書き換え候補と、保護されて見送った箇所を分けて返す。
+ *
+ * 走査を2つに分けてあるのは、拾うものの形が違うから（`[[…]]` はブロックまるごと、
+ * 接頭辞つきリンクは href だけ）。**保護範囲の判定は共有する** — 片方だけが
+ * コード表記を書き換えると、記法の見本が実リンクに化ける。
+ */
+function scanWikilinks(source: string, isProtected: (i: number) => boolean): {
+  candidates: Candidate[]
+  skipped: Skipped[]
+} {
   const candidates: Candidate[] = []
-  const skipped: Candidate[] = []
+  const skipped: Skipped[] = []
 
   for (const m of source.matchAll(WIKILINK)) {
-    const ref = m[1].trim()
-    const found: Candidate = {
+    if (isProtected(m.index)) {
+      skipped.push({ line: lineOf(source, m.index), text: m[0] })
+      continue
+    }
+    candidates.push({
       start: m.index,
       end: m.index + m[0].length,
       line: lineOf(source, m.index),
-      ref,
+      ref: m[1].trim(),
       label: (m[2] ?? m[1]).trim(),
-    }
-    ;(isProtected(m.index) ? skipped : candidates).push(found)
+    })
+  }
+
+  return { candidates, skipped }
+}
+
+/**
+ * 書く形から外れた href（先頭に `/`・`./`）を、`canonicalHref` に寄せる候補を返す。
+ *
+ * **接頭辞を判定しない。** `parseOkfLink` が読めた href のうち、綴りが
+ * `canonicalHref` と違うものがそれである。ここで `/^\//` のような判定を持つと、
+ * `okf.ts` が受ける綴りを増やしたときにこのツールだけが取り残される。
+ *
+ * 読めない href（`sub/x.md` `../x.md` `/index.md`）は触らない。行き先を決められない
+ * ので、寄せ先が無い — そちらは lint が「内部リンクにならない」として報せる。
+ */
+function scanLinkForm(source: string, isProtected: (i: number) => boolean): {
+  candidates: { start: number; end: number; line: number; from: string; to: string }[]
+  skipped: Skipped[]
+} {
+  const candidates: { start: number; end: number; line: number; from: string; to: string }[] = []
+  const skipped: Skipped[] = []
+
+  for (const m of source.matchAll(MD_LINK)) {
+    const href = m[1]
+    const target = parseOkfLink(href)
+    if (!target || href === target.canonicalHref) continue
+
+    const { start, end } = hrefRangeOf(m)
+    if (isProtected(m.index)) skipped.push({ line: lineOf(source, m.index), text: m[0] })
+    else candidates.push({ start, end, line: lineOf(source, m.index), from: href, to: target.canonicalHref })
   }
 
   return { candidates, skipped }
@@ -237,11 +307,19 @@ interface Failure {
   readonly reason: string
 }
 
+interface Change {
+  readonly line: number
+  readonly from: string
+  readonly to: string
+  /** どちらの移行か。`--check` が残存の意味を書き分けるのに使う */
+  readonly kind: "wikilink" | "link-form"
+}
+
 interface FileResult {
   readonly path: string
   readonly rewritten: string
-  readonly changes: { line: number; from: string; to: string }[]
-  readonly skipped: Candidate[]
+  readonly changes: Change[]
+  readonly skipped: Skipped[]
   readonly failures: Failure[]
 }
 
@@ -258,11 +336,20 @@ function migrate(files: readonly string[]): FileResult[] {
 
   return deckFiles.map((deck) => {
     const source = readFileSync(deck.path, "utf-8")
-    const { candidates, skipped } = scan(source)
+    const ranges = protectedRanges(source)
+    const isProtected = (i: number): boolean => ranges.some((r) => i >= r.start && i < r.end)
 
-    const changes: FileResult["changes"] = []
+    const { candidates, skipped } = scanWikilinks(source, isProtected)
+    const prefixed = scanLinkForm(source, isProtected)
+
+    const changes: Change[] = []
     const failures: Failure[] = []
     const edits: { start: number; end: number; text: string }[] = []
+
+    for (const p of prefixed.candidates) {
+      edits.push({ start: p.start, end: p.end, text: p.to })
+      changes.push({ line: p.line, from: p.from, to: p.to, kind: "link-form" })
+    }
 
     for (const c of candidates) {
       const resolved = resolveLegacyRef(c.ref, deck.slug, byId, byLocalId)
@@ -276,19 +363,27 @@ function migrate(files: readonly string[]): FileResult[] {
         failures.push({ file: deck.fileName, line: c.line, ref: c.ref, reason: "deck-not-a-file" })
         continue
       }
-      const href = `/${target}#${encodeFragment(entry.localId)}`
+      const href = `${target}#${encodeFragment(entry.localId)}`
       const text = `[${c.label}](${href})`
       edits.push({ start: c.start, end: c.end, text })
-      changes.push({ line: c.line, from: source.slice(c.start, c.end), to: text })
+      changes.push({ line: c.line, from: source.slice(c.start, c.end), to: text, kind: "wikilink" })
     }
 
-    // 後ろから当てる。前から書き換えると以降のオフセットが全部ずれる
+    // **後ろから当てる前に並べ替える。** 前から書き換えると以降のオフセットが全部ずれ、
+    // 走査が2本あるぶん `edits` はもう位置順に並んでいない（片方は `[[…]]`、
+    // もう片方は href の範囲を、それぞれ独立に頭から拾ってくる）
     let rewritten = source
-    for (const e of [...edits].reverse()) {
+    for (const e of [...edits].sort((a, b) => b.start - a.start)) {
       rewritten = rewritten.slice(0, e.start) + e.text + rewritten.slice(e.end)
     }
 
-    return { path: deck.path, rewritten, changes, skipped, failures }
+    return {
+      path: deck.path,
+      rewritten,
+      changes: changes.sort((a, b) => a.line - b.line),
+      skipped: [...skipped, ...prefixed.skipped].sort((a, b) => a.line - b.line),
+      failures,
+    }
   })
 }
 
@@ -297,7 +392,8 @@ function migrate(files: readonly string[]): FileResult[] {
 const USAGE = `Usage: tsx src/tools/migrate-wikilinks.ts [options] <dir|file...>
 
   --dry-run            書き換えずに差分だけ出す
-  --check              [[…]] が残っていれば非ゼロ終了（書き換えはしない）
+  --check              古い記法が残っていれば非ゼロ終了（書き換えはしない）
+                       見るのは2つ: [[…]] と、先頭に / ・ ./ の付いた内部リンク
 
 終了コード: 0 = 問題なし / 1 = 未解決あり（--check では残存あり） / 2 = 使い方・入出力の誤り`
 
@@ -335,7 +431,17 @@ export function main(argv: readonly string[]): number {
       for (const c of r.changes) console.error(`${basename(r.path)}:${c.line}: ${c.from}`)
       for (const f of r.failures) console.error(`${f.file}:${f.line}: [[${f.ref}]]`)
     }
-    if (left > 0) console.error(`旧記法が ${left} 件残っている`)
+    if (left > 0) {
+      // **2つを別に数える。** 残り方が違う — `[[…]]` はサイトでも折れているので
+      // 見れば分かるが、接頭辞つきはサイトでは当たり github.com でだけ折れる
+      const legacy = results.reduce((n, r) => n + r.changes.filter((c) => c.kind === "wikilink").length, 0)
+      const linkForm = results.reduce((n, r) => n + r.changes.filter((c) => c.kind === "link-form").length, 0)
+      const parts = [
+        legacy + failures.length > 0 ? `旧 [[…]] 記法が ${legacy + failures.length} 件` : "",
+        linkForm > 0 ? `先頭に \`/\`・\`./\` の付いた内部リンクが ${linkForm} 件` : "",
+      ].filter(Boolean)
+      console.error(`${parts.join("、")}残っている`)
+    }
     return left > 0 ? 1 : 0
   }
 
@@ -346,7 +452,7 @@ export function main(argv: readonly string[]): number {
 
   for (const r of results) {
     for (const s of r.skipped) {
-      console.log(`${basename(r.path)}:${s.line}: [[${s.ref}]] はコード表記なので据え置き`)
+      console.log(`${basename(r.path)}:${s.line}: ${s.text} はコード表記なので据え置き`)
     }
   }
 

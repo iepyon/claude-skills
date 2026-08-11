@@ -263,52 +263,69 @@ describe("parseInlineFormatting - links", () => {
 })
 
 /**
- * OKF v0.2 の内部リンク。**バンドル相対の絶対パスだけ**が内部リンクになる。
- * 判定の正本は `src/okf.ts` の `parseOkfLink`。
+ * OKF v0.2 の内部リンク。**デッキ名だけの相対パス**が書く形で、`./` と先頭 `/` も読む。
+ * 判定の正本は `src/okf.ts` の `parseOkfLink`。書く形を1つに絞るのは lint の仕事
+ * （`ontology.test.ts` の `link form`）。
  */
 describe("parseInlineFormatting - OKF internal links", () => {
   const linkOf = (text: string) => parseInlineFormatting(text)[0].link
 
-  it("should read /deck.md#slide as an internal link", () => {
-    expect(linkOf("[種ノート](/patterns-wiki.md#種ノート)")).toEqual({
+  it("should read deck.md#slide as an internal link", () => {
+    expect(linkOf("[種ノート](patterns-wiki.md#種ノート)")).toEqual({
       kind: "internal",
       ref: "patterns-wiki/種ノート",
       slide: "種ノート",
-      href: "/patterns-wiki.md#種ノート",
+      href: "patterns-wiki.md#種ノート",
     })
   })
 
-  it("should point a fragmentless /deck.md at the deck itself", () => {
-    expect(linkOf("[第2部](/patterns-wiki.md)")).toEqual({
+  it("should point a fragmentless deck.md at the deck itself", () => {
+    expect(linkOf("[第2部](patterns-wiki.md)")).toEqual({
       kind: "internal",
       ref: "patterns-wiki",
       slide: undefined,
-      href: "/patterns-wiki.md",
+      href: "patterns-wiki.md",
     })
   })
 
-  it("should slugify the deck path the same way the pipeline names decks", () => {
+  it("should also resolve the ./ and leading-/ spellings", () => {
+    // **読みを広く、書きを狭く。** ここで蹴ると `[x](a.md)` が外部リンクとして
+    // `target="_blank"` で描かれ、未解決リンクの一覧にも出ない（いちばん見つけにくい
+    // 壊れ方）。書く形を1つに絞るのは lint 側で、そちらは警告として見える
+    for (const href of ["./patterns-wiki.md#種ノート", "/patterns-wiki.md#種ノート"]) {
+      expect(linkOf(`[a](${href})`), href).toMatchObject({
+        kind: "internal",
+        ref: "patterns-wiki/種ノート",
+        slide: "種ノート",
+      })
+    }
+  })
+
+  it("should slugify the deck name the same way the pipeline names decks", () => {
     // pipeline.ts が `slugify(ファイル名)` で slug を作るので、リンク側も同じ規則で読む。
     // ここがずれると `My_Deck.md` へのリンクだけが黙って未解決になる
-    expect(linkOf("[a](/My_Deck.md#a)")).toMatchObject({ ref: "my-deck/a", slide: "a" })
+    expect(linkOf("[a](My_Deck.md#a)")).toMatchObject({ ref: "my-deck/a", slide: "a" })
   })
 
   it("should treat the OKF reserved files as external, not as decks", () => {
     // index.md / log.md は目録と更新履歴でスライドを持たない。内部リンクにすると
     // サイトの目録へのリンクが軒並み「未解決リンク」の一覧に出てしまう
-    expect(linkOf("[目録](/index.md)")).toEqual({ kind: "external", href: "/index.md" })
-    expect(linkOf("[履歴](/log.md)")).toEqual({ kind: "external", href: "/log.md" })
+    // 先頭 `/` の綴りでも予約ファイルは予約ファイル（パーサが受ける形が増えても変わらない）
+    for (const href of ["index.md", "log.md", "/index.md"]) {
+      expect(linkOf(`[a](${href})`), href).toEqual({ kind: "external", href })
+    }
   })
 
   it("should treat non-md bundle paths as external", () => {
-    expect(linkOf("[図](/diagrams/a.svg)")).toEqual({ kind: "external", href: "/diagrams/a.svg" })
+    expect(linkOf("[図](diagrams/a.svg)")).toEqual({ kind: "external", href: "diagrams/a.svg" })
   })
 
-  it("should not resolve relative paths or bare anchors", () => {
-    // OKF は相対パスも認めるが、この道具は絶対形1本に絞っている（okf.ts の説明を見よ）。
-    // 解決しない＝外部リンクとして出るので、lint が別に警告する
-    for (const href of ["./x.md", "../x.md", "x.md#a", "#種ノート"]) {
-      expect(linkOf(`[a](${href})`)).toEqual({ kind: "external", href })
+  it("should not resolve paths with a separator, or bare anchors", () => {
+    // 区切りを含む形はバンドルが平坦なので行き先が無い。裸の `#id` は解決に
+    // 「どのデッキに書かれたリンクか」が要るので、href だけを受ける契約を壊す。
+    // どちらも解決しない＝外部リンクとして出るので、lint が別に警告する
+    for (const href of ["sub/x.md", "../x.md", "/sub/x.md", "#種ノート"]) {
+      expect(linkOf(`[a](${href})`), href).toEqual({ kind: "external", href })
     }
   })
 
@@ -320,24 +337,24 @@ describe("parseInlineFormatting - OKF internal links", () => {
   })
 
   it("should count only the label, not the path", () => {
-    expect(stripInlineFormatting("[種ノート](/patterns-wiki.md#種ノート) を見よ")).toBe("種ノート を見よ")
+    expect(stripInlineFormatting("[種ノート](patterns-wiki.md#種ノート) を見よ")).toBe("種ノート を見よ")
   })
 
   it("should keep a link inside backticks literal", () => {
-    expect(parseInlineFormatting("`[a](/b.md#c)` と書く")).toEqual([
-      { text: "[a](/b.md#c)", code: true },
+    expect(parseInlineFormatting("`[a](b.md#c)` と書く")).toEqual([
+      { text: "[a](b.md#c)", code: true },
       { text: " と書く" },
     ])
   })
 
   it("should stay alive inside bold", () => {
     // B-44 の再発防止。1パスの交替は装飾が内側のリンクごと飲みやすい
-    expect(parseInlineFormatting("**結論は [原本](/m.md#原本) にある**")).toEqual([
+    expect(parseInlineFormatting("**結論は [原本](m.md#原本) にある**")).toEqual([
       { text: "結論は ", bold: true },
       {
         text: "原本",
         bold: true,
-        link: { kind: "internal", ref: "m/原本", slide: "原本", href: "/m.md#原本" },
+        link: { kind: "internal", ref: "m/原本", slide: "原本", href: "m.md#原本" },
       },
       { text: " にある", bold: true },
     ])
@@ -350,11 +367,11 @@ describe("stripInlineFormatting - links", () => {
   })
 
   it("should keep only the label of an internal link", () => {
-    expect(stripInlineFormatting("[はじめに](/intro.md#序) を読む")).toBe("はじめに を読む")
+    expect(stripInlineFormatting("[はじめに](intro.md#序) を読む")).toBe("はじめに を読む")
   })
 
   it("should strip links mixed with other decorations", () => {
-    expect(stripInlineFormatting("**太字**と[リンク](/a.md#b)と`code`")).toBe("太字とリンクとcode")
+    expect(stripInlineFormatting("**太字**と[リンク](a.md#b)と`code`")).toBe("太字とリンクとcode")
   })
 })
 
@@ -368,24 +385,24 @@ describe("stripInlineFormatting - links", () => {
  */
 describe("parseInlineFormatting - decorations nest", () => {
   it("should keep an internal link alive inside bold", () => {
-    expect(parseInlineFormatting("**主張から [原本](/m.md#原本と写し) まで**")).toEqual([
+    expect(parseInlineFormatting("**主張から [原本](m.md#原本と写し) まで**")).toEqual([
       { text: "主張から ", bold: true },
       {
         text: "原本",
         bold: true,
-        link: { kind: "internal", ref: "m/原本と写し", slide: "原本と写し", href: "/m.md#原本と写し" },
+        link: { kind: "internal", ref: "m/原本と写し", slide: "原本と写し", href: "m.md#原本と写し" },
       },
       { text: " まで", bold: true },
     ])
   })
 
   it("should keep an internal link alive inside italic", () => {
-    expect(parseInlineFormatting("*斜体の [接ぎ木](/p.md#接ぎ木)*")).toEqual([
+    expect(parseInlineFormatting("*斜体の [接ぎ木](p.md#接ぎ木)*")).toEqual([
       { text: "斜体の ", italic: true },
       {
         text: "接ぎ木",
         italic: true,
-        link: { kind: "internal", ref: "p/接ぎ木", slide: "接ぎ木", href: "/p.md#接ぎ木" },
+        link: { kind: "internal", ref: "p/接ぎ木", slide: "接ぎ木", href: "p.md#接ぎ木" },
       },
     ])
   })
@@ -399,8 +416,8 @@ describe("parseInlineFormatting - decorations nest", () => {
 
   it("should stack decorations instead of replacing them", () => {
     // code は交替の先頭なので中身を書式として解釈しない。装飾は積み上がる
-    expect(parseInlineFormatting("**`[種ノート](/p.md#種ノート)` は記法**")).toEqual([
-      { text: "[種ノート](/p.md#種ノート)", bold: true, code: true },
+    expect(parseInlineFormatting("**`[種ノート](p.md#種ノート)` は記法**")).toEqual([
+      { text: "[種ノート](p.md#種ノート)", bold: true, code: true },
       { text: " は記法", bold: true },
     ])
   })
@@ -424,8 +441,8 @@ describe("parseInlineFormatting - decorations nest", () => {
 
   it("should not recurse into a link label", () => {
     // ラベルは表示テキスト。`**` はリテラルとして残す（現時点の仕様）
-    expect(parseInlineFormatting("[**強調**](/a.md#id)")).toEqual([
-      { text: "**強調**", link: { kind: "internal", ref: "a/id", slide: "id", href: "/a.md#id" } },
+    expect(parseInlineFormatting("[**強調**](a.md#id)")).toEqual([
+      { text: "**強調**", link: { kind: "internal", ref: "a/id", slide: "id", href: "a.md#id" } },
     ])
   })
 })

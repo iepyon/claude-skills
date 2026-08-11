@@ -116,7 +116,7 @@ export class CodeDisplayLayout implements SlideLayout {
   }
 }
 
-// スライド ID。`/deck.md#id` の解決先であり、HTML の #hash でもある。
+// スライド ID。`deck.md#id` の解決先であり、HTML の #hash でもある。
 // props では任意にしておく（既存の new TitleSlide/new ContentSlide 呼び出しを
 // 全て書き換えずに済ませるため）。実際の採番は parser/slide-ids.ts が
 // ast-builder で一括して行うので、パイプラインを通れば必ず空でない値が入る。

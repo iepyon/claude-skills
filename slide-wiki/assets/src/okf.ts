@@ -55,7 +55,7 @@ export const deckSlug = (deckName: string): string => slugify(deckName) || "deck
 /**
  * デッキ slug の衝突を見つける。1件につき1つの誤りの文面を返す（無ければ空）。
  *
- * バンドルの中で slug が重なると、リンクの `/デッキ名.md` がどちらを指すか決まらない。
+ * バンドルの中で slug が重なると、リンクの `デッキ名.md` がどちらを指すか決まらない。
  * **一意化して先へ進んではいけない** — 連番を振ると、どのファイル名にも `order.yaml` にも
  * 現れない名前（`my-deck-2`）でしか指せないデッキができ、しかも exit 0 で通る。
  * デッキはファイルなので書き手が改名できる（一意化するしかないスライド ID とはそこが違う）。
@@ -84,34 +84,46 @@ export function findDeckSlugCollisions(
 }
 
 /**
- * 内部リンクの形。**バンドル相対の絶対パスだけ**を受ける（SPEC.md §6.1 の推奨形）。
+ * 内部リンクの形。読むのは `デッキ名.md#スライドID` と、先頭に `/`・`./` の付いた綴り。
+ * パス区切りを含む形（`sub/x.md` `../x.md`）と裸の `#スライドID` は受けない
+ * （捕獲群が `/` を含まないことで、前者を型の側から落としてある）。
  *
- * OKF は相対パス（`./x.md`）も合法としているが、この道具は解決しない。
- * 形を1つに絞ると「どのデッキから見た参照か」が要らなくなり、
- * 解決が「表を1回引く」だけになる（曖昧という失敗モードが消える）。
- * 絞ったのはこちらの都合なので、OKF の規定ではないことを ontology.yaml に書いてある。
+ * **宣言は ontology.yaml の `inline` 節の `internal-link`。** 書く形を1つに絞る理由と、
+ * 読みを広く取る理由はそちらが持つ。ここに写すと規則が2箇所になる。
+ * 絞りを留めるのは lint の `link-form` で、判定には下の `canonicalHref` を使う。
  *
  * `#スライドID` は OKF の規定外で、この道具の拡張（1ファイルに何十枚も入るため）。
  */
-const OKF_INTERNAL_LINK = /^\/([^#?\s]*\.md)(?:#(\S*))?$/
+const OKF_INTERNAL_LINK = /^(?:\/|\.\/)?([^#?\s/]+\.md)(?:#(\S*))?$/
 
 export interface OkfLinkTarget {
   /** サイト全体で一意な参照。`resolveRef` が引く鍵 */
   readonly ref: string
   /** デッキ内のスライド ID。単体 HTML と PPTX はこちらを引く。省略時はデッキ先頭 */
   readonly slide?: string
+  /**
+   * 同じ行き先を指す**書いてよい綴り**。`href` がこれと違えば、読めてはいるが
+   * 書く形から外れている（先頭に `/` か `./` が付いている）。
+   *
+   * **これを返すのは、lint に「どの接頭辞を許しているか」を持たせないため。**
+   * lint が接頭辞の正規表現を自分で持つと、ここが受ける綴りを増やしたときに
+   * 「パーサは読むのに lint は黙る」が起きる — サイトでは当たり、GitHub でだけ
+   * 折れる綴りが、警告も未解決リンクの一覧も通らずにデッキへ入る。
+   */
+  readonly canonicalHref: string
 }
 
 /**
  * markdown リンクの href を内部リンクとして読む。内部リンクでなければ null。
  *
- * デッキ slug は `deckSlug(拡張子を除いたパス)` — サイトを組む側が使うのと**同じ関数**。
- * したがって `/patterns-wiki.md#種ノート` は `patterns-wiki/種ノート` を指す。
+ * デッキ slug は `deckSlug(拡張子を除いたファイル名)` — サイトを組む側が使うのと**同じ関数**。
+ * したがって `patterns-wiki.md#種ノート` は `patterns-wiki/種ノート` を指す。
  * 参照側とサイト側で別々に slug を綴ると、書いたリンクが当たらない形の食い違いになる。
+ * 一致は `selfcheck` が `okf.deck-slug.examples` を両側に通して留める。
  *
- * サブディレクトリ（`/sub/deck.md`）はパスまるごとを slug 化するので
- * `sub-deck` になり、平坦なディレクトリしか読まない現状では未解決として報告される。
- * ここで basename だけを採ると、同名の最上位デッキに**黙って当たって**しまう。
+ * **相対の解決に元ドキュメントの位置が要らないのは、バンドルが平坦だからである**
+ * （→ ontology.yaml の `okf` 節）。デッキは全部が兄弟なので、`x.md` の行き先は
+ * どのデッキから書かれても同じ1枚に決まる。
  */
 export function parseOkfLink(href: string): OkfLinkTarget | null {
   const match = OKF_INTERNAL_LINK.exec(href)
@@ -124,6 +136,39 @@ export function parseOkfLink(href: string): OkfLinkTarget | null {
 
   const deck = deckSlug(path.replace(/\.md$/, ""))
 
-  const slide = match[2]
-  return slide ? { ref: `${deck}/${slide}`, slide } : { ref: deck }
+  // `undefined` はフラグメント無し、`""` は `#` だけ。canonicalHref は接頭辞だけを
+  // 落として綴りを写すので、この2つを畳むと `x.md#` が「書く形から外れている」に化ける
+  const fragment = match[2]
+  const canonicalHref = fragment === undefined ? path : `${path}#${fragment}`
+
+  const slide = fragment || undefined
+  return slide ? { ref: `${deck}/${slide}`, slide, canonicalHref } : { ref: deck, canonicalHref }
+}
+
+/**
+ * md のリンクを本文から拾う走査。捕獲群は href だけ。
+ *
+ * **href の綴りを扱う道具はここを通す。** 以前は `lint.ts` と移行ツールが同じ形を
+ * 別々に持っていた。行き先の判定（`parseOkfLink`）を1箇所に寄せても、**どれをリンクと
+ * 見なすか**が割れていれば同じことが起きる — 一方だけが拾う書き方が、もう一方の
+ * 検査や書き換えをすり抜ける。
+ *
+ * `[^()\s]+` は `inline-formatter.ts` の `mdHref` と同じ切り方。丸括弧と空白を
+ * 含む href はパーサがリンクと読まないので、こちらも拾わない。
+ *
+ * `matchAll` は仕様上この正規表現を複製してから回すので、`g` 付きを
+ * モジュール直下に置いても `lastIndex` は共有されない。
+ */
+export const MD_LINK = /\[[^\[\]]+?\]\(([^()\s]+)\)/g
+
+/**
+ * 本文中の href の位置。`MD_LINK` の一致から、href だけの範囲を返す。
+ *
+ * **末尾から数える。** ラベルは `[^\[\]]+?` なので丸括弧を含みうる
+ * （`[a(b](x.md)`）、`indexOf("(")` で前から探すとラベルの中の括弧に当たる。
+ * href は必ず閉じ括弧の直前にあるので、そこから長さを引くほうが常に正しい。
+ */
+export function hrefRangeOf(match: RegExpExecArray | RegExpMatchArray): { start: number; end: number } {
+  const end = match.index! + match[0].length - 1 // 閉じ `)` の直前
+  return { start: end - match[1].length, end }
 }

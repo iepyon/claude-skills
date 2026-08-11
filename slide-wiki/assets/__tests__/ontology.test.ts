@@ -408,16 +408,21 @@ describe("generated docs are fresh", () => {
 /**
  * リンクの書き方の検査。
  *
- * 守っているのは「**黙って通ってしまう**間違いを黙らせない」ことだけ。
- * とくに `./x.md` は外部リンクとして `target="_blank"` で描かれるので、
- * 見た目はリンクのままクリックすると別タブで存在しないパスを開く —
- * 未解決リンクの一覧にも出ない（内部リンクとして解決を試みてすらいない）。
+ * 守っているのは「**黙って通ってしまう**間違いを黙らせない」ことで、種類が2つある。
+ *
+ * `sub/x.md` `#か` は外部リンクとして `target="_blank"` で描かれるので、見た目は
+ * リンクのままクリックすると別タブで存在しないパスを開く — 未解決リンクの一覧にも
+ * 出ない（内部リンクとして解決を試みてすらいない）。
+ *
+ * 一方 `/x.md` `./x.md` は**パーサが解決するのでサイトでは当たる**。折れるのは生の md を
+ * github.com で開いたときだけなので、サイトを目で追っても気づけない。lint しか見つけられない。
  */
 describe("link form", () => {
   const deck = (body: string): string =>
     `---\ntype: deck\n---\n\n# あ\n\n---\n\n## か\n<!--id:か-->\n### さ\n${body}\n`
 
   const checks = (body: string): string[] => lintSource(deck(body)).map((d) => d.check)
+  const messages = (body: string): string => lintSource(deck(body)).map((d) => d.message).join("\n")
 
   it("旧 [[…]] 記法を error にする", () => {
     expect(lintSource(deck("見よ [[か]]"))).toContainEqual(
@@ -425,14 +430,25 @@ describe("link form", () => {
     )
   })
 
+  // **2つの診断は文面で見分ける。** どちらも check は `link-form` なので、
+  // check だけを見ていると「解決しない」と「書く形から外れている」が入れ替わっても
+  // 気づけない（読み手に見せる文面だけが違い、そこがこの検査の値打ちである）
   it("内部リンクにならない md へのリンクを報せる", () => {
-    for (const href of ["./b.md#c", "../b.md", "b.md#c", "#か"]) {
+    for (const href of ["sub/b.md#c", "../b.md", "/sub/b.md", "#か"]) {
       expect(checks(`見よ [x](${href})`), href).toContain("link-form")
+      expect(messages(`見よ [x](${href})`), href).toMatch(/内部リンクにならない/)
     }
   })
 
+  it("書く形から外れた綴りには、正しい綴りを見せて報せる", () => {
+    // 断り書き: フラグメントの有無はこの検査に効かない（`canonicalHref` が写す）ので
+    // 2形で足りる。効くのは先頭の `/` と `./` の2通りだけである
+    expect(messages("見よ [x](/a.md#か)")).toContain("`a.md#か` と書く")
+    expect(messages("見よ [x](./a.md)")).toContain("`a.md` と書く")
+  })
+
   it("正しい内部リンクと外部リンクには何も言わない", () => {
-    for (const href of ["/a.md#か", "/a.md", "https://example.com", "mailto:a@example.com"]) {
+    for (const href of ["a.md#か", "a.md", "https://example.com", "mailto:a@example.com"]) {
       expect(checks(`見よ [x](${href})`), href).not.toContain("link-form")
     }
   })
