@@ -29,7 +29,9 @@
 #    （WikiPattern の図解は ```pattern-diagram フェンスから `![…](….svg)` へ移した）
 # 3: デッキが自分について名乗る frontmatter を足した。冒頭の `---` を条件つきで
 #    スライド区切りから外し、YAML のメタとして読む（B-23）
-version: 3
+# 4: 内部リンクを OKF v0.2 のバンドル相対 markdown リンクに揃え、`[[…]]` を廃止した。
+#    書き方が1つになったぶん、解決の4段階と「曖昧」という失敗モードが消えている
+version: 4
 
 # ── md の骨格要素 ───────────────────────────────────────────────────
 # 行頭記号で認識される構造。ここに無い記法はすべて body（＝本文テキスト）に落ちる。
@@ -91,8 +93,14 @@ frontmatter:
     ——「このデッキのタグ」であって「このスライドのタグ」ではないため。
 
     `title` は本文からの派生の写しで、**表示名の正本は今までどおり1枚目の見出し**。
-    外部ツール（Obsidian の Properties・GitHub の表）に読ませるために置くだけなので、
+    バンドルを読む側（OKF の消費者・GitHub の表）に読ませるために置くだけなので、
     食い違ったら直すのは frontmatter のほう。
+
+    **キーの名前は OKF v0.2 に合わせてある**（`type` `title` `description` `tags`
+    `resource` `status` `sources` `verified` `generated` `stale_after`）。
+    `category` `author` `created` `updated` `theme` `site_title` は OKF に無い
+    こちらの拡張で、OKF は「知らないキーは保存して拒まない」と定めているので
+    バンドルとしての適合は保たれる。読む側に意味が届くのは前者だけ、と思って書く。
 
     人が md を開いたとき本文が下がるので、短く保つ（description は1行、tags は5個まで）。
 
@@ -119,10 +127,13 @@ frontmatter:
   title-matches-heading: warning # title と1枚目の見出しの食い違い
   fields:
     - name: type
-      level: recommended
+      level: required
       kind: text
       vocabulary: deck-types
-      description: このファイルが何であるか。外部ツールが種別で絞るのに使う。
+      description: >-
+        このファイルが何であるか。**OKF が唯一必須とするキー**（SPEC.md §4.1）で、
+        読む側は種別で振り分ける。値は中央登録制ではないので、未知の型は
+        「ふつうの概念」として扱われる。
       example: deck
     - name: title
       level: recommended
@@ -135,6 +146,13 @@ frontmatter:
       effect: search
       description: 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。
       example: 人が書き、AI が手入れする。育つ知識の作り方
+    - name: resource
+      level: optional
+      kind: uri
+      description: >-
+        このデッキが説明している実体の URI（OKF の推奨キー）。
+        考えを書いたデッキには無い — 実在の資産を説明するときだけ名乗る。
+      example: https://example.com/docs/wiki
     - name: tags
       level: recommended
       kind: list-of-text
@@ -182,15 +200,15 @@ frontmatter:
       kind: list-of-objects
       description: 誰がいつ内容を確かめたか。出典の照合結果を残す場所。
       sub-fields:
-        - {name: by, required: true, kind: actor, description: "human / ai:<model> / tool:<name>"}
-        - {name: at, required: true, kind: date, description: 確かめた日}
+        - {name: by, required: true, kind: actor, description: "human:<id> / <producer>/<version> / process:<id>"}
+        - {name: at, required: true, kind: timestamp, description: 確かめた日時}
     - name: generated
       level: optional
       kind: object
       description: 機械が作ったデッキであることの表明。
       sub-fields:
-        - {name: by, required: true, kind: actor, description: "ai:<model> / tool:<name>"}
-        - {name: at, required: false, kind: date, description: 生成日}
+        - {name: by, required: true, kind: actor, description: "<producer>/<version> / process:<id> / human:<id>"}
+        - {name: at, required: false, kind: timestamp, description: 生成日時}
     - name: stale_after
       level: optional
       kind: date
@@ -222,7 +240,11 @@ frontmatter:
   # 直したつもりで何も変わらない（selfcheck が未使用を落とす）。
   value-patterns:
     date: "^\\d{4}-\\d{2}-\\d{2}$"
-    actor: "^(human|ai:[\\w.-]+|tool:[\\w.-]+)$"
+    # OKF の generated.at / verified[].at は RFC3339。日付だけの略記も受ける
+    timestamp: "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2}))?$"
+    # OKF §7 の actor 表記。人は `human:`、自動処理は `process:`、
+    # 作り手は `<producer>/<version>`（信頼の段は `human:` の有無で決まるので、接頭辞に意味がある）
+    actor: "^(human:[\\w.-]+|process:[\\w.-]+|[\\w.-]+/[\\w.-]+)$"
     # 相対パスも URL も受ける。ここで見たいのは「地の文が入っていないこと」だけ
     uri: "^\\S+$"
 
@@ -235,19 +257,19 @@ annotations:
     pattern: '^<!--id:(.+?)-->$'
     applies-to: [content-slide, title-slide]
     cardinality: one
-    description: スライドの ID。`[[…]]` の解決先であり HTML の `#hash` でもある。
+    description: スライドの ID。`/デッキ名.md#…` の解決先であり HTML の `#hash` でもある。
     guidance: |
       省略するとスライドタイトルの slug を採り、衝突したら連番（`-2`）を付ける。
       採番は parser/slide-ids.ts が一括で行う。
 
       **明示した ID は予約である。** 他のスライドの見出しから作られた自動 slug より強く、
-      同じ綴りを欲しがった見出しのほうが連番に回る。したがって `[[…]]` の行き先は
+      同じ綴りを欲しがった見出しのほうが連番に回る。したがってリンクの行き先は
       md の並び順で変わらない。
 
       **明示 ID 同士がぶつかった場合は一意化を続ける**（重複するとリンクが解決できない）。
       どちらが間違っているかは機械には決められないので、lint の `slide-id` が
       両方の行番号を報告する（`--strict` で終了コード 1）。折れたリンクと違い
-      `[[…]]` は解決してしまう — 常に最初の1枚へ — ので、報告が無いと気づけない。
+      リンクは解決してしまう — 常に最初の1枚へ — ので、報告が無いと気づけない。
     example: "<!--id:seed-->"
   - name: icon
     syntax: "<!--icon:mi:<name>-->" # または <!--icon:<emoji>-->
@@ -278,7 +300,7 @@ annotations:
       本文と同じ大きさで中央に置く。`source` は主張がどこから来たかの**典拠**で、
       本文の1/3以下の大きさで下端に伏せる（読まずに飛ばせることが要件）。
 
-      **`[[…]]` を書いてもリンクにならない。** 出典は参照ではないので、
+      **リンクを書いてもリンクにならない。** 出典は参照ではないので、
       バックリンクのグラフに載せない（載せると「関連」と「典拠」が混ざり、
       文献名がパターンの隣人として並ぶ）。
 
@@ -579,7 +601,7 @@ layouts:
     description: テーブル表示（ディレクティブの後にパイプ区切りの表を置く）
     guidance: |
       ディレクティブの後にパイプ区切りの表を置く。`| --- |` の区切り行が必要。
-      セル内のテキストはプラグインが直接描くので `[[…]]` は効かない（BACKLOG B-22）。
+      セル内のテキストはプラグインが直接描くのでリンクは効かない（BACKLOG B-22）。
     annotations: [id, takeaway]
     leading-body: パイプ区切りのテーブル本体。
     slots: []
@@ -618,7 +640,7 @@ layouts:
     directives:
       - syntax: "<!--agenda-->"
     description: TOC/アジェンダ
-    guidance: 項目は `[[…]]` でリンクにでき、Wiki の目次として機能する。
+    guidance: 項目はリンクにでき、Wiki の目次として機能する。
     annotations: [id]
     leading-body: サブタイトル（省略可）。
     slots:
@@ -815,12 +837,12 @@ layouts:
       ### そこで
       **一文でよいから置く。** 見出しだけでもよい。
       書きかけのままでも、読み返せれば資産になる。
-      育てるのは後の自分に。育て方は [[育つ見出し]]。
+      育てるのは後の自分に。育て方は [育つ見出し](/patterns-wiki.md#育つ見出し)。
 
       ![種ノート](diagrams/patterns-wiki/種ノート.svg)
 
       <!--takeaway-->
-      関連: [[一枚一義]]
+      関連: [一枚一義](/patterns-wiki.md#一枚一義)
 
 # ── 語彙 ───────────────────────────────────────────────────────────
 # slot の heading: vocabulary が参照する語彙。
@@ -1055,17 +1077,33 @@ inline:
   effective-in: [section-heading, section-body, takeaway]
   not-effective-in-note: |
     プラグインがテキストを直接描く箇所（テーブルのセル・引用本文・ステップのラベル等）では
-    `[[…]]` はそのままの文字として出る（BACKLOG B-22）。
+    リンクはそのままの文字として出る（BACKLOG B-22）。
   syntaxes:
     - {name: bold, syntax: "**text**", description: 太字}
     - {name: italic, syntax: "*text*", description: 斜体}
     - {name: code, syntax: "`text`", description: インラインコード}
     - {name: external-link, syntax: "[ラベル](https://example.com)", counts-chars: label,
        description: "外部リンク。HTML は `<a>`、PPTX はハイパーリンク。"}
-    - {name: internal-link, syntax: "[[slide-id]]", counts-chars: label,
-       description: 内部リンク。表示テキストは ID そのまま。解決できなければ素のテキストになる。}
-    - {name: internal-link-labeled, syntax: "[[slide-id|表示テキスト]]", counts-chars: label,
-       description: 表示テキストを指定した内部リンク。}
+    - name: internal-link
+      syntax: "[ラベル](/デッキ名.md#スライドID)"
+      counts-chars: label
+      description: >-
+        内部リンク。**バンドル相対の絶対パスだけ**を内部リンクとして解決する
+        （OKF v0.2 §6.1 の推奨形）。同じデッキの中でも同じ形で書く。
+        フラグメントを省くとそのデッキの1枚目に着く。解決できなければ未解決として報告する。
+      guidance: |
+        **相対パス（`./x.md`）と裸の `#id` は内部リンクにしない。** OKF はどちらも
+        合法としているので、これは仕様ではなくこの道具の狭め方である。
+        絞る理由は、形が1つなら「どのデッキから見た参照か」が要らなくなり、
+        解決が表を1回引くだけになるため — 候補が2つあって決められない、
+        という失敗モードが原理的に消える。外部リンクとして描かれるので、
+        書いたつもりが繋がっていないことには気づける。
+
+        `#スライドID` は OKF の規定外で、この道具の拡張。OKF は1ファイル=1概念だが、
+        こちらは1ファイルに何十枚も入るので、ファイルだけでは行き先を指せない。
+
+        `index.md` と `log.md` は OKF の予約ファイル（→ okf 節）なのでデッキではなく、
+        指しても外部リンクになる。
 
 # ── 制限 ───────────────────────────────────────────────────────────
 limits:

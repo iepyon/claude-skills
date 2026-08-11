@@ -69,7 +69,7 @@ describe("slide id assignment", () => {
 
   it("should let an explicit id win over another slide's automatic slug", async () => {
     // 表紙の見出しが先に `設計` を取ると、書き手が名指した本文スライドが `設計-2` に落ち、
-    // [[設計]] は表紙に着く。明示 ID は予約なので、並び順で勝敗が変わってはいけない
+    // #設計 は表紙に着く。明示 ID は予約なので、並び順で勝敗が変わってはいけない
     const markdown = "# 設計\n\n---\n\n## 設計の考え方\n<!--id:設計-->\n### H\nbody"
     expect(await ids(markdown)).toEqual(["設計-2", "設計"])
   })

@@ -42,12 +42,20 @@ function richTextToHtml(runs: InlineTextRun[]): string {
       html = `<em>${html}</em>`
     }
     // リンクは最も外側で包む（装飾ごとクリック可能にする）。
-    // internal は #<target> のアンカーなので、Wiki ビューアが無い単体 HTML でも
+    // internal は #<slide> のアンカーなので、Wiki ビューアが無い単体 HTML でも
     // ただのページ内リンクとして無害に落ちる。
+    //
+    // 属性が2つあるのは、読む側の索引の粒度が違うため（InlineLink の説明を見よ）:
+    //   data-wikilink  … サイト全体の参照。Wiki ビューアが解決表を引く鍵
+    //   data-slide-ref … デッキ内のスライド ID。単体 HTML がスライド番号を引く鍵
     if (run.link) {
-      html = run.link.kind === "external"
-        ? `<a class="ext-link" href="${escapeAttr(run.link.href)}" target="_blank" rel="noopener noreferrer">${html}</a>`
-        : `<a class="wikilink" href="#${escapeAttr(run.link.target)}" data-wikilink="${escapeAttr(run.link.target)}">${html}</a>`
+      if (run.link.kind === "external") {
+        html = `<a class="ext-link" href="${escapeAttr(run.link.href)}" target="_blank" rel="noopener noreferrer">${html}</a>`
+      } else {
+        const { ref, slide } = run.link
+        const slideRef = slide === undefined ? "" : ` data-slide-ref="${escapeAttr(slide)}"`
+        html = `<a class="wikilink" href="#${escapeAttr(slide ?? ref)}" data-wikilink="${escapeAttr(ref)}"${slideRef}>${html}</a>`
+      }
     }
 
     return html

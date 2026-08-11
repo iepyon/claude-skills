@@ -46,6 +46,8 @@ npx tsx src/cli.ts --wiki doc/wiki _site/index.html    # Wiki サイト生成
 npx tsx src/cli.ts --lint [--strict] doc/Spec.md doc/wiki  # 宣言に照らして検査
 npx tsx src/ontology/selfcheck.ts                 # 宣言の自己点検
 npx tsx src/tools/gen-ontology-doc.ts [--check]   # ontology.md / SKILL.md 生成領域
+npx tsx src/tools/migrate-wikilinks.ts [--dry-run|--check] doc/wiki  # 旧 [[…]] の一括変換
+npx tsx src/tools/gen-okf-index.ts [--check]      # バンドルの index.md / log.md
 ```
 
 ## Code Reading Order
@@ -90,7 +92,7 @@ src/parser/
 ├── builder-state.ts    ビルダーの状態管理
 ├── slide-converter.ts  RawSlide → Slide 変換
 ├── block-formatter.ts  body → Paragraph[] 変換 (箇条書き・番号付きリストの解釈)
-├── inline-formatter.ts インライン装飾 (**bold**, *italic*, `code`, [[link]], [x](url)) → InlineTextRun[]
+├── inline-formatter.ts インライン装飾 (**bold**, *italic*, `code`, [ラベル](url)) → InlineTextRun[]
 ├── slide-ids.ts        slug 生成 + スライド ID の一括採番 (ast-builder から呼ぶ)
 └── handlers/           トークンハンドラ (structural, layout-directives, inline, body-text)
 ```
@@ -169,8 +171,15 @@ src/tools/
 ├── pptx-inspector.ts  PPTX XML → JSON 抽出
 ├── inventory-diff.ts  2つのインベントリの差分
 ├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
-└── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
+├── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
+├── migrate-wikilinks.ts  旧 `[[…]]` を OKF のバンドル相対リンクに書き換える
+└── gen-okf-index.ts   バンドルの目録 `index.md` と更新履歴 `log.md` を生成する
 ```
+
+**移行ツールはパーサに依存しない。** `migrate-wikilinks.ts` は `[[…]]` を自分の
+正規表現で拾い、解決に要るのはスライド ID の索引だけなので、パーサから旧記法を
+落としたあとも動く。他人のデッキを受け取るスキルなので、破壊的変更の移行路は
+同梱しておく（`--check` は「旧記法が紛れ込んでいないか」の恒常的な見張りにもなる）。
 
 **図形の名前は数えずに宣言する。** `--verify` が突き合わせる図形のキーは
 `src/shape-keys.ts` が唯一の語彙で、PPTX は pptxgenjs の `objectName`
@@ -203,6 +212,8 @@ src/shape-keys.ts   3者比較で図形を指す名前 (レンダラとツール
 src/text-lines.ts   「1行 = 1段落」の切り出し (レンダラとツールが共有)
 src/text-style.ts   中央寄せ・コードのフォントの判定 (レンダラとツールが共有)
 src/entities.ts     実体参照のデコード (レンダラとツールが共有)
+src/slug.ts         見出し → ID の綴り (デッキ slug と #fragment が同じ規則で作られる保証)
+src/okf.ts          OKF の予約ファイル名と内部リンクの形 (パーサ・CLI・lint・生成器が共有)
 src/deck-order.ts   `--wiki`/`--lint` にディレクトリを渡したときのデッキの並び (order.yaml の宣言)
 src/assets.ts       `![…](….svg)` の参照先の読み込み (**デッキ相対のパスを読むのはここだけ**)
 ```
@@ -231,7 +242,7 @@ md の記法そのもの（区切り・要素・ディレクティブ・語彙�
 - スライド ID の採番: `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
 - HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` と `data-default-font-name` は `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
-- Wiki のデッキの並び順: ディレクトリ直下の `order.yaml` の `decks:`（拡張子なしのファイル名）が正本。無ければファイル名順。**並び替えのために md をリネームしない** — ファイル名はデッキの slug、つまり `[[deck/slide]]` のリンク先でもあるので、リネームするとサイト中のリンクが折れる。宣言に無いデッキは末尾に付き（追記忘れで消さないため）、宣言にあって存在しないデッキ名はビルドを止める
+- Wiki のデッキの並び順: ディレクトリ直下の `order.yaml` の `decks:`（拡張子なしのファイル名）が正本。無ければファイル名順。**並び替えのために md をリネームしない** — ファイル名はデッキの slug、つまり `/デッキ名.md#…` のリンク先そのものなので、リネームするとサイト中のリンクが折れる。宣言に無いデッキは末尾に付き（追記忘れで消さないため）、宣言にあって存在しないデッキ名はビルドを止める。`index.md` / `log.md` は OKF の予約名なのでデッキとして読み込まない（`src/okf.ts` が正本）
 - 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）。**枠のほうを図の縦横比に合わせる** — `svgAspectRatio()` が `viewBox` から比を返し、wiki-pattern はその比で下敷きを組んで縦中央に置く。枠を図と違う比で置くと、HTML は `preserveAspectRatio` で図を縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に崩れるので、生成物を見比べても気づきにくい）
 - 図解に `<rect>` / `<line>` / `<circle>` / `<polygon>` / `<polyline>` を残さない（`wiki-pattern.test.ts` が止める）。定規で引いた線の図は、本文が道すじと書いても「これが唯一の実装」に読まれる — サイトが載せている `ラフで出す` を、図の側でも守るため。崩すのは `npx tsx src/tools/roughen-svg.ts`（揺れはファイル名と要素の並び順から決まるので、走らせ直しても同じ絵が出る。`<path>` と `<text>` には触らないので**冪等**）。フィルタで粗さを出せないのは `<defs>` と `id=` が禁じられているからで、揺れは座標に焼き付けるしかない
 
@@ -321,6 +332,8 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
 | `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
 | `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査＝実寸・禁止要素・定規で引いた線) |
+| `migrate-wikilinks.test.ts` | tools/migrate-wikilinks.ts (旧記法の一括変換・表示テキストの不変・コード表記の据え置き) |
+| `okf-conformance.test.ts` | `doc/wiki/` が OKF v0.2 に適合していること (§11 の3条件・§8 目録・§9 履歴・§6 リンク) |
 | `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
 | `workflows.test.ts` | `.github/workflows/` の宣言 (公開が PR で走らないこと・concurrency group が重ならないこと) |
 | `pptx-inspector.test.ts` | tools/pptx-inspector.ts |

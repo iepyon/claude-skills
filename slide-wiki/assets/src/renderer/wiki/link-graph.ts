@@ -3,22 +3,29 @@ import { layoutSlide, TextBox } from "../layout/index.js"
 import { WikiEntry, BrokenLink } from "./types.js"
 
 /**
- * スライドが張っている内部リンクの参照先（生の [[ref]] 文字列）を集める。
+ * スライドが張っている内部リンクの参照先（`deck/slide` の文字列）を集める。
  *
  * layoutSlide を呼ぶのは、リンクが InlineTextRun に載るのがレイアウト段だから。
  * 結果として1スライドにつき layoutSlide が2回走る（グラフ用と描画用）。
  * 数百枚ならミリ秒の世界なので今は許容する。効いてきたら描画側で計算した
  * LayoutResult をここへ渡す形にすればよい（局所的な変更で済む）。
  */
-export function collectRefs(entry: WikiEntry, theme: Theme): string[] {
-  const refs: string[] = []
+export interface CollectedRef {
+  /** 解決の鍵 */
+  readonly ref: string
+  /** 原文の綴り。折れていたときに書き手へ見せるのはこちら */
+  readonly href: string
+}
+
+export function collectRefs(entry: WikiEntry, theme: Theme): CollectedRef[] {
+  const refs: CollectedRef[] = []
 
   const scanBox = (box: TextBox): void => {
     const runs = box.paragraphs
       ? box.paragraphs.flatMap((para) => para.runs)
       : box.richText ?? []
     for (const run of runs) {
-      if (run.link?.kind === "internal") refs.push(run.link.target)
+      if (run.link?.kind === "internal") refs.push({ ref: run.link.ref, href: run.link.href })
     }
   }
 
@@ -27,30 +34,42 @@ export function collectRefs(entry: WikiEntry, theme: Theme): string[] {
 }
 
 /**
- * [[ref]] を globalId に解決する。書き手が短く書けることを優先した4段階:
- *
- * 1. `deck/slide` 形式でそのまま当たる（デッキをまたぐ明示的な参照）
- * 2. 自デッキ内の `slide`（最も普通のケース。書き手は短い ID だけ書けばよい）
- * 3. デッキを問わず localId が一致するものがサイト全体でちょうど1つ
- * 4. それ以外は未解決（見つからない、または曖昧）
- *
- * 3 で複数一致したときに黙って先頭を選ばないのは、デッキが増えた瞬間に
- * リンク先が変わる壊れ方をするため。曖昧は曖昧として報告する。
+ * 参照を解決するための索引。**3箇所（グラフ・解決表・移行ツール）が同じものを要る**ので、
+ * 組み立てを1つにまとめてある（以前は同じ5行が2箇所に写されていた）。
  */
-export function resolveRef(
-  ref: string,
-  fromDeckSlug: string,
-  byId: ReadonlyMap<string, WikiEntry>,
-  byLocalId: ReadonlyMap<string, readonly WikiEntry[]>
-): { globalId: string } | { reason: "not-found" | "ambiguous" } {
-  if (byId.has(ref)) return { globalId: ref }
+export interface RefIndex {
+  readonly byId: ReadonlyMap<string, WikiEntry>
+  /** デッキ slug → そのデッキの1枚目の globalId。フラグメント無しのリンクの行き先 */
+  readonly firstOfDeck: ReadonlyMap<string, string>
+}
 
-  const sameDeck = `${fromDeckSlug}/${ref}`
-  if (byId.has(sameDeck)) return { globalId: sameDeck }
+export function buildRefIndex(entries: readonly WikiEntry[], byId: ReadonlyMap<string, WikiEntry>): RefIndex {
+  const firstOfDeck = new Map<string, string>()
+  for (const entry of entries) {
+    if (!firstOfDeck.has(entry.deckSlug)) firstOfDeck.set(entry.deckSlug, entry.globalId)
+  }
+  return { byId, firstOfDeck }
+}
 
-  const candidates = byLocalId.get(ref) ?? []
-  if (candidates.length === 1) return { globalId: candidates[0].globalId }
-  if (candidates.length > 1) return { reason: "ambiguous" }
+/**
+ * 参照を globalId に解決する。**表を1回引くだけ。**
+ *
+ * 1. `deck/slide` — OKF リンク `/deck.md#slide` が作る形
+ * 2. `deck` だけ — フラグメント無しの `/deck.md`。そのデッキの1枚目に着く
+ * 3. それ以外は未解決
+ *
+ * **かつては4段階あった**（自デッキ内・サイト全体で一意、を探しに行った）。
+ * 短い参照 `[[種ノート]]` を許していたので、どのデッキから見た参照かで
+ * 行き先が変わり、「候補が2つあって決められない」という失敗モードがあった。
+ * リンクが常にファイルを名指しする形になったので、その段も曖昧も消えている
+ * — **書き方を1つに絞ると、解決規則のほうが要らなくなる。**
+ */
+export function resolveRef(ref: string, index: RefIndex): { globalId: string } | { reason: "not-found" } {
+  if (index.byId.has(ref)) return { globalId: ref }
+
+  const deckHead = index.firstOfDeck.get(ref)
+  if (deckHead) return { globalId: deckHead }
+
   return { reason: "not-found" }
 }
 
@@ -61,12 +80,7 @@ export interface LinkGraph {
 }
 
 export function buildLinkGraph(entries: readonly WikiEntry[], byId: ReadonlyMap<string, WikiEntry>, theme: Theme): LinkGraph {
-  const byLocalId = new Map<string, WikiEntry[]>()
-  for (const entry of entries) {
-    const bucket = byLocalId.get(entry.localId)
-    if (bucket) bucket.push(entry)
-    else byLocalId.set(entry.localId, [entry])
-  }
+  const index = buildRefIndex(entries, byId)
 
   const forward = new Map<string, string[]>()
   const backlinks = new Map<string, string[]>()
@@ -75,11 +89,11 @@ export function buildLinkGraph(entries: readonly WikiEntry[], byId: ReadonlyMap<
   for (const entry of entries) {
     const targets: string[] = []
 
-    for (const ref of collectRefs(entry, theme)) {
-      const resolved = resolveRef(ref, entry.deckSlug, byId, byLocalId)
+    for (const { ref, href } of collectRefs(entry, theme)) {
+      const resolved = resolveRef(ref, index)
 
       if ("reason" in resolved) {
-        broken.push({ fromId: entry.globalId, ref, reason: resolved.reason })
+        broken.push({ fromId: entry.globalId, ref, href, reason: resolved.reason })
         continue
       }
       // 自分自身へのリンクはグラフに入れない（バックリンク欄が自分で埋まるのを防ぐ）
@@ -112,17 +126,12 @@ export function buildResolutionTable(
   byId: ReadonlyMap<string, WikiEntry>,
   theme: Theme
 ): Record<string, Record<string, string>> {
-  const byLocalId = new Map<string, WikiEntry[]>()
-  for (const entry of entries) {
-    const bucket = byLocalId.get(entry.localId)
-    if (bucket) bucket.push(entry)
-    else byLocalId.set(entry.localId, [entry])
-  }
+  const index = buildRefIndex(entries, byId)
 
   const table: Record<string, Record<string, string>> = {}
   for (const entry of entries) {
-    for (const ref of collectRefs(entry, theme)) {
-      const resolved = resolveRef(ref, entry.deckSlug, byId, byLocalId)
+    for (const { ref } of collectRefs(entry, theme)) {
+      const resolved = resolveRef(ref, index)
       if ("reason" in resolved) continue
       const perDeck = (table[entry.deckSlug] ??= {})
       perDeck[ref] = resolved.globalId

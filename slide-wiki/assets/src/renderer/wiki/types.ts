@@ -37,11 +37,17 @@ export interface WikiDeckView {
   readonly searchWords?: string
 }
 
-/** 未解決リンク。ビルド時の警告とビューアの表示の両方に使う。 */
+/**
+ * 未解決リンク。ビルド時の警告とビューアの表示の両方に使う。
+ *
+ * `href` を別に持つのは、**書き手に見せるのは原文の綴り**だから
+ * （`ref` は解決の鍵で、`/deck.md#slide` から作られた内部表現にすぎない）。
+ */
 export interface BrokenLink {
   readonly fromId: string
   readonly ref: string
-  readonly reason: "not-found" | "ambiguous"
+  readonly href: string
+  readonly reason: "not-found"
 }
 
 export interface WikiSite {
@@ -58,7 +64,7 @@ export interface WikiSite {
 export interface WikiOptions {
   readonly siteTitle?: string
   /**
-   * デッキ slug → ([[ref]] → globalId)。ビルド時に解いたリンク解決の結果。
+   * デッキ slug → (参照 → globalId)。ビルド時に解いたリンク解決の結果。
    * 解決規則をブラウザ側にも書くと2箇所で食い違うので、結果だけを渡す。
    */
   readonly resolveTable?: Record<string, Record<string, string>>

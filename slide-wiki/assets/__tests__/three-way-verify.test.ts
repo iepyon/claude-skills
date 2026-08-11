@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest"
+import { listDeckFiles } from "../src/okf.js"
 import { Effect } from "effect"
 import { readdirSync, readFileSync } from "fs"
-import { join } from "path"
+import { join, basename } from "path"
 import { md2pptx, md2html } from "../src/index.js"
 import { parseMarkdown } from "../src/parser/index.js"
 import { validatePresentation } from "../src/schema/validation.js"
@@ -35,9 +36,8 @@ const specDecks = readdirSync(SPEC_DIR)
 
 const docDecks = [
   { name: "doc/Spec.md", path: join(DOC_DIR, "Spec.md"), baseDir: DOC_DIR },
-  ...readdirSync(join(DOC_DIR, "wiki"))
-    .filter((f) => f.endsWith(".md"))
-    .sort()
+  ...listDeckFiles(join(DOC_DIR, "wiki"))
+    .map((path) => basename(path))
     .map((name) => ({
       name: `doc/wiki/${name}`,
       path: join(DOC_DIR, "wiki", name),

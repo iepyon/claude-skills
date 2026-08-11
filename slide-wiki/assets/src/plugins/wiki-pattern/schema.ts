@@ -24,7 +24,7 @@ export class WikiPatternLayout implements SlideLayout {
   /**
    * 主張の典拠。**`string` のまま持つ（`TextBlock` にも richText にもしない）。**
    *
-   * インライン装飾を解かないことが、出典に `[[…]]` を書いてもリンクにならない
+   * インライン装飾を解かないことが、出典にリンクを書いてもリンクにならない
    * 理由そのもの。参照を拾う `collectRefs` が見るのは richText / paragraphs だけなので、
    * 素の text で置けばバックリンクのグラフに載らない
    * — 「関連」と「典拠」が混ざって、文献名がパターンの隣人として並ぶのを防ぐ。

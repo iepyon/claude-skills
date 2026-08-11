@@ -52,7 +52,7 @@ function panelHeight(
  * 図解にも掛かる注記に見える。図の下敷きは列の中で縦中央にあるので下に余地はあるが、
  * そこまで伸ばすと「このスライド全体の脚注」に読み替わる。
  *
- * `richText` を使わず `text` で置くのが、`[[…]]` がリンクにならない仕組み
+ * `richText` を使わず `text` で置くのが、リンクにならない仕組み
  * （schema.ts の source の説明を見よ）。
  */
 function buildSourceBox(source: string, leftWidth: number, theme: Theme): TextBox {
@@ -81,7 +81,7 @@ export function layoutWikiPattern(
   const dims = calculateColumnDimensions(WP_LEFT_RATIO, WP_RIGHT_RATIO, titleY, reserved)
 
   // 左段: いつ・なにが困るか／そこで（と、その中の段落）。**必ず buildSectionBoxes を通す。**
-  // `[[…]]` を拾うのは link-graph.ts の collectRefs で、それが見るのは
+  // リンクを拾うのは link-graph.ts の collectRefs で、それが見るのは
   // textBoxes の richText / paragraphs だけ。自前で TextBox を組むと
   // 描画は同じに見えたまま Wiki のリンクだけが静かに消える。
   //

@@ -4,6 +4,7 @@ import { join, basename, extname, dirname } from "path"
 import { Effect, Exit } from "effect"
 import { md2pptx, md2html, md2wiki, loadThemeFile, parseMarkdown, validatePresentation, DEFAULT_THEME } from "./index.js"
 import type { WikiSource } from "./index.js"
+import { isReservedOkfFile, listDeckFiles } from "./okf.js"
 import { slidesToInventory } from "./tools/inventory.js"
 import { inspectPptx } from "./tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "./tools/html-inspector.js"
@@ -56,18 +57,19 @@ function collectMarkdownFiles(paths: readonly string[]): string[] {
   const files: string[] = []
   for (const path of paths) {
     if (statSync(path).isDirectory()) {
-      const found = readdirSync(path)
-        .filter((f) => f.endsWith(".md"))
-        .sort()
-        .map((f) => join(path, f))
-
-      const { files: ordered, errors } = orderDeckFiles(found, path)
+      const { files: ordered, errors } = orderDeckFiles(listDeckFiles(path), path)
       if (errors.length > 0) {
         for (const e of errors) console.error(`${join(path, DECK_ORDER_FILE)}: ${e}`)
         process.exit(1)
       }
       ordered.forEach((f) => files.push(f))
     } else {
+      // 名指しされた予約ファイルは黙って飛ばさない。飛ばすと `--lint doc/wiki/index.md` が
+      // 「問題なし」と読める（何も検査していないだけなのに）
+      if (isReservedOkfFile(basename(path))) {
+        console.error(`${path}: OKF の予約ファイルなのでデッキとして読めない`)
+        process.exit(1)
+      }
       files.push(path)
     }
   }

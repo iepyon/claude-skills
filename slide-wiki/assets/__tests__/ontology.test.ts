@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import { listDeckFiles } from "../src/okf.js"
 import { Effect } from "effect"
 import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
@@ -304,7 +305,7 @@ describe("lint", () => {
   })
 
   it("flags the same explicit id on two slides, naming both lines", () => {
-    // 折れたリンクより見つけにくい壊れ方。[[seed]] は解決する（常に1枚目へ）ので
+    // 折れたリンクより見つけにくい壊れ方。#seed は解決する（常に1枚目へ）ので
     // 未解決リンクの一覧にも出ず、2枚目が誰からも指せないまま公開される
     const deck = ["## 一枚目", "<!--id:seed-->", "本文", "", "---", "", "## 二枚目", "<!--id:seed-->", "本文"]
     const diagnostics = lintSource(deck.join("\n"))
@@ -349,9 +350,7 @@ describe("the decks in this repository satisfy the declaration", () => {
   // 宣言が実装とずれたらここで落ちる — 実際に動いているデッキが反例になる
   const decks = [
     join(ASSETS_DIR, "doc", "Spec.md"),
-    ...readdirSync(join(ASSETS_DIR, "doc", "wiki"))
-      .filter((f) => f.endsWith(".md"))
-      .map((f) => join(ASSETS_DIR, "doc", "wiki", f)),
+    ...listDeckFiles(join(ASSETS_DIR, "doc", "wiki")),
     ...readdirSync(join(ASSETS_DIR, "__tests__", "markdown-spec"))
       .filter((f) => f.endsWith(".md") && f !== "README.md")
       .map((f) => join(ASSETS_DIR, "__tests__", "markdown-spec", f)),
@@ -382,5 +381,53 @@ describe("generated docs are fresh", () => {
 
   it("fails loudly when a generated region's markers are gone", () => {
     expect(() => applySkillRegions("# SKILL\n本文だけ\n")).toThrow(/生成領域/)
+  })
+})
+
+/**
+ * リンクの書き方の検査。
+ *
+ * 守っているのは「**黙って通ってしまう**間違いを黙らせない」ことだけ。
+ * とくに `./x.md` は外部リンクとして `target="_blank"` で描かれるので、
+ * 見た目はリンクのままクリックすると別タブで存在しないパスを開く —
+ * 未解決リンクの一覧にも出ない（内部リンクとして解決を試みてすらいない）。
+ */
+describe("link form", () => {
+  const deck = (body: string): string =>
+    `---\ntype: deck\n---\n\n# あ\n\n---\n\n## か\n<!--id:か-->\n### さ\n${body}\n`
+
+  const checks = (body: string): string[] => lintSource(deck(body)).map((d) => d.check)
+
+  it("旧 [[…]] 記法を error にする", () => {
+    expect(lintSource(deck("見よ [[か]]"))).toContainEqual(
+      expect.objectContaining({ level: "error", check: "legacy-wikilink" })
+    )
+  })
+
+  it("内部リンクにならない md へのリンクを報せる", () => {
+    for (const href of ["./b.md#c", "../b.md", "b.md#c", "#か"]) {
+      expect(checks(`見よ [x](${href})`), href).toContain("link-form")
+    }
+  })
+
+  it("正しい内部リンクと外部リンクには何も言わない", () => {
+    for (const href of ["/a.md#か", "/a.md", "https://example.com", "mailto:a@example.com"]) {
+      expect(checks(`見よ [x](${href})`), href).not.toContain("link-form")
+    }
+  })
+
+  it("画像やその他の資産への参照は対象外", () => {
+    expect(checks("![図](diagrams/a.svg)")).not.toContain("link-form")
+  })
+
+  it("インラインコードの中の見本は数えない", () => {
+    // guide デッキは記法の見本をコードで囲んで置いている。ここを数えると
+    // 記法を説明したデッキが恒久的に赤くなる
+    expect(checks("`[[か]]` と `[x](./b.md)` は書き方の見本")).toEqual([])
+  })
+
+  it("コードフェンスの中も数えない", () => {
+    expect(lintSource(`---\ntype: deck\n---\n\n# あ\n\n---\n\n## か\n\`\`\`markdown\n[[か]]\n\`\`\`\n`)
+      .map((d) => d.check)).not.toContain("legacy-wikilink")
   })
 })

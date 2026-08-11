@@ -86,9 +86,10 @@ tags: [wiki, パターンランゲージ]
 <!-- BEGIN GENERATED: frontmatter -->
 | キー | level | 形 | 効き先 | 説明 |
 |---|---|---|---|---|
-| `type` | recommended | `text` | lint と外部ツール | このファイルが何であるか。外部ツールが種別で絞るのに使う。 |
+| `type` | required | `text` | lint と外部ツール | このファイルが何であるか。**OKF が唯一必須とするキー**（SPEC.md §4.1）で、 読む側は種別で振り分ける。値は中央登録制ではないので、未知の型は 「ふつうの概念」として扱われる。 |
 | `title` | recommended | `text` | lint と外部ツール | 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。 |
 | `description` | recommended | `text` | 絞り込み | 1行の説明。**サイドバーの絞り込みに流れる**ので、引きたい言葉を入れる。 |
+| `resource` | optional | `uri` | lint と外部ツール | このデッキが説明している実体の URI（OKF の推奨キー）。 考えを書いたデッキには無い — 実在の資産を説明するときだけ名乗る。 |
 | `tags` | recommended | `list-of-text` | 絞り込み | デッキの主題。**サイドバーの絞り込みに流れる**ので、題に出ない言葉を補う。 |
 | `category` | optional | `text` | lint と外部ツール | デッキの区分。tags が主題を並べるのに対し、こちらは1つだけ選ぶ。 |
 | `status` | optional | `draft` / `stable` / `deprecated` | lint と外部ツール | 書きかけかどうか。order.yaml のコメントに書いていた「まだ無い」を機械に見せる。 |
@@ -150,7 +151,7 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 <!-- BEGIN GENERATED: annotations -->
 | 注釈 | 記法 | 効くレイアウト | 説明 |
 |---|---|---|---|
-| `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`[[…]]` の解決先であり HTML の `#hash` でもある。 |
+| `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`/デッキ名.md#…` の解決先であり HTML の `#hash` でもある。 |
 | `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
 | `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
 | `source` | `<!--source-->` | WikiPattern | そのスライドの主張の典拠。マーカーの次の行以降が本文になる。 |
@@ -165,10 +166,9 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | `*text*` | 斜体 |
 | `` `text` `` | インラインコード |
 | `[ラベル](https://example.com)` | 外部リンク。HTML は `<a>`、PPTX はハイパーリンク。 |
-| `[[slide-id]]` | 内部リンク。表示テキストは ID そのまま。解決できなければ素のテキストになる。 |
-| `[[slide-id\|表示テキスト]]` | 表示テキストを指定した内部リンク。 |
+| `[ラベル](/デッキ名.md#スライドID)` | 内部リンク。**バンドル相対の絶対パスだけ**を内部リンクとして解決する （OKF v0.2 §6.1 の推奨形）。同じデッキの中でも同じ形で書く。 フラグメントを省くとそのデッキの1枚目に着く。解決できなければ未解決として報告する。 |
 
-効くのは `section-heading`・`section-body`・`takeaway`。プラグインがテキストを直接描く箇所（テーブルのセル・引用本文・ステップのラベル等）では `[[…]]` はそのままの文字として出る（BACKLOG B-22）。
+効くのは `section-heading`・`section-body`・`takeaway`。プラグインがテキストを直接描く箇所（テーブルのセル・引用本文・ステップのラベル等）では リンクはそのままの文字として出る（BACKLOG B-22）。
 <!-- END GENERATED: inline -->
 
 内部リンクは PPTX では同一ファイル内のスライドジャンプになる。
@@ -176,13 +176,13 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 ### スライド ID
 
 `<!--id:foo-->` でスライドに ID を付ける。省略するとスライドタイトルから自動生成し、
-衝突したら連番（`-2`）を付ける。ID は `[[…]]` の解決先であり、HTML の `#hash` でもある。
+衝突したら連番（`-2`）を付ける。ID は `/デッキ名.md#ID` の解決先であり、HTML の `#hash` でもある。
 
 ```markdown
 ## 種ノート
 <!--id:seed-->
 ### まず置く
-育て方は [[育つ見出し]] を見よ
+育て方は [育つ見出し](/patterns-wiki.md#育つ見出し) を見よ
 ```
 
 ### Wiki 出力（`--wiki`）
@@ -194,9 +194,11 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 ```
 
-リンクの解決順は、① `deck/slide` の明示 → ② 自デッキ内 → ③ サイト全体で一意 →
-④ 未解決（複数一致しても選ばない。サイドバーに一覧が出る）。
-サンプルは `doc/wiki/`（機能ガイド + パターンの2主題 × 2デッキ + パターンを書くパターン + 索引の
+内部リンクは**バンドル相対の絶対パス1本**なので、解決は表を1回引くだけ
+（`/デッキ名.md#スライドID`、フラグメントを省けばそのデッキの1枚目）。
+同じデッキの中でも同じ形で書く — 書き方が1つだと「どのデッキから見た参照か」が要らず、
+候補が2つあって決められない、ということが起きない。当たらなければ未解決として
+サイドバーに一覧が出る。サンプルは `doc/wiki/`（機能ガイド + パターンの2主題 × 2デッキ + パターンを書くパターン + 索引の
 7デッキ。パターンは互いにデッキをまたいで参照し合う）。パターンの主題は**2部構成**で、
 第1部（`intro-*`）が背景・目的と語彙を使ったショートストーリー
 （始める → 続ける → 繋げる → 新しい種を撒く）、第2部（`patterns-*`）が
@@ -210,15 +212,29 @@ npx tsx src/cli.ts --wiki --site-title "My Wiki" doc/wiki out/index.html
 `← →` で送る順。送りはデッキの境界を越える）。無ければファイル名順。
 
 ```yaml
-decks: # 拡張子を除いたファイル名
-  - guide
-  - intro-wiki
-  - patterns-wiki
+groups: # グループ名は生成される index.md の見出しになる
+  - title: ガイド
+    decks: [guide] # 拡張子を除いたファイル名
+  - title: 人が育てる Wiki
+    decks: [intro-wiki, patterns-wiki] # 第1部と第2部は対なので同じグループへ
 ```
 
-ファイル名は `[[deck/slide]]` のリンク先（デッキの slug）でもあるので、
+送りの順はグループを平坦に均した順なので、1本の列だったころと変わらない。
+
+ファイル名は `/デッキ名.md#…` のリンク先そのものなので、
 並び替えのためにリネームしない — リンクが折れる。宣言に無いデッキは末尾に付き、
 宣言にあるのに存在しないデッキ名はビルドを止める。
+
+**`index.md` と `log.md` はデッキ名に使えない。** OKF がバンドルの目録と更新履歴として
+予約している名前で、デッキとしては読み込まない。目録のほうは
+`npx tsx src/tools/gen-okf-index.ts` が `order.yaml` の `groups:` から生成し、
+バンドルに置いて追跡する（`--check` で鮮度を見る）。
+これで `doc/wiki/` は、そのまま配っても他のエージェントが読める
+[OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) の
+バンドルになっている。
+
+旧 `[[…]]` 記法で書かれた md は `npx tsx src/tools/migrate-wikilinks.ts <dir>` が
+一括で書き換える（`--dry-run` で下見、`--check` で残存の検査）。
 
 ## 記法サンプル
 

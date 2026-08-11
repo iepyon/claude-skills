@@ -17,6 +17,7 @@ import "../plugins/index.js" // side-effect: 登録が済んでいないとプ�
 // 自動 ID の綴りは採番と同じ関数で出す。ここに写すと、slug の規則を変えた日に
 // lint だけが古い綴りで衝突を判定する（`slide-ids.ts` が正本）
 import { slugify } from "../parser/slide-ids.js"
+import { parseOkfLink } from "../okf.js"
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
   getFieldSet,
@@ -310,13 +311,67 @@ function checkUnknownDirectives(tokens: readonly Token[]): Diagnostic[] {
 }
 
 /**
+ * リンクの書き方。
+ *
+ * 見るのは2つで、どちらも**黙って通ってしまう**種類の間違いである。
+ *
+ * 1. 旧 `[[…]]` 記法。パーサが読まなくなったので、書くとただの文字として出る。
+ *    表示に出るだけまだましだが、書き手はリンクのつもりでいる
+ * 2. 内部リンクにならない md へのリンク（`./x.md` `x.md#a` `#a`）。
+ *    **これがいちばん危ない** — 外部リンクとして `target="_blank"` で描かれるので、
+ *    見た目はリンクであり、クリックすると別タブで存在しないパスを開く。
+ *    未解決リンクの一覧にも出ない（内部リンクとして解決を試みてすらいない）
+ *
+ * 判定は `okf.ts` の `parseOkfLink` に任せる。lint がもう1つ正規表現を持つと、
+ * 「パーサは内部リンクと読むのに lint は警告する」がいつか起きる。
+ */
+function checkLinkForm(tokens: readonly Token[]): Diagnostic[] {
+  const out: Diagnostic[] = []
+  let inFence = false
+
+  for (const token of tokens) {
+    if (token.type === "CodeFenceOpen") inFence = true
+    else if (token.type === "CodeFenceClose") inFence = false
+    if (inFence) continue
+    if (!("text" in token) || token.type === "CodeFenceLine") continue
+
+    // 記法の見本はインラインコードに入れて書く（guide デッキがそうしている）
+    const text = token.text.replace(/`[^`]+?`/g, "")
+
+    for (const _ of text.matchAll(/\[\[/g)) {
+      out.push({
+        level: "error",
+        check: "legacy-wikilink",
+        line: token.line,
+        message: "`[[…]]` は廃止した記法。`[ラベル](/デッキ名.md#スライドID)` と書く（`src/tools/migrate-wikilinks.ts` が一括変換する）",
+      })
+    }
+
+    for (const m of text.matchAll(/\[[^\[\]]+?\]\(([^()\s]+)\)/g)) {
+      const href = m[1]
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue // http: や mailto: は外部リンク
+      if (parseOkfLink(href)) continue
+      if (!href.includes(".md") && !href.startsWith("#")) continue // 画像やその他の資産
+      out.push({
+        level: "warning",
+        check: "link-form",
+        line: token.line,
+        message: `'${href}' は内部リンクにならない（先頭の \`/\` から書く。このままでは外部リンクとして別タブで開かれ、未解決リンクの一覧にも出ない）`,
+      })
+    }
+  }
+
+  return out
+}
+
+/**
  * スライド ID の衝突。
  *
  * なぜ採番側ではなくここで報告するか: `assignSlideIds` は必ず一意な ID を返す契約である
  * （重複するとサイトのリンクが解決できない）。だから機械は連番で先に進むしかなく、
  * 「どちらかが間違っている」と言えるのは書き手だけ。採番が跡を残し、lint がそれを読む。
  *
- * **折れたリンクより見つけにくい。** `<!--id:seed-->` を2枚に書くと `[[seed]]` は
+ * **折れたリンクより見つけにくい。** `<!--id:seed-->` を2枚に書くと `#seed` へのリンクは
  * 解決する — 常に1枚目へ。2枚目は誰からも指されないスライドとしてサイトに残り、
  * 書き手は繋いだつもりでいる。未解決リンクの一覧にも出ない。
  *
@@ -361,7 +416,7 @@ function checkSlideIds(slides: readonly SlideTokens[]): Diagnostic[] {
         line,
         message:
           `<!--id:${id}--> が ${lines.length} 枚にある（${others} 行目にも）。` +
-          `[[${id}]] は常に最初の1枚に解決し、残りは誰からも指せなくなる`,
+          `#${id} は常に最初の1枚に解決し、残りは誰からも指せなくなる`,
       })
     }
   }
@@ -413,6 +468,7 @@ export const FIELD_VALIDATORS: Readonly<Record<FieldKind, (value: unknown) => bo
   text: (v) => typeof v === "string",
   "list-of-text": (v) => Array.isArray(v) && v.every((x) => typeof x === "string"),
   date: (v) => typeof v === "string" && matchesDeclaredForm("date", v),
+  timestamp: (v) => typeof v === "string" && matchesDeclaredForm("timestamp", v),
   actor: (v) => typeof v === "string" && matchesDeclaredForm("actor", v),
   uri: (v) => typeof v === "string" && matchesDeclaredForm("uri", v),
   object: isPlainObject,
@@ -520,6 +576,21 @@ function checkFrontmatter(
     }
   }
 
+  // 名乗ったからには、必須のキーは名乗る。**名乗っていない md は上で return 済み**なので、
+  // frontmatter を持たないフィクスチャを巻き込まない（OKF の必須は `type` ひとつ）
+  for (const field of decl.fields) {
+    if (field.level !== "required") continue
+    const value = data[field.name]
+    if (value === undefined || value === null || value === "") {
+      emit(
+        "warning",
+        "frontmatter-field",
+        1,
+        `必須の '${field.name}' が無い（OKF はこの1つだけを必須にしている。無いと読む側が種別で振り分けられない）`
+      )
+    }
+  }
+
   for (const [key, value] of Object.entries(data)) {
     const line = lineOf(key)
     const field = declared.get(key)
@@ -623,6 +694,9 @@ export function lintTokens(tokens: readonly Token[], context: LintContext = {}):
   // タイトルスライドも対象に入れる（`<!--id:-->` の applies-to は title-slide を含み、
   // 表紙の自動 slug が本文スライドの明示 ID とぶつかりうる）
   out.push(...checkSlideIds(slides))
+
+  // リンクの書き方はスライドをまたがないが、レイアウトとも無関係なのでここで見る
+  out.push(...checkLinkForm(tokens))
 
   for (const slide of slides) {
     out.push(...checkUnknownDirectives(slide.tokens))

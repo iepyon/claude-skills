@@ -37,7 +37,7 @@ const cell = (s: string | undefined): string =>
  */
 const code = (s: string): string => (s.includes("`") ? "`` " + s + " ``" : "`" + s + "`")
 
-/** 表のセルに入れるインラインコード。`[[a|b]]` のパイプは列区切りに食われるのでエスケープする */
+/** 表のセルに入れるインラインコード。パイプは列区切りに食われるのでエスケープする */
 const codeCell = (s: string): string => code(s).replace(/\|/g, "\\|")
 
 /** ヘッダと区切り行を手書きしない（列数の数え間違いが起きる） */

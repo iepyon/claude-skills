@@ -84,8 +84,10 @@ function inlineTextRunsToPptxRuns(
     if (run.link) {
       if (run.link.kind === "external") {
         options.hyperlink = { url: run.link.href }
-      } else {
-        const slideNumber = slideNumberById?.get(run.link.target)
+      } else if (run.link.slide !== undefined) {
+        // 索引はローカルの ID で作られている（PPTX は1デッキしか知らない）ので、
+        // サイト全体の参照（deck/slide）ではなく slide のほうを引く。
+        const slideNumber = slideNumberById?.get(run.link.slide)
         if (slideNumber !== undefined) options.hyperlink = { slide: slideNumber }
       }
     }

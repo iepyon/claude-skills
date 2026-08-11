@@ -13,13 +13,13 @@ const ALPHA = `# アルファ集
 ## 種ノート
 <!--id:seed-->
 ### まず置く
-育て方は [[育つ見出し]]、繋ぎ方は [[bravo/つなぎ直し]] を見よ。
+育て方は [育つ見出し](/alpha.md#育つ見出し)、繋ぎ方は [つなぎ直し](/bravo.md#つなぎ直し) を見よ。
 
 ---
 
 ## 育つ見出し
 ### 見出しが先に伸びる
-[[seed]] から始まる。
+[種ノート](/alpha.md#seed) から始まる。
 `
 
 const BRAVO = `# ブラボー集
@@ -28,7 +28,7 @@ const BRAVO = `# ブラボー集
 
 ## つなぎ直し
 ### 既存に繋ぐ
-繋ぎ先は [[seed]]。存在しない [[どこにもない]] も混ぜる。
+繋ぎ先は [種ノート](/alpha.md#seed)。存在しない [どこにもない](/alpha.md#どこにもない) も混ぜる。
 `
 
 const buildSite = async () => {
@@ -136,42 +136,55 @@ describe("wiki site index", () => {
 })
 
 describe("wiki link resolution", () => {
-  it("should resolve a same-deck short reference", async () => {
+  it("should resolve a link inside the same deck", async () => {
     const site = await buildSite()
     expect(site.forward.get("alpha/seed")).toContain("alpha/育つ見出し")
   })
 
-  it("should resolve an explicit cross-deck reference", async () => {
+  it("should resolve a link into another deck", async () => {
     const site = await buildSite()
     expect(site.forward.get("alpha/seed")).toContain("bravo/つなぎ直し")
-  })
-
-  it("should resolve a short reference that is unique across the whole site", async () => {
-    const site = await buildSite()
-    expect(site.forward.get("bravo/つなぎ直し")).toContain("alpha/seed")
   })
 
   it("should report an unresolvable reference instead of guessing", async () => {
     const site = await buildSite()
     expect(site.broken).toEqual([
-      { fromId: "bravo/つなぎ直し", ref: "どこにもない", reason: "not-found" },
+      {
+        fromId: "bravo/つなぎ直し",
+        ref: "alpha/どこにもない",
+        href: "/alpha.md#どこにもない",
+        reason: "not-found",
+      },
     ])
   })
 
-  it("should report an ambiguous reference rather than picking one", async () => {
-    const mk = (title: string) => parseMarkdown(`## ${title}\n### H\n[[dup]] を見る`)
-    const a = await Effect.runPromise(mk("A"))
+  it("should show the writer the href they typed, not the internal key", async () => {
+    // 未解決の一覧に出すのは原文の綴り。解決の鍵（`deck/slide`）は内部表現で、
+    // md のどこを直せばよいかを教えてくれない
+    const site = await buildSite()
+    expect(site.broken[0].href).toBe("/alpha.md#どこにもない")
+  })
+
+  it("should not be able to be ambiguous at all", async () => {
+    // **かつては「候補が2つあって決められない」という失敗モードがあった。**
+    // 短い参照を許していたので、同じ ID が2つのデッキにあると行き先が決まらない。
+    // リンクがファイルを名指しする形になったので、同じ綴りが2つのデッキにあっても
+    // それぞれ別の行き先として解決する — 曖昧という状態が作れない
     const dup = await Effect.runPromise(parseMarkdown("## X\n<!--id:dup-->\n### H\nbody"))
+    const src = await Effect.runPromise(
+      parseMarkdown("## A\n### H\n[一](/one.md#dup) と [二](/two.md#dup)")
+    )
 
     const site = buildWikiSite(
       [
-        { slug: "src", title: "S", presentation: a },
+        { slug: "src", title: "S", presentation: src },
         { slug: "one", title: "One", presentation: dup },
         { slug: "two", title: "Two", presentation: dup },
       ],
       DEFAULT_THEME
     )
-    expect(site.broken.map((b) => b.reason)).toContain("ambiguous")
+    expect(site.broken).toEqual([])
+    expect(site.forward.get("src/a")).toEqual(["one/dup", "two/dup"])
   })
 
   it("should invert links into backlinks", async () => {
@@ -262,7 +275,7 @@ describe("rich text layout", () => {
     // 語の途中で改行される。子を1つに保つことでインラインフローに戻す。
     // 本文は行ごとの <p> にまとめる（PPTX が改行ごとに段落を出すのに合わせる）。
     const html = await Effect.runPromise(
-      md2html("## T\n### H\nこれは**強調**と[[a]]を含む文", {})
+      md2html("## T\n### H\nこれは**強調**と[a](/d.md#a)を含む文", {})
     )
     expect(html).toContain('<div class="para-stack">')
     expect(html).toMatch(/<div class="para-stack"><p class="para-plain"[^>]*>[^<]*<strong>/)
@@ -445,15 +458,15 @@ describe("text must never be clipped", () => {
   })
 
   it("should render agenda items as links, not raw markup", async () => {
-    // アジェンダは目次そのもの。ここで [[…]] が生のまま出ると
+    // アジェンダは目次そのもの。ここでリンクの綴りが生のまま出ると
     // 索引ページからどこへも飛べない。
     const html = await Effect.runPromise(
       md2wiki(
-        [{ name: "d", markdown: "## 読み方\n<!--agenda-->\nサブ\n### 置く: [[種ノート]]\n\n---\n\n## 種ノート\n### H\nbody" }],
+        [{ name: "d", markdown: "## 読み方\n<!--agenda-->\nサブ\n### 置く: [種ノート](/d.md#種ノート)\n\n---\n\n## 種ノート\n### H\nbody" }],
         {}
       )
     )
-    expect(html).toContain('data-wikilink="種ノート"')
-    expect(html).not.toContain("[[種ノート]]")
+    expect(html).toContain('data-wikilink="d/種ノート"')
+    expect(html).not.toContain("](/d.md#種ノート)")
   })
 })

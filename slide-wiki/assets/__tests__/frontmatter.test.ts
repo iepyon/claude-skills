@@ -7,6 +7,8 @@ import {
   readFrontmatter,
   splitFrontmatter,
 } from "../src/ontology/frontmatter.js"
+import { lintSource } from "../src/ontology/lint.js"
+import { listDeckFiles } from "../src/okf.js"
 
 /**
  * frontmatter の認識規則を守るテスト。
@@ -200,9 +202,7 @@ describe("名乗っていないフィクスチャを1つも巻き込まない", 
 describe("名乗っているデッキは剥がされる", () => {
   const decks = [
     join(ASSETS_DIR, "doc", "Spec.md"),
-    ...readdirSync(join(ASSETS_DIR, "doc", "wiki"))
-      .filter((f) => f.endsWith(".md"))
-      .map((f) => join(ASSETS_DIR, "doc", "wiki", f)),
+    ...listDeckFiles(join(ASSETS_DIR, "doc", "wiki")),
   ]
 
   it.each(decks)("%s は frontmatter を持ち、行数が変わらない", (file) => {
@@ -217,5 +217,60 @@ describe("名乗っているデッキは剥がされる", () => {
 
   it.each(decks)("%s のメタが読める", (file) => {
     expect(readDeckMeta(readFileSync(file, "utf-8"))?.type).toBeDefined()
+  })
+})
+
+/**
+ * OKF v0.2 に合わせたキーと値の形。
+ *
+ * ここで守っているのは「宣言が OKF を名乗っている以上、OKF の綴りだけが通る」こと。
+ * 独自の綴り（旧 `ai:<model>` など）が通り続けると、バンドルを他の道具に渡した
+ * ときに黙って読み飛ばされる — **書いた本人には最後まで分からない壊れ方**になる。
+ */
+describe("frontmatter は OKF v0.2 の綴りに従う", () => {
+  const lint = (md: string): string[] =>
+    lintSource(md, tokenize(splitFrontmatter(md).body)).map((d) => d.message)
+
+  const deck = (frontmatter: string): string =>
+    `---\n${frontmatter}\n---\n\n# あ\n\n---\n\n## か\n### さ\n本文\n`
+
+  it("名乗ったのに type が無ければ報せる", () => {
+    // OKF が必須にしているのはこの1つだけ（SPEC.md §11）
+    expect(lint(deck("title: あ")).join("\n")).toContain("必須の 'type' が無い")
+  })
+
+  it("名乗っていない md は巻き込まない", () => {
+    // frontmatter そのものは optional。フィクスチャを必須違反にしてはいけない
+    expect(lint("# あ\n\n---\n\n## か\n### さ\n本文\n").join("\n")).not.toContain("必須の 'type'")
+  })
+
+  it("actor は OKF の接頭辞つきの綴りだけを受ける", () => {
+    // 信頼の段（未検証 / 機械が確認 / 人が確認）は `human:` の有無で決まるので、
+    // 接頭辞そのものに意味がある。旧綴りの裸の `human` は通してはいけない
+    for (const by of ["human:ienaga", "process:nightly", "claude/opus-5"]) {
+      expect(lint(deck(`type: deck\nverified:\n  - {by: "${by}", at: "2026-01-01T09:00:00Z"}`)))
+        .not.toContainEqual(expect.stringContaining("actor として読めない"))
+    }
+    for (const by of ["human", "ai:opus", "tool:script"]) {
+      expect(lint(deck(`type: deck\nverified:\n  - {by: "${by}", at: "2026-01-01T09:00:00Z"}`)).join("\n"))
+        .toContain("actor として読めない")
+    }
+  })
+
+  it("verified.at と generated.at は RFC3339 を受ける", () => {
+    // OKF の例は `2026-06-20T22:53:05Z`。日付だけの略記も受ける（書き手が手で書く欄なので）
+    for (const at of ["2026-06-20T22:53:05Z", "2026-06-20T22:53:05+09:00", "2026-06-20"]) {
+      expect(lint(deck(`type: deck\ngenerated: {by: "claude/opus-5", at: "${at}"}`)).join("\n"))
+        .not.toContain("timestamp として読めない")
+    }
+    expect(lint(deck(`type: deck\ngenerated: {by: "claude/opus-5", at: "2026/06/20"}`)).join("\n"))
+      .toContain("timestamp として読めない")
+  })
+
+  it("OKF に無い独自キーは拒まない", () => {
+    // OKF は「知らないキーは保存して拒まない」と定めている（SPEC.md §11）。
+    // こちらの拡張（category など）が通ることが、その適合の裏返しになっている
+    expect(lint(deck("type: deck\ncategory: パターンカタログ\nauthor: 家永")).join("\n"))
+      .not.toContain("宣言に無い")
   })
 })

@@ -129,14 +129,14 @@ describe("validatePresentation", () => {
     expect(Exit.isSuccess(result)).toBe(true)
   })
 
-  it("should count only the label of a wikilink, not its slide id", async () => {
+  it("should count only the label of an internal link, not its path", async () => {
     const longId = "y".repeat(1200)
     const pres = new Presentation({
       slides: [
         new ContentSlide({
           title: "T",
           layout: new DefaultLayout({
-            sections: [new TextBlock({ heading: "H", body: `[[${longId}|短]]` })],
+            sections: [new TextBlock({ heading: "H", body: `[短](/d.md#${longId})` })],
           }),
         }),
       ],
