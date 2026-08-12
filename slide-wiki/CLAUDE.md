@@ -130,7 +130,8 @@ md の記法そのものは [ontology.md](ontology.md) が正本。ここに書�
   足し直すと二重になる。CSS は `wiki/styles.ts` にだけ書く（`html/slide-css.ts` に書くと
   `--html` に漏れる）
 - `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の
-  途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` でまとめる
+  途中で改行される）。`richText` も `paragraphs` も素のテキストも `Paragraph[]` に正規化して
+  `.para-stack` の1経路で描く（`element-renderers.ts`）
 - バンドル（デッキ集合・`order.yaml` の並び・デッキ slug・予約ファイル名・ID の一意性の範囲）の
   規則は `ontology.yaml` の `okf` 節が正本。コード側が持つのは綴りだけ
   （`RESERVED_OKF_FILES` / `OKF_VERSION` / `DECK_ORDER_FILE`）で、宣言との一致は

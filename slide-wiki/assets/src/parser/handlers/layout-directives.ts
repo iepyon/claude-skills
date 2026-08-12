@@ -1,7 +1,6 @@
 import { Option as O } from "effect"
 import { ParseError } from "../../errors.js"
-import { BuilderState, LayoutMode } from "../builder-types.js"
-import { Token } from "../tokenizer.js"
+import { LayoutMode } from "../builder-types.js"
 import { saveSection } from "../builder-state.js"
 import type { TokenHandler } from "./index.js"
 

@@ -35,9 +35,6 @@ export function slideBaseCss(theme: Theme): string {
       text-align: left;
     }
 
-    /* flex コンテナ直下の唯一の子。中は普通のインラインフローに戻る */
-    .rich-text { width: 100%; }
-
     /* 箇条書き。記号は ::before で描画するため DOM テキストには現れない
        （PPTX のネイティブバレットと抽出結果を一致させるため）。 */
     .para-stack { width: 100%; }

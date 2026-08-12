@@ -1,6 +1,4 @@
 import { Option as O } from "effect"
-import { BuilderState, LayoutMode } from "../builder-types.js"
-import { Token } from "../tokenizer.js"
 import { saveSection, saveSlide } from "../builder-state.js"
 import type { TokenHandler } from "./index.js"
 

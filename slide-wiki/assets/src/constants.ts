@@ -22,8 +22,6 @@ export const TAKEAWAY_HEIGHT = 0.9  // Increased to fit 2-3 lines of 20pt text
 export const TAKEAWAY_GAP = 0.2
 
 // CodeDisplay Layout
-export const CODE_LABEL_HEIGHT = 0.3
-export const CODE_LABEL_GAP = 0.05
 export const CODE_CAPTION_HEIGHT = 0.4
 export const CODE_CAPTION_GAP = 0.15
 

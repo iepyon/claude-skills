@@ -1,6 +1,4 @@
 import { Option as O } from "effect"
-import { BuilderState } from "../builder-types.js"
-import { Token } from "../tokenizer.js"
 import type { TokenHandler } from "./index.js"
 
 // BodyText: 本文テキスト

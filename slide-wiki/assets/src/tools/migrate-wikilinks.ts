@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync, statSync } from "fs"
-import { join, basename, extname } from "path"
+import { basename, extname } from "path"
 import { Effect } from "effect"
 
 import { parseMarkdown } from "../parser/index.js"

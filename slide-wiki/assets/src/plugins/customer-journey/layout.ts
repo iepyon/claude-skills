@@ -1,6 +1,5 @@
 import { Option as O } from "effect"
 import {
-  SLIDE_WIDTH,
   SLIDE_HEIGHT,
   MARGIN_X,
   MARGIN_Y,
@@ -30,7 +29,6 @@ export function layoutCustomerJourney(
   theme: Theme
 ): LayoutResult {
   const availableHeight = SLIDE_HEIGHT - titleY - MARGIN_Y
-  const contentWidth = SLIDE_WIDTH - 2 * MARGIN_X
 
   // グリッド寸法計算
   const LABEL_COL_WIDTH = 0.52 // ラベル列の幅（約50px相当）

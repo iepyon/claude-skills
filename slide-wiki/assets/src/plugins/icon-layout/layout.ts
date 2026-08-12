@@ -35,7 +35,7 @@ interface IconColumnDimensions {
   readonly colGap: number
 }
 
-function calculateIconColumnDimensions(titleY: number): IconColumnDimensions {
+function calculateIconColumnDimensions(): IconColumnDimensions {
   const contentWidth = SLIDE_WIDTH - 2 * MARGIN_X
   const colGap = 0.2
   const colWidth = (contentWidth - 2 * colGap) / 3
@@ -49,7 +49,7 @@ export function layoutIconColumns(
   titleY: number,
   theme: Theme
 ): LayoutResult {
-  const dims = calculateIconColumnDimensions(titleY)
+  const dims = calculateIconColumnDimensions()
   const borderBoxes: BorderBox[] = []
   const allTextBoxes: TextBox[] = []
   const iconBoxes: IconBox[] = []
