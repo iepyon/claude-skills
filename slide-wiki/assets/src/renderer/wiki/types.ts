@@ -36,7 +36,7 @@ export interface WikiDeckView {
   readonly short: string
   readonly entryIds: readonly string[]
   /**
-   * サイドバーの絞り込みに混ぜるデッキの語（description と tags）。
+   * サイドバーの絞り込みに混ぜるデッキの語（何を混ぜるかは site-index.ts が決める）。
    *
    * 検索対象が題と ID だけだと、スライドの名前を知っている人しか引けない
    * （「夜勤」「司書」「剪定」のような比喩の題ではとくにそうなる）。

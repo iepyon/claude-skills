@@ -13,7 +13,6 @@ import { fileURLToPath } from "url"
 import { parse } from "yaml"
 import type {
   Annotation,
-  FieldEffect,
   FieldKind,
   FieldSet,
   Frontmatter,
@@ -140,24 +139,6 @@ export function getOkf(): Okf {
 export function getFrontmatterField(name: string): FrontmatterField | undefined {
   return getFrontmatter().fields.find((f) => f.name === name)
 }
-
-/**
- * `effect` の綴りを、生成ドキュメントの表に出す言葉へ写す。**綴りの正本はここ1つ。**
- *
- * 受理する綴りの集合（selfcheck）と、表に書く言葉（gen-ontology-doc）を別々に
- * 持っていた頃は、新しい effect を足すと片方だけ通って**表のマスが `undefined` に
- * なったまま全部が緑**になりえた（生成物どうしを比べる検査では気づけない）。
- * 集合をこのキーから導くことで、対を保つ規則そのものが要らなくなっている。
- */
-export const EFFECT_LABEL: Readonly<Record<FieldEffect, string>> = {
-  search: "絞り込み",
-  display: "Wiki の表示",
-  "declared-only": "**まだ効かない**",
-  metadata: "lint と外部ツール",
-}
-
-/** `effect` に許す綴り。省略時の既定は metadata なので、そちらは呼び出し側が足す */
-export const KNOWN_EFFECTS: ReadonlySet<string> = new Set(Object.keys(EFFECT_LABEL))
 
 /**
  * 値が宣言された形に合っているか。**正規表現はすべて `value-patterns` から引く。**

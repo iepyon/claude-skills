@@ -83,12 +83,12 @@ export function wikiScript(): string {
       host.innerHTML = '<span class="none">まだどこからもリンクされていません</span>';
       return;
     }
-    // 本文のリンクと同じ規則で、またぐものにだけ来し方の名を添える。
-    // ここは annotateLinks の1周が届かない（毎回組み直す innerHTML なので）
-    var hereDeck = byId[id] ? byId[id].deck : null;
+    // またぐものにだけ来し方の名を添える。規則は crossDeckShort が持つ
+    // （annotateLinks の1周はここに届かない — 毎回組み直す innerHTML なので）
+    var hereDeck = byId[id].deck;
     host.innerHTML = "<ul>" + inbound.map(function (from) {
       var e = byId[from];
-      var cross = e && hereDeck && e.deck !== hereDeck ? (DECK_SHORT[e.deck] || e.deck) : null;
+      var cross = crossDeckShort(e && e.deck, hereDeck);
       return '<li><a class="wikilink" href="#" data-goto="' + escapeAttr(from) + '"' +
         (cross ? ' data-cross-deck="' + escapeAttr(cross) + '"' : "") + ">" +
         escapeHtml(e ? e.title : from) + "</a></li>";
@@ -152,18 +152,26 @@ export function wikiScript(): string {
   });
 
   // --------------------------------------------------------- link handling
+  /**
+   * リンクが「どの1枚の中に書かれているか」。**足場の定義はここ1つ。**
+   *
+   * プレビューカードは .slide だけを clone するので .wiki-slide が祖先に居ない —
+   * カード自身が名乗り直したものを拾う。切り離されたカードの上でも効く必要がある
+   * （下の click ハンドラが targetOf より先に closeAllPreviews() を呼んで
+   * removeChild するため。closest は木が document に繋がっていなくても祖先を辿る）。
+   */
+  function scopeOf(a) {
+    return a.closest(".wiki-slide") || a.closest(".preview-card");
+  }
+
   // リンク先の解決はビルド時に済ませてある（RESOLVE）。
   // 解決できなかったものには .broken を付けて、遷移させない。
   function targetOf(a) {
     if (a.dataset.goto) return a.dataset.goto;
     var ref = a.dataset.wikilink;
     if (!ref) return null;
-    // 参照はデッキごとに解決する。プレビューカードは .slide だけを clone するので
-    // data-deck を持つ .wiki-slide が祖先に居ない — カード自身が deck を名乗り直す。
-    // このフォールバックは *切り離されたカード* の上でも効く必要がある。下の click
-    // ハンドラが targetOf より先に closeAllPreviews() を呼んで removeChild するため
-    // （closest は木が document に繋がっていなくても祖先を辿る）。
-    var scope = a.closest(".wiki-slide") || a.closest(".preview-card");
+    // 参照はデッキごとに解決するので、足場が名乗った deck で表を引く
+    var scope = scopeOf(a);
     var deck = scope ? scope.dataset.deck : null;
     var perDeck = (deck && RESOLVE[deck]) || {};
     return perDeck[ref] || (byId[ref] ? ref : null);
@@ -178,10 +186,22 @@ export function wikiScript(): string {
    * ID なら .wiki-slide も .preview-card も同じ1つの索引を引ける。
    */
   function scopeDeckOf(a) {
-    var scope = a.closest(".wiki-slide") || a.closest(".preview-card");
+    var scope = scopeOf(a);
     if (!scope) return null;
     var entry = byId[scope.dataset.wikiId || scope.dataset.target];
     return entry ? entry.deck : null;
+  }
+
+  /**
+   * またぐときだけ、相手のデッキの短い呼び名。同じデッキなら null。
+   *
+   * **本文のリンクとバックリンクの帯が同じ規則を読む唯一の場所。**
+   * 片方に inline で書くと、規則を変えたとき（束の単位で見る・カードの中では
+   * 出さない等）もう一方が黙って古いままになる。
+   */
+  function crossDeckShort(otherDeck, hereDeck) {
+    if (!otherDeck || !hereDeck || otherDeck === hereDeck) return null;
+    return DECK_SHORT[otherDeck];
   }
 
   /**
@@ -208,9 +228,8 @@ export function wikiScript(): string {
         return;
       }
       var there = byId[target];
-      var here = scopeDeckOf(a);
-      if (!there || !here || there.deck === here) return;   // 同じデッキなら素のまま
-      a.dataset.crossDeck = DECK_SHORT[there.deck] || there.deck;
+      var cross = crossDeckShort(there && there.deck, scopeDeckOf(a));
+      if (cross) a.dataset.crossDeck = cross;
     });
   }
 

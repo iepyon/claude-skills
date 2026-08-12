@@ -18,7 +18,7 @@ function renderSidebar(site: WikiSite): string {
       const links = deck.entryIds
         .map((id) => {
           const entry = site.byId.get(id)!
-          // 題と ID に、デッキが frontmatter で名乗った語（description / tags）を足す。
+          // 題と ID に、デッキが frontmatter で名乗った語を足す（組み立ては site-index.ts）。
           // 題が比喩のスライドは、その名前を知らないと引けなかった
           const search = `${entry.title} ${entry.globalId} ${deck.searchWords ?? ""}`
             .trim()
@@ -53,6 +53,12 @@ export function generateWikiHtml(
 ): string {
   const siteTitle = options.siteTitle ?? "Slide Wiki"
   const deckBySlug = new Map(site.decks.map((d) => [d.slug, d]))
+  // デッキ1本の事実はデッキ単位の表にする。entries に足すと、同じ短い語を
+  // スライドの数だけ書き出すことになる（`resolve` と同じ形）。
+  // ビューアへ渡すのと、下のバッジを描くのが同じ表を読む
+  const deckShort: Record<string, string> = Object.fromEntries(
+    site.decks.map((d) => [d.slug, d.short])
+  )
 
   // ビューアに渡すのは「表示に要る最小限」だけ。スライド本体は DOM にあるので
   // ここで内容を二重に持たない（持つと表示とプレビューがずれうる）。
@@ -64,9 +70,7 @@ export function generateWikiHtml(
       title: e.title,
       deckIndex: e.deckIndex,
     })),
-    // デッキ1本の事実はデッキ単位の表で渡す。entries に足すと、同じ短い語を
-    // スライドの数だけ書き出すことになる（`resolve` と同じ形）
-    deckShort: Object.fromEntries(site.decks.map((d) => [d.slug, d.short])),
+    deckShort,
     resolve: options.resolveTable ?? {},
     backlinks: Object.fromEntries(site.backlinks),
   }
@@ -107,10 +111,8 @@ ${site.entries
   .map(
     // バッジは `.slide` の**外**（兄弟）に置く。中に入れると renderSlide の出力が
     // 変わり、`--html` と DOM が割れる（この Wiki の前提。index.ts の説明を見よ）。
-    // スライドの後ろに足すのは、`--html` と突き合わせる部分文字列を切らないため。
-    // 足場は position: relative の `.stage-frame` で、`.wiki-slide` には
-    // position を持たせない（`.slide` の absolute の基準が動く）。
-    (entry, i) => `        <div class="wiki-slide" data-wiki-id="${escapeAttr(entry.globalId)}" data-deck="${escapeAttr(entry.deckSlug)}">${slidesHtml[i]}<span class="deck-badge">${escapeHtml(deckBySlug.get(entry.deckSlug)?.short ?? entry.deckSlug)}</span></div>`
+    // 置き場所を決めるのは styles.ts の `.deck-badge` で、ここは順序だけを持つ。
+    (entry, i) => `        <div class="wiki-slide" data-wiki-id="${escapeAttr(entry.globalId)}" data-deck="${escapeAttr(entry.deckSlug)}">${slidesHtml[i]}<span class="deck-badge">${escapeHtml(deckShort[entry.deckSlug])}</span></div>`
   )
   .join("\n")}
       </div>
