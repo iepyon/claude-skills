@@ -13,7 +13,6 @@ import { DECK_ORDER_FILE } from "../deck-order.js"
 import { CONSUMED_KEYS, EFFECT_LABEL, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
   getAnnotations,
-  getFieldSets,
   getFrontmatter,
   getLayouts,
   getLimits,
@@ -41,7 +40,6 @@ export function selfcheckProblems(): string[] {
   const layouts = getLayouts()
   const annotations = getAnnotations()
   const vocabularies = getVocabularies()
-  const fieldSets = getFieldSets()
   const limits = getLimits()
   const frontmatter = getFrontmatter()
 
@@ -123,20 +121,6 @@ export function selfcheckProblems(): string[] {
     if (layout["max-chars"] !== undefined) {
       fail(layout["max-chars"] > 0, `${at}: max-chars が正でない`)
     }
-    if (layout.produces) {
-      fail(
-        layout.produces.includes(layout.name),
-        `${at}: produces に自分自身の _tag が入っていない（上限や集計が片側だけに効く）`
-      )
-    }
-    if (layout["field-set"]) {
-      const fs = fieldSets[layout["field-set"]]
-      fail(!!fs, `${at}: 未宣言の field-set '${layout["field-set"]}' を参照している`)
-      fail(
-        !fs || fs.layout === layout.name,
-        `${at}: field-set '${layout["field-set"]}' が別のレイアウト '${fs?.layout}' を指している`
-      )
-    }
   }
 
   // --- 注釈 ---
@@ -172,26 +156,6 @@ export function selfcheckProblems(): string[] {
       fail(!keys.has(term.key), `${at}: key '${term.key}' が重複している`)
       keys.add(term.key)
       fail(!!term.canonical, `${at}.${term.key}: canonical が無い`)
-      if (term.pattern) {
-        try {
-          new RegExp(term.pattern)
-        } catch (e) {
-          problems.push(`${at}.${term.key}: pattern が不正 (${String(e)})`)
-        }
-      }
-      const sub = term["sub-labels"]
-      if (sub) {
-        for (const s of sub.terms) {
-          if (sub.match === "exact") {
-            fail(!!s.canonical, `${at}.${term.key}.${s.key}: match: exact なのに canonical が無い`)
-          } else {
-            fail(
-              !!(s.contains?.length || s["contains-all"]?.length),
-              `${at}.${term.key}.${s.key}: match: contains-any なのに contains が無い`
-            )
-          }
-        }
-      }
     }
     // どこからも参照されない語彙は、宣言しても誰も照合しない。
     // 参照元はスロットの見出しだけではない — frontmatter のフィールドも語彙を指す
@@ -201,27 +165,6 @@ export function selfcheckProblems(): string[] {
         frontmatter.fields.some((f) => f.vocabulary === name),
       `${at}: どのスロット・frontmatter フィールドからも参照されていない`
     )
-  }
-
-  // --- フィールドセット ---
-  for (const [name, fs] of Object.entries(fieldSets)) {
-    const at = `field-set ${name}`
-    fail(names.has(fs.layout), `${at}: 未宣言のレイアウト '${fs.layout}' を指している`)
-    fail(fs.keys.length > 0, `${at}: keys が空`)
-    const seen = new Set<string>()
-    for (const k of fs.keys) {
-      fail(!seen.has(k.name), `${at}: キー '${k.name}' が重複している`)
-      seen.add(k.name)
-      fail(!!k.description, `${at}.${k.name}: description が無い`)
-      fail(
-        ["text", "int", "list"].includes(k.kind),
-        `${at}.${k.name}: kind '${k.kind}' が未知`
-      )
-      fail(
-        k.kind !== "list" || !!k.separator,
-        `${at}.${k.name}: kind: list なのに separator が無い`
-      )
-    }
   }
 
   // --- frontmatter ---

@@ -45,7 +45,7 @@ export function buildSiteIndex(decks: readonly WikiDeck[]): {
         globalId,
         deckSlug,
         localId,
-        // agenda と pattern-language は title:"" のスライドを吐く。
+        // agenda は title:"" のスライドを吐く。
         // その場合は localId を使う — ID は元の見出しから導出されているので、
         // デッキ名にフォールバックするより実際の中身に近い。
         title: slide.title || localId || deck.title,

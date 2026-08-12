@@ -96,23 +96,28 @@ describe("slide id assignment", () => {
   })
 
   it("should suffix extra slides produced by a multi-slide plugin", async () => {
-    // pattern-language は1ブロックから概要+詳細の2スライドを生む。
-    // converter は title:"" を吐くので、raw.title から採番できることが要点。
-    const markdown = `## パターンA
-<!--pattern-language-a-->
-number: 1
-name: "テストパターン"
-category: "テスト"
-stage: "はじめの一歩"
-### 状況
-状況の説明
-### 問題
-問題の説明
-### 解決
-解決の説明`
+    // customer-journey は5フェーズ以上を4件ずつのスライドに割る。
+    // converter は分割後の title を吐くので、raw.title から採番できることが要点。
+    const markdown = `## 旅路
+<!--カスタマージャーニー:-->
+### 認知
+#### タッチ:
+- Web検索
+### 比較
+#### タッチ:
+- 資料請求
+### 検討
+#### タッチ:
+- 商談
+### 購入
+#### タッチ:
+- 申込
+### 利用
+#### タッチ:
+- サポート`
     const result = await ids(markdown)
     expect(result.length).toBe(2)
-    expect(result).toEqual(["パターンa", "パターンa--2"])
+    expect(result).toEqual(["旅路", "旅路--2"])
   })
 
   it("should give every slide a non-empty id", async () => {

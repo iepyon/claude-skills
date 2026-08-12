@@ -210,7 +210,7 @@ Wiki を主題にした以上、この道具の看板はリンクである。そ
 
 **一部対応済み**: agenda は対応した（目次スライドでリンクが生のまま出ると
 索引としてまったく機能しないため）。残りは table / quote / steps / icon-layout /
-numbered-list / pattern-language / customer-journey / text-only / lean-canvas。
+numbered-list / customer-journey / text-only / lean-canvas。
 
 > この制限は `SKILL.md` と `ontology.yaml`（2箇所）が現時点の仕様として明記している。
 > 直したらその3箇所も畳む。
@@ -468,7 +468,7 @@ BodyText を warning）。
 **予言していた失敗が実際に起きた。** `selfcheck` は `レイアウト 17 / プラグイン 12` と言うのに、
 `SKILL.md:24` と `CLAUDE.md:14` の「**16レイアウト**」は生成領域の外の手書きのままで、
 17個目（wiki-pattern）が入った時点で黙って嘘になった。`docs-consistency.test.ts` が
-見ているのは `11ディレクトリ` / `12プラグイン登録` だけで、この2文は無防備。
+見ているのは `10ディレクトリ` / `11プラグイン登録` だけで、この2文は無防備。
 CLAUDE.md 自身が「そちらにある内容をここへ写さない（写した瞬間、四重管理とドリフトが始まる）」と
 書いている、その直後の行で写している。
 
@@ -540,12 +540,11 @@ CustomerJourney も4行固定。**4件以上書くと4件目以降が黙って�
 1. プラグインのディレクティブ認識（`registry.ts` が `directiveForPlugin` から導出）
 2. 文字数上限（`validation.ts` の `maxCharsForTag` / `isCharCountExcluded`）
 3. `lean-canvas-blocks` と `journey-rows` の語彙（`resolveTerm` 経由）
-4. lint（`lint.ts` が layouts / vocabularies / field-sets / cardinality を読む）
+4. lint（`lint.ts` が layouts / vocabularies / cardinality を読む）
 
 **宣言のみで誰も読まないもの**: `elements` 全体、`annotations[].pattern｜applies-to｜cardinality｜position｜example`、
 `layouts[].directives[].pattern` と `kind: code-fence`、`slots[].body`、
-`field-sets[].keys[].kind｜separator`、`inline`（`counts-chars` を含む）、
-`vocabularies.pattern-sections`。
+`inline`（`counts-chars` を含む）。
 
 どれが規範でどれが解説かが宣言自身に書かれていないので、読み手（Claude を含む）は全部を
 規範として読む。[B-26](#b-26) / [B-27](#b-27) はどちらもこの構造から出た具体例。
@@ -580,9 +579,9 @@ CustomerJourney も4行固定。**4件以上書くと4件目以降が黙って�
   同じものを別々に持つ。`selfcheck.ts` はパターンが**コンパイルできるか**しか見ていないので、
   どちらかを変えても赤くならない
 - **selfcheck がコアレイアウトを飛ばす**。`if (!layout.plugin) continue` により、
-  `Default` / `LeftRight` / `TopBottom` / `Grid` / `CodeDisplay` の5つと、`produces` 側の
-  `PatternLanguageDetail` は、**実クラスの `_tag` と一度も照合されていない**。
-  「宣言 ⇔ 実装を両方向で突き合わせる」と謳っているのはプラグインの12個だけ
+  `Default` / `LeftRight` / `TopBottom` / `Grid` / `CodeDisplay` の5つは、
+  **実クラスの `_tag` と一度も照合されていない**。
+  「宣言 ⇔ 実装を両方向で突き合わせる」と謳っているのはプラグインの11個だけ
 - **レイアウト優先順位が4箇所**。正は `parser/slide-converter.ts`、写しが
   `lint.ts` の `CORE_PRECEDENCE`、`renderer/layout/index.ts` のディスパッチ、
   `schema/validation.ts` の文字数分岐。宣言側に `directives[].pattern` と
@@ -591,21 +590,17 @@ CustomerJourney も4行固定。**4件以上書くと4件目以降が黙って�
 - **`numbered-list` の `bar` 綴りにテストが無い**。`ontology.test.ts` は
   `directives[0]`（= `circle`）だけをトークン化する。`index.ts` の
   `circle|bar` 正規表現から `bar` を落としても緑のまま
-- **pattern-language の語彙が handler にリテラルで散っている**。節名は約10箇所、
-  `sub-labels` の照合も handler が自前で持つ。600行の状態機械の改修になるため繰り延べた。
-  当面は `ontology.test.ts` が「宣言した節名がハンドラのソースに存在すること」を照合して
-  ドリフトを赤くする（内容の一致までは見ていない）
 - **ビルダーへの診断チャネルが無い**。lint がトークン列に対する2つ目のパーサになっている。
   ビルダーが「いま落とした」と報告できれば、入れ子モデルの写しが要らなくなる
 
 **受け入れ基準**: コアディレクティブが宣言のパターンから導出される（または両者の一致がテストで
-留まる）。selfcheck がコアレイアウトの `name` と `produces` を実クラスの `_tag` と照合する。
+留まる）。selfcheck がコアレイアウトの `name` を実クラスの `_tag` と照合する。
 
 <a id="b-30"></a>
 ### B-30: 層ごとに名前が違う同一概念
 
 **背景**: `ontology.yaml` は冒頭に用語体系（`element` / `annotation` / `layout` / `slot` /
-`vocabulary` / `field-set` / `inline`）を置いているが、実装の識別子には効いていない。
+`vocabulary` / `inline`）を置いているが、実装の識別子には効いていない。
 
 - **同じものが4つの名前を持つ**: 宣言の `Slot` → parser の `RawSection`
   （`parser/builder-types.ts`）→ schema の `TextBlock`（`schema/presentation.ts`）→
@@ -630,21 +625,18 @@ CustomerJourney も4行固定。**4件以上書くと4件目以降が黙って�
 
 **背景**: プラグイン機構が表現できない事情が、特例フォールバックとハックとして散っている。
 
-- **1プラグイン = 1タグの前提**。`pattern-language` は `PatternLanguageOverview` と
-  `PatternLanguageDetail` の2タグを出すのに `layoutTag` は1つしか持てず、
-  `registry.ts` の `getCharCounter` と `ontology/index.ts` の `getLayoutByTag` に
-  `produces` 経由の特例フォールバックが2本ある（後者のコメントに、これが無かったとき
-  Detail に 1024 ではなく 1000 が適用されていたと記録されている）。
-  `LayoutPlugin` に `producesTags` を持たせれば両方消える
-- **`titleFontSize: 1` が「タイトルを描かない」の代用**。`agenda/index.ts` と
-  `pattern-language/index.ts` が 1pt フォントで隠している。`showTitle: false` としてモデル化すべき
+- **`titleFontSize: 1` が「タイトルを描かない」の代用**。`agenda/index.ts` が
+  1pt フォントで隠している。`showTitle: false` としてモデル化すべき
 - **ファイル構成が守られていない**。`customer-journey` と `text-only` は `constants.ts` を持たず、
   `customer-journey/layout.ts` は `PRIMARY_COLOR = "0891B2"` をハードコードしている。
   この色は `schema/theme.ts` の `iconCardAccentColors` にもある同じ値で、テーマを変えても追随しない
   （[B-12](#b-12) と重なる）
 
-**受け入れ基準**: `registry.ts` と `ontology/index.ts` から `produces` の特例分岐が消える。
-`titleFontSize: 1` が無くなる。
+**受け入れ基準**: `titleFontSize: 1` が無くなる。
+
+**一部対応済み**: 「1プラグイン = 1タグ」は前提でなくなった — `produces` を宣言ごと落としたので、
+`registry.ts` の `getCharCounter` と `ontology/index.ts` の `getLayoutByTag` にあった特例
+フォールバック2本も消えている（オントロジー v8）。
 
 <a id="b-23"></a>
 ### B-23: 記法そのものの整理
@@ -665,8 +657,8 @@ CustomerJourney も4行固定。**4件以上書くと4件目以降が黙って�
 - **固定件数**: IconColumns / IconCards は3件ちょうど（[B-07](#b-07) と重なる）
 - **日本語ディレクティブ**: `<!--カスタマージャーニー:-->` だけが日本語で、末尾のコロンにも意味が無い。
   英語 `<!--customer-journey-->` に寄せるなら旧綴りの受理期間が要る
-- **語彙の日英混在**: lean-canvas は `課題` と `problem` の両方を受理するが、pattern-language の節名は
-  日本語のみ。受理の広さが語彙ごとに違う
+- **語彙の日英混在**: lean-canvas と wiki-pattern は `課題` と `problem` の両方を受理するが、
+  customer-journey の行ラベルは日本語のみ。受理の広さが語彙ごとに違う
 
 **受け入れ基準**: 変えるものを選び、`ontology.yaml` の宣言・`doc/` のデッキ・
 `__tests__/markdown-spec/` の入力を同時に更新して、`--lint --strict` が通る。
@@ -855,7 +847,7 @@ LeftRight レイアウトとの組み合わせ（左テキスト + 右画像）�
 ### B-12: テーマカバレッジ拡大
 
 **背景**: テーマ（`schema/theme.ts`）でカスタマイズできない配色が多い: lean-canvas /
-customer-journey / pattern-language / quote / steps の配色は各プラグインの `constants.ts` に
+customer-journey / quote / steps の配色は各プラグインの `constants.ts` に
 ハードコード、シンタックスハイライト配色も固定。また `mergeTheme` は全キー手書き列挙のため、
 テーマ項目を1つ増やすたびに interface / DEFAULT_THEME / merge の3箇所修正が必要で拡張コストが高い。
 
