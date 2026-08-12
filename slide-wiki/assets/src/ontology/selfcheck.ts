@@ -224,6 +224,35 @@ export function selfcheckProblems(): string[] {
       splitFrontmatter(`${fence}\n# T\n${fence}\n`).block === undefined,
       `${at}.recognition: 2行目が見出しの md を実装が frontmatter と誤認する`
     )
+    // 上の2件は**挙動そのもの**を留める（この2つの md がこう読まれること）。
+    // 以下は**宣言と実装の一致**を留める。2条件の連言のうち2行目の条件は
+    // `frontmatter.ts` の KEY_LINE が同じ内容を持つ二重持ちで、あちらは宣言を
+    // 読めない（パイプラインの最下層に居るので、宣言ローダを import すると依存が
+    // 上向きに戻って循環する）。読ませる代わりに、**両方の判定を突き合わせる** —
+    // これが無いと second-line-pattern はどこからも読まれない飾りになり、
+    // 「宣言を直したつもりで何も変わらない」が起きる（value-patterns と同じ理由）。
+    const declaresKeyLine = new RegExp(frontmatter.recognition["second-line-pattern"])
+    // 宣言が受ける例と受けない例を両方置く。片側だけだと、パターンを広げ過ぎた・
+    // 狭め過ぎたのどちらかを見逃す
+    for (const secondLine of [
+      "type: deck", // 素直なキー行
+      "order:", // 値の無いキー（行末で閉じる）
+      "sub.key-name: 1", // `.` と `-` を含む名
+      "# T", // 見出し。区切りから書き始めた普通のデッキ
+      "概要: なにか", // 非 ASCII の「キーらしい行」
+      "  type: deck", // 行頭が下がっている
+      "type:deck", // `:` の後に空白が無い
+    ]) {
+      const declared = declaresKeyLine.test(secondLine)
+      // 実装がその行をキー行と見たか。囲みは宣言の first-line で組む
+      const implemented =
+        splitFrontmatter(`${fence}\n${secondLine}\n${fence}\n\n# T\n`).block !== undefined
+      fail(
+        declared === implemented,
+        `${at}.recognition.second-line-pattern: 2行目 '${secondLine}' の扱いが食い違う` +
+          `（宣言=${declared} 実装=${implemented}）`
+      )
+    }
   }
 
   // --- 制限 ---
