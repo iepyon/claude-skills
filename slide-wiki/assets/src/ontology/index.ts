@@ -50,7 +50,7 @@ export function getLayouts(): readonly Layout[] {
 }
 
 /** _tag（layoutTag）で引く。宣言と _tag は1対1なので、たどるのは名前だけ */
-export function getLayoutByTag(tag: string): Layout | undefined {
+function getLayoutByTag(tag: string): Layout | undefined {
   return getLayouts().find((l) => l.name === tag)
 }
 
@@ -214,7 +214,7 @@ const FENCE_MARKER = /^```(\S+)$/
  * 数える側（lint）・宣言を検める側（selfcheck）・中身を集める側（プラグイン）が
  * 同じ規則で動く。
  */
-export function codeFenceLanguage(marker: string): string | undefined {
+function codeFenceLanguage(marker: string): string | undefined {
   const match = marker.match(FENCE_MARKER)
   return match ? match[1] : undefined
 }
@@ -229,7 +229,7 @@ const IMAGE_MARKER = /^!\[.*\]\(.*(\.[A-Za-z0-9]+)\)$/
  * 宣言側に置く**ため（実装が独自に `.svg` を知っていると、宣言を変えても
  * 読める種類が変わらない）。拡張子を名乗らない marker は画像枠と認めない。
  */
-export function imageExtension(marker: string): string | undefined {
+function imageExtension(marker: string): string | undefined {
   return marker.match(IMAGE_MARKER)?.[1].toLowerCase()
 }
 

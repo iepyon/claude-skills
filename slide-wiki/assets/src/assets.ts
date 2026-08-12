@@ -49,7 +49,7 @@ export function svgAspectRatio(svg: string): number | undefined {
  * 満たせないので、**ファイルは md のために実寸で書き、埋め込み側でここが読み替える**。
  * viewBox はそのまま残すので、拡大縮小しても座標系は変わらない。
  */
-export function fitSvgToBox(svg: string): string {
+function fitSvgToBox(svg: string): string {
   return svg.replace(SVG_OPEN_TAG, (tag) =>
     tag.replace(SIZE_ATTRIBUTE, "").replace(SVG_TAG_HEAD, '<svg width="100%" height="100%"')
   )

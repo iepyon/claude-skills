@@ -205,7 +205,7 @@ function layoutResultToSlideInventory(
 }
 
 // Convert a single slide to SlideInventory
-export function slideToInventory(
+function slideToInventory(
   slide: Slide,
   theme: Theme
 ): Effect.Effect<SlideInventory, never> {

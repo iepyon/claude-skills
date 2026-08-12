@@ -21,7 +21,7 @@ import {
   QUOTE_AUTHOR_SIZE,
 } from "./constants.js"
 
-export function layoutQuote(
+function layoutQuote(
   body: string,
   author: string | undefined,
   titleY: number,

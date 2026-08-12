@@ -39,7 +39,7 @@ export const handleTextOnlyDirective = (state: BuilderState, token: Token): O.Op
 }
 
 // BodyText in TextOnly mode: テキストを追加
-export const handleBodyTextInTextOnly = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBodyTextInTextOnly = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BodyText" || state.mode !== "text-only") return O.none()
 
   if (O.isNone(state.currentSlide)) return O.some(state)
@@ -59,7 +59,7 @@ export const handleBodyTextInTextOnly = (state: BuilderState, token: Token): O.O
 }
 
 // BlankLine in TextOnly mode: パラグラフ区切り（\n\n）
-export const handleBlankLineInTextOnly = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBlankLineInTextOnly = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BlankLine" || state.mode !== "text-only") return O.none()
 
   if (O.isNone(state.currentSlide)) return O.some(state)
@@ -82,7 +82,7 @@ export const handleBlankLineInTextOnly = (state: BuilderState, token: Token): O.
 }
 
 // H3 in TextOnly mode: 見出しテキストをbodyに追加（セクション作成を防止）
-export const handleH3InTextOnly = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleH3InTextOnly = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "H3" || state.mode !== "text-only") return O.none()
 
   if (O.isNone(state.currentSlide)) return O.some(state)

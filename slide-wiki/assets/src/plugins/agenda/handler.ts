@@ -28,7 +28,7 @@ export const handleAgendaDirective = (state: BuilderState, token: Token): O.Opti
 }
 
 // BodyText in Agenda mode: H3前はサブタイトルに蓄積
-export const handleBodyTextInAgenda = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBodyTextInAgenda = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BodyText" || state.mode !== "agenda") return O.none()
 
   if (O.isNone(state.currentSlide)) return O.some(state)
@@ -53,7 +53,7 @@ export const handleBodyTextInAgenda = (state: BuilderState, token: Token): O.Opt
 }
 
 // BlankLine in Agenda mode: 吸収
-export const handleBlankLineInAgenda = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBlankLineInAgenda = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BlankLine" || state.mode !== "agenda") return O.none()
   return O.some(state)
 }

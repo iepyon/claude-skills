@@ -11,7 +11,7 @@ import { diffInventory, Mismatch, SlideInventory } from "./inventory-diff.js"
 
 // 1脚あたりに表示する mismatch の上限。
 // 全件出すと400件級のデッキで端末が流れ、最初の1件が読めなくなる。
-export const VERIFY_MAX_SHOWN = 20
+const VERIFY_MAX_SHOWN = 20
 
 export interface VerifyLeg {
   readonly label: string
@@ -54,7 +54,7 @@ export function verifyInventories(
 
 // どのスライドのどの図形か。`property` だけでは `shape.exists` や
 // `paragraphs.length` の行が場所を持たず、デッキが大きいと探せない。
-export const locate = (mismatch: Mismatch): string =>
+const locate = (mismatch: Mismatch): string =>
   mismatch.property.startsWith(`${mismatch.slide}.`)
     ? mismatch.property
     : `${mismatch.slide}.${mismatch.shape}.${mismatch.property}`

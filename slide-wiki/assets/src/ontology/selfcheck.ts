@@ -345,7 +345,7 @@ export function selfcheckProblems(): string[] {
   return problems
 }
 
-export function selfcheck(): number {
+function selfcheck(): number {
   const problems = selfcheckProblems()
   for (const p of problems) console.error(`  [error] ${p}`)
   if (problems.length > 0) {

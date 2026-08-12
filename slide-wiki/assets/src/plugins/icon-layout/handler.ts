@@ -51,7 +51,7 @@ export const handleIconCardDirective = (state: BuilderState, token: Token): O.Op
 }
 
 // IconDirective in icon-cols/icon-cards mode: attach icon to current section
-export const handleIconInIconLayout = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleIconInIconLayout = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "IconDirective") return O.none()
   if (state.mode !== "icon-cols" && state.mode !== "icon-cards") return O.none()
 
