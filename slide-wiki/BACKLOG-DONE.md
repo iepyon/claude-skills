@@ -47,7 +47,7 @@
 `ontology.yaml` 自身で、`internal-link` の `guidance` が「**この2つの名前はまだ宣言に無く、
 `src/okf.ts` がコードで持っている**（B-41）」と自分で告白していた。しかも
 `types.ts` の `InlineSyntax` に `guidance` フィールドが無いので、**その告白は
-`ontology.md` に一度も出ていなかった** — [B-28](BACKLOG.md#b-28) の「誰も読まない宣言」の中でも、
+`ontology.md` に一度も出ていなかった** — [B-28](BACKLOG-LATER.md#b-28) の「誰も読まない宣言」の中でも、
 書いたのに読ませる先が無いという一段悪い形である。**散文の重複はコードの重複より多い**、
 というのが実測の結論（コード側のリテラル重複は `gen-okf-index.ts` の出力先1箇所だけだった）。
 
@@ -146,7 +146,7 @@ concurrency group も別にした。
 （どちらも実際に退行させて赤くなることを確認した）。このサイトが載せている
 `実行可能な規約` を、ワークフローの側でも守った形。
 
-残っているのはテストコードの型検査（[B-45](BACKLOG.md#b-45)、38件）。`gen-ontology-doc --check` と
+残っているのはテストコードの型検査（[B-45](BACKLOG-LATER.md#b-45)、38件）。`gen-ontology-doc --check` と
 `selfcheck` を npm スクリプトにしないのは意図的で、どちらも `ontology.test.ts` が
 走らせている — CLI をもう一度叩くと二重管理になる。
 
@@ -296,4 +296,4 @@ pptxgenjs がまったく分割しない／`pptx-inspector` が実体参照を�
 消した冗長性のぶんの検査は `text-style.test.ts` に置き直してある。
 **共有モジュールを増やすときは同じ手当てが要る。**
 
-残っている範囲は [B-33](BACKLOG.md#b-33)（何を保証していないか）と [B-34](BACKLOG.md#b-34)（見送った重複）。
+残っている範囲は [B-33](BACKLOG-LATER.md#b-33)（何を保証していないか）と [B-34](BACKLOG-LATER.md#b-34)（見送った重複）。
