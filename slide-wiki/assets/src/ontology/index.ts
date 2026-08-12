@@ -14,7 +14,6 @@ import { parse } from "yaml"
 import type {
   Annotation,
   FieldKind,
-  FieldSet,
   Frontmatter,
   FrontmatterField,
   Layout,
@@ -51,13 +50,9 @@ export function getLayouts(): readonly Layout[] {
   return loadOntology().layouts
 }
 
-/** _tag（layoutTag）で引く。PatternLanguageDetail のような produces 側も引ける */
+/** _tag（layoutTag）で引く。宣言と _tag は1対1なので、たどるのは名前だけ */
 export function getLayoutByTag(tag: string): Layout | undefined {
-  const layouts = getLayouts()
-  return (
-    layouts.find((l) => l.name === tag) ??
-    layouts.find((l) => l.produces?.includes(tag))
-  )
+  return getLayouts().find((l) => l.name === tag)
 }
 
 /** プラグイン id で引く（registry がディレクティブを導出するのに使う） */
@@ -82,12 +77,7 @@ export function directiveForPlugin(pluginId: string): string {
   return layout.directives[0].syntax
 }
 
-/**
- * その _tag の文字数上限。宣言が無ければデッキ全体の上限。
- *
- * PatternLanguageDetail のように produces 側の _tag でも、宣言元のレイアウトの
- * 上限が返る（かつて Detail だけ registry に無く 1024 が効いていなかった）。
- */
+/** その _tag の文字数上限。宣言が無ければデッキ全体の上限 */
 export function maxCharsForTag(tag: string): number {
   return getLayoutByTag(tag)?.["max-chars"] ?? getLimits()["max-chars-per-slide"]
 }
@@ -107,14 +97,6 @@ export function getVocabularies(): Readonly<Record<string, Vocabulary>> {
 
 export function getVocabulary(name: string): Vocabulary | undefined {
   return getVocabularies()[name]
-}
-
-export function getFieldSets(): Readonly<Record<string, FieldSet>> {
-  return loadOntology()["field-sets"]
-}
-
-export function getFieldSet(name: string): FieldSet | undefined {
-  return getFieldSets()[name]
 }
 
 export function getLimits(): Limits {
@@ -186,8 +168,6 @@ export function resolveTerm(vocab: Vocabulary, heading: string): VocabTerm | und
   for (const term of vocab.terms) {
     if (term.canonical.toLowerCase() === normalized) return term
     if (term.aliases?.some((a) => a.toLowerCase() === normalized)) return term
-    // pattern は原文に当てる（小文字化すると全角数字以外の表記を壊しうる）
-    if (term.pattern && compiled(term.pattern).test(trimmed)) return term
   }
   return undefined
 }

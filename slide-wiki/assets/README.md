@@ -38,10 +38,10 @@ See [../BACKLOG.md](../BACKLOG.md) for the feature backlog (prioritized, with ac
 - Stable slide ids via `<!--id:foo-->`, or auto-derived from the slide title
 - Material Icons (SVG) and emoji icons
 - YAML themes (`--theme`)
-- 17 layout types:
+- 16 layout types:
   - Core: `TitleSlide`, `Default`, `LeftRight`, `TopBottom`, `Grid`, `CodeDisplay`
   - Plugins: `IconColumns`, `IconCards`, `Steps`, `NumberedList`, `TextOnly`, `Table`,
-    `Quote`, `Agenda`, `LeanCanvas`, `CustomerJourney`, `PatternLanguage`, `WikiPattern`
+    `Quote`, `Agenda`, `LeanCanvas`, `CustomerJourney`, `WikiPattern`
 
 See [../SKILL.md](../SKILL.md) for the full Markdown syntax table with directives and examples.
 
@@ -74,12 +74,6 @@ npx tsx src/cli.ts input.md output.pptx --compress
 | `--compress`, `-c` | Enable ZIP compression in pptxgenjs (default: off) |
 
 **Note:** `--compress` reduces file size only marginally for small presentations.
-
-Batch mode — convert a directory of drafts into HTML plus an index page:
-
-```bash
-npx tsx src/batch-html.ts <drafts-dir> <htmls-dir>
-```
 
 ### Programmatic
 
@@ -163,9 +157,8 @@ Slide 2 exceeds 1000 characters (found 1183)
 ```
 
 **Structural lint** (`ontology/lint.ts`) checks what the declaration says about each
-layout: how many `###` a layout expects, which heading names it accepts, which `key: value`
-meta keys exist, which annotations take effect, and whether a `<!--…-->` matches any
-declaration at all. These catch the failures that are otherwise silent — an out-of-vocabulary
+layout: how many `###` a layout expects, which heading names it accepts, which annotations
+take effect, and whether a `<!--…-->` matches any declaration at all. These catch the failures that are otherwise silent — an out-of-vocabulary
 lean-canvas heading simply vanishes, and a misspelled directive renders as body text.
 
 ```bash
@@ -181,7 +174,6 @@ src/
   index.ts            Public API (md2pptx, md2html)
   cli.ts              CLI wrapper (--html, --verify, --wiki, --theme, --compress)
   pipeline.ts         parse → validate → render
-  batch-html.ts       drafts/*.md → htmls/*.html + index.html
   constants.ts        Slide dimensions, margins, gaps
   deck-order.ts       Deck order for a directory of decks (doc/wiki/order.yaml)
   errors.ts           Tagged errors (ParseError, ValidationError, RenderError)
@@ -195,7 +187,7 @@ src/
     html/             LayoutResult → inline-styled HTML (slide-css.ts is shared with wiki/)
     wiki/             Many Presentations → one linked site (reuses html/renderSlide)
     syntax-highlighter.ts, icon-resolver.ts, icon-mapping.ts
-  plugins/            Self-registering layout plugins (12 registrations)
+  plugins/            Self-registering layout plugins (11 registrations)
   tools/              inventory, html-inspector, pptx-inspector, inventory-diff,
                       gen-ontology-doc (ontology.yaml → ontology.md + SKILL.md regions)
 ```

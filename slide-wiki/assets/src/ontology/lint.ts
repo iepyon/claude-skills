@@ -5,8 +5,8 @@
  * 時点でもう失われている（どのマスにも入らなかったブロックは消え、未知のメタキーは
  * 捨てられる）。「黙って消えた」を捕まえるには、消える前＝トークン列を見るしかない。
  *
- * なぜ2つ目のパーサを許容するか: その代償として `splitSlides`・`collectHeadings`・
- * `metaLines` は plugin handler の入れ子モデルを小さく写している。これは承知の上の
+ * なぜ2つ目のパーサを許容するか: その代償として `splitSlides`・`collectHeadings` は
+ * plugin handler の入れ子モデルを小さく写している。これは承知の上の
  * 借金で、返し方は「ビルダーに診断チャネルを通し、落とす瞬間に報告させる」
  * （BACKLOG B-23）。Effect ベースのビルダーへの改修になるため今回は入れていない。
  *
@@ -20,7 +20,6 @@ import { slugify } from "../slug.js"
 import { MD_LINK, parseOkfLink } from "../okf.js"
 import { tokenize, type Token } from "../parser/tokenizer.js"
 import {
-  getFieldSet,
   getFrontmatter,
   getLayouts,
   getVocabulary,
@@ -214,62 +213,6 @@ function checkVocabulary(slot: Slot, kind: MarkerKind, headings: Headings): Diag
         (vocab["unknown-effect"] ? `（${vocab["unknown-effect"]}）` : "") +
         `。受理されるのは ${accepted}`,
     })
-  }
-  return out
-}
-
-/** `key: value` のメタ相は、ディレクティブから最初の `###` までの本文行 */
-function metaLines(tokens: readonly Token[]): Token[] {
-  const out: Token[] = []
-  let started = false
-  for (const token of tokens) {
-    if (token.type === "PluginDirective") {
-      started = true
-      continue
-    }
-    if (!started) continue
-    if (token.type === "H3") break
-    if (token.type === "BodyText") out.push(token)
-  }
-  return out
-}
-
-function checkFieldSet(layout: Layout, tokens: readonly Token[], line: number): Diagnostic[] {
-  const name = layout["field-set"]
-  if (!name) return []
-  const fieldSet = getFieldSet(name)
-  if (!fieldSet) return []
-
-  const out: Diagnostic[] = []
-  const seen = new Map<string, number>()
-  for (const token of metaLines(tokens)) {
-    const text = "text" in token ? token.text : ""
-    const colon = text.indexOf(":")
-    if (colon <= 0) continue // メタ相の非 key:value 行は実装も読み飛ばす
-    seen.set(text.slice(0, colon).trim(), token.line)
-  }
-
-  const declared = new Set(fieldSet.keys.map((k) => k.name))
-  if (fieldSet.unknown !== "ignore") {
-    for (const [key, keyLine] of seen) {
-      if (declared.has(key)) continue
-      out.push({
-        level: fieldSet.unknown,
-        check: "meta-keys",
-        line: keyLine,
-        message: `メタキー '${key}' は ${name} に宣言が無い（どこにも描かれない。タイポか宣言漏れ）`,
-      })
-    }
-  }
-  for (const key of fieldSet.keys) {
-    if (key.required && !seen.has(key.name)) {
-      out.push({
-        level: "warning",
-        check: "meta-keys",
-        line,
-        message: `必須のメタキー '${key.name}' が無い（${key.description}）`,
-      })
-    }
   }
   return out
 }
@@ -722,7 +665,6 @@ export function lintTokens(tokens: readonly Token[], context: LintContext = {}):
     if (!layout) continue
 
     out.push(...checkAnnotationScope(layout, slide.tokens))
-    out.push(...checkFieldSet(layout, slide.tokens, slide.line))
 
     const headings = collectHeadings(slide.tokens)
     const h4Slot = layout.slots.find((s) => s.marker === "####")

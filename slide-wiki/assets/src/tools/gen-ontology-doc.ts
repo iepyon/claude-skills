@@ -13,7 +13,6 @@ import { existsSync, readFileSync, writeFileSync } from "fs"
 import { fileURLToPath } from "url"
 import {
   getAnnotations,
-  getFieldSets,
   getFrontmatter,
   getLayouts,
   getLimits,
@@ -22,7 +21,7 @@ import {
   loadOntology,
   ontologyVersion,
 } from "../ontology/index.js"
-import type { FieldEffect, Layout, SubLabels, Vocabulary } from "../ontology/types.js"
+import type { FieldEffect, Layout, Vocabulary } from "../ontology/types.js"
 
 const ONTOLOGY_MD = fileURLToPath(new URL("../../../ontology.md", import.meta.url))
 const SKILL_MD = fileURLToPath(new URL("../../../SKILL.md", import.meta.url))
@@ -206,21 +205,6 @@ function limitsBullets(): string[] {
 
 // ── ontology.md ────────────────────────────────────────────────────
 
-function subLabelsTable(sub: SubLabels): string[] {
-  return table(
-    ["小項目", "ラベル"],
-    sub.terms.map((t) => {
-      const conditions: string[] = []
-      if (t.contains?.length) conditions.push(`${t.contains.map(code).join(" か ")} を含む`)
-      if (t["contains-all"]?.length) {
-        conditions.push(`${t["contains-all"].map(code).join(" と ")} を両方含む`)
-      }
-      const label = sub.match === "exact" ? code(`**${t.canonical}:**`) : conditions.join(" / ")
-      return [code(t.key), label]
-    })
-  )
-}
-
 function vocabularySection(name: string, vocab: Vocabulary): string[] {
   const lines = [`### ${vocab.label}（${code(name)}）`, ""]
   lines.push(
@@ -235,16 +219,11 @@ function vocabularySection(name: string, vocab: Vocabulary): string[] {
       vocab.terms.map((t) => [
         code(t.key),
         cell(t.canonical),
-        t.pattern ? `正規表現 ${code(t.pattern)}` : (t.aliases ?? []).map(code).join("・") || "—",
+        (t.aliases ?? []).map(code).join("・") || "—",
         cell(t.description),
       ])
     )
   )
-  for (const t of vocab.terms) {
-    const sub = t["sub-labels"]
-    if (!sub) continue
-    lines.push("", `**${t.canonical}** の中の小項目:`, "", ...subLabelsTable(sub))
-  }
   return lines
 }
 
@@ -261,12 +240,6 @@ function layoutSection(layout: Layout): string[] {
   }
   if (layout["max-chars"] !== undefined) {
     lines.push(`- 文字数上限: **${layout["max-chars"]}**（既定の上書き）`)
-  }
-  if (layout.produces) {
-    lines.push(`- 生成されるスライド: ${layout.produces.map(code).join(" → ")}`)
-  }
-  if (layout["field-set"]) {
-    lines.push(`- メタ: ${code(layout["field-set"])}（下記「メタ」節）`)
   }
   if (layout["leading-body"]) {
     lines.push(`- ディレクティブ直後の本文: ${cell(layout["leading-body"])}`)
@@ -350,26 +323,6 @@ function buildOntologyDoc(): string {
     L.push("", ...vocabularySection(name, vocab))
   }
 
-  L.push("", "## メタ（`key: value`）", "")
-  for (const [name, fs] of Object.entries(getFieldSets())) {
-    L.push(`### ${fs.label}（${code(name)}）`, "")
-    L.push(`- レイアウト: ${code(fs.layout)}`, `- 書き方: ${cell(fs.syntax)}`, `- 未宣言キーの扱い: **${fs.unknown}**`)
-    L.push(...prose(fs.guidance))
-    L.push(
-      "",
-      ...table(
-        ["キー", "必須", "種別", "説明", "例"],
-        fs.keys.map((k) => [
-          code(k.name),
-          k.required ? "必須" : "省略可",
-          code(k.kind),
-          cell(k.description),
-          k.example ? code(k.example) : "—",
-        ])
-      )
-    )
-  }
-
   // 内部リンクの綴りがバンドルの構造に依るので、構造を先に読ませる
   L.push("", `## ${getOkf().label}`, "", ...okfSection())
   L.push("", "## インライン記法", "", ...inlineTable())
@@ -408,7 +361,6 @@ export const CONSUMED_KEYS: ReadonlySet<string> = new Set([
   "annotations",
   "layouts",
   "vocabularies",
-  "field-sets",
   "okf",
   "inline",
   "limits",

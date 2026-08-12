@@ -13,13 +13,13 @@ const derive = (base: string, offset: number): string =>
  *
  * ここが ID の唯一の採番点であることには理由が2つある:
  *
- * 1. 11個のプラグイン converter は、それぞれ自前で ContentSlide を組み立てる。
- *    採番を converter 側に持たせると11箇所の同期が必要になる。
- * 2. pattern-language は `title: ""` のスライドを吐くなど、converter の出力からは
+ * 1. 10個のプラグイン converter は、それぞれ自前で ContentSlide を組み立てる。
+ *    採番を converter 側に持たせると10箇所の同期が必要になる。
+ * 2. agenda は `title: ""` のスライドを吐くなど、converter の出力からは
  *    元の見出しが読めないことがある。`raw.title` を読めるのは変換の直前だけ。
  *
- * 1つの RawSlide が複数スライドを生む場合（pattern-language の概要+詳細、
- * customer-journey のページ分割）は、2枚目以降に `--2`, `--3` を付ける。
+ * 1つの RawSlide が複数スライドを生む場合（customer-journey のページ分割）は、
+ * 2枚目以降に `--2`, `--3` を付ける。
  *
  * **`<!--id:-->` は予約として扱う。** 書き手が明示した ID は、他のスライドの見出しから
  * 自動生成された slug より強い。`# 設計` の表紙と `<!--id:設計-->` の本文が同じデッキに

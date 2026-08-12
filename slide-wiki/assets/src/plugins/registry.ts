@@ -1,5 +1,5 @@
 import { Option as O } from "effect"
-import { directiveForPlugin, getLayoutByTag } from "../ontology/index.js"
+import { directiveForPlugin } from "../ontology/index.js"
 import type { LayoutPlugin, TokenMatcher, TokenHandler, LayoutHandler } from "./types.js"
 
 const plugins: LayoutPlugin[] = []
@@ -82,18 +82,11 @@ export function getLayoutHandlers(): ReadonlyArray<LayoutHandler> {
  * How to measure this layout's characters. The *limit* is not here — ontology.yaml owns it,
  * and `validation.ts` reads it via `maxCharsForTag`. Keeping one door onto the number is the
  * point of the ontology, so the registry does not offer a second.
- *
- * `produces`-side tags (PatternLanguageDetail) have no registration of their own, so fall
- * back to the plugin that owns the declaring layout. That fallback is general — it keys off
- * the declared `produces` list, not off any layout name.
  */
 export function getCharCounter(
   tag: string
 ): ((layout: import("../schema/presentation.js").SlideLayout) => number) | undefined {
-  const owner =
-    plugins.find(p => p.layoutTag === tag) ??
-    plugins.find(p => p.id === getLayoutByTag(tag)?.plugin)
-  return owner?.countChars
+  return plugins.find(p => p.layoutTag === tag)?.countChars
 }
 
 export function getTitleFontSize(tag: string): number | undefined {

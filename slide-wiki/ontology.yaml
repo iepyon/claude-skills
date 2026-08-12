@@ -8,8 +8,8 @@
 #
 # なぜ要るか: slide-wiki は「Claude がドキュメントを読んで機械的に使う」スキルなので、
 # md の構造が宣言されていないことがそのまま生成品質の劣化になる。実際これまで
-# lean-canvas の9ブロック名・カスタマージャーニーの行ラベル・pattern-language の
-# メタキーは**コードの中のリテラルにしか存在せず**、語彙外の見出しは黙って消えていた。
+# lean-canvas の9ブロック名やカスタマージャーニーの行ラベルは**コードの中のリテラルに
+# しか存在せず**、語彙外の見出しは黙って消えていた。
 #
 # 用語:
 #   element    = md の骨格要素（deck / title-slide / content-slide / section / subsection / body）。
@@ -20,7 +20,6 @@
 #   slot       = そのレイアウトで `###` / `####` が持つ意味。**「### に何を書けばよいか」の正本。**
 #                marker・cardinality・heading（free か vocabulary）・body の読まれ方を宣言する。
 #   vocabulary = slot の見出し名として許される語彙（別名つき）。語彙外の扱い(unknown)も宣言する。
-#   field-set  = `key: value` 形式のメタ。現在 pattern-language ブロックだけが持つ。
 #   inline     = 本文中の記法と、それが効く場所。
 #   bundle     = デッキの md を平らに並べた1つのディレクトリ。`--wiki` に渡す単位であり、
 #                そのまま配れる OKF のバンドルでもある。**ここだけが md 1本の外側。**
@@ -47,7 +46,16 @@
 #    スライドの右上と、デッキをまたぐリンクの末尾に出る。これに合わせて
 #    フィールドの effect に `display` を足した（今までの効き先は lint と外部ツール・
 #    絞り込み・未実装の3つで、「読み手の画面に出る」を言い表せなかった）
-version: 7
+# 8: PatternLanguage（`<!--pattern-language-a-->`）を廃止した。パターンを載せる形は
+#    WikiPattern に一本化する。**同じものを2つの書き方で書けること自体が費用**で、
+#    12節の語彙・10キーのメタ・1ブロック2スライドの分岐が、どのデッキも使っていない
+#    ままドキュメントと lint と実装に載り続けていた。これに伴い、そこだけが使っていた
+#    宣言の仕組み4つ（`field-set` = `key: value` のメタ、`produces` = 1ブロックから
+#    複数スライド、語彙項目の `pattern` = 正規表現で受理する見出し、`sub-labels` =
+#    節の中の `**ラベル:**`）も落とす。**使い手のいない仕組みは、宣言を読んでも
+#    効き目を確かめられない** — selfcheck が未参照の語彙や未使用の value-pattern を
+#    落とすのと同じ理由で、宣言の側にも残さない
+version: 8
 
 # ── md の骨格要素 ───────────────────────────────────────────────────
 # 行頭記号で認識される構造。ここに無い記法はすべて body（＝本文テキスト）に落ちる。
@@ -80,7 +88,7 @@ elements:
   subsection:
     marker: "####"
     label: サブセクション
-    description: 区画の中の行ラベル。CustomerJourney と PatternLanguage だけが使う。
+    description: 区画の中の行ラベル。CustomerJourney だけが使う。
   image:
     marker: "![alt](src)"
     label: 画像
@@ -355,7 +363,11 @@ annotations:
 #                 "rows*cols"（ディレクティブの引数から解決）。
 #                 heading: free（名前は自由）| vocabulary（vocabularies の語彙に従う）
 #                 body: free | lines | bullets-only | none
-# produces      = 1ブロックから複数スライドを作るレイアウトの、生成される _tag の並び
+#
+# **1ブロックが生むのは1種類の _tag。** 別の _tag を連れて出る形（かつての PatternLanguage
+# の概要+詳細）は宣言から落とした。連れられるほうは宣言に名前しか持てず、上限も数え方も
+# 「宣言元をたどる」例外でしか引けない。件数のほうは自由で、CustomerJourney は同じ _tag の
+# まま4フェーズずつに割る。
 layouts:
   - name: Default
     label: Default
@@ -749,57 +761,6 @@ layouts:
       #### 感情:
       - 期待感
 
-  - name: PatternLanguageOverview
-    label: PatternLanguage
-    plugin: pattern-language
-    directives:
-      - syntax: "<!--pattern-language-a-->"
-    description: パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成
-    guidance: |
-      このスキルで唯一 `key: value` のメタを持つレイアウト。最初の `###` までがメタ、
-      それ以降が本文。本文の節名も語彙で決まる（語彙外の節は中身ごと黙って捨てられる）。
-    max-chars: 1024
-    produces: [PatternLanguageOverview, PatternLanguageDetail]
-    field-set: pattern-meta
-    annotations: [id]
-    leading-body: "メタ（`key: value` の並び）。最初の `###` でメタ相が終わる。"
-    slots:
-      - name: sections
-        marker: "###"
-        cardinality: "1..n"
-        heading: vocabulary
-        vocabulary: pattern-sections
-        body: free
-        description: パターンの節。節ごとに本文の読まれ方が違う（語彙の説明を見る）。
-      - name: example-items
-        marker: "####"
-        cardinality: "0..n"
-        heading: free
-        body: free
-        description: 「具体例N：…」節の中の小項目。
-      - name: diagram
-        marker: "```pattern-diagram"
-        cardinality: "0..1"
-        heading: free
-        body: none
-        description: 概要ページの左下に置く SVG。フェンスの中身をそのまま図として描く。
-    example: |
-      ## パターン12
-      <!--pattern-language-a-->
-      number: 12
-      name: 反証条件を先に書く
-      category: 仮説検証
-      oneliner: 何が起きたら崩れるかを、実験の前に一文で決める
-      ### 状況・いつ使うか
-      仮説を立てたが、検証の成否をどう判定するか決めていないとき。
-      ### 問題・なぜ必要か
-      後から基準を動かせると、どんな結果も「支持された」と読めてしまう。
-      ### 何をするのか
-      - 反証条件を一文で書く
-      - 実験の前に確定させる
-      ### 期待結果
-      結果の解釈が一意に定まる。
-
   - name: WikiPattern
     label: WikiPattern
     plugin: wiki-pattern
@@ -956,73 +917,6 @@ vocabularies:
       - {key: judge,   canonical: 判断,   description: 顧客の判断・評価}
       - {key: emotion, canonical: 感情,   description: 顧客の感情}
 
-  pattern-sections:
-    label: パターン・ランゲージの節
-    unknown: warning
-    unknown-effect: その節の内容は蓄積されず、丸ごと捨てられる
-    terms:
-      - key: situation
-        canonical: 状況・いつ使うか
-        description: 概要ページの「状況」。本文がそのまま入る。
-      - key: problem
-        canonical: 問題・なぜ必要か
-        description: 概要ページの「問題」。本文がそのまま入る。
-      - key: solution
-        canonical: 何をするのか
-        description: |
-          概要ページの「解決」。`- ` で始まる行は原則(principles)として別枠に、
-          それ以外の行は本文に入る。`**…**` だけの行は小見出しとして読み飛ばされる。
-      - key: result
-        canonical: 期待結果
-        description: 概要ページの「期待結果」。
-      - key: caution
-        canonical: 注意
-        description: 概要ページの「注意」。
-      - key: success
-        canonical: 成功例
-        description: 詳細ページの成功例。`**ラベル:**` で小項目が切り替わる。
-        sub-labels:
-          match: exact
-          terms:
-            - {key: title,    canonical: タイトル}
-            - {key: before,   canonical: Before}
-            - {key: analysis, canonical: ズレ分析}
-            - {key: after,    canonical: After}
-      - key: failure
-        canonical: 失敗例
-        description: 詳細ページの失敗例。`**ラベル:**` で小項目が切り替わる。
-        sub-labels:
-          match: exact
-          terms:
-            - {key: title,       canonical: タイトル}
-            - {key: attempt,     canonical: やったこと}
-            - {key: problem,     canonical: 何がダメだったか}
-            - {key: improvement, canonical: こうすればよかった}
-      - key: concrete-example
-        canonical: 具体例N：タイトル
-        pattern: '^具体例[0-9０-９]+[：:](.+)$'
-        description: |
-          詳細ページの具体例。全角/半角の数字とコロンを受理する。`####` で小項目を作れる。
-        sub-labels:
-          match: contains-any
-          terms:
-            - {key: goodPoints,  contains: [ポイント]}
-            - {key: goodExample, contains-all: [良い, 例]}
-            - {key: badExample,  contains: [NG, 短すぎる]}
-            - {key: badReason,   contains: [失敗]}
-      - key: template
-        canonical: テンプレート
-        description: 詳細ページのテンプレート。コードフェンスの中身だけが使われる。
-      - key: checklist
-        canonical: セルフチェック
-        description: 詳細ページのチェックリスト。`- [ ] 項目` の行だけが読まれる。
-      - key: team-scenarios
-        canonical: チーム活用シナリオ
-        description: 詳細ページのシナリオ。`1. 項目` の番号付き行だけが読まれる。
-      - key: comm-diagram-note
-        canonical: コミュニケーション図メモ
-        description: 意図的に読み捨てる節（描画されない作業メモ）。
-
   wiki-pattern-sections:
     label: Wiki パターンの2節
     unknown: error
@@ -1045,69 +939,6 @@ vocabularies:
         canonical: そこで
         aliases: [解決, どうする, solution]
         description: 打ち手。本文がそのまま入る。冒頭の一文を太字にして打ち手を立てる。
-
-# ── フィールドセット（key: value 形式のメタ） ───────────────────────
-# 現在 pattern-language ブロックだけが持つ。宣言に無いキーはタイポとして warning にする
-# （実装は黙って meta に入れるだけで、どこにも描かれない）。
-field-sets:
-  pattern-meta:
-    label: パターンのメタ
-    layout: PatternLanguageOverview
-    syntax: "`key: value` を1行ずつ。最初の `###` でメタ相が終わる。"
-    guidance: |
-      値の `"…"` と `[…]` は剥がされ、`\"` はアンエスケープされる。
-      未宣言のキーは黙って捨てられるので、増やすときは必ずここへ宣言する。
-    unknown: warning
-    keys:
-      - name: number
-        required: true
-        kind: text
-        description: "パターン番号。目次(batch-html)がこれと name で項目を作る。"
-        example: "12"
-      - name: name
-        required: true
-        kind: text
-        description: "パターン名。概要ページの見出しになる。"
-        example: "反証条件を先に書く"
-      - name: category
-        required: false
-        kind: text
-        description: "分類。"
-        example: "仮説検証"
-      - name: stage
-        required: false
-        kind: text
-        description: "適用段階。"
-        example: "CPF"
-      - name: oneliner
-        required: false
-        kind: text
-        description: "一行要約。概要ページのリード文になる。"
-        example: "何が起きたら崩れるかを、実験の前に一文で決める"
-      - name: difficulty
-        required: false
-        kind: int
-        description: "難易度。未指定は 0。"
-        example: "3"
-      - name: frequency
-        required: false
-        kind: int
-        description: "頻度。未指定は 0。"
-        example: "5"
-      - name: related_patterns
-        required: false
-        kind: list
-        separator: ","
-        description: "関連パターン。カンマ区切り（`[...]` で囲んでもよい）。"
-        example: "[P-03, P-07]"
-      - name: takeaway
-        required: false
-        kind: text
-        description: "まとめ。このレイアウトは `<!--takeaway-->` を使わずここで書く。"
-      - name: reference
-        required: false
-        kind: text
-        description: "出典。"
 
 # ── バンドル（サイトの階層）─────────────────────────────────────────
 # ここまでの節はすべて「1つの md ファイルの中」の構造だった。この節だけがファイルの外側 —

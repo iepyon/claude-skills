@@ -311,7 +311,7 @@ describe("rich text layout", () => {
 
 describe("titles for plugins that blank the slide title", () => {
   it("should fall back to the slide id, not the deck name", async () => {
-    // agenda / pattern-language の converter は title:"" を吐く。
+    // agenda の converter は title:"" を吐く。
     // デッキ名にフォールバックすると、サイドバーもプレビューも
     // 全部デッキ名になって区別がつかなくなる。
     const pres = await Effect.runPromise(

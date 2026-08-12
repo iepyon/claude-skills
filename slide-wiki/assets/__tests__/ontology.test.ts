@@ -115,17 +115,16 @@ describe("ontology declaration", () => {
 })
 
 describe("ontology drives validation", () => {
-  it("gives both PatternLanguage pages the declared limit", () => {
-    // Detail は layoutTag として登録されていないので、レジストリを引くだけだと
-    // 宣言が 1024 と言っている裏で 1000 が効いていた。
-    expect(maxCharsForTag("PatternLanguageOverview")).toBe(1024)
-    expect(maxCharsForTag("PatternLanguageDetail")).toBe(1024)
-    expect(getCharCounter("PatternLanguageDetail")).toBeTypeOf("function")
-  })
-
   it("falls back to the declared deck-wide limit", () => {
     expect(maxCharsForTag("Default")).toBe(getLimits()["max-chars-per-slide"])
     expect(maxCharsForTag("NotALayout")).toBe(getLimits()["max-chars-per-slide"])
+  })
+
+  it("hands the count back to the plugin that declares the tag", () => {
+    // 数え方だけはレジストリが持つ（上限は宣言が持つ）。宣言と _tag は1対1なので、
+    // 登録の無い _tag には数え方も無い — たどれる先が1つしか無いことの裏返し。
+    expect(getCharCounter("WikiPattern")).toBeTypeOf("function")
+    expect(getCharCounter("NotALayout")).toBeUndefined()
   })
 
   it("keeps the character limit out of the code", () => {
@@ -162,13 +161,6 @@ describe("vocabulary resolution", () => {
     const rows = getVocabulary("journey-rows")!
     expect(resolveTerm(rows, "タッチ:")?.key).toBe("touch")
     expect(resolveTerm(rows, "タッチ：")?.key).toBe("touch")
-  })
-
-  it("matches numbered sections by their declared pattern", () => {
-    const sections = getVocabulary("pattern-sections")!
-    expect(resolveTerm(sections, "具体例1：短い例")?.key).toBe("concrete-example")
-    expect(resolveTerm(sections, "具体例２:全角")?.key).toBe("concrete-example")
-    expect(resolveTerm(sections, "具体例")).toBeUndefined()
   })
 
   it("rejects a plausible-but-undeclared heading", () => {
@@ -223,19 +215,6 @@ describe("the implementation accepts every declared vocabulary term", () => {
       }
     }
   })
-
-  it("pattern-language's handler still spells every declared section the same way", () => {
-    // このプラグインの語彙はまだハンドラ側が持っている（BACKLOG B-23）。
-    // 移すまでの間、2つの写しが一致していることだけを留める。
-    const handler = read(join(ASSETS_DIR, "src", "plugins", "pattern-language", "handler.ts"))
-    for (const term of getVocabulary("pattern-sections")!.terms) {
-      if (term.pattern) {
-        expect(handler, `具体例の正規表現が宣言とずれている`).toContain(term.pattern)
-        continue
-      }
-      expect(handler, `節 '${term.canonical}' がハンドラに無い`).toContain(term.canonical)
-    }
-  })
 })
 
 describe("cardinality parsing", () => {
@@ -282,17 +261,6 @@ describe("lint", () => {
   it("flags icon columns that are not exactly three", () => {
     const two = ["## I", "<!--icon-cols-->", "### A", "1", "### B", "2"].join("\n")
     expect(checks(two)).toEqual(["slot-cardinality"])
-  })
-
-  it("flags an undeclared pattern-language meta key and a missing required one", () => {
-    const diagnostics = lintSource(
-      ["## P", "<!--pattern-language-a-->", "name: 反証条件", "categoly: 仮説検証", "### 注意", "無し"].join(
-        "\n"
-      )
-    )
-    expect(diagnostics.map((d) => d.check)).toEqual(["meta-keys", "meta-keys"])
-    expect(diagnostics.map((d) => d.message).join(" ")).toContain("categoly")
-    expect(diagnostics.map((d) => d.message).join(" ")).toContain("number")
   })
 
   it("flags an annotation the layout cannot use", () => {

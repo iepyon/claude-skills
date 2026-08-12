@@ -22,7 +22,7 @@ Markdown のデッキをリンクで辿れる Wiki にする Claude Code skill�
 ## オントロジー（md の構造の正本）
 
 **このファイルには、ここにしか無い規約だけを書く。** md の構造 — 骨格要素・注釈ディレクティブ・
-16レイアウトとその `###` / `####` の意味・見出しの語彙・`key: value` メタ・文字数制限 — の正本は
+16レイアウトとその `###` / `####` の意味・見出しの語彙・文字数制限 — の正本は
 [ontology.yaml](ontology.yaml)（人間可読な生成物は [ontology.md](ontology.md)）。
 **そちらにある内容をここへ写さない**（写した瞬間、四重管理とドリフトが始まる）。
 
@@ -203,13 +203,6 @@ PPTX は改行ごとに `<a:p>` を出すので、HTML も AST インベント�
 間違っていれば3脚とも揃って間違う（比較は緑のまま）。冗長性を消したぶんの検査は
 `text-style.test.ts` が明示的に置き直している。共有モジュールを増やすときは同じ手当てが要る。
 
-### 6. Batch: 複数 Markdown の一括 HTML 化
-
-```
-src/batch-html.ts   drafts/*.md → htmls/*.html + index.html 目次ページ生成
-                    (pattern-language ブロックからメタ情報を抽出して目次を作る)
-```
-
 ### Shared: Constants & Errors
 
 ```
@@ -281,14 +274,13 @@ src/plugins/
 ├── table/                `<!--table-->` (shape + text の自力描画)
 ├── quote/                `<!--quote-->`
 ├── agenda/               `<!--agenda-->`
-├── pattern-language/     `<!--pattern-language-a-->` (1ブロック → Overview + Detail の2スライド)
 └── wiki-pattern/         `<!--pattern-->` (左に2節、右に `![…](….svg)` が指す外部 SVG)
 ```
 
-11ディレクトリ・**12プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
+10ディレクトリ・**11プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
 
 - `sectionRoute`: `###` セクションを `pluginData` の指定フィールドに集めるだけの標準ルート — lean-canvas, numbered-list, steps, icon-layout, agenda, wiki-pattern
-- `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ — customer-journey, pattern-language, quote, table, text-only, steps, icon-layout, agenda, wiki-pattern
+- `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ — customer-journey, quote, table, text-only, steps, icon-layout, agenda, wiki-pattern
 
 (steps / icon-layout / agenda / wiki-pattern は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる。
 wiki-pattern が挟むのは画像とコードフェンス — 画像は図解の参照を読み込む本題で、フェンスのほうは
@@ -339,7 +331,6 @@ wiki-pattern が挟むのは画像とコードフェンス — 画像は図解�
 | `cli.test.ts` | cli.ts (CLI 引数・ファイル出力) |
 | `customer-journey.test.ts` | CustomerJourney レイアウト |
 | `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
-| `pattern-language.test.ts` | PatternLanguage レイアウト (Overview + Detail) |
 | `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査＝実寸・禁止要素・定規で引いた線) |
 | `migrate-wikilinks.test.ts` | tools/migrate-wikilinks.ts (旧記法と接頭辞つきリンクの一括変換・表示テキストの不変・コード表記の据え置き) |
 | `okf-conformance.test.ts` | `doc/wiki/` が OKF v0.2 に適合していること (§11 の3条件・§8 目録・§9 履歴・§6 リンク) |

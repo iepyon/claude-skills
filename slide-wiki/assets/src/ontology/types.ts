@@ -5,33 +5,14 @@
  * 「YAML では何と書くのか」を思い出せなくなる）。読み取り側は必ずこの型を通す。
  */
 
-/** 語彙の1項目。`canonical` か `pattern` のどちらかで見出しを受理する。 */
+/** 語彙の1項目。見出しは `canonical` か `aliases` のどれかに一致すれば受理される。 */
 export interface VocabTerm {
   readonly key: string
-  /** 正書。表示にも使う。`pattern` を持つ項目では書式の説明を兼ねる */
+  /** 正書。表示にも使う */
   readonly canonical: string
   /** 受理する別表記（照合は小文字化・トリムしてから） */
   readonly aliases?: readonly string[]
-  /** 固定名でなく正規表現で受理する項目（具体例N：… のような連番節） */
-  readonly pattern?: string
   readonly description?: string
-  /** その節の中で意味を持つ `**ラベル:**` */
-  readonly "sub-labels"?: SubLabels
-}
-
-export interface SubLabels {
-  readonly match: "exact" | "contains-any"
-  readonly terms: readonly SubLabelTerm[]
-}
-
-export interface SubLabelTerm {
-  readonly key: string
-  /** match: exact のとき */
-  readonly canonical?: string
-  /** match: contains-any のとき、いずれかを含めば一致 */
-  readonly contains?: readonly string[]
-  /** match: contains-any のとき、すべて含めば一致 */
-  readonly "contains-all"?: readonly string[]
 }
 
 export interface Vocabulary {
@@ -88,9 +69,6 @@ export interface Layout {
   /** ディレクティブと最初の `###` の間に置く本文の意味 */
   readonly "leading-body"?: string
   readonly slots: readonly Slot[]
-  /** 1ブロックから複数スライドを作るレイアウトの、生成される _tag の並び */
-  readonly produces?: readonly string[]
-  readonly "field-set"?: string
   readonly example?: string
 }
 
@@ -104,25 +82,6 @@ export interface Annotation {
   readonly description: string
   readonly guidance?: string
   readonly example?: string
-}
-
-export interface FieldKey {
-  readonly name: string
-  readonly required: boolean
-  readonly kind: "text" | "int" | "list"
-  readonly separator?: string
-  readonly description: string
-  readonly example?: string
-}
-
-export interface FieldSet {
-  readonly label: string
-  /** このフィールドセットを持つレイアウトの name */
-  readonly layout: string
-  readonly syntax: string
-  readonly guidance?: string
-  readonly unknown: "warning" | "error" | "ignore"
-  readonly keys: readonly FieldKey[]
 }
 
 export interface Element {
@@ -317,7 +276,6 @@ export interface Ontology {
   readonly annotations: readonly Annotation[]
   readonly layouts: readonly Layout[]
   readonly vocabularies: Readonly<Record<string, Vocabulary>>
-  readonly "field-sets": Readonly<Record<string, FieldSet>>
   readonly okf: Okf
   readonly inline: Inline
   readonly limits: Limits

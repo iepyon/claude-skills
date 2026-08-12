@@ -1,6 +1,6 @@
 ---
 name: slide-wiki
-description: Builds a link-navigable slide wiki from Markdown decks, and renders the same decks to PowerPoint and HTML. Converts structured Markdown through a pipeline of parse → validate → layout → render, with layout plugins and wiki-style links that carry hover previews and backlinks across deck boundaries. Supports 17 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, pattern language, and wiki patterns with a required SVG diagram. Use when building a linked slide wiki from several decks, creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
+description: Builds a link-navigable slide wiki from Markdown decks, and renders the same decks to PowerPoint and HTML. Converts structured Markdown through a pipeline of parse → validate → layout → render, with layout plugins and wiki-style links that carry hover previews and backlinks across deck boundaries. Supports 16 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, and wiki patterns with a required SVG diagram. Use when building a linked slide wiki from several decks, creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
 ---
 
 # slide-wiki
@@ -22,7 +22,7 @@ npx tsx src/cli.ts --lint input.md                   # 構造の検査だけ
 ## md の構造の正本
 
 このスキルが読む Markdown の構造 — 骨格要素・注釈・16レイアウトが `###` / `####` に何を期待するか・
-見出しの語彙・`key: value` メタ・文字数 — は [ontology.yaml](ontology.yaml) が唯一の正本。
+見出しの語彙・文字数 — は [ontology.yaml](ontology.yaml) が唯一の正本。
 **書き方の全文リファレンスは [ontology.md](ontology.md)**（生成物）にあり、以下はその要約。
 `--lint` はその宣言に照らして md を検査する。
 
@@ -63,7 +63,6 @@ npx tsx src/cli.ts --lint input.md                   # 構造の検査だけ
 <!-- BEGIN GENERATED: limits -->
 - 1スライド **1000文字**を超えると ValidationError。本文と見出し（Markdown 構文を除く）。リンクは表示ラベルだけを数え、URL は数えない。
 - 読みやすさの目安は **240文字程度**（ツールでは強制しない）
-- PatternLanguage だけは **1024文字**まで（レイアウトごとの上書き）
 - `CodeDisplay` は文字数を数えない（タイトルのみ）
 <!-- END GENERATED: limits -->
 
@@ -140,7 +139,6 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | Agenda | `<!--agenda-->` | TOC/アジェンダ |
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
-| PatternLanguage | `<!--pattern-language-a-->` | パターン・ランゲージ。1ブロックから概要ページ + 詳細ページの2スライドを生成 |
 | WikiPattern | `<!--pattern-->` | Wiki のパターン1件。左に いつ・なにが困るか／そこで、右に SVG の図解 |
 <!-- END GENERATED: layouts -->
 
