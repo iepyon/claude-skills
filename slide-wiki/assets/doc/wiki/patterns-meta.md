@@ -259,7 +259,7 @@ Meszaros & Doble "Visible Forces"（PLoPD3, 1997）＝読者が解の選択を�
 ### そこで
 **魚ではなく、たのしい釣り方を渡す。**
 効いた形ではなく、自分で釣れる道すじを書く。
-釣る余地の残し方は [ラフで出す](patterns-meta.md#ラフで出す)。
+工夫の余地の残し方は [ラフで出す](patterns-meta.md#ラフで出す)。
 
 ![たのしい釣り方](diagrams/patterns-meta/たのしい釣り方.svg)
 
