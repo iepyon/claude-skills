@@ -326,14 +326,14 @@ Meszaros & Doble "Readable References to Patterns"（PLoPD3, 1997）＝他のパ
 分かった頃には他所から張られ、改名すると折れる。
 
 ### そこで
-**書いた直後に、同僚に向けて声に出す。**
+**書いた後に、同僚やゴムのアヒルに向けて声に出す。**
 詰まったら即、改名する。値段は繋がった数で上がる。
 [ジワる名前](patterns-meta.md#ジワる名前) も [文に溶かす](patterns-meta.md#文に溶かす) 一行も、耳で分かる。
 
 ![声に出して読む](diagrams/patterns-meta/声に出して読む.svg)
 
 <!--source-->
-Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」＝モデルを声に出して試すのが、モデルを洗練させる最良の方法のひとつ。"Rough edges are easy to hear"（粗い所は耳で分かる）。
+Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」＝声に出して試すのがモデルを洗練させる最良の方法のひとつ。"Rough edges are easy to hear"（粗い所は耳で分かる）。／Hunt & Thomas『達人プログラマー』(1999)「Rubber Ducking」＝聞き手は頷くだけでよい（風呂のゴムのアヒルのように）。
 
 ---
 
