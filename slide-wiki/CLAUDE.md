@@ -1,37 +1,26 @@
 # CLAUDE.md
 
-## Git Push Policy
+Markdown のデッキをリンクで辿れる Wiki にする Claude Code skill。同じデッキを PPTX
+（AST → pptxgenjs）と HTML にも出力し、共通のレイアウトエンジンで座標を計算して3系統に出す。
 
-**作業ブランチへの push は済ませる。** 以前ここには「push するな、要求されたときだけ」と
-書いてあったが、**Claude Code on the web の停止フックが未 push のコミットを毎回差し戻すので、
-規約として成り立っていなかった**（フックは無条件で、未コミット・未追跡・未 push のいずれかが
-あれば止める）。守るべきものはフックのほうにある — リモートセッションのコンテナは
-使い終わると回収されるので、**push していないコミットは失われる。**
+**このファイルには、ここにしか無い規約だけを書く。** 他に正本があるものは指すだけにする
+（写した瞬間、多重管理とドリフトが始まる）。
 
-代わりに残す線は3つ。どれもフックが見ていないので、ここにしか無い規約になる。
+| 知りたいこと | 正本 |
+|---|---|
+| md の構造（骨格要素・注釈ディレクティブ・レイアウトと `###` / `####` の意味・見出しの語彙・文字数・リンク） | [ontology.yaml](ontology.yaml)（人間可読な生成物は [ontology.md](ontology.md)） |
+| 書き方の案内・レイアウト一覧 | [SKILL.md](SKILL.md)（生成領域を含む） |
+| コードの地図・CLI オプション・使い方 | [assets/README.md](assets/README.md) |
+| やること・やらないこと | `BACKLOG.md` / `BACKLOG-LATER.md` / `BACKLOG-DONE.md` / `BACKLOG-WONTDO.md` |
+
+## Git
 
 - **`main` に直接 push しない。** 公開サイトは `main` への push で再ビルドされる
   （`.github/workflows/pages.yml`）。作業は必ずブランチに置く
 - **force push しない。** 明示的に要求されたときだけ
 - **PR は頼まれてから作る。** ブランチを push しても PR は開かない
-
-## Overview
-
-Markdown のデッキをリンクで辿れる Wiki にする Claude Code skill。同じデッキを PPTX（AST → pptxgenjs）と HTML にも出力し、共通のレイアウトエンジンで座標を計算して3系統に出す。
-
-## オントロジー（md の構造の正本）
-
-**このファイルには、ここにしか無い規約だけを書く。** md の構造 — 骨格要素・注釈ディレクティブ・
-16レイアウトとその `###` / `####` の意味・見出しの語彙・文字数制限 — の正本は
-[ontology.yaml](ontology.yaml)（人間可読な生成物は [ontology.md](ontology.md)）。
-**そちらにある内容をここへ写さない**（写した瞬間、四重管理とドリフトが始まる）。
-
-- 実装は `assets/src/ontology/` 経由で宣言を読む。`registry.ts` はプラグインのディレクティブを、
-  `schema/validation.ts` は文字数上限をそこから導出する。**コードに語彙や数値を再定義しない。**
-- `ontology.md` と SKILL.md の生成領域（`<!-- BEGIN GENERATED: … -->`）は
-  `npx tsx src/tools/gen-ontology-doc.ts` で生成する。手編集禁止。
-- 宣言に照らした md の検査は `npx tsx src/cli.ts --lint <deck.md>`。既定は警告、`--strict` でエラー。
-- 宣言そのものの点検は `npx tsx src/ontology/selfcheck.ts`。
+- **作業ブランチへの push は済ませる。** リモートセッションのコンテナは使い終わると回収されるので、
+  push していないコミットは失われる（停止フックも未 push を無条件で差し戻す）
 
 ## Commands
 
@@ -50,175 +39,62 @@ npx tsx src/tools/migrate-wikilinks.ts [--dry-run|--check] doc/wiki  # 古い記
 npx tsx src/tools/gen-okf-index.ts [--check]      # バンドルの index.md / log.md
 ```
 
-## Code Reading Order
+## オントロジー（宣言の読み方）
 
-コードを読む順序。パイプラインの流れに沿って上流から下流へ。
+- 実装は `assets/src/ontology/` 経由で宣言を読む。`registry.ts` はプラグインのディレクティブを、
+  `schema/validation.ts` は文字数上限をそこから導出する。**コードに語彙や数値を再定義しない**
+- `ontology.md` と SKILL.md の生成領域（`<!-- BEGIN GENERATED: … -->`）は
+  `gen-ontology-doc.ts` の生成物。**手編集禁止**
+- **frontmatter は生の md を受け取る3つの入口すべてで剥がす** — `pipeline.ts` の `prepare()`、
+  `parser/index.ts` の `parseMarkdown()`、`ontology/lint.ts` の `lintSource()`。片方だけだと
+  同じデッキから違うトークン列が出て、3者比較が原因の分かりにくい形で落ちる。剥がし方は
+  **同じ行数の空行への置換**で、切り落とすと以降の診断の行番号が実ファイルとずれる
+- `lint.ts` がトークン層を見るのは、語彙外の `###` や未宣言のメタキーが **AST に変換される
+  時点でもう失われている**ため（消えたブロックは AST に痕跡を残さない）
 
-### 1. Entry Points → Pipeline
-
-```
-src/index.ts        md2pptx(), md2html(), md2wiki() — 公開 API
-src/cli.ts          CLI ラッパー (--html, --verify, --wiki, --lint, --strict)
-src/pipeline.ts     パイプラインの組み立て: prepare()（tokenize → lint → parse → validate）→ render
-```
-
-### 1.5 Ontology: 宣言の読み取りと検査
-
-```
-src/ontology/
-├── types.ts        ontology.yaml の宣言に対応する型（YAML のキーは kebab-case のまま）
-├── index.ts        ローダ + 導出ルックアップ（registry / validation / lint / 生成器の唯一の入口）
-├── frontmatter.ts  デッキ冒頭の YAML の分割と読み取り（依存は yaml だけ＝どこからでも呼べる）
-├── selfcheck.ts    宣言そのものの点検（宣言 ⇔ 実装の両方向を突き合わせる）
-└── lint.ts         書かれた md を宣言に照らして検査（トークン層で見る）
-```
-
-**frontmatter は生の md を受け取る3つの入口すべてで剥がす** — `pipeline.ts` の `prepare()`、
-`parser/index.ts` の `parseMarkdown()`、`ontology/lint.ts` の `lintSource()`。
-片方だけだと同じデッキから違うトークン列が出て、3者比較が原因の分かりにくい形で落ちる。
-剥がし方は**同じ行数の空行への置換**で、切り落とすと以降の診断の行番号が実ファイルとずれる。
-
-`lint.ts` がトークン層を見るのは、語彙外の `###` や未宣言のメタキーが **AST に変換される時点で
-もう失われている**ため（消えたブロックは AST に痕跡を残さない）。
-
-### 2. Parsing: Markdown → AST
+## 3系統をずらさないための約束
 
 ```
-src/parser/
-├── index.ts            barrel export (parseMarkdown / parseTokens)
-├── tokenizer.ts        行ベースのトークン化 (matchers 配列 → Option パターン)
-├── ast-builder.ts      トークン列 → 未検証 AST (handlers 配列 → Option パターン)
-├── builder-types.ts    ビルダーの型定義
-├── builder-state.ts    ビルダーの状態管理
-├── slide-converter.ts  RawSlide → Slide 変換
-├── block-formatter.ts  body → Paragraph[] 変換 (箇条書き・番号付きリストの解釈)
-├── inline-formatter.ts インライン装飾 (**bold**, *italic*, `code`, [ラベル](url)) → InlineTextRun[]
-├── slide-ids.ts        スライド ID の一括採番 (ast-builder から呼ぶ。slug の綴りは src/slug.ts)
-└── handlers/           トークンハンドラ (structural, layout-directives, inline, body-text)
+Markdown → parser/ → schema/ → layout/ ─┬→ pptx/ → .pptx
+                                        ├→ html/ → .html
+                                        └→ wiki/ → .html (複数デッキを1枚に)
 ```
 
-### 3. Validation: AST → Validated Presentation
+座標は `layout/` が一度だけ計算し、3レンダラが同じ `LayoutResult` を消費する。
 
-```
-src/schema/
-├── index.ts            barrel export
-├── presentation.ts     Plain class 型 (TitleSlide, ContentSlide, コアレイアウト各種)
-├── theme.ts            Theme 型 + DEFAULT_THEME
-└── validation.ts       文字数制限バリデーション (上限の正本は ontology.yaml)
-```
+- **Wiki のスライド DOM は `html/` の `renderSlide()` を再利用する。** 複製すると三者がずれる
+- コアレイアウト以外（IconColumns / IconCards / Steps / NumberedList 等）の座標計算は
+  各プラグインの `layout.ts` にあり、`layoutSlide()` が registry 経由で dispatch する
+- **図形の名前は数えずに宣言する。** `--verify` が突き合わせる図形のキーは `shape-keys.ts` が
+  唯一の語彙で、PPTX は pptxgenjs の `objectName`（→ `<p:cNvPr name>`）、HTML は
+  `data-shape-id` に**同じ文字列**を書き出す。インスペクタは描画順を数えず、その名前を読む。
+  比較対象は**テキストを運ぶ図形**だけで、境界ボックス・塗り・コード背景・SVG は `deco:` を
+  付けて除外する（除外が生成物の中に書かれている状態を保つ）
 
-### 4. Rendering: Validated AST → Output
+**1箇所にしか持たない語彙・規則**（レンダラとツールが共有する）:
 
-共通のレイアウトエンジンが座標を計算し、PPTX/HTML 両レンダラが同じ座標を消費する。
-
-```
-src/renderer/
-├── index.ts            barrel (renderPresentation, renderToHtml)
-│
-├── layout/             ★ 共有レイアウトエンジン (PPTX・HTML 両方が使う)
-│   ├── index.ts        layoutSlide() ディスパッチャ + barrel re-export
-│   ├── types.ts        TextBox, BorderBox, IconBox, CodeBox, ShapeBox, Paragraph, LayoutResult
-│   ├── helpers.ts      buildSectionBoxes, estimateTextHeight, 座標計算ユーティリティ
-│   ├── basic.ts        Default, LeftRight, TopBottom, Grid, TitleSlide
-│   └── special.ts      CodeDisplay
-│   ※ IconColumns / IconCards / Steps / NumberedList 等の座標計算は
-│      各プラグインの layout.ts に移動済み (layoutSlide が registry 経由で dispatch)
-│
-├── pptx/               PPTX レンダラ
-│   ├── index.ts        renderPresentation() — PptxGenJS で書き出し
-│   └── slide-builder.ts  layoutSlide() → pptx.addText/addShape API
-│
-├── html/               HTML レンダラ
-│   ├── index.ts        renderToHtml() + renderSlide() — inline style HTML 生成
-│   ├── slide-renderers.ts  layoutSlide() → HTML div 生成
-│   ├── element-renderers.ts  TextBox → CSS 変換
-│   ├── slide-css.ts    ★ スライド1枚ぶんの CSS (html と wiki で共有)
-│   └── template.ts     HTML ドキュメントテンプレート
-│
-├── wiki/               Wiki レンダラ (複数デッキ → 1枚のリンク可能サイト)
-│   ├── index.ts        renderToWiki() / buildWikiSite()
-│   ├── types.ts        WikiDeck, WikiEntry, WikiSite, BrokenLink
-│   ├── site-index.ts   ID のデッキ名前空間化 (deck-slug/slide-id)
-│   ├── link-graph.ts   参照収集・4段階の解決・バックリンクの逆引き
-│   ├── styles.ts       サイトシェルの CSS (slide-css.ts を取り込む)
-│   ├── client-script.ts  ルーティング・ホバープレビュー・キーボード・拡大率
-│   └── template.ts     サイトのドキュメントテンプレート
-│   ※ スライドの DOM は html/ の renderSlide() を再利用する。
-│      複製すると PPTX/HTML/Wiki の三者がずれるため。
-│
-├── syntax-highlighter.ts  コードハイライト (PPTX/HTML 共用)
-├── icon-resolver.ts       アイコン → emoji/SVG 解決
-└── icon-mapping.ts        Material Icon → Unicode マッピング
-```
-
-**データフロー:**
-```
-Markdown
-  → parser/    → RawPresentation (AST)
-  → schema/    → Presentation (validated)
-  → layout/    → LayoutResult { textBoxes[], borderBoxes[], iconBoxes[], ... }
-  → pptx/      → Buffer (.pptx)
-  → html/      → string (.html)
-  → wiki/      → string (.html, 複数デッキを1枚に)
-```
-
-### 5. Tools: 検証ユーティリティ
-
-```
-src/tools/
-├── inventory.ts       layoutSlide() → JSON スナップショット
-├── html-inspector.ts  HTML data-* 属性 → JSON 抽出
-├── pptx-inspector.ts  PPTX XML → JSON 抽出
-├── inventory-diff.ts  2つのインベントリの差分
-├── verify.ts          3者比較の組み立てと判定 (食い違い → 非ゼロ終了)
-├── roughen-svg.ts     図解の線を手描き風に崩す (`ラフで出す` を図の側で守る)
-├── trim-svg.ts        図解の枠を中身に寄せる (枠に残した余白がそのまま絵の小ささになる)
-├── migrate-wikilinks.ts  古い記法を今の書き方へ揃える (旧 `[[…]]` と、先頭 `/`・`./` 付きのリンク)
-└── gen-okf-index.ts   バンドルの目録 `index.md` と更新履歴 `log.md` を生成する
-```
-
-**移行ツールはパーサに依存しない。** `migrate-wikilinks.ts` は `[[…]]` を自分の
-正規表現で拾い、解決に要るのはスライド ID の索引だけなので、パーサから旧記法を
-落としたあとも動く。他人のデッキを受け取るスキルなので、破壊的変更の移行路は
-同梱しておく（`--check` は「古い記法が紛れ込んでいないか」の恒常的な見張りにもなる）。
-
-**ただし「どちらの綴りが正しいか」は持たない。** 先頭 `/`・`./` 付きリンクの寄せ先は
-`parseOkfLink` が返す `canonicalHref` そのもので、接頭辞の集合を移行ツールは知らない。
-`okf.ts` が受ける綴りを増やしたときに、ここだけ古い規則で通す状態を作らないため。
-**2つの移行は残り方が違う** — `[[…]]` はサイトでも折れるので見れば分かるが、
-接頭辞つきはサイトでは当たり github.com でだけ折れる（だから `--check` が要る）。
-
-**図形の名前は数えずに宣言する。** `--verify` が突き合わせる図形のキーは
-`src/shape-keys.ts` が唯一の語彙で、PPTX は pptxgenjs の `objectName`
-(→ `<p:cNvPr name>`)、HTML は `data-shape-id` に**同じ文字列**を書き出す。
-インスペクタは描画順を数えず、その名前を読む。比較対象は**テキストを運ぶ図形**だけで、
-境界ボックス・塗り・コード背景・SVG は `deco:` を付けて除外する
-（除外が生成物の中に書かれている状態を保つ）。
-
-**段落の数え方**（`src/text-lines.ts`）と**書式の決め方**（`src/text-style.ts`）も1箇所。
-PPTX は改行ごとに `<a:p>` を出すので、HTML も AST インベントリも「1行 = 1段落」で数える。
-中央寄せとコードのフォントも同様。3脚が別々の規則を持つと、見た目が同じでも比較が落ちる。
+- `text-lines.ts` — 「1行 = 1段落」の切り出し（PPTX が改行ごとに `<a:p>` を出すので、
+  HTML も AST インベントリも同じ数え方をする）
+- `text-style.ts` — 中央寄せとコードのフォントの判定
+- `slug.ts` — 見出し → ID の綴り（デッキ slug と `#fragment` が同じ規則で作られる保証）
+- `okf.ts` — OKF の予約ファイル名と内部リンクの形（パーサ・CLI・lint・生成器が共有）
+- `deck-order.ts` — `--wiki` / `--lint` にディレクトリを渡したときのデッキの並び（`order.yaml` の宣言）
+- `assets.ts` — `![…](….svg)` の参照先の読み込み（**デッキ相対のパスを読むのはここだけ**）
+- `constants.ts` — スライド寸法・マージン・GAP。`layout/` の全ファイルが参照するので、
+  座標調整や新レイアウト追加時に必ず確認する
+- `entities.ts` — 実体参照のデコード / `errors.ts` — Tagged errors
 
 **ただし、共有した規則は3者比較では守れない。** 3脚が同じ関数を呼ぶので、その関数が
 間違っていれば3脚とも揃って間違う（比較は緑のまま）。冗長性を消したぶんの検査は
 `text-style.test.ts` が明示的に置き直している。共有モジュールを増やすときは同じ手当てが要る。
 
-### Shared: Constants & Errors
-
-```
-src/constants.ts    スライド寸法・マージン・GAP 等のレイアウト定数を集約
-src/errors.ts       ParseError, ValidationError, RenderError (Tagged errors)
-src/shape-keys.ts   3者比較で図形を指す名前 (レンダラとツールが共有)
-src/text-lines.ts   「1行 = 1段落」の切り出し (レンダラとツールが共有)
-src/text-style.ts   中央寄せ・コードのフォントの判定 (レンダラとツールが共有)
-src/entities.ts     実体参照のデコード (レンダラとツールが共有)
-src/slug.ts         見出し → ID の綴り (デッキ slug と #fragment が同じ規則で作られる保証)
-src/okf.ts          OKF の予約ファイル名と内部リンクの形 (パーサ・CLI・lint・生成器が共有)
-src/deck-order.ts   `--wiki`/`--lint` にディレクトリを渡したときのデッキの並び (order.yaml の宣言)
-src/assets.ts       `![…](….svg)` の参照先の読み込み (**デッキ相対のパスを読むのはここだけ**)
-```
-
-`constants.ts` は layout/ 内の全ファイルが参照する。座標調整や新レイアウト追加時に必ず確認。
+**移行ツールはパーサに依存しない。** `migrate-wikilinks.ts` は旧 `[[…]]` を自分の正規表現で
+拾うので、パーサから旧記法を落としたあとも動く（他人のデッキを受け取るスキルなので、破壊的変更の
+移行路は同梱しておく。`--check` は「古い記法が紛れ込んでいないか」の恒常的な見張りにもなる）。
+**ただし「どちらの綴りが正しいか」は持たない** — 先頭 `/`・`./` 付きリンクの寄せ先は
+`parseOkfLink` が返す `canonicalHref` そのもので、接頭辞の集合を移行ツールは知らない。
+**2つの移行は残り方が違う** — `[[…]]` はサイトでも折れるので見れば分かるが、接頭辞つきは
+サイトでは当たり github.com でだけ折れる（だから `--check` が要る）。
 
 ## Key Patterns
 
@@ -230,128 +106,122 @@ pipe(handlers.map(h => h(input)), A.findFirst(O.isSome), O.flatten, O.getOrElse(
 
 **Effect-TS** — `Effect.gen` + `yield*` で制御フロー。`.pipe()` チェーンは最小限に。
 
-**Tagged errors** — `ParseError`, `ValidationError`, `RenderError` (src/errors.ts)
-
 ## Key Constraints
 
-md の記法そのもの（区切り・要素・ディレクティブ・語彙・文字数・リンク）は
-[ontology.md](ontology.md) が正本。ここに書くのは**実装側の制約だけ**。
+md の記法そのものは [ontology.md](ontology.md) が正本。ここに書くのは**実装側の制約だけ**。
 
-- 箇条書きの描画: `block-formatter.ts` が Paragraph[] に変換し、PPTX はネイティブバレット・HTML は CSS 疑似要素で記号を描く (リテラルの `•` は書かない — 二重表示になる)
-- 新レイアウト追加時: `ontology.yaml` の `layouts` に宣言 → `plugins/` にプラグインフォルダを作成 → `plugins/index.ts` に import 追加 → `gen-ontology-doc.ts` を実行。宣言が無いと最初のトークン化で落ちる（ドキュメントにも lint にも現れないレイアウトを作らせないため）
-- スライド ID の採番: `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う（11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
-- HTML のスライド div は `id=` を持たない。Wiki のホバープレビューが `cloneNode` するので ID が重複する。ID は `data-slide-key`、`data-slide-id="slide-N"` と `data-default-font-name` は `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
-- **Wiki だけの装飾は `.slide` の外に置く。** デッキのバッジ（右上の短い呼び名）は `.wiki-slide` の中・`.slide` の兄弟に吐く — 中に入れると `renderSlide()` の出力が変わり、`--html` と DOM が割れる。足場は `position: relative` の `.stage-frame` で、**`.wiki-slide` には `position` を持たせない**（`.slide` の absolute の基準がそちらへ移る）。またぐリンクの補足は**属性 + CSS の `::after`**（`data-cross-deck`）で足す — 節点を挿すとホバーのカードが `cloneNode` で運び、カード側で足し直すと二重になる。CSS は `wiki/styles.ts` にだけ書く（`html/slide-css.ts` に書くと `--html` に漏れる）
-- `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` で1つにまとめる
-- バンドル（デッキ集合・`order.yaml` の並び・デッキ slug・予約ファイル名・ID の一意性の範囲）の規則は [ontology.yaml](ontology.yaml) の `okf` 節が正本で、実装は `src/deck-order.ts` と `src/okf.ts`。**ここに規則を写さない。** コード側が持つのは綴りだけ（`RESERVED_OKF_FILES` / `OKF_VERSION` / `DECK_ORDER_FILE`）で、宣言との一致は `ontology.test.ts` が留める
-- 図解は md に書かず `![…](….svg)` で外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。**パイプラインが文字列だけでは完結しない唯一の場所**で、`baseDir`（md が置かれているディレクトリ）を `md2pptx`/`md2html` のオプション・`WikiSource` から `parseTokens` まで引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える（ファイル側は md での表示のために実寸を名乗る）。**枠のほうを図の縦横比に合わせる** — `svgAspectRatio()` が `viewBox` から比を返し、wiki-pattern はその比で下敷きを組み、上を左段の最初の見出しにそろえて置く（幅と高さの両方で列に収めるので、縦長の図では下敷きが列より細くなる。列の下端を割るときだけ持ち上げる）。枠を図と違う比で置くと、HTML は `preserveAspectRatio` で図を縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に崩れるので、生成物を見比べても気づきにくい）
-- 図解に `<rect>` / `<line>` / `<circle>` / `<polygon>` / `<polyline>` を残さない（`wiki-pattern.test.ts` が止める）。定規で引いた線の図は、本文が道すじと書いても「これが唯一の実装」に読まれる — サイトが載せている `ラフで出す` を、図の側でも守るため。崩すのは `npx tsx src/tools/roughen-svg.ts`（揺れはファイル名と要素の並び順から決まるので、走らせ直しても同じ絵が出る。`<path>` と `<text>` には触らないので**冪等**）。フィルタで粗さを出せないのは `<defs>` と `id=` が禁じられているからで、揺れは座標に焼き付けるしかない
-- 図解の `viewBox` は中身に寄せる。図は下敷きいっぱいに描かれるので、**枠に残した余白はそのまま絵の小ささになる**（340x320 に 283x248 しか描いていない図は、同じ場所に 12% 小さく出る）。寄せるのは `npx tsx src/tools/trim-svg.ts`（`--dry-run` / `--check` あり。中身から枠を決めるので**冪等**、`width` / `height` も実寸のまま揃える）。逆に**中身がはみ出した図は枠を広げて収める** — 切れた線や字は生成物を開いても消えているだけで気づけないため。中身の測り方は大きめに寄せてある（`<text>` の幅は読む人のフォントで変わる）。どちらも `wiki-pattern.test.ts` が配布中の図で見張る
+- 箇条書きの描画: `block-formatter.ts` が Paragraph[] に変換し、PPTX はネイティブバレット・
+  HTML は CSS 疑似要素で記号を描く（リテラルの `•` は書かない — 二重表示になる）
+- 新レイアウト追加: `ontology.yaml` の `layouts` に宣言 → `plugins/` にフォルダを作成 →
+  `plugins/index.ts` に `import "./my-layout/index.js"` を1行追加 → `gen-ontology-doc.ts` を実行。
+  宣言が無いと登録時／最初のトークン化で落ちる（ドキュメントにも lint にも現れない
+  レイアウトを作らせないため）
+- スライド ID の採番は `parser/slide-ids.ts` が `ast-builder.ts` から**一括で**行う
+  （11個のプラグイン converter を触らないため、かつ `raw.title` が読めるのが変換直前だけのため）
+- HTML のスライド div は `id=` を持たない（Wiki のホバープレビューが `cloneNode` するので
+  重複する）。ID は `data-slide-key`、`data-slide-id` と `data-default-font-name` は
+  `html-inspector` 用なので触らない（PPTX が `theme1.xml` に既定フォントを持つのと同じで、
+  HTML も自分で名乗る — 読む側が定数を持つと `--theme` でその脚だけ食い違う）
+- **Wiki だけの装飾は `.slide` の外に置く。** デッキのバッジは `.wiki-slide` の中・`.slide` の
+  兄弟に吐く（中に入れると `renderSlide()` の出力が変わり `--html` と DOM が割れる）。足場は
+  `position: relative` の `.stage-frame` で、**`.wiki-slide` には `position` を持たせない**
+  （`.slide` の absolute の基準がそちらへ移る）。またぐリンクの補足は**属性 + CSS の `::after`**
+  （`data-cross-deck`）で足す — 節点を挿すとホバーのカードが `cloneNode` で運び、カード側で
+  足し直すと二重になる。CSS は `wiki/styles.ts` にだけ書く（`html/slide-css.ts` に書くと
+  `--html` に漏れる）
+- `display:flex` の直下に複数のインライン要素を置かない（1つずつが flex アイテムになり語の
+  途中で改行される）。`richText` は `.rich-text`、`paragraphs` は `.para-stack` でまとめる
+- バンドル（デッキ集合・`order.yaml` の並び・デッキ slug・予約ファイル名・ID の一意性の範囲）の
+  規則は `ontology.yaml` の `okf` 節が正本。コード側が持つのは綴りだけ
+  （`RESERVED_OKF_FILES` / `OKF_VERSION` / `DECK_ORDER_FILE`）で、宣言との一致は
+  `ontology.test.ts` が留める
+
+### 図解（`![…](….svg)`）
+
+図解は md に書かず外部ファイルを指す（md をそのまま GitHub で開いても絵として表示させるため）。
+
+- **パイプラインが文字列だけでは完結しない唯一の場所。** `baseDir`（md が置かれている
+  ディレクトリ）を `md2pptx` / `md2html` のオプション・`WikiSource` から `parseTokens` まで
+  引き回す。読み込みは `assets.ts` の1関数だけが行い、埋め込み時に幅高を `100%` に読み替える
+  （ファイル側は md での表示のために実寸を名乗る）
+- **枠のほうを図の縦横比に合わせる。** `svgAspectRatio()` が `viewBox` から比を返し、
+  wiki-pattern はその比で下敷きを組む。違う比で置くと、HTML は `preserveAspectRatio` で図を
+  縮めて余白を作り、PPTX は `addImage` が枠に引き伸ばして図を歪ませる（同じ原因で別々に
+  崩れるので、生成物を見比べても気づきにくい）
+- **定規で引いた線を残さない** — `<rect>` / `<line>` / `<circle>` / `<polygon>` / `<polyline>` は
+  禁止。サイトが載せている `ラフで出す` を図の側でも守るため。崩すのは `roughen-svg.ts`
+  （揺れはファイル名と要素の並び順から決まり、`<path>` と `<text>` には触らないので**冪等**）。
+  フィルタで粗さを出せないのは `<defs>` と `id=` が禁じられているからで、揺れは座標に焼き付ける
+- **`viewBox` は中身に寄せる。** 図は下敷きいっぱいに描かれるので、枠に残した余白はそのまま
+  絵の小ささになる。逆に中身がはみ出した図は枠を広げて収める（切れた線や字は生成物を開いても
+  消えているだけで気づけない）。寄せるのは `trim-svg.ts`（`--dry-run` / `--check` あり、**冪等**）
+- 上の2つは `wiki-pattern.test.ts` が配布中の図で見張る
 
 ## Plugin System
 
-自己登録パターンによるレイアウトプラグイン。各プラグインが `registerPlugin()` を import 時に呼び出す。
+自己登録パターン。各プラグインが import 時に `registerPlugin()` を呼ぶ。標準構成は
+`index.ts`（自己登録）/ `schema.ts` / `handler.ts` / `converter.ts` / `layout.ts` / `constants.ts`
+（`registry.ts` が派生ルックアップを、`plugins/index.ts` が side-effect import を持つ）。
 
-```
-src/plugins/
-├── types.ts              LayoutPlugin インターフェース + TokenMatcher/TokenHandler/LayoutHandler 型
-├── registry.ts           registerPlugin() + 派生ルックアップ (getConverters, getLayoutHandlers 等)
-├── index.ts              side-effect imports でプラグインをロード
-│
-├── lean-canvas/          `<!--lean-canvas-->` — 各プラグインの標準ファイル構成:
-│   ├── index.ts          自己登録 (registerPlugin 呼び出し)
-│   ├── schema.ts         LeanCanvasLayout (SlideLayout 実装)
-│   ├── handler.ts        ディレクティブハンドラ
-│   ├── converter.ts      RawSlide → LeanCanvasLayout
-│   ├── layout.ts         座標計算 (LayoutResult を返す)
-│   └── constants.ts      LEAN_CANVAS_* 定数
-│
-├── customer-journey/     `<!--カスタマージャーニー:-->` (converter がページネーション)
-├── steps/                `<!--steps-->`
-├── numbered-list/        `<!--numbered-list:circle-->` / `<!--numbered-list:bar-->`
-├── icon-layout/          `<!--icon-cols-->` と `<!--icon-cards-->` の**2プラグインを登録**
-├── text-only/            `<!--text-only-->`
-├── table/                `<!--table-->` (shape + text の自力描画)
-├── quote/                `<!--quote-->`
-├── agenda/               `<!--agenda-->`
-└── wiki-pattern/         `<!--pattern-->` (左に2節、右に `![…](….svg)` が指す外部 SVG)
-```
+10ディレクトリ・**11プラグイン登録**（`icon-layout` だけが `icon-cols` と `icon-cards` の2つを
+登録する）。パーサ側の受け取り方は2つあり、**排他ではなく併用可**:
 
-10ディレクトリ・**11プラグイン登録** (icon-layout のみ2つ)。パーサ側の受け取り方は2つの仕組みがあり、**排他ではなく併用可**:
+- `sectionRoute`: `###` セクションを `pluginData` の指定フィールドに集めるだけの標準ルート
+- `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ
 
-- `sectionRoute`: `###` セクションを `pluginData` の指定フィールドに集めるだけの標準ルート — lean-canvas, numbered-list, steps, icon-layout, agenda, wiki-pattern
-- `modeHandlers`: H3/H4/BodyText の解釈を自前で持つ — customer-journey, quote, table, text-only, steps, icon-layout, agenda, wiki-pattern
+steps / icon-layout / agenda / wiki-pattern は両方を持つ。wiki-pattern が挟むのは画像と
+コードフェンスで、画像は図解の参照を読み込む本題、フェンスのほうは飲むだけ（捕まえないと
+コアのハンドラが `mode` を `"code"` にして、スライドが CodeDisplay として変換されてしまう）。
 
-(steps / icon-layout / agenda / wiki-pattern は両方を持ち、標準ルートに加えて独自トークン解釈を挟んでいる。
-wiki-pattern が挟むのは画像とコードフェンス — 画像は図解の参照を読み込む本題で、フェンスのほうは
-飲むだけ。捕まえないとコアのハンドラが `mode` を `"code"` にして、スライドが CodeDisplay として
-変換されてしまう)
-
-ディレクティブと文字数上限は**プラグインには書かない**。正本は `ontology.yaml` の `layouts` で、
-`registerPlugin()` が `id` を鍵に完全一致の `tokenMatcher` を導出し（宣言の読み込みは
-初回の `getTokenMatchers()` まで遅延する）、文字数上限は `validation.ts` が `maxCharsForTag()` で
-直接引く。レジストリが返すのは数え方（`getCharCounter()`）だけ。したがって**通常 `tokenMatcher` は書かない** — 手書きするのは認識が
-リテラル1本で表せない場合のみ (numbered-list の `circle|bar` 正規表現が唯一の例)。
-
-**新プラグイン追加**: `ontology.yaml` の `layouts` に宣言 + `plugins/index.ts` に
-`import "./my-layout/index.js"` を 1 行追加。宣言が無いと登録時に落ちる。
+**ディレクティブと文字数上限はプラグインに書かない。** 正本は `ontology.yaml` の `layouts` で、
+`registerPlugin()` が `id` を鍵に完全一致の `tokenMatcher` を導出し（宣言の読み込みは初回の
+`getTokenMatchers()` まで遅延する）、上限は `validation.ts` が `maxCharsForTag()` で直接引く。
+レジストリが返すのは数え方（`getCharCounter()`）だけ。したがって**手書きの `tokenMatcher` は
+認識がリテラル1本で表せない場合のみ**（numbered-list の `circle|bar` 正規表現が唯一の例）。
 
 ## Theme System
 
-`schema/theme.ts` に `Theme` 型と `DEFAULT_THEME` を定義。CLI の `--theme <path>` で YAML テーマファイルを指定可能。テーマは色・フォントサイズ・マージン等をカスタマイズする。未指定時は DEFAULT_THEME がフォールバック。
+`schema/theme.ts` の `Theme` 型と `DEFAULT_THEME`。CLI の `--theme <path>` で YAML を指定できる。
 
 **`contentSlide` のフォントサイズは、はみ出したスライドで縮む。** `dispatchLayout` が
-`contentSlide.{heading,body,gridHeading,gridBody}Size` を 0.9 → 0.6 と段階的に下げて再レイアウトする
-(`renderer/layout/index.ts`)。これは1枚を収めるための仕組みなので、**並べて読ませるレイアウトが
-使うと本文の長さでページごとに文字が変わる**。そういうレイアウトはサイズをテーマの別の節に置く
-（`wikiPattern` がそれ。`numberedList` / `table` / `agenda` も `contentSlide` の外にある）。
+`contentSlide.{heading,body,gridHeading,gridBody}Size` を 0.9 → 0.6 と段階的に下げて再レイアウト
+する（`renderer/layout/index.ts`）。これは1枚を収めるための仕組みなので、**並べて読ませる
+レイアウトが使うと本文の長さでページごとに文字が変わる**。そういうレイアウトはサイズをテーマの
+別の節に置く（`wikiPattern` がそれ。`numberedList` / `table` / `agenda` も `contentSlide` の外）。
 別の節に置いたぶん縮小は空回りし、収まらなければ `validateLayout` がビルドを止める。
 
-## Test → Module 対応表
+## Tests
 
-| テストファイル | 対象モジュール |
+名前が対象を言っているもの — `parser.test.ts` / `block-formatter.test.ts` /
+`inline-formatting.test.ts` / `slide-id.test.ts` / `validation.test.ts` / `theme.test.ts` /
+`layout-engine.test.ts` / `overflow.test.ts` / `html-renderer.test.ts` / `cli.test.ts` /
+`deck-order.test.ts` / `frontmatter.test.ts` / `migrate-wikilinks.test.ts` /
+`customer-journey.test.ts` / `table.test.ts` / `icon-resolver.test.ts` /
+`syntax-highlighter.test.ts` / `html-inspector.test.ts` / `pptx-inspector.test.ts`。
+
+そうでないもの:
+
+| テストファイル | 対象 |
 |---|---|
 | `e2e.test.ts` | 全パイプライン (markdown → .pptx buffer) |
-| `parser.test.ts` | parser/ (AST 構築) |
-| `block-formatter.test.ts` | parser/block-formatter.ts (リスト → Paragraph 変換) |
-| `inline-formatting.test.ts` | parser/inline-formatter.ts (**bold** / *italic* / `code` / リンク) |
-| `slide-id.test.ts` | parser/slide-ids.ts (slug 生成・ID 採番・衝突の連番) |
-| `wiki.test.ts` | renderer/wiki/ (デッキ合成・リンク解決・バックリンク・自己完結性・ビューア幾何) |
-| `deck-order.test.ts` | deck-order.ts (order.yaml の宣言順・未宣言デッキの扱い・宣言の誤り) |
-| `validation.test.ts` | schema/validation.ts (文字数制限) |
-| `ontology.test.ts` | ontology.yaml + src/ontology/ (宣言の自己整合・宣言⇔実装・lint・生成物の鮮度) |
-| `frontmatter.test.ts` | ontology/frontmatter.ts (冒頭 YAML の認識規則・行番号の保存・既存 md を巻き込まないこと) |
-| `layout-engine.test.ts` | renderer/layout/ (座標計算・スナップショット) |
-| `overflow.test.ts` | renderer/layout/overflow.ts + validate-layout.ts (はみ出し検出・縮小・失敗) |
-| `html-renderer.test.ts` | renderer/html/ (HTML 生成・data 属性) |
-| `theme.test.ts` | schema/theme.ts (YAML テーマ読み込み) |
-| `snapshot-comparison.test.ts` | tools/ (コアレイアウト6種のインベントリ比較) |
-| `three-way-verify.test.ts` | tools/ (実在する全デッキの3者比較 + 食い違いの判定) |
-| `text-style.test.ts` | text-style.ts (3脚が共有する書式規則 — 共有したぶん比較では守れない) |
-| `cli.test.ts` | cli.ts (CLI 引数・ファイル出力) |
-| `customer-journey.test.ts` | CustomerJourney レイアウト |
-| `table.test.ts` | Table レイアウト (パイプ区切り表のパース + 座標) |
-| `wiki-pattern.test.ts` | WikiPattern レイアウト (2節の並べ替え・空行で割れる段落・図解の必須化・外部 SVG の読み込み・座標・配布デッキの SVG 検査＝実寸・禁止要素・定規で引いた線) |
-| `migrate-wikilinks.test.ts` | tools/migrate-wikilinks.ts (旧記法と接頭辞つきリンクの一括変換・表示テキストの不変・コード表記の据え置き) |
-| `okf-conformance.test.ts` | `doc/wiki/` が OKF v0.2 に適合していること (§11 の3条件・§8 目録・§9 履歴・§6 リンク) |
-| `docs-consistency.test.ts` | SKILL.md / CLAUDE.md / assets/README.md と実装の乖離検出 |
-| `workflows.test.ts` | `.github/workflows/` の宣言 (公開が PR で走らないこと・concurrency group が重ならないこと) |
-| `pptx-inspector.test.ts` | tools/pptx-inspector.ts |
-| `icon-resolver.test.ts` | renderer/icon-resolver.ts |
-| `syntax-highlighter.test.ts` | renderer/syntax-highlighter.ts |
-| `html-inspector.test.ts` | tools/html-inspector.ts |
+| `ontology.test.ts` | 宣言の自己整合・宣言 ⇔ 実装・lint・生成物の鮮度 |
+| `wiki.test.ts` | デッキ合成・リンク解決・バックリンク・自己完結性・ビューア幾何 |
+| `wiki-pattern.test.ts` | WikiPattern の座標と2節の並べ替え、配布デッキの SVG 検査（実寸・禁止要素・定規で引いた線） |
+| `snapshot-comparison.test.ts` | コアレイアウト6種のインベントリ比較 |
+| `three-way-verify.test.ts` | 実在する全デッキの3者比較 + 食い違いの判定 |
+| `text-style.test.ts` | 3脚が共有する書式規則（共有したぶん比較では守れない） |
+| `okf-conformance.test.ts` | `doc/wiki/` が OKF v0.2 に適合していること |
+| `docs-consistency.test.ts` | ドキュメントが数え上げている件数・ファイル名と実装の乖離 |
+| `workflows.test.ts` | 公開が PR で走らないこと・concurrency group が重ならないこと |
 
 ## Development Notes
 
-- `cd assets` してから npm コマンド実行
-- `.pptx`, `.html` は gitignore 済み
-- `npx tsx` で直接実行 (ビルド不要)
-- PPTX/HTML 両レンダラは同一の `LayoutResult` を消費 → 座標ドリフト防止
+- `cd assets` してから npm コマンド実行。`npx tsx` で直接実行（ビルド不要）。
+  `.pptx` / `.html` は gitignore 済み
+- **型検査は `npm test` に含まれない。** vitest は esbuild で型を捨てるので `npm run typecheck` を
+  別に打つ。見るのは `src/` だけ（`__tests__` は tsconfig の `exclude` にあり、入れるには別
+  tsconfig と 38 件の解消が要る — BACKLOG B-45）
 - **CI は2本に分ける。** `ci.yml` が PR で `npm test` + `npm run typecheck`、`pages.yml` が
-  `main` への push で公開する。**pages.yml に `pull_request` を足してはいけない**し、
-  2本が同じ concurrency group を使ってもいけない — 以前 PR の run が公開側と同じ
-  group に入り、`cancel-in-progress` が push 側を殺してデプロイが消えた。
-  この2点は `workflows.test.ts` が落ちる形で守っている
-- **型検査は `npm test` に含まれない。** vitest は esbuild で型を捨てるので
-  `npm run typecheck` を別に打つ。見るのは `src/` だけ（`__tests__` は tsconfig の
-  `exclude` にあり、入れるには別 tsconfig と 38 件の解消が要る — BACKLOG B-45）
+  `main` への push で公開する。**pages.yml に `pull_request` を足してはいけない**し、2本が
+  同じ concurrency group を使ってもいけない — 以前 PR の run が公開側と同じ group に入り、
+  `cancel-in-progress` が push 側を殺してデプロイが消えた。`workflows.test.ts` が守っている

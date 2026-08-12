@@ -192,7 +192,7 @@ src/
                       gen-ontology-doc (ontology.yaml → ontology.md + SKILL.md regions)
 ```
 
-See [../CLAUDE.md](../CLAUDE.md) for the annotated reading order and the plugin/theme mechanics.
+See [../CLAUDE.md](../CLAUDE.md) for the invariants that keep the three renderers in step, and the plugin/theme mechanics.
 
 ## Testing
 
