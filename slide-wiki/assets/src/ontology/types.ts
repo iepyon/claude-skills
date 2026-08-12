@@ -152,6 +152,8 @@ export type FieldKind =
 export type FieldEffect =
   /** サイドバーの絞り込みに流れる */
   | "search"
+  /** Wiki が読み手の画面に描く（スライド右上のバッジと、またぐリンクの補足） */
+  | "display"
   /** 置き場所として宣言しただけで、まだ何も読まない */
   | "declared-only"
   /** lint とバンドルを読む側（OKF の消費者・GitHub の表）だけが読む */

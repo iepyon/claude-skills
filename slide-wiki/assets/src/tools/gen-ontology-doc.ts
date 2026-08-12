@@ -22,7 +22,7 @@ import {
   loadOntology,
   ontologyVersion,
 } from "../ontology/index.js"
-import type { Layout, SubLabels, Vocabulary } from "../ontology/types.js"
+import type { FieldEffect, Layout, SubLabels, Vocabulary } from "../ontology/types.js"
 
 const ONTOLOGY_MD = fileURLToPath(new URL("../../../ontology.md", import.meta.url))
 const SKILL_MD = fileURLToPath(new URL("../../../SKILL.md", import.meta.url))
@@ -152,9 +152,15 @@ function inlineTable(): string[] {
   return lines
 }
 
-/** そのキーがいま何に効くか。宣言の effect をそのまま人の言葉にする */
-const EFFECT_LABEL: Readonly<Record<string, string>> = {
+/**
+ * そのキーがいま何に効くか。宣言の effect をそのまま人の言葉にする。
+ * **綴りの正本はここ1つ**で、受理する集合（selfcheck の KNOWN_EFFECTS）は
+ * このキーから導く — 別々に持つと、新しい effect を片方だけに足したとき
+ * 表のマスが `undefined` のまま全部が緑になる（生成物どうしの比較では気づけない）。
+ */
+export const EFFECT_LABEL: Readonly<Record<FieldEffect, string>> = {
   search: "絞り込み",
+  display: "Wiki の表示",
   "declared-only": "**まだ効かない**",
   metadata: "lint と外部ツール",
 }

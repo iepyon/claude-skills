@@ -1,6 +1,7 @@
 ---
 type: deck
 title: リンクで辿るスライド
+short: guide
 description: ページめくりだけではない、もう一つの読み方
 tags: [使い方, リンク, ホバー, バックリンク]
 ---

@@ -48,7 +48,7 @@ function loadDecks(dir: string): { decks: Deck[]; groups: readonly DeckGroup[] }
   const decks = files.map((path) => {
     const markdown = readFileSync(path, "utf-8")
 
-    // frontmatter は**1回だけ**読む。`readDeckMeta` が返すのは描画側が使う5キーだけなので、
+    // frontmatter は**1回だけ**読む。`readDeckMeta` が返すのは描画側が使うキーだけなので、
     // created / updated まで要るここは1つ下の `readFrontmatter` を直に呼ぶ
     // （手で YAML を読み直すと、認識規則が本体と割れる）
     const block = splitFrontmatter(markdown).block

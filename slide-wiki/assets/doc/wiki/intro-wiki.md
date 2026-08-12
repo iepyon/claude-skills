@@ -1,6 +1,7 @@
 ---
 type: deck
 title: なぜ Wiki を育てるのか
+short: intro
 description: 第1部。書いたものが後から効かない理由と、このサイトの歩き方
 tags: [wiki, 第1部, 動機, ナレッジマネジメント]
 ---

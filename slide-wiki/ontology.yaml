@@ -43,7 +43,11 @@
 #    github.com は先頭の `/` をリポジトリのルートと読むので、生の md を開くと
 #    リンクが必ず折れていた。相対形なら置き場所の深さに関係なく当たる
 #    （書く形は1つのまま。理由の詳細は inline 節の internal-link）
-version: 6
+# 7: デッキが短い呼び名（frontmatter の `short`）を名乗れるようにした。Wiki の
+#    スライドの右上と、デッキをまたぐリンクの末尾に出る。これに合わせて
+#    フィールドの effect に `display` を足した（今までの効き先は lint と外部ツール・
+#    絞り込み・未実装の3つで、「読み手の画面に出る」を言い表せなかった）
+version: 7
 
 # ── md の骨格要素 ───────────────────────────────────────────────────
 # 行頭記号で認識される構造。ここに無い記法はすべて body（＝本文テキスト）に落ちる。
@@ -110,7 +114,7 @@ frontmatter:
 
     **キーの名前は OKF v0.2 に合わせてある**（`type` `title` `description` `tags`
     `resource` `status` `sources` `verified` `generated` `stale_after`）。
-    `category` `author` `created` `updated` `theme` `site_title` は OKF に無い
+    `short` `category` `author` `created` `updated` `theme` `site_title` は OKF に無い
     こちらの拡張で、OKF は「知らないキーは保存して拒まない」と定めているので
     バンドルとしての適合は保たれる。読む側に意味が届くのは前者だけ、と思って書く。
 
@@ -152,6 +156,16 @@ frontmatter:
       kind: text
       description: 1枚目の見出しと同じ文字列。表示名の正本は見出しのほうで、ここは写し。
       example: Wiki が育つパターン
+    - name: short
+      level: recommended
+      kind: text
+      effect: display
+      description: >-
+        デッキの短い呼び名。**Wiki の各スライドの右上と、そのデッキへ渡るリンクの
+        末尾に、この文字列がそのまま出る**。両方に出るので短く保つ（全角4字・
+        半角6字が目安）。名乗らなければデッキ名（slug）で代替するので、
+        欠けても壊れないが、そこへ渡るリンクだけ長い語が出て語調が揃わない。
+      example: wiki
     - name: description
       level: recommended
       kind: text

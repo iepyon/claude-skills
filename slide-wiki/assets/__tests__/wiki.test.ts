@@ -325,6 +325,108 @@ describe("titles for plugins that blank the slide title", () => {
   })
 })
 
+describe("デッキの短い呼び名が、どの束を見ているかを名乗る", () => {
+  // 同じレイアウトのパターン集が2本並ぶと、1枚を見ただけではどちらか分からない。
+  // 呼び名は右上のバッジと、そのデッキへ渡るリンクの補足の**両方**に出る1語。
+
+  const NAMED = `---
+type: deck
+title: アルファ集
+short: alfa
+---
+
+# アルファ集
+
+---
+
+## 種ノート
+<!--id:seed-->
+### まず置く
+繋ぎ方は [つなぎ直し](bravo.md#つなぎ直し)、育て方は [育つ見出し](alpha.md#育つ見出し)。
+
+---
+
+## 育つ見出し
+### 見出しが先に伸びる
+本文
+`
+
+  // ビューアのスクリプト本文と、その中の1関数ぶんの切り出し。
+  // 終端を「次の宣言」で取るのは、閉じ括弧の数え上げに依らせないため
+  const scriptOf = (html: string): string => html.slice(html.lastIndexOf("<script>"))
+  const between = (s: string, from: string, to: string): string =>
+    s.slice(s.indexOf(from), s.indexOf(to, s.indexOf(from)))
+
+  const namedHtml = () =>
+    Effect.runPromise(
+      md2wiki(
+        [
+          { name: "alpha", markdown: NAMED },
+          { name: "bravo", markdown: BRAVO },
+        ],
+        { siteTitle: "テストWiki" }
+      )
+    )
+
+  it("スライドごとにバッジを出し、スライドの**外**に置く", async () => {
+    // .slide の閉じの直後に来ていること。中に入れると renderSlide の出力が変わり、
+    // 「Wiki のスライドは --html と同じ DOM」という前提が割れる
+    const wiki = await namedHtml()
+    expect(wiki).toMatch(/<span class="deck-badge">alfa<\/span><\/div>/)
+    const single = await Effect.runPromise(md2html(NAMED, {}))
+    expect(single).not.toContain("deck-badge")
+  })
+
+  it("名乗らないデッキのバッジはデッキ名になる（欠けても穴が空かない）", async () => {
+    const html = await buildHtml()
+    expect(html).toContain('<span class="deck-badge">alpha</span>')
+    expect(html).toContain('<span class="deck-badge">bravo</span>')
+  })
+
+  it("呼び名はデッキ単位の表でビューアに渡る（スライドごとに繰り返さない）", async () => {
+    const html = await namedHtml()
+    expect(html).toContain('"deckShort":{"alpha":"alfa","bravo":"bravo"}')
+  })
+
+  it("呼び名でもサイドバーから引ける（バッジが教えた語が空振りしない）", async () => {
+    const html = await namedHtml()
+    const found = [...html.matchAll(/data-search="([^"]*)"/g)]
+      .map((m) => m[1])
+      .find((s) => s.includes("種ノート"))
+    expect(found).toContain("alfa")
+  })
+
+  it("折れたリンクには補足を足さない（赤い破線に行き先の名を名乗らせない）", async () => {
+    const script = scriptOf(await namedHtml())
+    expect(script).toMatch(/if \(!target\) \{[\s\S]*?classList\.add\("broken"\)[\s\S]*?return;/)
+  })
+
+  it("またぐ判定は本文のリンクとバックリンクで同じ1つの規則を読む", async () => {
+    // 片方に inline で書くと、規則を変えたときもう一方が黙って古いままになる
+    const script = scriptOf(await namedHtml())
+    expect(script).toMatch(/function crossDeckShort\(/)
+    expect(between(script, "function annotateLinks()", "document.addEventListener"))
+      .toContain("crossDeckShort(")
+    expect(between(script, "function renderBacklinks(id)", "navigation"))
+      .toContain("crossDeckShort(")
+  })
+
+  it("補足は属性で足す（節点を挿すとプレビューの複製で二重になる）", async () => {
+    const html = await namedHtml()
+    const annotate = between(scriptOf(html), "function annotateLinks()", "document.addEventListener")
+    expect(annotate).not.toContain("createElement")
+    expect(html).toContain("a.wikilink[data-cross-deck]::after")
+  })
+
+  it("リンクの足場はスライドの ID から引く（data-deck の読み手を増やさない — B-47）", async () => {
+    const script = scriptOf(await namedHtml())
+    const scopeFn = between(script, "function scopeDeckOf(a)", "function crossDeckShort")
+    expect(scopeFn).not.toContain("dataset.deck")
+    expect(scopeFn).toContain("dataset.wikiId")
+  })
+
+})
+
 describe("viewer layout contract", () => {
   // ここで守っているのは「実際に見えるか」ではなく、見えるための前提条件。
   // 幾何そのものはブラウザでしか確かめられないので、崩れやすい箇所を固定する。

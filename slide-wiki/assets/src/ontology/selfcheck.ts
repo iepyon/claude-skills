@@ -10,7 +10,7 @@ import { readFileSync } from "fs"
 import { getPlugins } from "../plugins/registry.js"
 import { OKF_VERSION, RESERVED_OKF_FILES, deckSlug, isReservedOkfFile, parseOkfLink } from "../okf.js"
 import { DECK_ORDER_FILE } from "../deck-order.js"
-import { CONSUMED_KEYS, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
+import { CONSUMED_KEYS, EFFECT_LABEL, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
   getAnnotations,
   getFieldSets,
@@ -27,8 +27,8 @@ import {
 import { FIELD_VALIDATORS } from "./lint.js"
 import { splitFrontmatter } from "./frontmatter.js"
 
-/** frontmatter フィールドの effect に許す綴り（gen-ontology-doc の EFFECT_LABEL と対になる） */
-const KNOWN_EFFECTS: ReadonlySet<string> = new Set(["search", "declared-only", "metadata"])
+/** effect に許す綴り。表に出す言葉を持つものだけ（EFFECT_LABEL がその正本） */
+const KNOWN_EFFECTS: ReadonlySet<string> = new Set(Object.keys(EFFECT_LABEL))
 
 /** 点検の失敗。1件ずつ集めて最後にまとめて出す（最初の1件で止めない） */
 export function selfcheckProblems(): string[] {

@@ -26,6 +26,7 @@ export function wikiScript(): string {
   var ENTRIES   = window.__WIKI__.entries;    // [{id, deck, deckTitle, title, deckIndex}]
   var RESOLVE   = window.__WIKI__.resolve;    // { deckSlug: { ref: globalId } }
   var BACKLINKS = window.__WIKI__.backlinks;  // { globalId: [globalId] }
+  var DECK_SHORT = window.__WIKI__.deckShort; // { deckSlug: 短い呼び名 }
 
   var byId = {};
   ENTRIES.forEach(function (e, i) { e.index = i; byId[e.id] = e; });
@@ -82,9 +83,14 @@ export function wikiScript(): string {
       host.innerHTML = '<span class="none">まだどこからもリンクされていません</span>';
       return;
     }
+    // またぐものにだけ来し方の名を添える。規則は crossDeckShort が持つ
+    // （annotateLinks の1周はここに届かない — 毎回組み直す innerHTML なので）
+    var hereDeck = byId[id].deck;
     host.innerHTML = "<ul>" + inbound.map(function (from) {
       var e = byId[from];
-      return '<li><a class="wikilink" href="#" data-goto="' + escapeAttr(from) + '">' +
+      var cross = crossDeckShort(e && e.deck, hereDeck);
+      return '<li><a class="wikilink" href="#" data-goto="' + escapeAttr(from) + '"' +
+        (cross ? ' data-cross-deck="' + escapeAttr(cross) + '"' : "") + ">" +
         escapeHtml(e ? e.title : from) + "</a></li>";
     }).join("") + "</ul>";
   }
@@ -146,29 +152,84 @@ export function wikiScript(): string {
   });
 
   // --------------------------------------------------------- link handling
+  /**
+   * リンクが「どの1枚の中に書かれているか」。**足場の定義はここ1つ。**
+   *
+   * プレビューカードは .slide だけを clone するので .wiki-slide が祖先に居ない —
+   * カード自身が名乗り直したものを拾う。切り離されたカードの上でも効く必要がある
+   * （下の click ハンドラが targetOf より先に closeAllPreviews() を呼んで
+   * removeChild するため。closest は木が document に繋がっていなくても祖先を辿る）。
+   */
+  function scopeOf(a) {
+    return a.closest(".wiki-slide") || a.closest(".preview-card");
+  }
+
   // リンク先の解決はビルド時に済ませてある（RESOLVE）。
   // 解決できなかったものには .broken を付けて、遷移させない。
   function targetOf(a) {
     if (a.dataset.goto) return a.dataset.goto;
     var ref = a.dataset.wikilink;
     if (!ref) return null;
-    // 参照はデッキごとに解決する。プレビューカードは .slide だけを clone するので
-    // data-deck を持つ .wiki-slide が祖先に居ない — カード自身が deck を名乗り直す。
-    // このフォールバックは *切り離されたカード* の上でも効く必要がある。下の click
-    // ハンドラが targetOf より先に closeAllPreviews() を呼んで removeChild するため
-    // （closest は木が document に繋がっていなくても祖先を辿る）。
-    var scope = a.closest(".wiki-slide") || a.closest(".preview-card");
+    // 参照はデッキごとに解決するので、足場が名乗った deck で表を引く
+    var scope = scopeOf(a);
     var deck = scope ? scope.dataset.deck : null;
     var perDeck = (deck && RESOLVE[deck]) || {};
     return perDeck[ref] || (byId[ref] ? ref : null);
   }
 
-  function markBrokenLinks() {
+  /**
+   * そのリンクが「どのデッキの中に書かれているか」。
+   *
+   * **読むのはスライドの ID で、data-deck ではない。** targetOf が data-deck を
+   * 読んでいるのは解決表がデッキごとに引かれているためで、その鍵は落とす予定がある
+   * （BACKLOG B-47）。ここで読み手を1人増やすと、その掃除の値段が上がる。
+   * ID なら .wiki-slide も .preview-card も同じ1つの索引を引ける。
+   */
+  function scopeDeckOf(a) {
+    var scope = scopeOf(a);
+    if (!scope) return null;
+    var entry = byId[scope.dataset.wikiId || scope.dataset.target];
+    return entry ? entry.deck : null;
+  }
+
+  /**
+   * またぐときだけ、相手のデッキの短い呼び名。同じデッキなら null。
+   *
+   * **本文のリンクとバックリンクの帯が同じ規則を読む唯一の場所。**
+   * 片方に inline で書くと、規則を変えたとき（束の単位で見る・カードの中では
+   * 出さない等）もう一方が黙って古いままになる。
+   */
+  function crossDeckShort(otherDeck, hereDeck) {
+    if (!otherDeck || !hereDeck || otherDeck === hereDeck) return null;
+    return DECK_SHORT[otherDeck];
+  }
+
+  /**
+   * リンクに印を付ける。**折れているか、デッキをまたぐか、どちらか一方だけ。**
+   *
+   * 同じ1回の解決から出る排他の結果なので、2周に分けない。行き先が引けない
+   * リンクに行き先の名を添えると、赤い破線が確かな行き先を名乗ることになる。
+   *
+   * 補足を DOM の節点ではなく**属性**にしてあるのは、ホバーのカードが
+   * .slide を cloneNode するため — 節点は複製に運ばれ、カードの中で足し直すと
+   * 二重になる。属性なら代入が冪等で、複製もそのまま正しい
+   * （カードが写すのは複製元のスライドで、そのスライドから見た「またぐ」は
+   * どこに置かれても変わらない）。
+   *
+   * この1周は読み込み時に1回だけ走る。スライドを後から作るようになったら、
+   * 新しい節点に対して呼び直すこと。
+   */
+  function annotateLinks() {
     Array.prototype.forEach.call(document.querySelectorAll("a.wikilink[data-wikilink]"), function (a) {
-      if (!targetOf(a)) {
+      var target = targetOf(a);
+      if (!target) {
         a.classList.add("broken");
         a.setAttribute("title", "リンク先が見つかりません: " + a.dataset.wikilink);
+        return;
       }
+      var there = byId[target];
+      var cross = crossDeckShort(there && there.deck, scopeDeckOf(a));
+      if (cross) a.dataset.crossDeck = cross;
     });
   }
 
@@ -407,7 +468,7 @@ export function wikiScript(): string {
   function escapeAttr(s) { return escapeHtml(s).replace(/"/g, "&quot;"); }
 
   // ---------------------------------------------------------------- init
-  markBrokenLinks();
+  annotateLinks();
   var start = idFromHash();
   if (start) {
     if (!location.hash) history.replaceState(null, "", "#" + encodeURIComponent(start));

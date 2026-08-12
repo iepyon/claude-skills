@@ -30,6 +30,11 @@ ${slideBaseCss(theme)}
       --muted: #8496ad;
       --accent: #7aa2f7;
       --preview-scale: ${PREVIEW_SCALE};
+      /* スライドの上に重ねる小片の座布団。スライドの地色は白にも濃色にもなるので、
+         字の色をどう選んでも「地に近い一方」では沈む — 座布団ごと置けば地に依らない。
+         送りの山括弧とデッキのバッジが同じ判断をしているので、値は1組だけ持つ。 */
+      --on-slide-bg: rgba(12,18,30,.66);
+      --on-slide-line: rgba(255,255,255,.45);
     }
 
     body {
@@ -161,13 +166,12 @@ ${slideBaseCss(theme)}
       display: flex; align-items: center;
       opacity: 0; transition: opacity .15s ease;
     }
-    /* 山括弧は自前の丸い座布団に載せる。スライドの地色は白にも濃色にもなるので、
-       字の色をどう選んでも「地に近い一方」では沈む。座布団ごと置けば地に依らない。 */
+    /* 山括弧は自前の丸い座布団に載せる（色は --on-slide-* の説明を見よ） */
     .edge-zone::after {
       display: flex; align-items: center; justify-content: center;
       width: 30px; height: 30px; border-radius: 50%;
-      background: rgba(12,18,30,.66);
-      border: 1px solid rgba(255,255,255,.45);
+      background: var(--on-slide-bg);
+      border: 1px solid var(--on-slide-line);
       box-shadow: 0 2px 8px rgba(0,0,0,.4);
       color: #fff; font-size: 19px; line-height: 1;
       /* 山括弧は字面が上寄りなので、光学的な中心に落とす */
@@ -200,6 +204,43 @@ ${slideBaseCss(theme)}
       box-shadow: 0 8px 40px rgba(0,0,0,.5);
       position: relative;
     }
+    /* デッキの短い呼び名。**どのパターン集を見ているか**をスライドの中で名乗る。
+       題は上のパンくずにあるが、読んでいる最中に目を上げないと分からない。
+
+       足場は position: relative の .stage-frame（.wiki-slide には position を
+       持たせない — .slide の absolute の基準がそちらへ移ってしまう）。だから
+       scaleStage() の transform に乗り、どの倍率でもスライドに対する比が変わらない。
+       枠の overflow: hidden が角丸に沿って切る。
+
+       座布団は送りの山括弧と同じ1組の色で置く（--on-slide-* の説明を見よ）。
+       pointer-events: none は必須 — バッジは右端 8% の送りゾーンの中に居るので、
+       クリックを飲むと「端を押して送る」に穴が空く（tooltip も置けない）。 */
+    .deck-badge {
+      position: absolute; top: 10px; right: 12px; z-index: 3;
+      max-width: 22%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      padding: 2px 9px; border-radius: 999px;
+      background: var(--on-slide-bg);
+      border: 1px solid var(--on-slide-line);
+      color: #fff; font-size: 12px; line-height: 1.6; letter-spacing: .04em;
+      pointer-events: none;
+    }
+
+    /* デッキをまたぐリンクにだけ、行き先の短い名を添える。付いていること自体が
+       「またぐ」の合図なので、デッキ内のリンクには何も足さない。
+
+       ここに置くのは、これが Wiki だけの概念だから — 1枚 HTML はデッキが1つで、
+       「またぐ」に指すものが無い（.broken が slideBaseCss 側に居るのとはそこが違う）。
+       節点ではなく属性 + ::after なのは client-script の annotateLinks を見よ。
+       inline-block にすると親の下線が渡らない（原子インラインには伝播しない）ので、
+       補足が下線の続きに見えず、リンクの語との切れ目が保たれる。 */
+    a.wikilink[data-cross-deck]::after {
+      content: attr(data-cross-deck);
+      display: inline-block;
+      margin-left: .18em;
+      font-size: .68em; vertical-align: .35em;
+      opacity: .75; letter-spacing: .02em; white-space: nowrap;
+    }
+
     /* Wiki では表示中の1枚だけを stage に出す。
        .slide.active の規則は slideBaseCss 側と共有している。 */
     .wiki-slide { display: none; }
