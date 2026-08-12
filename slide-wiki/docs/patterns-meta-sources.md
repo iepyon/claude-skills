@@ -29,7 +29,7 @@ Meszaros & Doble, **"A Pattern Language for Pattern Writing"**
 | C. Naming and Referencing | **Evocative Pattern Name** | ジワる名前 |
 | C. Naming and Referencing | **Meaningful Metaphor Name** | メタファ（＋その対の ドメイン言語） |
 | C. Naming and Referencing | **Readable References to Patterns** | 文に溶かす |
-| C. Naming and Referencing | **Relationship to Other Patterns** | でこぼこ石畳（副） |
+| C. Naming and Referencing | **Relationship to Other Patterns** | 不揃いの石畳（副） |
 | D. Understandable | Understood Notations | ラフで出す（**不一致**、後述） |
 
 ---
@@ -215,7 +215,7 @@ POV の「なぜなら［　］だからだ。とはいえ［　］である。�
 **ただし出典としては「名前の由来」に寄せるのが正確。** EDP の記事は Alexander も
 forces も引いておらず、パターン・ランゲージからの派生ではなく**独立に立った語彙**。
 「フォースの緊張関係を言い換えたもの」と刻むと、無い系譜を作ることになる。
-`でこぼこ石畳` と同じ扱い（名前は 247、内容は序文）にするのが筋が通る。
+`不揃いの石畳` と同じ扱い（名前は 247、内容は序文）にするのが筋が通る。
 
 **確認すべきこと**: ザワつく状況というオノマトペは、実際にここから採ったのか。
 採ったなら名前の出典として書ける。偶然一致したなら「同じ着想の別系統」と書くべきで、
@@ -287,12 +287,12 @@ forces も引いておらず、パターン・ランゲージからの派生で�
 
 **主従ではなく、役割分担だった。** Fowler のルールの言い回しは
 **"Three strikes and you refactor"** で、**「3ストライク」という名前はここから来ている**。
-つまり `でこぼこ石畳`（名前は 247、内容は序文）と同じ構造 — **名前は Fowler、内容は Coplien**。
+つまり `不揃いの石畳`（名前は 247、内容は序文）と同じ構造 — **名前は Fowler、内容は Coplien**。
 デッキ本文の「パターンは発明ではなく発見である」は Coplien の主張そのもの。
 
 > 刻んだ文字列: `名前は『リファクタリング』の "Three strikes and you refactor"（Don Roberts 由来）。内容は Coplien の rule of three (1996)＝…`
 
-### でこぼこ石畳 ○
+### 不揃いの石畳 ○
 
 **「上位・同位・下位の3方向」は Alexander の序文にそのまま書いてある。**
 
@@ -311,10 +311,13 @@ forces も引いておらず、パターン・ランゲージからの派生で�
 （目地を1インチ空けて草や苔が生えるようにする石畳。モルタルを使わず地面に直に置く）。
 不揃いのまま噛み合う、という比喩がここから来ている。名前の出典として書ける。
 
+**目地を埋めないことまで 247 の記述**なので、デッキ本文の「目地は埋めない」と
+図の同じ字も、名前の借り先の中に収まっている（草が生えるのはモルタルを使わないから）。
+
 **副**: Meszaros & Doble (1997) **Relationship to Other Patterns** —
 leads to / specializes / generalizes / alternatives の関係を記録する。
 
-> 草案: `Alexander『パタン・ランゲージ』(1977) 序文 + 247 Paving With Cracks Between The Stones`
+> 刻んだ文字列: `Alexander『パタン・ランゲージ』(1977) 序文＝…／名前は同書 247「目地に草の生える石畳」＝目地を1インチ空け、モルタルで固めず地面に直に置く。草や苔はそこから生える。`
 
 ### 文に溶かす ◎
 
@@ -438,7 +441,7 @@ Problem / Solution を切り出して照合した。
 2. **3ストライクで書く は、名前と内容で出典の役割が違う。** Fowler『リファクタリング』の
    ルールは **"Three strikes and you refactor"**（Don Roberts 由来）で、
    **「3ストライク」という名前はここから来ている**。内容（発明ではなく発見）は
-   Coplien の rule of three。`でこぼこ石畳` と同じ「名前は A、内容は B」の構造なので、
+   Coplien の rule of three。`不揃いの石畳` と同じ「名前は A、内容は B」の構造なので、
    主従ではなくそう書き換えた。
 
 ### 訂正: gush は文献に実在した
@@ -500,11 +503,11 @@ Gush と刻むと、探した読者が文献に見つけられない。
 | メタファ | ◎ | Meszaros & Doble "Meaningful Metaphor Name" (PLoPD3, 1997) ＋ "If you have to explain the metaphor, it is not familiar enough." | ほぼ完全一致。単独で足りる。**旧名は `借りてきた比喩`。利用者の判断で説明的な語に改名した** — `ジワる名前`（一度で伝わる名前は、たいてい説明である）の基準からは外れるが、`メタファ` 本来の基準＝**読者にとって既に馴染みがあるか**で測れば、このデッキの読者に学習コストはゼロで借り物として成立している。**比喩名に戻さない。** 出口条件の一文を足したのは、対の `ドメイン言語` への蝶番だから |
 | ドメイン言語 | ○ | Evans『エリック・エヴァンスのドメイン駆動設計』(2003) ユビキタス言語 / Meszaros の出口条件 | `メタファ` の対（`往復切符`）。**Evans の逐語を刻まない** — egress で本文に触れておらず、刻んだのは二次資料が一致して伝える Therefore の要約まで。**`Fowler の DSL を足さない`** — あれは実行可能な言語の話で、散文の命名ではない。**「語を作る」と書かない** — Evans の主眼は語の発明ではなく、ドメイン専門家の語彙を全員が厳密に使い続けること。打ち手は**聞いて拾う**（一度「その場だけの語を作り」と書いて利用者の指摘で直した。この文書は先に線を引いていた）。適用例3件目はこのサイトの `ontology.yaml` |
 | 声に出して読む | ◎ | Evans『ドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」 | **Gabriel の Author Reads Selection を足さない。** あれは合評の場での手順で、このパターンは書いた直後の一人での検算。場面が違う |
-| ザワつく状況 | ◎（名前は提供された本文で確認） | Meszaros & Doble "Visible Forces" (PLoPD3, 1997) / 名前は東京科学大学 EDP の「ざわざわ感」 | EDP の記事は Alexander も forces も引いていない**独立の語彙**。「フォースの言い換え」と書くと無い系譜を作る。**名前の由来**として並べる（でこぼこ石畳と同じ扱い）。表記は「ざわざわ感」 |
+| ザワつく状況 | ◎（名前は提供された本文で確認） | Meszaros & Doble "Visible Forces" (PLoPD3, 1997) / 名前は東京科学大学 EDP の「ざわざわ感」 | EDP の記事は Alexander も forces も引いていない**独立の語彙**。「フォースの言い換え」と書くと無い系譜を作る。**名前の由来**として並べる（不揃いの石畳と同じ扱い）。表記は「ざわざわ感」 |
 | 釣り竿を渡す | ○ | Alexander『時を超えた建設の道』(1979) の生成性 / Coplien, generative pattern (1994) | **名前の由来（魚と釣り方の格言）は書かない** — 典拠が無い。出典は内容＝生成性のほうに付ける |
 | ラフで出す | ◎ | Buxton『Sketching User Experiences』(2007) Appropriate Degree of Refinement | 唯一の一次資料確認済み。**Meszaros の Understood Notations を足さない**（記法の馴染みの話で、粗さの話ではない） |
-| 3ストライクで書く | ○ | 名前は『リファクタリング』の "Three strikes and you refactor"（Don Roberts 由来）/ 内容は Coplien の rule of three (1996) | **主従ではなく役割分担。** 「3ストライク」という名前は Fowler の "Three strikes and you refactor" から。内容（発明ではなく発見）は Coplien。でこぼこ石畳と同じ構造。**Coplien 1996 の本文は未読**なので逐語引用は避け、数字（3件）だけに留める |
-| でこぼこ石畳 | ○ | Alexander『パタン・ランゲージ』(1977) 序文 + 247 Paving With Cracks Between The Stones | 序文が**上位・同位・下位の3方向**の出典、247 が**名前**の出典。役割が違うので両方要る |
+| 3ストライクで書く | ○ | 名前は『リファクタリング』の "Three strikes and you refactor"（Don Roberts 由来）/ 内容は Coplien の rule of three (1996) | **主従ではなく役割分担。** 「3ストライク」という名前は Fowler の "Three strikes and you refactor" から。内容（発明ではなく発見）は Coplien。不揃いの石畳と同じ構造。**Coplien 1996 の本文は未読**なので逐語引用は避け、数字（3件）だけに留める |
+| 不揃いの石畳 | ○ | Alexander『パタン・ランゲージ』(1977) 序文 + 247 Paving With Cracks Between The Stones | 序文が**上位・同位・下位の3方向**の出典、247 が**名前**の出典。役割が違うので両方要る |
 | 往復切符 | △ | Fowler『リファクタリング』の逆向きの対（関数の抽出／インライン化ほか）/ Buxton のスケッチ／プロトタイプ / 要求自体はデッキの追加 | **「規則」と刻まない** — Alexander はパターン自体を rule と呼ぶので、無い衝突を作る（本文は「べき論」）。**逐語引用を足さない** — egress で一次資料に触れておらず、"inverse of" のような文字列は未確認。適用例3件目はこのサイトの `動く北極星` ↔ `動かない物差し` |
 | 文に溶かす | ◎ | Meszaros & Doble "Readable References to Patterns" (PLoPD3, 1997) | 完全一致。単独で足りる |
 | 黙って聴く著者 | ◎ | Gabriel "Fly on the Wall"（Writers' Workshops の合評） | **綴りは Fly on the Wall。** on-the-fly ではない（この注意は調査メモに留め、スライドには刻まない — 読者向けの典拠ではなく書き手向けの覚え書き） |
