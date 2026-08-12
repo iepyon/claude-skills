@@ -1,4 +1,4 @@
-import { pipe, Option as O } from "effect"
+import { Option as O } from "effect"
 import { TitleSlide, ContentSlide, DefaultLayout, LeftRightLayout, TopBottomLayout, GridLayout, TextBlock, CodeDisplayLayout } from "../schema/index.js"
 import { RawSlide, RawSection } from "./builder-types.js"
 import { getConverters } from "../plugins/registry.js"

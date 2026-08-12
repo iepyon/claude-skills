@@ -23,8 +23,6 @@ import {
   GridSpacing,
   ColumnDimensions,
   RowDimensions,
-  LeanCanvasDimensions,
-  LeanCanvasCellSpec,
 } from "./types.js"
 
 // --- Takeaway helpers (used by 9+ layout functions) ---

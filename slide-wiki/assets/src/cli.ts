@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, statSync, readdirSync, mkdirSync } from "fs"
+import { readFileSync, writeFileSync, statSync, mkdirSync } from "fs"
 import { basename, extname, dirname } from "path"
 import { Effect, Exit } from "effect"
 import { md2pptx, md2html, md2wiki, loadThemeFile, parseMarkdown, validatePresentation, DEFAULT_THEME } from "./index.js"

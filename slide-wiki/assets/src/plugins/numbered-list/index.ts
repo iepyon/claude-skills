@@ -1,6 +1,5 @@
 import { Option as O } from "effect"
 import type { SlideLayout } from "../../schema/presentation.js"
-import { TextBlock } from "../../schema/presentation.js"
 import { registerPlugin } from "../registry.js"
 import { handleNumberedListDirective } from "./handler.js"
 import { convertNumberedList } from "./converter.js"

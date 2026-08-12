@@ -15,7 +15,6 @@ import type {
   Annotation,
   FieldKind,
   Frontmatter,
-  FrontmatterField,
   Layout,
   Limits,
   Okf,
@@ -118,10 +117,6 @@ export function getOkf(): Okf {
   return loadOntology().okf
 }
 
-export function getFrontmatterField(name: string): FrontmatterField | undefined {
-  return getFrontmatter().fields.find((f) => f.name === name)
-}
-
 /**
  * 値が宣言された形に合っているか。**正規表現はすべて `value-patterns` から引く。**
  *
@@ -132,15 +127,6 @@ export function getFrontmatterField(name: string): FrontmatterField | undefined 
 export function matchesDeclaredForm(kind: FieldKind, value: string): boolean {
   const pattern = getFrontmatter()["value-patterns"][kind]
   return pattern === undefined || compiled(pattern).test(value)
-}
-
-/** frontmatter を認識する条件（`splitFrontmatter` の実装と突き合わせるために公開する） */
-export function frontmatterRecognition(): { firstLine: string; secondLine: RegExp } {
-  const recognition = getFrontmatter().recognition
-  return {
-    firstLine: recognition["first-line"],
-    secondLine: compiled(recognition["second-line-pattern"]),
-  }
 }
 
 /** 宣言は不変なので、コンパイル済みの正規表現は使い回してよい */
@@ -275,22 +261,13 @@ export function markerKind(marker: string): MarkerKind {
 }
 
 /**
- * そのレイアウトの枠が名乗る綴り。宣言から導くので、プラグインが綴りを持たなくてよい
- * （`registerPlugin` がディレクティブを宣言から導くのと同じ理由 — 書き手が打つ文字列・
- * lint が数える文字列・実装が集める文字列を1つにする）。
+ * そのレイアウトの画像枠が受理する拡張子。宣言から導くので、プラグインが綴りを
+ * 持たなくてよい（`registerPlugin` がディレクティブを宣言から導くのと同じ理由 —
+ * 書き手が打つ文字列・lint が数える文字列・実装が集める文字列を1つにする）。
  *
- * どちらも**期待した種類でなければ落とす** — 宣言を書き替えたのに実装が古い種類を
+ * **期待した種類でなければ落とす** — 宣言を書き替えたのに実装が古い種類を
  * 集め続ける、という緑のままの食い違いを作らせない。
  */
-export function fenceLanguageForLayout(tag: string, slotName: string): string {
-  const kind = markerKind(markerForSlot(tag, slotName) ?? "")
-  if (kind.kind !== "code-fence") {
-    throw new Error(`ontology.yaml: ${tag}.slots.${slotName} がコードフェンスの枠として宣言されていない`)
-  }
-  return kind.language
-}
-
-/** そのレイアウトの画像枠が受理する拡張子 */
 export function imageExtensionForLayout(tag: string, slotName: string): string {
   const kind = markerKind(markerForSlot(tag, slotName) ?? "")
   if (kind.kind !== "image") {

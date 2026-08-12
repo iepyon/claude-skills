@@ -388,5 +388,3 @@ ${slideBaseCss(theme)}
     }
 `
 }
-
-export const PREVIEW_SCALE_VALUE = PREVIEW_SCALE
