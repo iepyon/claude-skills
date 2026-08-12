@@ -175,7 +175,25 @@ Evans の PDF はいずれも CONNECT が 403 で取れなかった（`curl` も
 逐語の裏付け。**節名を刻む** — 「ユビキタス言語」だけでは章が広すぎて読者が辿れない。
 Gabriel を併記しないのは場面が混ざるから（合評の場 vs 書いた後の一人での検算）。
 
-> 刻んだ文字列: `Evans『…ドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」＝…"Rough edges are easy to hear"`
+**併記: 聞き手はゴムのアヒルでよい（○）。** Hunt & Thomas『達人プログラマー』(1999) の
+デバッグの節にある **Rubber Ducking**。二次資料が一致して引くのは次の一節
+（**本文は未取得** — この環境からは egress が塞がれていて一次に当たれなかった。だから ○）。
+
+> "A very simple but particularly useful technique for finding the cause of a problem is
+> simply to explain it to someone else. The other person should look over your shoulder
+> at the screen, and **nod his or her head constantly (like a rubber duck bobbing up and
+> down in a bathtub)**."
+
+**併記できるのは、この一節が聞き手に何も求めていないから。** 声に出す側だけで効くと
+言っているので、`黙って聴く著者`（読者は黙って聴く）とも衝突しない。むしろアヒルは
+**黙る以外のことをしない聞き手**で、同じ軸の端に置ける。Gabriel を外した理由（場面が
+合評に寄る）はここには当たらない — Rubber Ducking も書いた本人が一人でやる検算である。
+
+**「同僚や」を残すのは、アヒルが上位互換ではないから。** 詰まりに気づくだけならアヒルで
+足りるが、`ジワる名前` が効いているかどうかは
+その名前を知らない人の反応でしか分からない。だから並べて、どちらでもよいと書く。
+
+> 刻んだ文字列: `Evans『…ドメイン駆動設計』(2003) ユビキタス言語の節「Modeling Out Loud」＝…"Rough edges are easy to hear"（粗い所は耳で分かる）。／Hunt & Thomas『達人プログラマー』(1999)「Rubber Ducking」＝聞き手は頷くだけでよい（風呂のゴムのアヒルのように）。`
 
 ### ザワつく状況 ◎
 
