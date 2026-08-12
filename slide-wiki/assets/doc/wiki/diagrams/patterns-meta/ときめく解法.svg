@@ -1,0 +1,30 @@
+<svg width="350" height="330" viewBox="-7 1 350 330" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <path d="M103.8 9.5 Q168.9 9.6 234 10.9 Q233.5 28.4 233.1 45.8 Q169.2 45.8 105.4 47.4 Q105 27.8 101.8 8.6" stroke="#4B5563" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M103.8 9.5 Q168.9 10.5 234 10.9 Q233.3 28.4 233.1 45.8 Q169.3 48.5 105.4 47.4 Q103.3 27.9 101.5 8.5" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="170" y="34" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#4B5563">打ち手の候補</text>
+
+  <path d="M118 52 C100 68 80 84 78 104" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M78 110 l-5 -9 l10 0 z" fill="#9CA3AF"/>
+  <path d="M222 52 C240 68 260 84 262 104" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M262 110 l-5 -9 l10 0 z" fill="#1E40AF"/>
+
+  <path d="M6.4 115.9 Q77.5 114.8 148.7 116.8 Q147.2 136.1 147.5 155.5 Q78 155 8.4 154.1 Q7.1 134.7 6 115.4" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M6.4 115.9 Q77.5 118.2 148.7 116.8 Q147.4 136.1 147.5 155.5 Q78 155.6 8.4 154.1 Q5.5 134.2 5.2 114.1" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="78" y="141" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#9CA3AF">採算で選ぶ</text>
+  <path d="M193.7 114.5 Q262.5 117.2 331.4 116.2 Q330.7 136.1 330.2 156 Q260.7 156.1 191.1 156.5 Q193 134.8 193.1 112.9" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M193.7 114.5 Q262.5 116.1 331.4 116.2 Q330.2 136.1 330.2 156 Q260.7 155.2 191.1 156.5 Q193 136.2 191.7 115.8" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="262" y="141" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1E40AF">ときめきで選ぶ</text>
+
+  <text x="78" y="186" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">二度目に手が出ない</text>
+  <text x="262" y="186" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#4B5563">3度目まで来る</text>
+
+  <path d="M78 198 C77 208 79 216 78 220" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M78 226 l-5 -9 l10 0 z" fill="#9CA3AF"/>
+  <path d="M262 198 C261 208 263 216 262 220" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M262 226 l-5 -9 l10 0 z" fill="#1E40AF"/>
+
+  <path d="M17.5 231.9 Q77.5 230.7 137.6 231.8 Q139.3 251.4 138.6 271.2 Q79.1 270.5 19.6 269.6 Q18.9 250.6 18 231.5" stroke="#9CA3AF" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M17.5 231.9 Q77.5 232.8 137.6 231.8 Q139.5 251.4 138.6 271.2 Q79.1 270.1 19.6 269.6 Q18.5 250 17.1 230.3" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="78" y="256" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#9CA3AF">一度きり</text>
+  <path d="M203.3 229.9 Q262.5 229.7 321.7 229.9 Q320.5 250.3 321.3 270.7 Q261.6 271.3 201.9 270.6 Q201.2 250.8 201.5 231.1" stroke="#1E40AF" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M203.3 229.9 Q262.5 229.6 321.7 229.9 Q320.8 250.3 321.3 270.7 Q261.6 271.1 201.9 270.6 Q203.5 250.5 201.1 230.6" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="262" y="256" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#1E40AF">パターン</text>
+
+  <text x="170" y="296" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">並べるのは採算、選ぶのはときめき</text>
+  <text x="170" y="318" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#1F2937">3度目が来るのは、ときめいた方</text>
+</svg>
