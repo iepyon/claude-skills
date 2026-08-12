@@ -124,22 +124,22 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 <!-- BEGIN GENERATED: layouts -->
 | レイアウト | ディレクティブ | 説明 |
 |---|---|---|
-| Default | (なし) | セクションを縦に並べる |
-| LeftRight | `<!--left:N-->` `<!--right:M-->` | 左右分割（比率指定） |
-| TopBottom | `<!--top:N-->` `<!--bottom:M-->` | 上下分割（比率指定） |
-| Grid | `<!--grid:RxC-->` | R行×C列のグリッド |
-| IconColumns | `<!--icon-cols-->` | アイコン付き3カラム |
-| IconCards | `<!--icon-cards-->` | アイコン付きカード |
-| Steps | `<!--steps-->` | 階段状のステップ表示 |
-| NumberedList | `<!--numbered-list:circle-->` | 番号付きリスト（意匠は `circle` か `bar`） |
-| CodeDisplay | `` ```<language> `` | シンタックスハイライト付きコード |
-| TextOnly | `<!--text-only-->` | 自由形式テキスト |
-| Table | `<!--table-->` | テーブル表示（ディレクティブの後にパイプ区切りの表を置く） |
-| Quote | `<!--quote-->` | 引用・名言スライド |
-| Agenda | `<!--agenda-->` | TOC/アジェンダ |
+| WikiPattern | `<!--pattern-->` | Wiki のパターン1件。左に いつ・なにが困るか／そこで、右に SVG の図解 |
 | LeanCanvas | `<!--lean-canvas-->` | リーンキャンバス |
 | CustomerJourney | `<!--カスタマージャーニー:-->` | カスタマージャーニーマップ |
-| WikiPattern | `<!--pattern-->` | Wiki のパターン1件。左に いつ・なにが困るか／そこで、右に SVG の図解 |
+| Steps | `<!--steps-->` | 階段状のステップ表示 |
+| NumberedList | `<!--numbered-list:circle-->` | 番号付きリスト（意匠は `circle` か `bar`） |
+| Agenda | `<!--agenda-->` | TOC/アジェンダ |
+| Quote | `<!--quote-->` | 引用・名言スライド |
+| Table | `<!--table-->` | テーブル表示（ディレクティブの後にパイプ区切りの表を置く） |
+| CodeDisplay | `` ```<language> `` | シンタックスハイライト付きコード |
+| TextOnly | `<!--text-only-->` | 自由形式テキスト |
+| Default | (なし) | セクションを縦に並べる |
+| IconColumns | `<!--icon-cols-->` | アイコン付き3カラム |
+| IconCards | `<!--icon-cards-->` | アイコン付きカード |
+| Grid | `<!--grid:RxC-->` | R行×C列のグリッド |
+| LeftRight | `<!--left:N-->` `<!--right:M-->` | 左右分割（比率指定） |
+| TopBottom | `<!--top:N-->` `<!--bottom:M-->` | 上下分割（比率指定） |
 <!-- END GENERATED: layouts -->
 
 各レイアウトが `###` / `####` に何を期待するか（件数・見出しの語彙・本文の読まれ方）は
@@ -151,8 +151,8 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | 注釈 | 記法 | 効くレイアウト | 説明 |
 |---|---|---|---|
 | `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`デッキ名.md#…` の解決先であり HTML の `#hash` でもある。 |
-| `icon` | `<!--icon:mi:<name>-->` | IconColumns・IconCards・Steps | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
-| `takeaway` | `<!--takeaway-->` | Default・LeftRight・TopBottom・Grid・IconColumns・IconCards・Steps・NumberedList・TextOnly・Table・WikiPattern | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
+| `icon` | `<!--icon:mi:<name>-->` | Steps・IconColumns・IconCards | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
+| `takeaway` | `<!--takeaway-->` | WikiPattern・Steps・NumberedList・Table・TextOnly・Default・IconColumns・IconCards・Grid・LeftRight・TopBottom | スライド末尾の出典・まとめ。マーカーの次の行以降が本文になる。 |
 | `source` | `<!--source-->` | WikiPattern | そのスライドの主張の典拠。マーカーの次の行以降が本文になる。 |
 <!-- END GENERATED: annotations -->
 

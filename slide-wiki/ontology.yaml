@@ -55,7 +55,14 @@
 #    節の中の `**ラベル:**`）も落とす。**使い手のいない仕組みは、宣言を読んでも
 #    効き目を確かめられない** — selfcheck が未参照の語彙や未使用の value-pattern を
 #    落とすのと同じ理由で、宣言の側にも残さない
-version: 8
+# 9: レイアウトと語彙の並びを、意味の濃いほうから薄いほうへ入れ替えた。宣言の中身は
+#    1文字も変わっていないが、**この列がそのまま生成物の節の順になる**ので、読み手が
+#    最初に見るのが Default・LeftRight・Grid か、WikiPattern・LeanCanvas・
+#    CustomerJourney かで、道具の読み方そのものが変わる。前者は「md を段組みにする道具」
+#    に見え、後者は「決まった意味の枠に書き込む道具」に見える。**宣言が正本であるほど、
+#    宣言の並びは編集の都合ではなく読ませたい順に従う**（並び自体が何も強制しないぶん、
+#    理由を書き残さないと次の編集で「関連するものを近くへ」で崩れる）
+version: 9
 
 # ── md の骨格要素 ───────────────────────────────────────────────────
 # 行頭記号で認識される構造。ここに無い記法はすべて body（＝本文テキスト）に落ちる。
@@ -368,399 +375,20 @@ annotations:
 # の概要+詳細）は宣言から落とした。連れられるほうは宣言に名前しか持てず、上限も数え方も
 # 「宣言元をたどる」例外でしか引けない。件数のほうは自由で、CustomerJourney は同じ _tag の
 # まま4フェーズずつに割る。
+#
+# **並びは意味の濃いほうから薄いほうへ。** この列はそのまま ontology.md と SKILL.md の
+# 表と節の順になるので、**読み手が最初に見る数枚が「slide-wiki とは何か」を決める**。
+# 箱を並べるだけのレイアウトから始めると、この道具は「md を段組みにするもの」に見える。
+# 先に WikiPattern・LeanCanvas・CustomerJourney を置くと、`###` に書くのは配置ではなく
+# **決まった意味の枠**だ、という読み方が先に立つ（この3つだけが語彙を持ち、次節の
+# `vocabularies` へそのまま続く）。アイコン・グリッド・左右分割は、その枠に収まらない話を
+# 書き手が自分で組むための材料なので後ろに置く。
+#
+# 3つの帯はコメントであって宣言ではない（機械が読むのは並びだけ）。帯を宣言にすると
+# 生成物に見出しの階層が1段増え、どの層も帯の名前を引かないまま selfcheck の
+# 突き合わせ先だけが増える。**並び自体が読ませたい順である**ことで足りる。
 layouts:
-  - name: Default
-    label: Default
-    plugin: null
-    directives: []
-    description: セクションを縦に並べる
-    annotations: [id, takeaway]
-    slots:
-      - name: sections
-        marker: "###"
-        cardinality: "0..n"
-        heading: free
-        body: free
-        description: |
-          見出しと本文の組。上から順に縦に積まれる。`###` を書かず本文だけを置くと、
-          見出しの無いセクション1件として扱われる（だから 0 件でも成立する）。
-    example: |
-      ## スライドタイトル
-      ### 見出しA
-      本文テキスト
-      ### 見出しB
-      本文テキスト
-
-  - name: LeftRight
-    label: LeftRight
-    plugin: null
-    directives:
-      - syntax: "<!--left:N-->"
-        pattern: '^<!--left:(\d+)-->$'
-      - syntax: "<!--right:M-->"
-        pattern: '^<!--right:(\d+)-->$'
-    description: 左右分割（比率指定）
-    guidance: N・M は整数の比率。`right` は `left` より後に置く（前に置くと ParseError）。
-    annotations: [id, takeaway]
-    slots:
-      - name: sections
-        marker: "###"
-        cardinality: "0..n"
-        heading: free
-        body: free
-        description: 直前のディレクティブが指す側（左/右）に積まれる。本文だけでも成立する。
-    example: |
-      ## タイトル
-      <!--left:2-->
-      ### 左側
-      左の内容
-      <!--right:1-->
-      ### 右側
-      右の内容
-
-  - name: TopBottom
-    label: TopBottom
-    plugin: null
-    directives:
-      - syntax: "<!--top:N-->"
-        pattern: '^<!--top:(\d+)-->$'
-      - syntax: "<!--bottom:M-->"
-        pattern: '^<!--bottom:(\d+)-->$'
-    description: 上下分割（比率指定）
-    guidance: N・M は整数の比率。`bottom` は `top` より後に置く（前に置くと ParseError）。
-    annotations: [id, takeaway]
-    slots:
-      - name: sections
-        marker: "###"
-        cardinality: "0..n"
-        heading: free
-        body: free
-        description: 直前のディレクティブが指す側（上/下）に積まれる。本文だけでも成立する。
-    example: |
-      ## タイトル
-      <!--top:3-->
-      ### 上側
-      上の内容
-      <!--bottom:2-->
-      ### 下側
-      下の内容
-
-  - name: Grid
-    label: Grid
-    plugin: null
-    directives:
-      - syntax: "<!--grid:RxC-->"
-        pattern: '^<!--grid:(\d+)x(\d+)-->$'
-    description: R行×C列のグリッド
-    guidance: フォントサイズは R×C から自動で決まる（1x1 が最大、4x4 が最小）。
-    annotations: [id, takeaway]
-    slots:
-      - name: cells
-        marker: "###"
-        cardinality: "rows*cols"
-        heading: free
-        body: free
-        description: セル。左上から行優先で埋まる。件数が R×C と違うと空セルか溢れになる。
-    example: |
-      ## タイトル
-      <!--grid:2x2-->
-      ### セル1
-      内容1
-      ### セル2
-      内容2
-      ### セル3
-      内容3
-      ### セル4
-      内容4
-
-  - name: IconColumn
-    label: IconColumns
-    plugin: icon-cols
-    directives:
-      - syntax: "<!--icon-cols-->"
-    description: アイコン付き3カラム
-    guidance: |
-      **3件ちょうど**を想定する。2件以下だとこのレイアウトとして認識されず Default に落ち、
-      4件以上だと4件目以降が黙って捨てられる（BACKLOG B-07 で可変化を検討中）。
-    annotations: [id, icon, takeaway]
-    slots:
-      - name: columns
-        marker: "###"
-        cardinality: "3"
-        heading: free
-        body: free
-        description: カラム。見出し・`<!--icon:-->`・本文の順に書く。
-    example: |
-      ## タイトル
-      <!--icon-cols-->
-      ### 1. 自己認識
-      <!--icon:mi:search-->
-      無意識的な前提を特定する力。
-      ### 2. 率直さ
-      <!--icon:💬-->
-      前提の崩壊を認める誠実さ。
-      ### 3. 責任
-      <!--icon:⚓-->
-      不確実性を引き受ける覚悟。
-
-  - name: IconCard
-    label: IconCards
-    plugin: icon-cards
-    directives:
-      - syntax: "<!--icon-cards-->"
-    description: アイコン付きカード
-    guidance: IconColumns と同じく **3件ちょうど**を想定する（過不足の扱いも同じ）。
-    annotations: [id, icon, takeaway]
-    slots:
-      - name: columns
-        marker: "###"
-        cardinality: "3"
-        heading: free
-        body: free
-        description: カード。見出し・`<!--icon:-->`・本文の順に書く。
-    example: |
-      ## タイトル
-      <!--icon-cards-->
-      ### 認知科学
-      <!--icon:mi:psychology-->
-      人間の思考プロセスを理解する研究分野。
-      ### コーディング
-      <!--icon:mi:code-->
-      効率的なアルゴリズムで構築する。
-      ### 自動化
-      <!--icon:mi:auto_awesome-->
-      反復タスクを自動化する。
-
-  - name: Steps
-    label: Steps
-    plugin: steps
-    directives:
-      - syntax: "<!--steps-->"
-    description: 階段状のステップ表示
-    guidance: 3件未満だとこのレイアウトとして認識されず Default に落ちる。
-    annotations: [id, icon, takeaway]
-    slots:
-      - name: steps
-        marker: "###"
-        cardinality: "3..n"
-        heading: free
-        body: lines
-        description: |
-          ステップ。見出し・`<!--icon:-->`・本文の順に書く。本文は**1行目が役割名**、
-          2行目以降が説明になる（行の位置に意味がある唯一のレイアウト）。
-    example: |
-      ## タイトル
-      <!--steps-->
-      ### 見る
-      <!--icon:mi:visibility-->
-      観察者
-      全体像を理解し 各フェーズの目的を 説明できる
-      ### 習う
-      <!--icon:mi:school-->
-      見習い
-      先輩を手本に スクリプトを組む
-      ### 実践
-      <!--icon:mi:directions_run-->
-      実践者
-      自律的に判断し 適切な手法を 選択できる
-
-  - name: NumberedList
-    label: NumberedList
-    plugin: numbered-list
-    directives:
-      - syntax: "<!--numbered-list:circle-->"
-        pattern: '^<!--numbered-list:(circle|bar)-->$'
-    description: 番号付きリスト（意匠は `circle` か `bar`）
-    guidance: "`<!--numbered-list:circle-->`（丸）か `<!--numbered-list:bar-->`（帯）のどちらかを書く。"
-    annotations: [id, takeaway]
-    slots:
-      - name: items
-        marker: "###"
-        cardinality: "1..n"
-        heading: free
-        body: free
-        description: 項目。番号は自動採番される（見出しに番号を書かない）。
-    example: |
-      ## タイトル
-      <!--numbered-list:circle-->
-      ### 仮説を立てる
-      観察事実から「〜ならば〜だろう」の形で書く。
-      ### 検証計画を作る
-      仮説ごとに反証シグナルを設計する。
-      <!--takeaway-->
-      仮説検証は1週間スプリントで回すこと
-
-  - name: CodeDisplay
-    label: CodeDisplay
-    plugin: null
-    directives:
-      - syntax: "```<language>"
-        kind: code-fence
-    description: シンタックスハイライト付きコード
-    guidance: |
-      文字数制限の対象外（タイトルだけ数える）。コードフェンスの**後ろ**に書いた本文は
-      キャプションになる。
-    annotations: [id]
-    leading-body: なし（コードフェンスの後の本文がキャプションになる）
-    slots: []
-    example: |
-      ## TypeScript コード例
-
-      ```typescript
-      interface User {
-        id: number
-        name: string
-      }
-      ```
-
-      型安全なユーザー型。
-
-  - name: TextOnly
-    label: TextOnly
-    plugin: text-only
-    directives:
-      - syntax: "<!--text-only-->"
-    description: 自由形式テキスト
-    annotations: [id, takeaway]
-    leading-body: 本文そのもの。空行で段落が分かれる。
-    slots: []
-    example: |
-      ## エグゼクティブサマリー
-      <!--text-only-->
-      本レポートは、開発者が直面する構造的な問題を分析したものです。
-
-      分析の結果、単なる時間管理の問題ではないことが明らかになりました。
-
-  - name: Table
-    label: Table
-    plugin: table
-    directives:
-      - syntax: "<!--table-->"
-    description: テーブル表示（ディレクティブの後にパイプ区切りの表を置く）
-    guidance: |
-      ディレクティブの後にパイプ区切りの表を置く。`| --- |` の区切り行が必要。
-      セル内のテキストはプラグインが直接描くのでリンクは効かない（BACKLOG B-22）。
-    annotations: [id, takeaway]
-    leading-body: パイプ区切りのテーブル本体。
-    slots: []
-    example: |
-      ## 機能比較
-      <!--table-->
-      | 機能 | Basic | Pro |
-      | --- | --- | --- |
-      | ユーザー数 | 5名 | 50名 |
-      | サポート | メール | 優先対応 |
-
-  - name: Quote
-    label: Quote
-    plugin: quote
-    directives:
-      - syntax: "<!--quote-->"
-    description: 引用・名言スライド
-    annotations: [id]
-    leading-body: 引用文そのもの。複数行・複数段落も可。
-    slots:
-      - name: author
-        marker: "###"
-        cardinality: "0..1"
-        heading: free
-        body: none
-        description: 著者名。省略可（引用文だけのスライドになる）。
-    example: |
-      ## 名言 — イノベーション
-      <!--quote-->
-      イノベーションとは、優れたアイデアに「イエス」と言うことではない。
-      ### Steve Jobs
-
-  - name: Agenda
-    label: Agenda
-    plugin: agenda
-    directives:
-      - syntax: "<!--agenda-->"
-    description: TOC/アジェンダ
-    guidance: 項目はリンクにでき、Wiki の目次として機能する。
-    annotations: [id]
-    leading-body: サブタイトル（省略可）。
-    slots:
-      - name: items
-        marker: "###"
-        cardinality: "1..n"
-        heading: free
-        body: none
-        description: アジェンダ項目。本文は持たない。
-    example: |
-      ## Agenda
-      <!--agenda-->
-      本日のプログラム
-      ### イントロダクション
-      ### 市場分析
-      ### Q&A
-
-  - name: LeanCanvas
-    label: LeanCanvas
-    plugin: lean-canvas
-    directives:
-      - syntax: "<!--lean-canvas-->"
-    description: リーンキャンバス
-    guidance: |
-      **見出し名が配置を決める**（書いた順ではない）。語彙外の見出しはどのマスにも
-      入らず黙って消えるので、下記 lean-canvas-blocks の語彙から選ぶ。
-    annotations: [id]
-    slots:
-      - name: blocks
-        marker: "###"
-        cardinality: "1..9"
-        heading: vocabulary
-        vocabulary: lean-canvas-blocks
-        body: free
-        description: 9ブロックのいずれか。同じブロックを2回書くと後勝ちになる。
-    example: |
-      ## リーンキャンバス
-      <!--lean-canvas-->
-      ### 課題
-      - 開発コスト高
-      ### ソリューション
-      - テンプレート提供
-      ### 独自の価値提案
-      最速でMVP構築できる統合プラットフォーム
-
-  - name: CustomerJourney
-    label: CustomerJourney
-    plugin: customer-journey
-    directives:
-      - syntax: "<!--カスタマージャーニー:-->"
-    description: カスタマージャーニーマップ
-    guidance: |
-      フェーズが5件以上あると4件ずつのスライドに自動分割され、タイトルに `(1/2)` が付く。
-    annotations: [id]
-    slots:
-      - name: phases
-        marker: "###"
-        cardinality: "1..n"
-        heading: free
-        body: none
-        description: フェーズ（列）。名前は自由。
-      - name: rows
-        marker: "####"
-        cardinality: "1..4"
-        heading: vocabulary
-        vocabulary: journey-rows
-        body: bullets-only
-        description: |
-          行ラベル。**`- ` で始まる行しか読まれない**（素の本文行は黙って捨てられる）。
-    example: |
-      ## カスタマージャーニー
-      <!--カスタマージャーニー:-->
-      ### 認知
-      #### タッチ:
-      - Web検索
-      #### 行動:
-      - 情報収集
-      #### 判断:
-      - 課題解決できそう
-      #### 感情:
-      - 期待感
-
+  # ── 意味が決まっているレイアウト（見出しが語彙に縛られる）───────────────
   - name: WikiPattern
     label: WikiPattern
     plugin: wiki-pattern
@@ -842,28 +470,436 @@ layouts:
       <!--takeaway-->
       関連: [一枚一義](patterns-wiki.md#一枚一義)
 
+  - name: LeanCanvas
+    label: LeanCanvas
+    plugin: lean-canvas
+    directives:
+      - syntax: "<!--lean-canvas-->"
+    description: リーンキャンバス
+    guidance: |
+      **見出し名が配置を決める**（書いた順ではない）。語彙外の見出しはどのマスにも
+      入らず黙って消えるので、下記 lean-canvas-blocks の語彙から選ぶ。
+    annotations: [id]
+    slots:
+      - name: blocks
+        marker: "###"
+        cardinality: "1..9"
+        heading: vocabulary
+        vocabulary: lean-canvas-blocks
+        body: free
+        description: 9ブロックのいずれか。同じブロックを2回書くと後勝ちになる。
+    example: |
+      ## リーンキャンバス
+      <!--lean-canvas-->
+      ### 課題
+      - 開発コスト高
+      ### ソリューション
+      - テンプレート提供
+      ### 独自の価値提案
+      最速でMVP構築できる統合プラットフォーム
+
+  - name: CustomerJourney
+    label: CustomerJourney
+    plugin: customer-journey
+    directives:
+      - syntax: "<!--カスタマージャーニー:-->"
+    description: カスタマージャーニーマップ
+    guidance: |
+      フェーズが5件以上あると4件ずつのスライドに自動分割され、タイトルに `(1/2)` が付く。
+    annotations: [id]
+    slots:
+      - name: phases
+        marker: "###"
+        cardinality: "1..n"
+        heading: free
+        body: none
+        description: フェーズ（列）。名前は自由。
+      - name: rows
+        marker: "####"
+        cardinality: "1..4"
+        heading: vocabulary
+        vocabulary: journey-rows
+        body: bullets-only
+        description: |
+          行ラベル。**`- ` で始まる行しか読まれない**（素の本文行は黙って捨てられる）。
+    example: |
+      ## カスタマージャーニー
+      <!--カスタマージャーニー:-->
+      ### 認知
+      #### タッチ:
+      - Web検索
+      #### 行動:
+      - 情報収集
+      #### 判断:
+      - 課題解決できそう
+      #### 感情:
+      - 期待感
+
+  # ── 形に役割があるレイアウト（見出しは自由だが、並びや場所が意味を持つ）──
+  - name: Steps
+    label: Steps
+    plugin: steps
+    directives:
+      - syntax: "<!--steps-->"
+    description: 階段状のステップ表示
+    guidance: 3件未満だとこのレイアウトとして認識されず Default に落ちる。
+    annotations: [id, icon, takeaway]
+    slots:
+      - name: steps
+        marker: "###"
+        cardinality: "3..n"
+        heading: free
+        body: lines
+        description: |
+          ステップ。見出し・`<!--icon:-->`・本文の順に書く。本文は**1行目が役割名**、
+          2行目以降が説明になる（行の位置に意味がある唯一のレイアウト）。
+    example: |
+      ## タイトル
+      <!--steps-->
+      ### 見る
+      <!--icon:mi:visibility-->
+      観察者
+      全体像を理解し 各フェーズの目的を 説明できる
+      ### 習う
+      <!--icon:mi:school-->
+      見習い
+      先輩を手本に スクリプトを組む
+      ### 実践
+      <!--icon:mi:directions_run-->
+      実践者
+      自律的に判断し 適切な手法を 選択できる
+
+  - name: NumberedList
+    label: NumberedList
+    plugin: numbered-list
+    directives:
+      - syntax: "<!--numbered-list:circle-->"
+        pattern: '^<!--numbered-list:(circle|bar)-->$'
+    description: 番号付きリスト（意匠は `circle` か `bar`）
+    guidance: "`<!--numbered-list:circle-->`（丸）か `<!--numbered-list:bar-->`（帯）のどちらかを書く。"
+    annotations: [id, takeaway]
+    slots:
+      - name: items
+        marker: "###"
+        cardinality: "1..n"
+        heading: free
+        body: free
+        description: 項目。番号は自動採番される（見出しに番号を書かない）。
+    example: |
+      ## タイトル
+      <!--numbered-list:circle-->
+      ### 仮説を立てる
+      観察事実から「〜ならば〜だろう」の形で書く。
+      ### 検証計画を作る
+      仮説ごとに反証シグナルを設計する。
+      <!--takeaway-->
+      仮説検証は1週間スプリントで回すこと
+
+  - name: Agenda
+    label: Agenda
+    plugin: agenda
+    directives:
+      - syntax: "<!--agenda-->"
+    description: TOC/アジェンダ
+    guidance: 項目はリンクにでき、Wiki の目次として機能する。
+    annotations: [id]
+    leading-body: サブタイトル（省略可）。
+    slots:
+      - name: items
+        marker: "###"
+        cardinality: "1..n"
+        heading: free
+        body: none
+        description: アジェンダ項目。本文は持たない。
+    example: |
+      ## Agenda
+      <!--agenda-->
+      本日のプログラム
+      ### イントロダクション
+      ### 市場分析
+      ### Q&A
+
+  - name: Quote
+    label: Quote
+    plugin: quote
+    directives:
+      - syntax: "<!--quote-->"
+    description: 引用・名言スライド
+    annotations: [id]
+    leading-body: 引用文そのもの。複数行・複数段落も可。
+    slots:
+      - name: author
+        marker: "###"
+        cardinality: "0..1"
+        heading: free
+        body: none
+        description: 著者名。省略可（引用文だけのスライドになる）。
+    example: |
+      ## 名言 — イノベーション
+      <!--quote-->
+      イノベーションとは、優れたアイデアに「イエス」と言うことではない。
+      ### Steve Jobs
+
+  - name: Table
+    label: Table
+    plugin: table
+    directives:
+      - syntax: "<!--table-->"
+    description: テーブル表示（ディレクティブの後にパイプ区切りの表を置く）
+    guidance: |
+      ディレクティブの後にパイプ区切りの表を置く。`| --- |` の区切り行が必要。
+      セル内のテキストはプラグインが直接描くのでリンクは効かない（BACKLOG B-22）。
+    annotations: [id, takeaway]
+    leading-body: パイプ区切りのテーブル本体。
+    slots: []
+    example: |
+      ## 機能比較
+      <!--table-->
+      | 機能 | Basic | Pro |
+      | --- | --- | --- |
+      | ユーザー数 | 5名 | 50名 |
+      | サポート | メール | 優先対応 |
+
+  - name: CodeDisplay
+    label: CodeDisplay
+    plugin: null
+    directives:
+      - syntax: "```<language>"
+        kind: code-fence
+    description: シンタックスハイライト付きコード
+    guidance: |
+      文字数制限の対象外（タイトルだけ数える）。コードフェンスの**後ろ**に書いた本文は
+      キャプションになる。
+    annotations: [id]
+    leading-body: なし（コードフェンスの後の本文がキャプションになる）
+    slots: []
+    example: |
+      ## TypeScript コード例
+
+      ```typescript
+      interface User {
+        id: number
+        name: string
+      }
+      ```
+
+      型安全なユーザー型。
+
+  - name: TextOnly
+    label: TextOnly
+    plugin: text-only
+    directives:
+      - syntax: "<!--text-only-->"
+    description: 自由形式テキスト
+    annotations: [id, takeaway]
+    leading-body: 本文そのもの。空行で段落が分かれる。
+    slots: []
+    example: |
+      ## エグゼクティブサマリー
+      <!--text-only-->
+      本レポートは、開発者が直面する構造的な問題を分析したものです。
+
+      分析の結果、単なる時間管理の問題ではないことが明らかになりました。
+
+  # ── 箱を並べるだけのレイアウト（意味は書き手が本文で与える）─────────────
+  - name: Default
+    label: Default
+    plugin: null
+    directives: []
+    description: セクションを縦に並べる
+    annotations: [id, takeaway]
+    slots:
+      - name: sections
+        marker: "###"
+        cardinality: "0..n"
+        heading: free
+        body: free
+        description: |
+          見出しと本文の組。上から順に縦に積まれる。`###` を書かず本文だけを置くと、
+          見出しの無いセクション1件として扱われる（だから 0 件でも成立する）。
+    example: |
+      ## スライドタイトル
+      ### 見出しA
+      本文テキスト
+      ### 見出しB
+      本文テキスト
+
+  - name: IconColumn
+    label: IconColumns
+    plugin: icon-cols
+    directives:
+      - syntax: "<!--icon-cols-->"
+    description: アイコン付き3カラム
+    guidance: |
+      **3件ちょうど**を想定する。2件以下だとこのレイアウトとして認識されず Default に落ち、
+      4件以上だと4件目以降が黙って捨てられる（BACKLOG B-07 で可変化を検討中）。
+    annotations: [id, icon, takeaway]
+    slots:
+      - name: columns
+        marker: "###"
+        cardinality: "3"
+        heading: free
+        body: free
+        description: カラム。見出し・`<!--icon:-->`・本文の順に書く。
+    example: |
+      ## タイトル
+      <!--icon-cols-->
+      ### 1. 自己認識
+      <!--icon:mi:search-->
+      無意識的な前提を特定する力。
+      ### 2. 率直さ
+      <!--icon:💬-->
+      前提の崩壊を認める誠実さ。
+      ### 3. 責任
+      <!--icon:⚓-->
+      不確実性を引き受ける覚悟。
+
+  - name: IconCard
+    label: IconCards
+    plugin: icon-cards
+    directives:
+      - syntax: "<!--icon-cards-->"
+    description: アイコン付きカード
+    guidance: IconColumns と同じく **3件ちょうど**を想定する（過不足の扱いも同じ）。
+    annotations: [id, icon, takeaway]
+    slots:
+      - name: columns
+        marker: "###"
+        cardinality: "3"
+        heading: free
+        body: free
+        description: カード。見出し・`<!--icon:-->`・本文の順に書く。
+    example: |
+      ## タイトル
+      <!--icon-cards-->
+      ### 認知科学
+      <!--icon:mi:psychology-->
+      人間の思考プロセスを理解する研究分野。
+      ### コーディング
+      <!--icon:mi:code-->
+      効率的なアルゴリズムで構築する。
+      ### 自動化
+      <!--icon:mi:auto_awesome-->
+      反復タスクを自動化する。
+
+  - name: Grid
+    label: Grid
+    plugin: null
+    directives:
+      - syntax: "<!--grid:RxC-->"
+        pattern: '^<!--grid:(\d+)x(\d+)-->$'
+    description: R行×C列のグリッド
+    guidance: フォントサイズは R×C から自動で決まる（1x1 が最大、4x4 が最小）。
+    annotations: [id, takeaway]
+    slots:
+      - name: cells
+        marker: "###"
+        cardinality: "rows*cols"
+        heading: free
+        body: free
+        description: セル。左上から行優先で埋まる。件数が R×C と違うと空セルか溢れになる。
+    example: |
+      ## タイトル
+      <!--grid:2x2-->
+      ### セル1
+      内容1
+      ### セル2
+      内容2
+      ### セル3
+      内容3
+      ### セル4
+      内容4
+
+  - name: LeftRight
+    label: LeftRight
+    plugin: null
+    directives:
+      - syntax: "<!--left:N-->"
+        pattern: '^<!--left:(\d+)-->$'
+      - syntax: "<!--right:M-->"
+        pattern: '^<!--right:(\d+)-->$'
+    description: 左右分割（比率指定）
+    guidance: N・M は整数の比率。`right` は `left` より後に置く（前に置くと ParseError）。
+    annotations: [id, takeaway]
+    slots:
+      - name: sections
+        marker: "###"
+        cardinality: "0..n"
+        heading: free
+        body: free
+        description: 直前のディレクティブが指す側（左/右）に積まれる。本文だけでも成立する。
+    example: |
+      ## タイトル
+      <!--left:2-->
+      ### 左側
+      左の内容
+      <!--right:1-->
+      ### 右側
+      右の内容
+
+  - name: TopBottom
+    label: TopBottom
+    plugin: null
+    directives:
+      - syntax: "<!--top:N-->"
+        pattern: '^<!--top:(\d+)-->$'
+      - syntax: "<!--bottom:M-->"
+        pattern: '^<!--bottom:(\d+)-->$'
+    description: 上下分割（比率指定）
+    guidance: N・M は整数の比率。`bottom` は `top` より後に置く（前に置くと ParseError）。
+    annotations: [id, takeaway]
+    slots:
+      - name: sections
+        marker: "###"
+        cardinality: "0..n"
+        heading: free
+        body: free
+        description: 直前のディレクティブが指す側（上/下）に積まれる。本文だけでも成立する。
+    example: |
+      ## タイトル
+      <!--top:3-->
+      ### 上側
+      上の内容
+      <!--bottom:2-->
+      ### 下側
+      下の内容
+
 # ── 語彙 ───────────────────────────────────────────────────────────
 # slot の heading: vocabulary が参照する語彙。
 # canonical = 正書、aliases = 受理される別表記（照合は小文字化してトリムしてから）
-# pattern   = 固定名でなく正規表現で受理する項目（具体例N：… のような連番節）
 # unknown   = 語彙外の見出しをどう扱うか（warning / error / ignore）
-# sub-labels= その節の中で意味を持つ `**ラベル:**`。match は exact か contains-any。
+#
+# **並びは layouts と揃える**（WikiPattern → LeanCanvas → CustomerJourney）。語彙は
+# レイアウトの `###` から参照されるものなので、片方だけ並べ替えると、レイアウトの節で
+# 名前を見た語彙を次節で探すときに順番が合わない。スロットから参照されない `deck-types`
+# だけが最後 — 引かれる場所が frontmatter で、この節の中で1つだけ出自が違う。
+#
+# **語彙の中の terms は並べ替えない。** wiki-pattern-sections はこの並びがそのまま
+# 描画順（いつ・なにが困るか → そこで）なので、ここだけは順序が宣言の中身である。
 vocabularies:
-  deck-types:
-    label: frontmatter の type
-    unknown: warning
-    unknown-effect: 外部ツールが種別で絞れなくなる（描画には影響しない）
+  wiki-pattern-sections:
+    label: Wiki パターンの2節
+    unknown: error
+    unknown-effect: どの枠にも入らず、その節は描かれない
     guidance: |
-      スロットの見出しではなく **frontmatter の `type` から参照される**唯一の語彙。
-      値が増えるのは「md ファイルの種類」が増えたときだけなので、
-      レイアウトや注釈のように書き手が日々選ぶものではない。
+      2節そろって1つのパターンになる。順番は書いた順ではなく、この語彙の並び
+      （いつ・なにが困るか → そこで）で左カラムに積まれる。
+
+      **語彙外の見出しはエラーにする。** 3節だった頃の `### 問題` を書き残すと、
+      警告のままでは中身ごと黙って消えた状態で公開されてしまう。ここだけ `error` なのは、
+      1パターンの節が2つしかなく、1つ落ちれば残りが片肺だと分かりきっているため。
     terms:
-      - key: deck
-        canonical: deck
-        description: スライドのデッキ（doc/wiki/*.md）
-      - key: spec
-        canonical: spec
-        description: 記法の仕様書（doc/Spec.md）
+      - key: situation
+        canonical: いつ・なにが困るか
+        aliases: [状況, いつ, situation]
+        description: |
+          どんな場面で、何が困るのか。本文がそのまま入る。
+          空行で「場面の段落」と「困りごとの段落」に割り、困りごとの核は太字にする。
+      - key: solution
+        canonical: そこで
+        aliases: [解決, どうする, solution]
+        description: 打ち手。本文がそのまま入る。冒頭の一文を太字にして打ち手を立てる。
+
   lean-canvas-blocks:
     label: リーンキャンバスの9ブロック
     unknown: warning
@@ -917,28 +953,21 @@ vocabularies:
       - {key: judge,   canonical: 判断,   description: 顧客の判断・評価}
       - {key: emotion, canonical: 感情,   description: 顧客の感情}
 
-  wiki-pattern-sections:
-    label: Wiki パターンの2節
-    unknown: error
-    unknown-effect: どの枠にも入らず、その節は描かれない
+  deck-types:
+    label: frontmatter の type
+    unknown: warning
+    unknown-effect: 外部ツールが種別で絞れなくなる（描画には影響しない）
     guidance: |
-      2節そろって1つのパターンになる。順番は書いた順ではなく、この語彙の並び
-      （いつ・なにが困るか → そこで）で左カラムに積まれる。
-
-      **語彙外の見出しはエラーにする。** 3節だった頃の `### 問題` を書き残すと、
-      警告のままでは中身ごと黙って消えた状態で公開されてしまう。ここだけ `error` なのは、
-      1パターンの節が2つしかなく、1つ落ちれば残りが片肺だと分かりきっているため。
+      スロットの見出しではなく **frontmatter の `type` から参照される**唯一の語彙。
+      値が増えるのは「md ファイルの種類」が増えたときだけなので、
+      レイアウトや注釈のように書き手が日々選ぶものではない。
     terms:
-      - key: situation
-        canonical: いつ・なにが困るか
-        aliases: [状況, いつ, situation]
-        description: |
-          どんな場面で、何が困るのか。本文がそのまま入る。
-          空行で「場面の段落」と「困りごとの段落」に割り、困りごとの核は太字にする。
-      - key: solution
-        canonical: そこで
-        aliases: [解決, どうする, solution]
-        description: 打ち手。本文がそのまま入る。冒頭の一文を太字にして打ち手を立てる。
+      - key: deck
+        canonical: deck
+        description: スライドのデッキ（doc/wiki/*.md）
+      - key: spec
+        canonical: spec
+        description: 記法の仕様書（doc/Spec.md）
 
 # ── バンドル（サイトの階層）─────────────────────────────────────────
 # ここまでの節はすべて「1つの md ファイルの中」の構造だった。この節だけがファイルの外側 —
