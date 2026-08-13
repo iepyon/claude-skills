@@ -4,6 +4,8 @@ title: パターンを書くパターン
 short: meta
 description: 良いパターンの質そのものを、パターンにする
 tags: [パターンランゲージ, メタ, 書き方, 出典]
+created: "2026-08-10"
+updated: "2026-08-13"
 sources:
   - resource: ../../../docs/patterns-meta-sources.md
     title: patterns-meta の出典調査（一次資料まで辿った記録と検証度）

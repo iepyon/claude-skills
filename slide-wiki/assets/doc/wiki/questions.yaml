@@ -87,10 +87,11 @@ questions:
 
   # ── バンドル自身について ───────────────────────────────────────
   - q: このバンドルのデッキはいつ書かれ、最近なにが変わったか
-    expect: gap
+    answers: [log.md]
+    keywords: [更新履歴, 手を入れた]
     note: >-
-      どのデッキも created / updated を名乗っておらず、log.md（OKF §9 の更新履歴）が
-      生成されない。日付を名乗れば answers: [log.md] で answered に上げられる。
+      もとは gap だった問い。デッキが created / updated を名乗るまで、
+      log.md（OKF §9 の更新履歴）は生成されず、機械には答えられなかった。
 
   - q: 「人が書き、AI が手入れする」と言うが、AI は具体的になにを手入れするのか
     expect: gap

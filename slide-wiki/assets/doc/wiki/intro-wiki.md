@@ -4,6 +4,8 @@ title: なぜ Wiki を育てるのか
 short: intro
 description: 第1部。書いたものが後から効かない理由と、このサイトの歩き方
 tags: [wiki, 第1部, 動機, ナレッジマネジメント]
+created: "2026-08-09"
+updated: "2026-08-12"
 ---
 
 # なぜ Wiki を育てるのか

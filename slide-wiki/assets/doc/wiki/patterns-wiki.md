@@ -4,6 +4,8 @@ title: Wiki が育つパターン
 short: wiki
 description: 人が書き、AI が手入れする。育つ知識の作り方
 tags: [wiki, パターンランゲージ, 第2部, 人が育てる]
+created: "2026-08-09"
+updated: "2026-08-12"
 ---
 
 # Wiki が育つパターン
