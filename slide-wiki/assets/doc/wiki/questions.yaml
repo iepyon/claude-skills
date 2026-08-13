@@ -96,9 +96,3 @@ questions:
     note: >-
       もとは gap だった問い。デッキが created / updated を名乗るまで、
       log.md（OKF §9 の更新履歴）は生成されず、機械には答えられなかった。
-
-  - q: 「人が書き、AI が手入れする」と言うが、AI は具体的になにを手入れするのか
-    expect: gap
-    note: >-
-      patterns-wiki の description（表紙の一文）にしか無く、本文はどのスライドも
-      AI の役割を語っていない。分担を語る一枚が書かれたら answered に上げる。
