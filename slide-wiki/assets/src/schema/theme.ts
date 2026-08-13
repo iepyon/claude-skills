@@ -168,11 +168,17 @@ export const DEFAULT_THEME: Theme = {
     headingSize: 14,
     bodySize: 12,
   },
+  // 15/14 は contentSlide の 18/16 に一段だけ寄せた値（元は 12/11）。表だけ本文より
+  // 5pt 小さいと、同じサイトを読み進めたときにその1枚で目が止まる。**行の高さは
+  // 残りの高さを行数で割って決まる**ので、字を大きくしても行は増えない — 増えるのは
+  // 1行に入る字数の上限が下がることだけで、折り返して2行になった枚は
+  // `validateLayout` が止める（配布先のデッキで黙って重ならないため、ここは
+  // contentSlide の 18/16 までは上げない）。
   table: {
     headerBackground: "1B2A4A",
     headerTextColor: "FFFFFF",
-    headerFontSize: 12,
-    bodyFontSize: 11,
+    headerFontSize: 15,
+    bodyFontSize: 14,
     borderColor: "E5E7EB",
     altRowColor: "F7F8FA",
   },
