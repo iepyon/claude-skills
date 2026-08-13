@@ -25,6 +25,7 @@ sources:
 ### 効かせる: [振る舞い](patterns-meta.md#振る舞い)
 ### 仕上げる: [仕上げ](patterns-meta.md#仕上げ)
 ### 繋ぐ: [繋がり](patterns-meta.md#繋がり)
+### 背景: [第1部 パターンってなんだろう](intro-meta.md#パターンとは)
 ### 隣: [Wiki が育つパターン](patterns-wiki.md#読み方)
 
 ---
