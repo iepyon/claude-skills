@@ -71,7 +71,7 @@ export const handleCustomerJourneyDirective = (state: BuilderState, token: Token
 }
 
 // H3 in CustomerJourney mode: フェーズ名
-export const handleH3InCustomerJourney = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleH3InCustomerJourney = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "H3" || state.mode !== "customer-journey") return O.none()
 
   const journey = getJourney(state)
@@ -95,7 +95,7 @@ export const handleH3InCustomerJourney = (state: BuilderState, token: Token): O.
 }
 
 // H4: カスタマージャーニーの行ラベル
-export const handleH4InCustomerJourney = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleH4InCustomerJourney = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "H4" || state.mode !== "customer-journey") return O.none()
 
   // 語彙外のラベルは行を選ばない（以降の箇条書きは捨てられる。lint が slot-vocabulary で報告する）
@@ -108,7 +108,7 @@ export const handleH4InCustomerJourney = (state: BuilderState, token: Token): O.
 }
 
 // BodyText in CustomerJourney mode: 箇条書き項目を追加
-export const handleBodyTextInCustomerJourney = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBodyTextInCustomerJourney = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BodyText" || state.mode !== "customer-journey") return O.none()
 
   const cj = getCJState(state)

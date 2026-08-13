@@ -37,7 +37,7 @@ function bulletToPptxOption(bullet: NonNullable<Paragraph["bullet"]>): unknown {
  * (1) 最後の断片にも改行が付いて続く run が1行余計に下がり、
  * (2) 末尾が改行の文字列は `match(/\n$/g) === null` ガードでそもそも分割されない。
  */
-export function withBreakLines(
+function withBreakLines(
   texts: readonly string[],
   options: PptxGenJS.TextPropsOptions
 ): Array<{ text: string; options: PptxGenJS.TextPropsOptions }> {

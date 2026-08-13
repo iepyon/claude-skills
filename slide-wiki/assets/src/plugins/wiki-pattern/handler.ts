@@ -16,7 +16,7 @@ import { readSvgAsset } from "../../assets.js"
  * ontology.yaml を読みに行かせない）。
  */
 let diagramExtension: string | undefined
-export const diagramFileExtension = (): string =>
+const diagramFileExtension = (): string =>
   (diagramExtension ??= imageExtensionForLayout("WikiPattern", "diagram"))
 
 /** 書き手に見せる記法。宣言の marker をそのまま出す（組み立て直すと宣言と食い違う） */
@@ -65,7 +65,7 @@ export const handleWikiPatternDirective = (
  * 行番号が消える。ここで落とせば `deck.md:57` の形で書き手に返せる。
  * 読むのは assets.ts の1関数だけで、プラグインはパスの解き方を知らない。
  */
-export const handleImageInWikiPattern = (
+const handleImageInWikiPattern = (
   state: BuilderState,
   token: Token
 ): O.Option<BuilderState> => {
@@ -105,7 +105,7 @@ export const handleImageInWikiPattern = (
  * 節の末尾に残った `\n` は converter が落とす — ここで先読みはできないので、
  * 「足しておいて後で削る」ほうに寄せている。
  */
-export const handleBlankLineInWikiPattern = (
+const handleBlankLineInWikiPattern = (
   state: BuilderState,
   token: Token
 ): O.Option<BuilderState> => {
@@ -137,7 +137,7 @@ const FENCE_TOKENS: ReadonlyArray<Token["type"]> = [
   "CodeFenceClose",
 ]
 
-export const handleCodeFenceInWikiPattern = (
+const handleCodeFenceInWikiPattern = (
   state: BuilderState,
   token: Token
 ): O.Option<BuilderState> =>

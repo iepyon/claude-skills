@@ -28,7 +28,7 @@ export const handleStepsDirective = (state: BuilderState, token: Token): O.Optio
 }
 
 // IconDirective in Steps mode: attach icon to current section
-export const handleIconInSteps = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleIconInSteps = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "IconDirective" || state.mode !== "steps") return O.none()
 
   if (O.isNone(state.currentSection)) {

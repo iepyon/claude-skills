@@ -5,6 +5,7 @@ import {
   MARGIN_Y,
   CELL_GAP,
   SECTION_GAP,
+  HEADING_HEIGHT,
   HEADING_BODY_GAP,
   BODY_HEIGHT,
   TAKEAWAY_HEIGHT,
@@ -285,7 +286,6 @@ export function buildSectionBoxes(
 
   // Calculate per-section body heights if availableHeight is set
   let dynamicBodyHeights: number[] = []
-  const FIXED_HEADING_HEIGHT = 0.3
 
   if (context.availableHeight !== undefined) {
     const headingCount = sections.filter(s => s.heading).length
@@ -305,7 +305,7 @@ export function buildSectionBoxes(
     const gapOverhead = gapCount * defaultHeadingBodyGap
     // 見出しの高さは下の描画と同じ値を使う。ここだけ固定値のままだと、
     // headingHeight を渡したレイアウトで確保と実物が食い違う
-    const headingOverhead = headingCount * (context.headingHeight ?? FIXED_HEADING_HEIGHT)
+    const headingOverhead = headingCount * (context.headingHeight ?? HEADING_HEIGHT)
 
     const fixedOverhead = paddingOverhead + sectionGapOverhead + gapOverhead + headingOverhead
     const availableForBodyContent = context.availableHeight - fixedOverhead
@@ -352,7 +352,7 @@ export function buildSectionBoxes(
 
     // Heading
     if (section.heading) {
-      const headingHeight = context.headingHeight ?? FIXED_HEADING_HEIGHT
+      const headingHeight = context.headingHeight ?? HEADING_HEIGHT
       boxes.push({
         x: context.baseX + context.padding,
         y: currentY,

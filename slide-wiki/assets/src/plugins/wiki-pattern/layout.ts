@@ -84,7 +84,7 @@ function buildSourceBox(source: string, width: number, theme: Theme): TextBox {
   }
 }
 
-export function layoutWikiPattern(
+function layoutWikiPattern(
   layout: WikiPatternLayout,
   titleY: number,
   theme: Theme

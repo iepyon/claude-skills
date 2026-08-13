@@ -47,9 +47,9 @@ export function collectRefs(entry: WikiEntry, theme: Theme): CollectedRef[] {
  * 名指しする形になったので、段も曖昧も消えた — **書き方を1つに絞ると、
  * 解決規則のほうが要らなくなる。**
  */
-export type RefIndex = ReadonlyMap<string, string>
+type RefIndex = ReadonlyMap<string, string>
 
-export function buildRefIndex(entries: readonly WikiEntry[]): RefIndex {
+function buildRefIndex(entries: readonly WikiEntry[]): RefIndex {
   const index = new Map<string, string>()
   for (const entry of entries) {
     index.set(entry.globalId, entry.globalId)

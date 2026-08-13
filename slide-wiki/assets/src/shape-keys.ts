@@ -18,7 +18,7 @@ export const borderKey = (index: number): string => `border-${index}`
 // 比較の対象は「テキストを運ぶ図形」。境界ボックス・塗り・コード背景・SVG は
 // テキストを持たないので、この接頭辞を付けて明示的に除外する。
 // 暗黙に落とすのではなく生成物の中に書いておくことで、除外が読んで分かる。
-export const DECO_PREFIX = "deco:"
+const DECO_PREFIX = "deco:"
 
 // 1つのボックスが複数の図形に展開されるとき、役割で区別する
 // （例: shape-box-0 の塗りは deco:shape-box-0-fill、テキストは shape-box-0）。

@@ -42,7 +42,7 @@ export const handleQuoteDirective = (state: BuilderState, token: Token): O.Optio
 }
 
 // BodyText in Quote mode: テキストを追加
-export const handleBodyTextInQuote = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBodyTextInQuote = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BodyText" || state.mode !== "quote") return O.none()
 
   if (O.isNone(state.currentSlide)) return O.some(state)
@@ -62,7 +62,7 @@ export const handleBodyTextInQuote = (state: BuilderState, token: Token): O.Opti
 }
 
 // BlankLine in Quote mode: パラグラフ区切り
-export const handleBlankLineInQuote = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBlankLineInQuote = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BlankLine" || state.mode !== "quote") return O.none()
 
   if (O.isNone(state.currentSlide)) return O.some(state)
@@ -83,7 +83,7 @@ export const handleBlankLineInQuote = (state: BuilderState, token: Token): O.Opt
 }
 
 // H3 in Quote mode: author 設定
-export const handleH3InQuote = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleH3InQuote = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "H3" || state.mode !== "quote") return O.none()
 
   if (O.isNone(state.currentSlide)) return O.some(state)

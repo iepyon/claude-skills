@@ -71,7 +71,7 @@ export const handleTableDirective = (state: BuilderState, token: Token): O.Optio
 }
 
 // BodyText in "table" mode: parse pipe-delimited rows
-export const handleBodyTextInTable = (state: BuilderState, token: Token): O.Option<BuilderState> => {
+const handleBodyTextInTable = (state: BuilderState, token: Token): O.Option<BuilderState> => {
   if (token.type !== "BodyText" || state.mode !== "table") return O.none()
 
   // Only process lines that look like table rows
