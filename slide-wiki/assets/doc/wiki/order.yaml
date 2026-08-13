@@ -27,7 +27,8 @@ groups:
 
   - title: パターンを書く
     decks:
-      - patterns-meta # パターンを書くパターン。第1部はまだ無い（対の intro-meta を書いたら隣へ）
+      - intro-meta # 第1部: パターンを書きはじめる前に（入門）
+      - patterns-meta # 第2部: パターンを書くパターン
 
   - title: 索引
     decks:
