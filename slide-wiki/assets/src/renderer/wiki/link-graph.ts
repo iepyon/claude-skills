@@ -17,6 +17,28 @@ export interface CollectedRef {
   readonly href: string
 }
 
+/**
+ * スライドが読み手に見せているテキストを1つの文字列に畳む。
+ *
+ * 「そのスライドに書いてあるか」を判定する走査は**ここ1本にまとめる**
+ * （`collectRefs` と同じく layoutSlide の textBoxes を読む — 描画されない語を
+ * 「書いてある」と数えないため）。想定問答の到達可能性検査
+ * （`answerability.test.ts` の keywords）が今の使い手で、サイドバーの絞り込みに
+ * 本文を流すとき（BACKLOG B-37）は `data-search` の種もこの走査から採る。
+ * 別々に走査を書くと、検査は届くのに絞り込みには出ない語ができる。
+ */
+export function collectText(entry: WikiEntry, theme: Theme): string {
+  const parts: string[] = []
+
+  for (const box of layoutSlide(entry.slide, theme).textBoxes) {
+    if (box.text) parts.push(box.text)
+    const runs = box.paragraphs ? box.paragraphs.flatMap((para) => para.runs) : box.richText ?? []
+    for (const run of runs) parts.push(run.text)
+  }
+
+  return parts.join("\n")
+}
+
 export function collectRefs(entry: WikiEntry, theme: Theme): CollectedRef[] {
   const refs: CollectedRef[] = []
 

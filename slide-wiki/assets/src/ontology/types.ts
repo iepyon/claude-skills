@@ -251,6 +251,28 @@ export interface OkfSlideIdScope {
   readonly note?: string
 }
 
+/** 想定問答のアンカーとして受ける・受けない綴りの実例。selfcheck が実物のローダーに通す */
+export interface OkfQuestionAnchorExample {
+  readonly anchor: string
+  readonly valid: boolean
+}
+
+/**
+ * 想定問答（バンドルが答えられるべき問い）の宣言。
+ *
+ * ここが持つのは置き場所と形だけで、綴りの判定は `src/questions.ts`、
+ * 実在と到達可能性の検査は `answerability.test.ts` が持つ。
+ * `file` は `QUESTIONS_FILE` と、`expect-values` は `QUESTION_EXPECT_VALUES` と
+ * 一致することを selfcheck が見る。
+ */
+export interface OkfQuestions {
+  readonly file: string
+  readonly shape: string
+  readonly "expect-values": readonly string[]
+  readonly guidance?: string
+  readonly "anchor-examples": readonly OkfQuestionAnchorExample[]
+}
+
 /**
  * バンドル（サイトの階層）。他の節と違い、ここだけが1つの md ファイルの外側を宣言する。
  * 予約ファイル名と版の綴りは `src/okf.ts` が持ち、ontology.test.ts が両者を照合する。
@@ -267,6 +289,7 @@ export interface Okf {
   readonly "deck-set": OkfDeckSet
   readonly "deck-slug": OkfDeckSlug
   readonly "slide-id-scope": OkfSlideIdScope
+  readonly questions: OkfQuestions
 }
 
 export interface Ontology {

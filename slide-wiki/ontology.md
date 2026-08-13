@@ -1,6 +1,6 @@
 <!-- 生成物: src/tools/gen-ontology-doc.ts による ontology.yaml からの機械生成。手編集禁止。
      `npx tsx src/tools/gen-ontology-doc.ts` で再生成する。正本は ontology.yaml。
-     ontology-version: 9 -->
+     ontology-version: 10 -->
 
 # slide-wiki スライド Markdown オントロジー
 
@@ -665,6 +665,37 @@ ID であってほしいため。サイトにまとめる段で `deck-slug/` を
 
 **閉じているからこそ、ID の衝突の検査を lint に置けた** — lint は1ファイルずつ
 呼ばれるので、検査の範囲と一意性の範囲がそのまま一致する。
+
+**想定問答**
+
+- 問いの正本: バンドル直下の `questions.yaml`（`questions: [{q, answers, keywords, expect, note}]`）
+- expect の値: `answered` / `gap`
+
+| 答えのアンカーの綴り | 受理 |
+|---|---|
+| `patterns-wiki.md#種ノート` | ○ |
+| `patterns-wiki.md` | ○ |
+| `log.md` | ○ |
+| `./patterns-wiki.md#種ノート` | × |
+| `#種ノート` | × |
+
+**問いが先に無ければ、「AI にも読める」は誰も確かめていない言葉である。**
+OKF 適合（§11）が見るのは構造が読めることまでで、読み手の問いに答えが
+引けるかは別の性質。そこで、答えられるべき問いを事前に置く — サイトが
+載せている「動かない物差し」（役に立った形を先に書き、事前に置く）を
+バンドル自身に当てた形で、まだ答えられない問いは `expect: gap` として
+そのまま置く（同じく「街灯の外へ」の形）。
+
+`answers` の綴りは本文の内部リンクと同じ（`デッキ名.md#スライドID`）。
+目録・履歴そのもの（予約ファイル名）も答えにできる。`keywords` は
+**答えの側に実際に現れる語**を書く — 検索で辿り着けない答えは、
+有っても無いのと同じ（検査はスライドの描画テキストとデッキの
+tags / description / short に対する部分一致）。
+
+**この宣言が持つのは置き場所と形だけ。** 綴りの判定は実装（src/questions.ts が
+src/okf.ts の parseOkfLink に委ねる）、アンカーの実在と検索語の到達可能性の
+検査は answerability.test.ts、エージェントに実際に解かせる非決定論の半分は
+docs/answerability-eval.md の手順が持つ（CI には入れない）。
 
 **バンドルは平坦である。** 読むのはディレクトリ直下の md だけで、サブディレクトリは
 降りない。内部リンクがパス区切りを含む形を受けないのはそのためで、`sub/deck.md` は

@@ -10,6 +10,7 @@ import { readFileSync } from "fs"
 import { getPlugins } from "../plugins/registry.js"
 import { OKF_VERSION, RESERVED_OKF_FILES, deckSlug, isReservedOkfFile, parseOkfLink } from "../okf.js"
 import { DECK_ORDER_FILE } from "../deck-order.js"
+import { QUESTIONS_FILE, QUESTION_EXPECT_VALUES, questionAnchorError } from "../questions.js"
 import { CONSUMED_KEYS, EFFECT_LABEL, SKILL_MD, staleSkillRegions } from "../tools/gen-ontology-doc.js"
 import {
   getAnnotations,
@@ -326,6 +327,27 @@ export function selfcheckProblems(): string[] {
   fail(
     okf["deck-slug"].examples.some((e) => e.name !== e.slug),
     `okf.deck-slug.examples: 変換が起きる例が1つも無い（読み手に規則が伝わらない）`
+  )
+
+  // --- 想定問答（宣言 ⇔ src/questions.ts） ---
+  // 置き場所と expect の語彙は、規則を宣言が持ち綴りをコードが持つ（order-file と同じ分業）。
+  // アンカーの綴りは規則を写す代わりに例を置き、実物のローダーの判定に通す
+  const questions = okf.questions
+  fail(questions.file === QUESTIONS_FILE, `okf.questions.file が src/questions.ts の綴りと違う`)
+  fail(
+    [...questions["expect-values"]].sort().join(",") === [...QUESTION_EXPECT_VALUES].sort().join(","),
+    `okf.questions.expect-values が src/questions.ts の QUESTION_EXPECT_VALUES と違う`
+  )
+  for (const e of questions["anchor-examples"]) {
+    const error = questionAnchorError(e.anchor)
+    fail(
+      (error === null) === e.valid,
+      `okf.questions.anchor-examples: '${e.anchor}' は実装では${error === null ? "受理される" : `誤り（${error}）`}（宣言は valid: ${e.valid}）`
+    )
+  }
+  fail(
+    questions["anchor-examples"].some((e) => !e.valid),
+    `okf.questions.anchor-examples: 受理されない例が1つも無い（綴りの絞りが読み手に伝わらない）`
   )
 
   // --- 宣言 ⇔ 生成物 ---

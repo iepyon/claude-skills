@@ -89,6 +89,7 @@ function okfSection(): string[] {
   const deckSet = okf["deck-set"]
   const slug = okf["deck-slug"]
   const ids = okf["slide-id-scope"]
+  const questions = okf.questions
 
   return [
     `${cell(okf.description)}版は ${code(okf["okf-version"])}（[SPEC.md](${okf.spec})）。`,
@@ -128,6 +129,17 @@ function okfSection(): string[] {
     `- 一意な範囲: ${cell(ids["unique-in"])}`,
     `- サイト全体での綴り: ${code(ids["namespaced-as"])}`,
     ...prose(ids.note),
+    "",
+    "**想定問答**",
+    "",
+    `- 問いの正本: バンドル直下の ${code(questions.file)}（${code(questions.shape)}）`,
+    `- expect の値: ${questions["expect-values"].map(code).join(" / ")}`,
+    "",
+    ...table(
+      ["答えのアンカーの綴り", "受理"],
+      questions["anchor-examples"].map((e) => [codeCell(e.anchor), e.valid ? "○" : "×"])
+    ),
+    ...prose(questions.guidance),
     ...prose(okf.guidance),
   ]
 }

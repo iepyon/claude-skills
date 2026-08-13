@@ -1,0 +1,99 @@
+# 想定問答 — このバンドルが答えられるべき問い。
+#
+# 「役に立った形を先に書き、事前に置く」（patterns-wiki.md#動かない物差し）を
+# バンドル自身に当てたもの。問いは読み手の状況（いつ・なにが困るか）から書く。
+# 答えられるかどうかが、このバンドルの「AI にも読める」の物差しになる。
+#
+# - `answers` は本文のリンクと同じ綴り（`デッキ名.md#スライドID`。先頭に `/` や
+#   `./` を付けない）。バンドルの目録・履歴（index.md / log.md）を答えとする
+#   ときはファイル名だけを書く。
+# - `keywords` は到達可能性の検査語。問いの言い回しではなく、**答えの側に実際に
+#   現れる語**を書く（スライドの本文か、デッキの tags / description / short に
+#   部分一致すれば届く）。検索で辿り着けない答えは、有っても無いのと同じ。
+# - `expect: gap` は「まだ答えられない問い」をそのまま置く形
+#   （patterns-wiki.md#街灯の外へ）。答えを書いたら answered に上げる。
+#
+# 綴りとアンカーの実在は __tests__/answerability.test.ts が検査する（決定論の半分）。
+# エージェントに実際に解かせる手順は ../../../docs/answerability-eval.md
+# （バンドルには含まれない。非決定論の半分なので CI にも入れない）。
+questions:
+  # ── 読み始め・道具の使い方 ─────────────────────────────────────
+  - q: どこから読み始めればよいか
+    answers: [intro-wiki.md#読み方-wiki, map.md#入口]
+    keywords: [歩き方, 入り直す]
+
+  - q: サイト内の別のスライドへのリンクはどう書くか
+    answers: [guide.md#書き方, guide.md#解決順]
+    keywords: [リンク, スライドID]
+
+  # ── 育てる（第1部・第2部の主題） ───────────────────────────────
+  - q: ノートは増えているのに、読み返されない。何が足りないのか
+    answers: [intro-wiki.md#育てる理由]
+    keywords: [読み返し, 入れ物]
+
+  - q: 書きかけのまま置いておくと、負債にならないか
+    answers: [intro-wiki.md#壊れない-wiki]
+    keywords: [書きかけ, 負債]
+
+  - q: 思いついたことを、後で書こうと思ったまま忘れる。どうすればよいか
+    answers: [patterns-wiki.md#種ノート]
+    keywords: [思いつき, 一文でよいから置く]
+
+  - q: 数行で止まったままのノートに、何を足せばよいか
+    answers: [patterns-wiki.md#育つ見出し]
+    keywords: [見出し, 数行]
+
+  - q: 1枚のノートに話題が2つ以上混ざってしまった。どうするか
+    answers: [patterns-wiki.md#一枚一義]
+    keywords: [話題, 割る]
+
+  - q: 新しく書いた一枚を、後から辿れるようにするには
+    answers: [patterns-wiki.md#接ぎ木]
+    keywords: [台木, 接ぐ]
+
+  - q: 索引や分類は、いつ・どう作ればよいか
+    answers: [patterns-wiki.md#けもの道]
+    keywords: [索引, 踏まれた跡]
+
+  - q: 古くなって、今は正しくないノートをどうするか
+    answers: [patterns-wiki.md#剪定]
+    keywords: [古び, 間違い]
+
+  - q: 育てた Wiki を、人に見せられる形にするには
+    answers: [patterns-wiki.md#収穫]
+    keywords: [人に見せ, 摘んで]
+
+  # ── 狙う ───────────────────────────────────────────────────────
+  - q: 書き始める前に、目的と分類体系をきちんと設計しておきたい。それでよいか
+    answers: [patterns-wiki.md#動く北極星, patterns-wiki.md#けもの道]
+    keywords: [目的, 分類]
+
+  - q: 次の一枚は、書きやすい話から選んでよいか
+    answers: [patterns-wiki.md#街灯の外へ]
+    keywords: [書きやすい, 街灯]
+
+  # ── 書く（パターンの書き方） ───────────────────────────────────
+  - q: パターンに、どんな名前を付ければよいか
+    answers: [patterns-meta.md#ジワる名前, patterns-meta.md#メタファ]
+    keywords: [名前, 比喩]
+
+  - q: 何回うまくいったら、パターンとして書いてよいか
+    answers: [patterns-meta.md#3ストライクで書く]
+    keywords: [3度目, 一度きり]
+
+  - q: パターンに添える図は、どこまで描き込むか
+    answers: [patterns-meta.md#ラフで出す]
+    keywords: [ラフ, 描き込む]
+
+  # ── バンドル自身について ───────────────────────────────────────
+  - q: このバンドルのデッキはいつ書かれ、最近なにが変わったか
+    expect: gap
+    note: >-
+      どのデッキも created / updated を名乗っておらず、log.md（OKF §9 の更新履歴）が
+      生成されない。日付を名乗れば answers: [log.md] で answered に上げられる。
+
+  - q: 「人が書き、AI が手入れする」と言うが、AI は具体的になにを手入れするのか
+    expect: gap
+    note: >-
+      patterns-wiki の description（表紙の一文）にしか無く、本文はどのスライドも
+      AI の役割を語っていない。分担を語る一枚が書かれたら answered に上げる。

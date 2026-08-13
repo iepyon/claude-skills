@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { OKF_VERSION, RESERVED_OKF_FILES, listDeckFiles } from "../src/okf.js"
 import { DECK_ORDER_FILE } from "../src/deck-order.js"
+import { QUESTIONS_FILE, QUESTION_EXPECT_VALUES } from "../src/questions.js"
 import { Effect } from "effect"
 import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
@@ -73,6 +74,11 @@ describe("ontology declaration", () => {
 
   it("declares the order file that deck-order.ts actually reads", () => {
     expect(getOkf()["deck-set"]["order-file"]).toBe(DECK_ORDER_FILE)
+  })
+
+  it("declares the questions file that src/questions.ts actually reads", () => {
+    expect(getOkf().questions.file).toBe(QUESTIONS_FILE)
+    expect([...getOkf().questions["expect-values"]].sort()).toEqual([...QUESTION_EXPECT_VALUES].sort())
   })
 
   it("declares a directive that the tokenizer actually recognizes", () => {

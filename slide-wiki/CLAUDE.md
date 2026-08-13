@@ -11,6 +11,7 @@ Markdown のデッキをリンクで辿れる Wiki にする Claude Code skill�
 | md の構造（骨格要素・注釈ディレクティブ・レイアウトと `###` / `####` の意味・見出しの語彙・文字数・リンク） | [ontology.yaml](ontology.yaml)（人間可読な生成物は [ontology.md](ontology.md)） |
 | 書き方の案内・レイアウト一覧 | [SKILL.md](SKILL.md)（生成領域を含む） |
 | コードの地図・CLI オプション・使い方 | [assets/README.md](assets/README.md) |
+| バンドルが答えられるべき問い | `assets/doc/wiki/questions.yaml`（実走の手順は [docs/answerability-eval.md](docs/answerability-eval.md)） |
 | やること・やらないこと | `BACKLOG.md` / `BACKLOG-LATER.md` / `BACKLOG-DONE.md` / `BACKLOG-WONTDO.md` |
 
 ## Git
@@ -212,6 +213,7 @@ steps / icon-layout / agenda / wiki-pattern は両方を持つ。wiki-pattern �
 | `three-way-verify.test.ts` | 実在する全デッキの3者比較 + 食い違いの判定 |
 | `text-style.test.ts` | 3脚が共有する書式規則（共有したぶん比較では守れない） |
 | `okf-conformance.test.ts` | `doc/wiki/` が OKF v0.2 に適合していること |
+| `answerability.test.ts` | `doc/wiki/` が想定の問い（`questions.yaml`）に答えられること — アンカーの実在と検索語の到達可能性（決定論の半分。実走は `docs/answerability-eval.md`） |
 | `docs-consistency.test.ts` | ドキュメントが数え上げている件数・ファイル名と実装の乖離 |
 | `workflows.test.ts` | 公開が PR で走らないこと・concurrency group が重ならないこと |
 
