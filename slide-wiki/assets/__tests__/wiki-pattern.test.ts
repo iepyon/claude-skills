@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from "fs"
 import { join } from "path"
 import { parseMarkdown } from "../src/parser/index.js"
 import { validatePresentation } from "../src/schema/validation.js"
-import { layoutSlide } from "../src/renderer/layout/index.js"
+import { layoutSlide, boxPlainText } from "../src/renderer/layout/index.js"
 import { detectOverflow } from "../src/renderer/layout/overflow.js"
 import { validateLayout } from "../src/renderer/layout/validate-layout.js"
 import type { LayoutResult, ShapeBox } from "../src/renderer/layout/types.js"
@@ -128,7 +128,7 @@ describe("WikiPattern — 2見出しの左段", () => {
   })
 
   it("節の末尾に残った空行は捨てる", async () => {
-    // 図解や <!--takeaway--> の前の空行がそのまま残ると、空の段落が1つ増えて
+    // 図解や <!--source--> の前の空行がそのまま残ると、空の段落が1つ増えて
     // そのぶん本文の高さが削られる。ハンドラは節の終わりを知らないので converter が落とす
     const layout = await layoutOf(
       deck({ sections: ["### 状況", "きっかけ。", "### そこで", "打ち手。", ""].join("\n") })
@@ -244,7 +244,7 @@ describe("WikiPattern — 座標", () => {
     // 左段のテキストの箱の右端と下敷きの左端が、この順で並んでいること
     const result = await layoutFor(deck())
     const panel = result.shapeBoxes!.find((s) => s.shapeType === "rect")!
-    // 全幅の箱（タイトル・takeaway）は左段の話ではないので外す
+    // 全幅の箱（タイトル）は左段の話ではないので外す
     const body = result.textBoxes.filter((b) => b.w < SLIDE_WIDTH - 2 * MARGIN_X - 0.01)
     expect(body.length).toBeGreaterThan(0)
     for (const box of body) {
@@ -615,7 +615,7 @@ describe("配布しているデッキの図解", () => {
             DEFAULT_THEME.wikiPattern.bodySize
           )
           // 2つの見出しと、場面・困りごと・打ち手の3段落が、どれも縮んでいないこと
-          // （タイトルと takeaway は全幅なので、幅で左段だけを取り出せる）
+          // （タイトルは全幅なので、幅で左段だけを取り出せる）
           //
           // 出典も左段の幅なのでここに入る。**3つとも theme.wikiPattern から採る**ので、
           // 揃っていることを絶対値で見るこの検査の趣旨は変わらない
@@ -766,15 +766,14 @@ describe("WikiPattern — 出典", () => {
 })
 
 describe("WikiPattern — takeaway は受けない", () => {
+  const layoutFor = async (markdown: string) =>
+    layoutSlide((await present(markdown)).slides[1], DEFAULT_THEME)
+
   const TAKEAWAY = "関連: [別のパターン2](d.md#別のパターン2)"
 
   it("書いても描かれない（関連は本文に溶かし、末尾に積むのは出典だけ）", async () => {
-    const result = layoutSlide((await present(deck({ takeaway: TAKEAWAY }))).slides[1], DEFAULT_THEME)
-    const texts = result.textBoxes.flatMap((b) => [
-      b.text ?? "",
-      ...(b.richText?.map((r) => r.text) ?? []),
-      ...(b.paragraphs?.flatMap((p) => p.runs.map((r) => r.text)) ?? []),
-    ])
+    const result = await layoutFor(deck({ takeaway: TAKEAWAY }))
+    const texts = result.textBoxes.map(boxPlainText)
     expect(texts.some((t) => t.includes("関連"))).toBe(false)
     expect(texts.some((t) => t.includes("別のパターン2"))).toBe(false)
   })
