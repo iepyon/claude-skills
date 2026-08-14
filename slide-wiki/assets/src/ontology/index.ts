@@ -19,6 +19,7 @@ import type {
   Limits,
   Okf,
   Ontology,
+  Relations,
   VocabTerm,
   Vocabulary,
 } from "./types.js"
@@ -115,6 +116,18 @@ export function getFrontmatter(): Frontmatter {
  */
 export function getOkf(): Okf {
   return loadOntology().okf
+}
+
+/**
+ * パターン間の関係の宣言（型の語彙と、その代数）。
+ *
+ * **辺そのものはここに無い。** 辺はバンドルの `relations.file` にあり、読むのは
+ * `src/ontology/relations.ts`。宣言が持つのは「どんな型が書けて、どう振る舞うか」だけで、
+ * 「どのパターンとどのパターンが繋がっているか」はバンドルの内容だからである
+ * （`okf` 節が `order-file` の名前だけを持ち、並びそのものは `order.yaml` にあるのと同じ）。
+ */
+export function getRelations(): Relations {
+  return loadOntology().relations
 }
 
 /**

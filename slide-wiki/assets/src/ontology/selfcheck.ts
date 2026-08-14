@@ -328,6 +328,39 @@ export function selfcheckProblems(): string[] {
     `okf.deck-slug.examples: 変換が起きる例が1つも無い（読み手に規則が伝わらない）`
   )
 
+  // --- パターン間の関係の代数 ---
+  // **逆対は必ず双方向で宣言する**（Dublin Core が hasPart ⇄ isPartOf を必ず対で持つのと同じ）。
+  // 片側だけ書いた辺の裏返しをローダが導出する以上、導出先が存在しない型を指していると
+  // 「書けるのに引けない辺」が黙って生まれる
+  const relations = onto.relations
+  const relationNames = new Set(relations.types.map((t) => t.name))
+  for (const type of relations.types) {
+    if (type.direction === "symmetric") {
+      fail(
+        type.inverse == null,
+        `relations.types: 対称な '${type.name}' に inverse がある（対称な型の逆は自分自身）`
+      )
+      continue
+    }
+    if (type.inverse == null) continue // 一方向の型。裏返さないので相手は要らない
+    const mate = relations.types.find((t) => t.name === type.inverse)
+    fail(mate !== undefined, `relations.types: '${type.name}' の inverse '${type.inverse}' が宣言に無い`)
+    fail(
+      mate === undefined || mate.inverse === type.name,
+      `relations.types: '${type.name}' と '${type.inverse}' の inverse が噛み合っていない`
+    )
+  }
+  for (const name of relations.disjoint.flat()) {
+    fail(relationNames.has(name), `relations.disjoint: '${name}' は宣言に無い型`)
+  }
+  for (const name of relations.coverage["require-any-of"]) {
+    fail(relationNames.has(name), `relations.coverage: '${name}' は宣言に無い型`)
+  }
+  fail(
+    getLayouts().some((l) => l.name === relations["applies-to"]),
+    `relations.applies-to: '${relations["applies-to"]}' というレイアウトの宣言が無い`
+  )
+
   // --- 宣言 ⇔ 生成物 ---
   // 宣言したのにドキュメントへ出ないキーは、生成物どうしを比べる --check では見つからない
   for (const key of Object.keys(onto)) {

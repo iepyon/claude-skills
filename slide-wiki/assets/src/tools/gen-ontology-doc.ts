@@ -17,6 +17,7 @@ import {
   getLayouts,
   getLimits,
   getOkf,
+  getRelations,
   getVocabularies,
   loadOntology,
   ontologyVersion,
@@ -129,6 +130,48 @@ function okfSection(): string[] {
     `- サイト全体での綴り: ${code(ids["namespaced-as"])}`,
     ...prose(ids.note),
     ...prose(okf.guidance),
+  ]
+}
+
+/**
+ * パターン間の関係。**代数まで出す。**
+ *
+ * 型の名前だけを並べても、読んだ側は `対` が対称なのか、`上位` を辿って畳んでよいのかを
+ * 知りようがない。関係を問い合わせる相手（人と Claude の両方）が正しく推論できるかは
+ * その3つ — 向き・逆・推移するか — に懸かっているので、表の列にして出す。
+ */
+function relationsSection(): string[] {
+  const rel = getRelations()
+  const inverseCell = (t: (typeof rel.types)[number]): string =>
+    t.direction === "symmetric" ? "自分自身（対称）" : t.inverse ? code(t.inverse) : "無し（一方向）"
+
+  return [
+    cell(rel.description),
+    "",
+    `辺の正本はバンドルの ${code(rel.file)}（${code(rel["file-shape"])}）。両端になれるのは ${code(rel["applies-to"])} だけ。`,
+    "",
+    "**型と、その代数**",
+    "",
+    ...table(
+      ["型", "逆向き", "意味", "出どころ"],
+      rel.types.map((t) => [code(t.name), inverseCell(t), cell(t.description), cell(t.source)])
+    ),
+    "",
+    `- **推移しない。** ${code("上位")} / ${code("下位")} を辿って畳むのは問い合わせる側の仕事で、` +
+      "書いた1本の辺と導いた辺は別のものとして扱う",
+    `- **排他**: ${rel.disjoint.map((g) => g.map(code).join(" / ")).join("、")} — 同じ2枚に同時には立たない`,
+    `- **片側だけ書く**: 逆向きの辺はローダが導出する`,
+    `- **孤立させない**: どのパターンも ${rel.coverage["require-any-of"].map(code).join(" / ")} のどれか1本は持つ（${rel.coverage.level}）`,
+    "",
+    "**宣言と本文は互いを縛る**",
+    "",
+    ...prose(rel.prose.note),
+    "",
+    ...table(
+      ["分類を求めないリンク", "理由"],
+      rel.prose.exclude.map((e) => [code(e.name), cell(e.description)])
+    ),
+    ...prose(rel.guidance),
   ]
 }
 
@@ -325,6 +368,8 @@ function buildOntologyDoc(): string {
 
   // 内部リンクの綴りがバンドルの構造に依るので、構造を先に読ませる
   L.push("", `## ${getOkf().label}`, "", ...okfSection())
+  // 関係はバンドルの中の事実なので、バンドルの構造を読んだ直後に置く
+  L.push("", `## ${getRelations().label}`, "", ...relationsSection())
   L.push("", "## インライン記法", "", ...inlineTable())
   L.push("", "## 制限", "", ...limitsBullets())
   L.push("", ...prose(getLimits().guidance))
@@ -343,6 +388,7 @@ function skillRegions(): Record<string, string[]> {
     annotations: annotationsTable(),
     inline: inlineTable(),
     okf: okfSection(),
+    relations: relationsSection(),
   }
 }
 
@@ -362,6 +408,7 @@ export const CONSUMED_KEYS: ReadonlySet<string> = new Set([
   "layouts",
   "vocabularies",
   "okf",
+  "relations",
   "inline",
   "limits",
 ])
