@@ -20,7 +20,6 @@ export class WikiPatternLayout implements SlideLayout {
    * SVG は縮んで枠の中に余白が出る。
    */
   readonly diagramAspect?: number
-  readonly takeaway?: string
   /**
    * 主張の典拠。**`string` のまま持つ（`TextBlock` にも richText にもしない）。**
    *
@@ -28,6 +27,9 @@ export class WikiPatternLayout implements SlideLayout {
    * 理由そのもの。参照を拾う `collectRefs` が見るのは richText / paragraphs だけなので、
    * 素の text で置けばバックリンクのグラフに載らない
    * — 「関連」と「典拠」が混ざって、文献名がパターンの隣人として並ぶのを防ぐ。
+   *
+   * **`takeaway` は持たない。** 関連は本文に溶かす書き方にしたので、末尾に積むものは
+   * 典拠だけになった（宣言の annotations も `[id, source]`）。
    */
   readonly source?: string
 
@@ -35,13 +37,11 @@ export class WikiPatternLayout implements SlideLayout {
     sections: readonly TextBlock[]
     diagram: string
     diagramAspect?: number
-    takeaway?: string
     source?: string
   }) {
     this.sections = props.sections
     this.diagram = props.diagram
     this.diagramAspect = props.diagramAspect
-    this.takeaway = props.takeaway
     this.source = props.source
   }
 }

@@ -15,8 +15,8 @@ Write one sentence. Grow it later.
 
 ![Seed Note](diagrams/11-wiki-pattern/seed-note.svg)
 
-<!--takeaway-->
-Takeaway と図解が同居する形。
+<!--source-->
+出典と図解が同居する形。パターンが末尾に置けるのは典拠だけ（takeaway は受けない）。
 ---
 ## Sections Out Of Order
 <!--pattern-->

@@ -32,30 +32,22 @@ import {
  * Calculate the vertical space reserved at the bottom of a slide for the takeaway box.
  * Returns TAKEAWAY_HEIGHT + TAKEAWAY_GAP when a takeaway is present, 0 otherwise.
  */
-export const reservedForTakeaway = (
-  takeaway: string | undefined,
-  height: number = TAKEAWAY_HEIGHT
-): number => (takeaway ? height + TAKEAWAY_GAP : 0)
+export const reservedForTakeaway = (takeaway: string | undefined): number =>
+  takeaway ? TAKEAWAY_HEIGHT + TAKEAWAY_GAP : 0
 
 /**
  * Build a takeaway TextBox positioned at the bottom of the slide.
  *
- * `height` は既定の `TAKEAWAY_HEIGHT`（20pt が2〜3行入る高さ）を狭められる口。
- * 1行しか置かないレイアウトが 0.9in を確保すると、その差が本文の取り分から消える。
- * 渡すときは `reservedForTakeaway` にも同じ値を渡すこと（確保と実物が食い違う）。
+ * 高さも位置も動かせない。**takeaway を持つレイアウトは全部これで揃う** ので、
+ * 「この1枚だけ狭く／持ち上げて」が要るときは、それは takeaway ではなく別の役割の箱
+ * （wiki-pattern の出典がそれで、自分で箱を組んでいる）。
  */
-export function buildTakeawayBox(
-  takeaway: string,
-  theme: Theme,
-  height: number = TAKEAWAY_HEIGHT,
-  bottomOffset: number = 0
-): TextBox {
-  const takeawayY = SLIDE_HEIGHT - MARGIN_Y - height - bottomOffset
+export function buildTakeawayBox(takeaway: string, theme: Theme): TextBox {
   return {
     x: MARGIN_X,
-    y: takeawayY,
+    y: SLIDE_HEIGHT - MARGIN_Y - TAKEAWAY_HEIGHT,
     w: SLIDE_WIDTH - 2 * MARGIN_X,
-    h: height,
+    h: TAKEAWAY_HEIGHT,
     // richText で持つ理由: takeaway は出典・まとめを書く場所で、
     // ここにリンクを置けないと B-14（参考資料スライドで URL を活かす）が成立しない。
     richText: parseInlineFormatting(takeaway),
@@ -70,22 +62,16 @@ export function buildTakeawayBox(
 /**
  * Append a takeaway box to an existing LayoutResult if a takeaway string is provided.
  * Consolidates the repeated pattern: if (takeaway) { textBoxes.push(buildTakeawayBox(...)) }
- *
- * `bottomOffset` は下端に**別の箱が先に居る**ときに takeaway を持ち上げる口
- * （wiki-pattern の出典がそれ）。既定の 0 では従来どおり下マージンに接する。
- * 素朴に両方を「下端」に置くと重なり、しかも小さい側が隠れて気づけない。
  */
 export function withTakeaway(
   result: LayoutResult,
   takeaway: string | undefined,
-  theme: Theme,
-  height: number = TAKEAWAY_HEIGHT,
-  bottomOffset: number = 0
+  theme: Theme
 ): LayoutResult {
   if (!takeaway) return result
   return {
     ...result,
-    textBoxes: [...result.textBoxes, buildTakeawayBox(takeaway, theme, height, bottomOffset)],
+    textBoxes: [...result.textBoxes, buildTakeawayBox(takeaway, theme)],
   }
 }
 
