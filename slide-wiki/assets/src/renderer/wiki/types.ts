@@ -68,11 +68,31 @@ export interface WikiSite {
   readonly broken: readonly BrokenLink[]
 }
 
+/** 1枚から見た、型のついた隣人。向きはこのスライドから相手へ */
+export interface WikiRelation {
+  readonly rel: string
+  readonly to: string
+}
+
 export interface WikiOptions {
   readonly siteTitle?: string
+  /**
+   * バンドルの置き場。`relations.yaml` を読むためだけに要る。
+   *
+   * **デッキごとの `baseDir` ではなく1つに畳んだもの。** バンドルは平坦なので
+   * デッキは全部が兄弟で、置き場は1つしかない（→ ontology.yaml の `okf` 節）。
+   * 別々のディレクトリから md を集めて渡した場合はバンドルではないので、
+   * 呼ぶ側が undefined を渡す。
+   */
+  readonly bundleDir?: string
   /**
    * デッキ slug → (参照 → globalId)。ビルド時に解いたリンク解決の結果。
    * 解決規則をブラウザ側にも書くと2箇所で食い違うので、結果だけを渡す。
    */
   readonly resolveTable?: Record<string, Record<string, string>>
+  /**
+   * globalId → そこから出ている型つきの辺。逆向きは導出済みで、
+   * どちらのスライドから見ても自分の側の型名で引ける。
+   */
+  readonly relations?: Record<string, readonly WikiRelation[]>
 }

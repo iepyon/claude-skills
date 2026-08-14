@@ -1,9 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { mkdtempSync, rmSync, writeFileSync } from "fs"
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "fs"
 import { tmpdir } from "os"
-import { join } from "path"
+import { join, basename } from "path"
+import { Effect } from "effect"
 import { deriveEdges, lintRelations, type RelationDiagnostic } from "../src/ontology/relations.js"
 import { getRelations } from "../src/ontology/index.js"
+import { buildWikiSite, relationsByEntry } from "../src/renderer/wiki/index.js"
+import { orderDeckFiles } from "../src/deck-order.js"
+import { deckSlug, listDeckFiles } from "../src/okf.js"
+import { parseMarkdown } from "../src/index.js"
 
 const WIKI_DIR = join(__dirname, "..", "doc", "wiki")
 
@@ -36,6 +41,54 @@ describe("配布しているバンドル", () => {
       d.message.split(" は ")[0]
     )
     expect(isolated).toEqual(["3ストライクで書く", "声に出して読む", "黙って聴く著者"])
+  })
+})
+
+describe("サイトに渡す形", () => {
+  const decks = orderDeckFiles(listDeckFiles(WIKI_DIR), WIKI_DIR).files.map((f) => ({
+    name: basename(f, ".md"),
+    markdown: readFileSync(f, "utf-8"),
+    baseDir: WIKI_DIR,
+  }))
+  const site = buildWikiSite(
+    // 関係の突き合わせに要るのは索引だけなので、レイアウトを通さずに組む
+    decks.map((d) => ({
+      slug: deckSlug(d.name),
+      title: d.name,
+      presentation: Effect.runSync(parseMarkdown(d.markdown, { baseDir: d.baseDir })),
+    }))
+  )
+  const byEntry = relationsByEntry(WIKI_DIR, site)
+
+  it("13枚すべてが型つきの隣人を持つ", () => {
+    expect(Object.keys(byEntry)).toHaveLength(13)
+  })
+
+  /** 逆向きが導出されているので、書いていない側からも自分の型名で引ける */
+  it("書いていない側からも、その側の型名で引ける", () => {
+    const written = byEntry["patterns-meta/たのしい釣り方"]
+    expect(written).toContainEqual({ rel: "下位", to: "patterns-meta/ラフで出す" })
+
+    const derived = byEntry["patterns-meta/ラフで出す"]
+    expect(derived).toContainEqual({ rel: "上位", to: "patterns-meta/たのしい釣り方" })
+  })
+
+  /**
+   * `検算` は一方向。要るのは**検算される側**の一枚で、「この名前をどう確かめるか」は
+   * その一枚を読んでいるときに要る。逆に 声に出して読む の側から検算する先を並べても、
+   * 読み手はその一覧から何も決められない。
+   */
+  it("一方向の型は相手側に現れない", () => {
+    expect(byEntry["patterns-meta/ジワる名前"]).toContainEqual({
+      rel: "検算",
+      to: "patterns-meta/声に出して読む",
+    })
+    expect(byEntry["patterns-meta/声に出して読む"].map((r) => r.rel)).not.toContain("検算")
+  })
+
+  /** 関係の宣言が無いバンドルでも、サイトはそのまま出る */
+  it("宣言が無ければ空を返す", () => {
+    expect(relationsByEntry(tmpdir(), site)).toEqual({})
   })
 })
 

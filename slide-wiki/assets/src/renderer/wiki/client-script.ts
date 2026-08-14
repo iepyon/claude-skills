@@ -26,6 +26,7 @@ export function wikiScript(): string {
   var ENTRIES   = window.__WIKI__.entries;    // [{id, deck, deckTitle, title, deckIndex}]
   var RESOLVE   = window.__WIKI__.resolve;    // { deckSlug: { ref: globalId } }
   var BACKLINKS = window.__WIKI__.backlinks;  // { globalId: [globalId] }
+  var RELATIONS = window.__WIKI__.relations;  // { globalId: [{rel, to}] } — 逆向きは導出済み
   var DECK_SHORT = window.__WIKI__.deckShort; // { deckSlug: 短い呼び名 }
 
   var byId = {};
@@ -62,6 +63,7 @@ export function wikiScript(): string {
     var active = document.querySelector('.toc-link[aria-current="true"]');
     if (active && active.scrollIntoView) active.scrollIntoView({ block: "nearest" });
 
+    renderRelations(id);
     renderBacklinks(id);
     document.querySelector(".main").scrollTop = 0;
     scaleStage();
@@ -74,6 +76,38 @@ export function wikiScript(): string {
   }
 
   window.addEventListener("hashchange", function () { show(idFromHash()); });
+
+  // ------------------------------------------------------------- relations
+  // 型ごとに束ねて出す。**型を持つのはパターンだけ**なので、無いスライドでは節ごと隠す
+  // （空の見出しが全スライドに並ぶと、関係が「あるのに空」なのか「そもそも無い」のかが
+  // 読み手に区別できない）。
+  function renderRelations(id) {
+    var section = document.getElementById("relations");
+    var edges = RELATIONS[id] || [];
+    if (!edges.length) { section.hidden = true; return; }
+    section.hidden = false;
+
+    // 型の並びは書かれた順。宣言の並び（上位→下位→同位→対→…）がそのまま出る
+    var order = [];
+    var byRel = {};
+    edges.forEach(function (e) {
+      if (!byRel[e.rel]) { byRel[e.rel] = []; order.push(e.rel); }
+      byRel[e.rel].push(e.to);
+    });
+
+    var hereDeck = byId[id].deck;
+    document.getElementById("relations-body").innerHTML = order.map(function (rel) {
+      var chips = byRel[rel].map(function (to) {
+        var e = byId[to];
+        var cross = crossDeckShort(e && e.deck, hereDeck);
+        return '<li><a class="wikilink" href="#" data-goto="' + escapeAttr(to) + '"' +
+          (cross ? ' data-cross-deck="' + escapeAttr(cross) + '"' : "") + ">" +
+          escapeHtml(e ? e.title : to) + "</a></li>";
+      }).join("");
+      return '<div class="rel-row"><span class="rel-type">' + escapeHtml(rel) +
+        "</span><ul>" + chips + "</ul></div>";
+    }).join("");
+  }
 
   // ------------------------------------------------------------- backlinks
   function renderBacklinks(id) {
@@ -457,8 +491,11 @@ export function wikiScript(): string {
     wrap.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
     wrap.style.height = Math.round(${SLIDE_H_PX} * scale) + "px";
 
-    var bl = document.querySelector(".backlinks");
-    if (bl) bl.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
+    // 帯は2本ある（関係とバックリンク）。querySelector で1本目だけを合わせていたころは、
+    // 節を増やした瞬間に下の帯だけ 960px に取り残される
+    Array.prototype.forEach.call(document.querySelectorAll(".backlinks"), function (bl) {
+      bl.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
+    });
   }
 
   // ----------------------------------------------------------- utilities

@@ -274,6 +274,18 @@ ${slideBaseCss(theme)}
     .backlinks a:hover { background: rgba(122,162,247,.18); border-color: var(--accent); }
     .backlinks .none { color: var(--muted); }
 
+    /* 型つきの関係。型の名前を左に立て、相手をその右に並べる。
+       型は1語（上位・対・検算…）なので、幅を固定すると行頭が揃って読む単位が切れる。 */
+    .relations .rel-row {
+      display: flex; align-items: baseline; gap: 10px;
+      margin-bottom: 6px;
+    }
+    .relations .rel-type {
+      flex: 0 0 4.5em;
+      font-size: 11px; font-weight: 700; letter-spacing: .04em;
+      color: var(--accent);
+    }
+
     /* ステージの上に置く。読み方の説明は、読み始める前に目に入らないと意味がない。 */
     .hint {
       margin-bottom: 12px; flex-shrink: 0;

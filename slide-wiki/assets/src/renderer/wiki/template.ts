@@ -73,6 +73,7 @@ export function generateWikiHtml(
     deckShort,
     resolve: options.resolveTable ?? {},
     backlinks: Object.fromEntries(site.backlinks),
+    relations: options.relations ?? {},
   }
 
   return `<!DOCTYPE html>
@@ -121,6 +122,14 @@ ${site.entries
       <div class="edge-zone left" aria-hidden="true"></div>
       <div class="edge-zone right" aria-hidden="true"></div>
     </div>
+
+    <!-- 関係を先、バックリンクを後に置く。前者は書き手が型を付けた事実、後者は
+         リンクから導いた結果で、迷ったときに効くのは前者のほう。
+         どちらも .slide の外なので、--html と PPTX の DOM には現れない。 -->
+    <section class="backlinks relations" id="relations" hidden>
+      <h2>関係</h2>
+      <div id="relations-body"></div>
+    </section>
 
     <section class="backlinks">
       <h2>このスライドへのリンク</h2>
