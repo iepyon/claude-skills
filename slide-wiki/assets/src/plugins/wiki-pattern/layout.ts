@@ -7,12 +7,7 @@ import type {
   LayoutResult,
   SectionContext,
 } from "../../renderer/layout/types.js"
-import {
-  calculateColumnDimensions,
-  reservedForTakeaway,
-  withTakeaway,
-  buildSectionBoxes,
-} from "../../renderer/layout/helpers.js"
+import { calculateColumnDimensions, buildSectionBoxes } from "../../renderer/layout/helpers.js"
 import { WikiPatternLayout } from "./schema.js"
 import {
   WP_LEFT_RATIO,
@@ -21,7 +16,6 @@ import {
   WP_SECTION_GAP,
   WP_HEADING_HEIGHT,
   WP_HEADING_BODY_GAP,
-  WP_TAKEAWAY_HEIGHT,
   WP_SOURCE_HEIGHT,
   WP_PANEL_RADIUS,
   WP_PANEL_BORDER,
@@ -89,10 +83,8 @@ function layoutWikiPattern(
   titleY: number,
   theme: Theme
 ): LayoutResult {
-  // 出典と takeaway は両方書ける。確保は足し合わせる（どちらも下端に積む）
-  const reserved =
-    reservedForTakeaway(layout.takeaway, WP_TAKEAWAY_HEIGHT) +
-    (layout.source ? WP_SOURCE_HEIGHT : 0)
+  // 下端に積むのは出典だけ（パターンは takeaway を受けない）
+  const reserved = layout.source ? WP_SOURCE_HEIGHT : 0
   const dims = calculateColumnDimensions(WP_LEFT_RATIO, WP_RIGHT_RATIO, titleY, reserved)
 
   // 左段: いつ・なにが困るか／そこで（と、その中の段落）。**必ず buildSectionBoxes を通す。**
@@ -157,19 +149,12 @@ function layoutWikiPattern(
     },
   ]
 
-  // 出典は下端に接する。takeaway があればその上へ持ち上げる（重なると 4pt が隠れる）
-  const sourceOffset = layout.source ? WP_SOURCE_HEIGHT : 0
+  // 出典は下端に接する（上に積まれるものは無い）
   const withSource = layout.source
     ? [...textBoxes, buildSourceBox(layout.source, Math.min(dims.leftWidth, panelX - MARGIN_X), theme)]
     : textBoxes
 
-  return withTakeaway(
-    { textBoxes: withSource, shapeBoxes },
-    layout.takeaway,
-    theme,
-    WP_TAKEAWAY_HEIGHT,
-    sourceOffset
-  )
+  return { textBoxes: withSource, shapeBoxes }
 }
 
 export const handleWikiPatternLayout = (

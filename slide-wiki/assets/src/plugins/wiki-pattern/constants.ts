@@ -42,17 +42,6 @@ export const WP_HEADING_BODY_GAP = 0.06
 export const WP_PADDING = 0.1
 
 /**
- * takeaway に確保する高さ。既定の `TAKEAWAY_HEIGHT`(0.9) は 20pt が2〜3行入る想定だが、
- * パターンの takeaway は1行（必要高 0.28in）しか置かない。関連は本文に溶かし、典拠は
- * `<!--source-->` が引き受けるので、ここに積むものは残っていない。
- *
- * **1行ぶんに決め打っている。** 2行に折り返す takeaway はここでビルドが止まる
- * （0.35 × はみ出し許容 1.2 = 0.42in < 2行の 0.69in）。1行に収まらないなら、
- * 削るか他のパターンへ渡すほうが、左段の本文を削るより読み手に効く。
- */
-export const WP_TAKEAWAY_HEIGHT = 0.35
-
-/**
  * 出典に確保する高さ。**3行ぶん。**
  *
  * 6pt の3行のインクは 0.333in（`overflow.ts` の `requiredHeight` の数え方で
@@ -66,13 +55,13 @@ export const WP_TAKEAWAY_HEIGHT = 0.35
  * `--verify` では出ず、はみ出しの見逃しになる）。
  *
  * **高さに余裕はある。** 左段の下端は 4.32in で、下マージン（5.325in）まで 1.0in 余る。
- * だから `WP_TAKEAWAY_HEIGHT` を流用しない理由は**高さではない**。理由は役割で、
- * takeaway は 20pt・太字・中央寄せ・全幅で「読ませる」側、出典は 6pt・左寄せ・左段幅で
- * 「読み飛ばせる」側にある。さらに takeaway は richText になるので
- * リンクになってしまう（schema.ts を見よ）。
+ * それでも 0.3in しか取らないのは、確保した高さがそのまま本文の取り分から消えるため。
  *
- * 余っているぶんを全部確保しないのは、確保した高さがそのまま本文の取り分から
- * 消えるため（helpers.ts が takeaway の 0.9in について書いているのと同じ話）。
+ * コアの `TAKEAWAY_HEIGHT`(0.9) を流用しないのは**高さの都合ではなく役割**で、
+ * takeaway は 20pt・太字・中央寄せ・全幅で「読ませる」側、出典は 6pt・左寄せ・左段幅で
+ * 「読み飛ばせる」側にある。さらに takeaway は richText になるのでリンクになってしまう
+ * （schema.ts を見よ）。パターンが takeaway を受けないのも同じ理由の続きで、
+ * 下端に積むものは出典だけになった。
  */
 export const WP_SOURCE_HEIGHT = 0.3
 

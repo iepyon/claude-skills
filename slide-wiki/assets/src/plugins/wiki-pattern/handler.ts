@@ -128,7 +128,7 @@ const handleBlankLineInWikiPattern = (
  * `handleCodeFenceOpen` が走り、`mode` を "code" に、`codeLanguage` をスライドに
  * 書き込む。そうなるとセクションのルート先が消え、スライドは CodeDisplay として
  * 変換される（`slide-converter.ts` の優先順）。閉じる側も同様に飲む必要があり、
- * コアに届くと `mode` が "default" に戻って、以降の `<!--takeaway-->` や `###` が
+ * コアに届くと `mode` が "default" に戻って、以降の `<!--source-->` や `###` が
  * 別のレイアウトの規則で読まれてしまう。
  */
 const FENCE_TOKENS: ReadonlyArray<Token["type"]> = [

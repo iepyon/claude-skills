@@ -22,7 +22,7 @@ const PARAGRAPH_BREAK = /\n[ \t]*\n+/
  * 空行として出すので、**同じ本文が2つの生成物で違う形になる**。
  *
  * 末尾の `\n` を落とすのはここ。ハンドラは節の終わりを知らないまま空行を足すので、
- * 図解や `<!--takeaway-->` の前の空行が末尾に残っている（残したままだと
+ * 図解や `<!--source-->` の前の空行が末尾に残っている（残したままだと
  * 空の段落が1つ増え、そのぶん本文の高さが削られる）。
  */
 const splitParagraphs = (section: RawSection): TextBlock[] => {
@@ -81,7 +81,6 @@ export const convertWikiPattern = (raw: RawSlide): O.Option<Slide[]> => {
         sections: orderSections(sections),
         diagram,
         diagramAspect: svgAspectRatio(diagram),
-        takeaway: raw.takeaway,
         source: raw.source,
       }),
     }),
