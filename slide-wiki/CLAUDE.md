@@ -196,7 +196,7 @@ steps / icon-layout / agenda / wiki-pattern は両方を持つ。wiki-pattern �
 名前が対象を言っているもの — `parser.test.ts` / `block-formatter.test.ts` /
 `inline-formatting.test.ts` / `slide-id.test.ts` / `validation.test.ts` / `theme.test.ts` /
 `layout-engine.test.ts` / `overflow.test.ts` / `html-renderer.test.ts` / `cli.test.ts` /
-`deck-order.test.ts` / `frontmatter.test.ts` / `migrate-wikilinks.test.ts` /
+`deck-order.test.ts` / `frontmatter.test.ts` / `migrate-wikilinks.test.ts` / `relations.test.ts` /
 `customer-journey.test.ts` / `table.test.ts` / `icon-resolver.test.ts` /
 `syntax-highlighter.test.ts` / `html-inspector.test.ts` / `pptx-inspector.test.ts`。
 

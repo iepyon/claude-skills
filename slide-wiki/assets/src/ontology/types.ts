@@ -269,6 +269,65 @@ export interface Okf {
   readonly "slide-id-scope": OkfSlideIdScope
 }
 
+/**
+ * 関係の型1つ。
+ *
+ * `inverse` が**書ける向きの数**を決める。名前があれば書き手はどちらの綴りでも書けて、
+ * ローダが反対向きを導出する。`null` は一方向にしか書けない型（`検算`）で、
+ * 「◯◯に検算される」は導出して見せるだけにする（同じ辺が2通りに書けると、
+ * 片方だけ消したときに辺が生き残る）。
+ */
+export interface RelationType {
+  readonly name: string
+  readonly direction: "directed" | "symmetric"
+  /** 逆向きの型名。対称な型は持たない（自分自身が逆）。一方向の型は null */
+  readonly inverse?: string | null
+  readonly description: string
+  /** どのパターン／文献がこの型を要求しているか */
+  readonly source?: string
+}
+
+/** どのパターンも孤立させないための条件 */
+export interface RelationCoverage {
+  readonly "require-any-of": readonly string[]
+  readonly level: "warning" | "error"
+}
+
+/** 分類を求めないリンク。増やすほど検査が緩むので、1件ずつ理由を持たせる */
+export interface RelationProseExclusion {
+  readonly name: string
+  readonly description: string
+}
+
+/** 宣言と本文を互いに縛る規則 */
+export interface RelationProse {
+  /** `both` = 宣言 → 本文 と 本文 → 宣言 の双方向 */
+  readonly require: "both"
+  readonly note?: string
+  readonly exclude: readonly RelationProseExclusion[]
+}
+
+/**
+ * パターン間の関係。`okf` 節がデッキの集合を宣言するのに対し、こちらは
+ * その中のスライド同士の噛み合い方を宣言する。辺そのものはバンドルの `file` にある。
+ */
+export interface Relations {
+  readonly label: string
+  readonly description: string
+  /** バンドル直下に置く辺の宣言ファイル名 */
+  readonly file: string
+  /** そのファイルの形。`okf.deck-set` の `order-shape` と同じ役目 */
+  readonly "file-shape": string
+  /** 辺の両端になれるレイアウトの name */
+  readonly "applies-to": string
+  readonly guidance?: string
+  readonly types: readonly RelationType[]
+  /** この組の中では、同じ2枚のあいだに1つの型しか立てられない */
+  readonly disjoint: readonly (readonly string[])[]
+  readonly coverage: RelationCoverage
+  readonly prose: RelationProse
+}
+
 export interface Ontology {
   readonly version: number
   readonly elements: Readonly<Record<string, Element>>
@@ -277,6 +336,7 @@ export interface Ontology {
   readonly layouts: readonly Layout[]
   readonly vocabularies: Readonly<Record<string, Vocabulary>>
   readonly okf: Okf
+  readonly relations: Relations
   readonly inline: Inline
   readonly limits: Limits
 }

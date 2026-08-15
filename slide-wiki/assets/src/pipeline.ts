@@ -202,6 +202,13 @@ export function md2wiki(
       })
     }
 
-    return yield* renderToWiki(decks, theme, { siteTitle: options.siteTitle })
+    // **バンドルは平坦なので、置き場は1つしかない。** デッキが全部同じディレクトリから
+    // 来ていればそれがバンドルで、`relations.yaml` はそこにある。ばらばらの場所から
+    // 集めて渡された md はバンドルではないので、関係を探しにいかない
+    // （`--wiki a/x.md b/y.md` のような呼び方。リンクは解決するが束ではない）
+    const baseDirs = new Set(sources.map((s) => s.baseDir).filter((d): d is string => !!d))
+    const bundleDir = baseDirs.size === 1 ? [...baseDirs][0] : undefined
+
+    return yield* renderToWiki(decks, theme, { siteTitle: options.siteTitle, bundleDir })
   })
 }

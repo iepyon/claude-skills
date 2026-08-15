@@ -10,6 +10,7 @@ import { inspectPptx } from "./tools/pptx-inspector.js"
 import { extractInventoryFromHtml } from "./tools/html-inspector.js"
 import { verifyInventories, printVerifyReport } from "./tools/verify.js"
 import { formatDiagnostic, lintSource, shouldFail, type Diagnostic } from "./ontology/lint.js"
+import { lintRelations } from "./ontology/relations.js"
 import { orderDeckFiles } from "./deck-order.js"
 
 const args = process.argv.slice(2)
@@ -111,12 +112,23 @@ if (lintOnly) {
     })
     .some(Boolean)
 
+  // パターン間の関係はデッキをまたぐバンドル単位の事実なので、md 1本ずつのループの外で見る
+  // （渡されたのがディレクトリのときだけ。単体ファイルにはバンドルが無い）
+  const bundleFailed = nonFlagArgs
+    .filter((path) => statSync(path).isDirectory())
+    .map((dir) => {
+      const diagnostics = lintRelations(dir)
+      for (const d of diagnostics) console.error(formatDiagnostic(d, `${dir}/${d.file}`))
+      return shouldFail(diagnostics, strict)
+    })
+    .some(Boolean)
+
   console.log(
-    failed
+    failed || bundleFailed
       ? `❌ 宣言違反あり（${files.length} 件のデッキを検査）`
       : `✅ ${files.length} 件のデッキは ontology.yaml の宣言に沿っている`
   )
-  process.exit(failed ? 1 : 0)
+  process.exit(failed || bundleFailed ? 1 : 0)
 }
 
 if (nonFlagArgs.length < 2) {

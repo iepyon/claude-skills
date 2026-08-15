@@ -247,12 +247,22 @@ ${slideBaseCss(theme)}
     .wiki-slide.active { display: block; }
     .wiki-slide .slide { display: block; }
 
-    /* 幅は scaleStage() が縮小後のステージに合わせて入れる。ここで max-width を
-       持つと、拡大したときインラインの width に勝ってしまい、ステージだけ広がって
-       この帯が 960px に取り残される。 */
-    .backlinks {
-      margin-top: 20px;
+    /* 幅は scaleStage() が縮小後のステージに合わせて外側の .link-bands に入れる。
+       ここで max-width を持つと、拡大したときインラインの width に勝ってしまい、
+       ステージだけ広がってこの帯が 960px に取り残される。 */
+    .link-bands {
+      display: flex;
+      align-items: flex-start;
+      gap: 28px;
       width: 100%;
+    }
+    /* **横に並べるのは縦の予算のため。** ステージは残りの高さいっぱいまで伸びるので、
+       帯を縦に積むと増えたぶんがそのまま画面の外へ出る（scaleStage の CHROME_RESERVE は
+       帯1本ぶんしか見込んでいない）。片方が隠れていればもう片方が全幅を取る。 */
+    .backlinks {
+      flex: 1 1 0;
+      min-width: 0;
+      margin-top: 20px;
       border-top: 1px solid var(--line);
       padding-top: 14px;
       font-size: 12.5px;
@@ -273,6 +283,25 @@ ${slideBaseCss(theme)}
     }
     .backlinks a:hover { background: rgba(122,162,247,.18); border-color: var(--accent); }
     .backlinks .none { color: var(--muted); }
+
+    /* 型つきの関係。型の名前とその相手を1つのまとまりとして、行に流して折り返す。
+       **型ごとに改行しない** — 型は1語（上位・対・検算…）で相手も1〜3枚なので、
+       1型1行にすると右が大きく空き、そのぶん帯が縦に伸びてステージを押し下げる。
+       まとまりの切れ目は、行間ではなく型どうしの間隔（24px）が示す。 */
+    .relations #relations-body {
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      gap: 6px 24px;
+    }
+    .relations .rel-row {
+      display: inline-flex; align-items: baseline; gap: 8px;
+      /* 型と相手のあいだでは折り返さない（見出しだけが前の行に残ると読めない）。
+         まとまりそのものは wrap する */
+    }
+    .relations .rel-type {
+      flex: none; white-space: nowrap;
+      font-size: 11px; font-weight: 700; letter-spacing: .04em;
+      color: var(--accent);
+    }
 
     /* ステージの上に置く。読み方の説明は、読み始める前に目に入らないと意味がない。 */
     .hint {
@@ -355,6 +384,12 @@ ${slideBaseCss(theme)}
     .scrim { display: none; }
 
     @media (max-width: 860px) {
+      /* 狭くても横に並べたままにする。**縦に積むと帯の背が倍になり、そのぶん
+         ステージが縮む** — 狭い画面ではただでさえ小さいので、そちらのほうが痛い。
+         型の名前を固定幅の列にしていたころは1行に収まらず積むしかなかったが、
+         いまは型と相手が1つのまとまりとして流れて折り返す。 */
+      .link-bands { gap: 16px; }
+
       body {
         grid-template-columns: 1fr;
         grid-template-areas: "topbar" "main";
