@@ -284,14 +284,21 @@ ${slideBaseCss(theme)}
     .backlinks a:hover { background: rgba(122,162,247,.18); border-color: var(--accent); }
     .backlinks .none { color: var(--muted); }
 
-    /* 型つきの関係。型の名前を左に立て、相手をその右に並べる。
-       型は1語（上位・対・検算…）なので、幅を固定すると行頭が揃って読む単位が切れる。 */
+    /* 型つきの関係。型の名前とその相手を1つのまとまりとして、行に流して折り返す。
+       **型ごとに改行しない** — 型は1語（上位・対・検算…）で相手も1〜3枚なので、
+       1型1行にすると右が大きく空き、そのぶん帯が縦に伸びてステージを押し下げる。
+       まとまりの切れ目は、行間ではなく型どうしの間隔（24px）が示す。 */
+    .relations #relations-body {
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      gap: 6px 24px;
+    }
     .relations .rel-row {
-      display: flex; align-items: baseline; gap: 10px;
-      margin-bottom: 6px;
+      display: inline-flex; align-items: baseline; gap: 8px;
+      /* 型と相手のあいだでは折り返さない（見出しだけが前の行に残ると読めない）。
+         まとまりそのものは wrap する */
     }
     .relations .rel-type {
-      flex: 0 0 4.5em;
+      flex: none; white-space: nowrap;
       font-size: 11px; font-weight: 700; letter-spacing: .04em;
       color: var(--accent);
     }

@@ -494,6 +494,11 @@ describe("viewer layout contract", () => {
 
     // 幅を持たせるのは外側1つだけ。帯ごとに入れると、片方が隠れている間も半分のまま
     expect(html).toContain('bands.style.width')
+
+    // 関係は型ごとに改行せず、行に流して折り返す。1型1行にすると右が大きく空き、
+    // そのぶん帯が縦に伸びて（型4つで 27px → 110px）またステージを押し下げる
+    const rel = html.slice(html.indexOf("#relations-body {"), html.indexOf(".relations .rel-type"))
+    expect(rel).toMatch(/flex-wrap:\s*wrap/)
   })
 
   it("should size the hover preview at runtime instead of baking in one ratio", async () => {
