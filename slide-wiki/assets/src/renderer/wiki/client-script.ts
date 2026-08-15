@@ -462,13 +462,29 @@ export function wikiScript(): string {
   });
 
   // --------------------------------------------------------------- scaling
-  // バックリンク欄とキーヒントのぶん、縦に残しておく余白。
-  // 実際に要るのは 115px ほどだが、そこまで確保するとスライドが目に見えて縮む。
-  // 下端の手がかりだけ覗かせ、残りは .main のスクロールに逃がす。
+  // 最初の1周だけ使う、ステージ下の余白の当て推量。**2周目は実測に置き換わる。**
   var CHROME_RESERVE = 64;
   // 暴走よけであって、制限ではない。中身はベクタの文字と SVG なので拡大で劣化しない。
   // 常に下の contain（幅と高さの小さいほう）が効くよう、十分高く取る。
   var MAX_STAGE_SCALE = 4;
+  // 帯がこれ以上細くならない幅。名前の札が1行に2つは並ぶ寸法。
+  var BAND_MIN_WIDTH = 360;
+
+  // ステージの上下にある物（キーヒントと帯）の実寸。**定数で見積もらない。**
+  // 帯の高さは中身で変わる — 関係の型の数、バックリンクの枚数、幅による折り返し。
+  // 決め打ちだとどこかのスライドで必ず足りなくなり、足りないぶんは画面の外へ出る。
+  // しかも show() が毎回 scrollTop を 0 に戻すので、送るたびに見えなくなる。
+  // **スクロールで届くことを当てにしない** — 埋め込まれて表示されると、
+  // ホイールが外側に取られて内側の .main が動かないことがある。
+  function chromeHeight() {
+    var total = 0;
+    [document.querySelector(".hint"), document.getElementById("link-bands")].forEach(function (el) {
+      if (!el || el.offsetParent === null) return;
+      var cs = getComputedStyle(el);
+      total += el.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+    });
+    return total;
+  }
 
   function scaleStage() {
     var main = document.querySelector(".main");
@@ -476,25 +492,50 @@ export function wikiScript(): string {
     var frame = document.getElementById("stage-frame");
     if (!main || !wrap || !frame) return;
 
+    var bands = document.getElementById("link-bands");
     var pad = parseFloat(getComputedStyle(main).paddingLeft) || 0;
     var availW = main.clientWidth - pad * 2;
-    var availH = Math.max(200, main.clientHeight - pad * 2 - CHROME_RESERVE);
+    var reserve = CHROME_RESERVE;
 
-    // 幅と高さの両方に収める。横だけで決めると、背の低い画面で
-    // スライドの下が切れる。本文領域はスライドより横長なのが普通なので、
-    // 実際に効くのはたいてい高さのほう。
-    var scale = Math.min(availW / ${SLIDE_W_PX}, availH / ${SLIDE_H_PX}, MAX_STAGE_SCALE);
+    // **収まるまで測り直す。** 帯の幅はステージの倍率から入るので、ステージを縮めると
+    // 帯は細くなり、折り返しが増えて**背が伸びる**。だから「1周だけ測り直して終わり」では
+    // 足りない — 見積もりを増やすたびに次の測定でまた増えうる。
+    // 縮む方向にしか動かないので必ず収束する（帯の幅に下限があるので、そこで背の伸びが
+    // 止まる）。回数は暴走よけであって、ここで打ち切る想定ではない — 4回で切っていたころは
+    // 収束前に抜けて、最後に当てた倍率が1つ前の見積もりのままだった。
+    for (var pass = 0; pass < 8; pass++) {
+      // 下限は「これ以上縮めても読めない」の線であって、収める努力をやめる線ではない。
+      // ここを高く取ると、狭い窓で帯が入りきらず画面の外へ出る（そして埋め込み先では
+      // スクロールが効かないことがある）。小さくても見えているほうがまだよい。
+      var availH = Math.max(260, main.clientHeight - pad * 2 - reserve);
 
-    frame.style.transform = "scale(" + scale + ")";
-    // 外箱に「縮小後の実寸」を持たせる。transform はレイアウト寸法を
-    // 変えないので、これをやらないと 960px の箱がはみ出して左が見切れる。
-    wrap.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
-    wrap.style.height = Math.round(${SLIDE_H_PX} * scale) + "px";
+      // 幅と高さの両方に収める。横だけで決めると、背の低い画面で
+      // スライドの下が切れる。本文領域はスライドより横長なのが普通なので、
+      // 実際に効くのはたいてい高さのほう。
+      var scale = Math.min(availW / ${SLIDE_W_PX}, availH / ${SLIDE_H_PX}, MAX_STAGE_SCALE);
 
-    // 幅を持たせるのは帯の外側1つだけ。中の2本は flex が分ける
-    // （帯ごとに入れていたころは、片方が隠れている間ももう片方が半分のままだった）
-    var bands = document.getElementById("link-bands");
-    if (bands) bands.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
+      frame.style.transform = "scale(" + scale + ")";
+      // 外箱に「縮小後の実寸」を持たせる。transform はレイアウト寸法を
+      // 変えないので、これをやらないと 960px の箱がはみ出して左が見切れる。
+      wrap.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
+      wrap.style.height = Math.round(${SLIDE_H_PX} * scale) + "px";
+
+      // 幅を持たせるのは帯の外側1つだけ。中の2本は flex が分ける
+      // （帯ごとに入れていたころは、片方が隠れている間ももう片方が半分のままだった）
+      //
+      // **ステージに合わせるが、下限を割らない。** 帯を縮めると折り返しが増えて背が伸び、
+      // 伸びたぶんステージがまた縮む — 下限が無いと、この輪が回りきって帯が 99px 幅・
+      // 441px 高になり、ステージは 120px まで潰れていた。下限があれば背の伸びが止まり、
+      // 上の輪が収束する。ステージより広く出る場合もあるが、見えないよりはよい。
+      if (bands) {
+        bands.style.width =
+          Math.min(availW, Math.max(Math.round(${SLIDE_W_PX} * scale), BAND_MIN_WIDTH)) + "px";
+      }
+
+      var measured = chromeHeight();
+      if (measured <= reserve + 1) break; // 見積もりの中に収まった
+      reserve = measured;
+    }
   }
 
   // ----------------------------------------------------------- utilities

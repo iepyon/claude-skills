@@ -384,9 +384,11 @@ ${slideBaseCss(theme)}
     .scrim { display: none; }
 
     @media (max-width: 860px) {
-      /* 狭い画面では横に並べない。型の名前（4.5em）と相手の名前が同じ行に収まらず、
-         語の途中で折り返す。縦に積んだぶんはスクロールに逃がす */
-      .link-bands { flex-direction: column; gap: 0; }
+      /* 狭くても横に並べたままにする。**縦に積むと帯の背が倍になり、そのぶん
+         ステージが縮む** — 狭い画面ではただでさえ小さいので、そちらのほうが痛い。
+         型の名前を固定幅の列にしていたころは1行に収まらず積むしかなかったが、
+         いまは型と相手が1つのまとまりとして流れて折り返す。 */
+      .link-bands { gap: 16px; }
 
       body {
         grid-template-columns: 1fr;
