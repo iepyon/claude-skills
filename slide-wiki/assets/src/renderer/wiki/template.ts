@@ -123,18 +123,22 @@ ${site.entries
       <div class="edge-zone right" aria-hidden="true"></div>
     </div>
 
-    <!-- 関係を先、バックリンクを後に置く。前者は書き手が型を付けた事実、後者は
-         リンクから導いた結果で、迷ったときに効くのは前者のほう。
+    <!-- 帯は横に並べる。**縦に積むと下の帯がスライドに押し出される** — ステージは
+         残りの高さいっぱいまで伸びるので、増えた帯のぶんはそのまま画面の外へ出る
+         （show() が毎回 scrollTop を 0 に戻すので、送るたびに見えなくなる）。
+         左が書き手の付けた型、右がリンクから導いた結果。
          どちらも .slide の外なので、--html と PPTX の DOM には現れない。 -->
-    <section class="backlinks relations" id="relations" hidden>
-      <h2>関係</h2>
-      <div id="relations-body"></div>
-    </section>
+    <div class="link-bands" id="link-bands">
+      <section class="backlinks relations" id="relations" hidden>
+        <h2>関係</h2>
+        <div id="relations-body"></div>
+      </section>
 
-    <section class="backlinks">
-      <h2>このスライドへのリンク</h2>
-      <div id="backlinks-body"></div>
-    </section>
+      <section class="backlinks">
+        <h2>このスライドへのリンク</h2>
+        <div id="backlinks-body"></div>
+      </section>
+    </div>
   </main>
 
   <div id="preview-layer"></div>

@@ -476,6 +476,26 @@ describe("viewer layout contract", () => {
     expect(block).not.toMatch(/max-width:\s*960px/)
   })
 
+  it("should keep the strips below the stage on one row", async () => {
+    // **縦に積むと下の帯が画面の外へ出る。** ステージは残りの高さいっぱいまで伸び、
+    // CHROME_RESERVE は帯1本ぶんしか見込んでいないので、2本目はそのまま押し出される。
+    // しかも show() が毎回 scrollTop を 0 に戻すため、送るたびに見えなくなる
+    // （関係の帯を足した日に実際そうなった。実測で -94px ＝ 全部が下端の外）。
+    const html = await buildHtml()
+    // 入れ物の**閉じるところまで**を切る。`</main>` まで取ると、外へ出した節も
+    // 範囲に入ってしまい、縦積みへ戻しても緑のままになる（実際そうなった）
+    const bands = html.match(/<div class="link-bands"[\s\S]*?<\/section>\s*<\/div>/)
+    expect(bands).not.toBeNull()
+    expect(bands![0]).toContain('id="relations"')
+    expect(bands![0]).toContain('id="backlinks-body"')
+
+    const css = html.slice(html.indexOf(".link-bands {"), html.indexOf(".backlinks {"))
+    expect(css).toMatch(/display:\s*flex/)
+
+    // 幅を持たせるのは外側1つだけ。帯ごとに入れると、片方が隠れている間も半分のまま
+    expect(html).toContain('bands.style.width')
+  })
+
   it("should size the hover preview at runtime instead of baking in one ratio", async () => {
     // 0.5 固定では 480x270 で中身が読めない。画面サイズと入れ子の深さで決める。
     const html = await buildHtml()

@@ -491,11 +491,10 @@ export function wikiScript(): string {
     wrap.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
     wrap.style.height = Math.round(${SLIDE_H_PX} * scale) + "px";
 
-    // 帯は2本ある（関係とバックリンク）。querySelector で1本目だけを合わせていたころは、
-    // 節を増やした瞬間に下の帯だけ 960px に取り残される
-    Array.prototype.forEach.call(document.querySelectorAll(".backlinks"), function (bl) {
-      bl.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
-    });
+    // 幅を持たせるのは帯の外側1つだけ。中の2本は flex が分ける
+    // （帯ごとに入れていたころは、片方が隠れている間ももう片方が半分のままだった）
+    var bands = document.getElementById("link-bands");
+    if (bands) bands.style.width = Math.round(${SLIDE_W_PX} * scale) + "px";
   }
 
   // ----------------------------------------------------------- utilities

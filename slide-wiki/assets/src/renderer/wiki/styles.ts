@@ -247,12 +247,22 @@ ${slideBaseCss(theme)}
     .wiki-slide.active { display: block; }
     .wiki-slide .slide { display: block; }
 
-    /* 幅は scaleStage() が縮小後のステージに合わせて入れる。ここで max-width を
-       持つと、拡大したときインラインの width に勝ってしまい、ステージだけ広がって
-       この帯が 960px に取り残される。 */
-    .backlinks {
-      margin-top: 20px;
+    /* 幅は scaleStage() が縮小後のステージに合わせて外側の .link-bands に入れる。
+       ここで max-width を持つと、拡大したときインラインの width に勝ってしまい、
+       ステージだけ広がってこの帯が 960px に取り残される。 */
+    .link-bands {
+      display: flex;
+      align-items: flex-start;
+      gap: 28px;
       width: 100%;
+    }
+    /* **横に並べるのは縦の予算のため。** ステージは残りの高さいっぱいまで伸びるので、
+       帯を縦に積むと増えたぶんがそのまま画面の外へ出る（scaleStage の CHROME_RESERVE は
+       帯1本ぶんしか見込んでいない）。片方が隠れていればもう片方が全幅を取る。 */
+    .backlinks {
+      flex: 1 1 0;
+      min-width: 0;
+      margin-top: 20px;
       border-top: 1px solid var(--line);
       padding-top: 14px;
       font-size: 12.5px;
@@ -367,6 +377,10 @@ ${slideBaseCss(theme)}
     .scrim { display: none; }
 
     @media (max-width: 860px) {
+      /* 狭い画面では横に並べない。型の名前（4.5em）と相手の名前が同じ行に収まらず、
+         語の途中で折り返す。縦に積んだぶんはスクロールに逃がす */
+      .link-bands { flex-direction: column; gap: 0; }
+
       body {
         grid-template-columns: 1fr;
         grid-template-areas: "topbar" "main";
