@@ -25,6 +25,7 @@ tags: [索引, 目次, ナビゲーション]
 ### 手順書に見える: [ザワつく状況](patterns-meta.md#ザワつく状況)
 ### 通じたか不明: [声に出して読む](patterns-meta.md#声に出して読む)
 ### 収まらない: [原稿用紙](patterns-slidewiki.md#原稿用紙)
+### 次に迷う: [赤リンク](patterns-slidewiki.md#赤リンク)
 
 ---
 

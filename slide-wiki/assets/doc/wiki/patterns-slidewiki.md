@@ -21,6 +21,7 @@ sources:
 書き手が手を動かす順に並べてある
 
 ### 削る: [原稿用紙](patterns-slidewiki.md#原稿用紙)
+### 繋ぐ: [赤リンク](patterns-slidewiki.md#赤リンク)
 ### 隣: [Wiki が育つパターン](patterns-wiki.md#読み方)
 ### 書き方: [パターンを書くパターン](patterns-meta.md#読み方)
 
@@ -46,3 +47,26 @@ sources:
 
 <!--source-->
 名前は原稿用紙＝枠が先にあり、文章のほうを枠に合わせて練る。内容は PechaKucha 20x20（Klein & Dytham, 2003）＝20枚×20秒に固定し "talk less, show more" を強制する。「並ぶと1枚だけ声が小さい」はこのデッキの追加。
+
+---
+
+## 赤リンク
+<!--id:赤リンク-->
+<!--pattern-->
+### いつ・なにが困るか
+次の1枚を足すとき、先に行き先を書き上げたくなる。
+無い行き先へのリンクは、壊れた印に見える。
+
+**繋がりの発見が、書く作業の後ろに回る。**
+何を書くべきかは、リンクの穴がいちばん知っている。
+揃うのを待つ間に、その手がかりが消える。
+
+### そこで
+**無い行き先へ、先にリンクを書く。**
+[未解決の一覧](guide.md#解決順) が、次に書く1枚の畑になる。
+書き出す一文は [種ノート](patterns-wiki.md#種ノート) に従って置く。
+
+![赤リンク](diagrams/patterns-slidewiki/赤リンク.svg)
+
+<!--source-->
+名前は Wikipedia の赤リンク。Spinellis & Louridas "The Collaborative Organization of Knowledge"（CACM, 2008）＝新しい記事の大半は、それを指す参照が書かれた直後に生まれる。元祖は c2 wiki（1995）の「?」リンク。
