@@ -22,6 +22,7 @@ sources:
 
 ### 削る: [原稿用紙](patterns-slidewiki.md#原稿用紙)
 ### 繋ぐ: [赤リンク](patterns-slidewiki.md#赤リンク)
+### 組む: [上下巻](patterns-slidewiki.md#上下巻)
 ### 隣: [Wiki が育つパターン](patterns-wiki.md#読み方)
 ### 書き方: [パターンを書くパターン](patterns-meta.md#読み方)
 
@@ -70,3 +71,26 @@ sources:
 
 <!--source-->
 名前は Wikipedia の赤リンク。Spinellis & Louridas "The Collaborative Organization of Knowledge"（CACM, 2008）＝新しい記事の大半は、それを指す参照が書かれた直後に生まれる。元祖は c2 wiki（1995）の「?」リンク。
+
+---
+
+## 上下巻
+<!--id:上下巻-->
+<!--pattern-->
+### いつ・なにが困るか
+カタログのデッキに、背景や動機も足したくなる。
+1本にまとまっているほうが、親切に思える。
+
+**物語の混ざったカタログは、引くのに邪魔になる。**
+引く人は答えが欲しく、読む人は筋が欲しい。
+1本で両方に応えると、どちらにも半端になる。
+
+### そこで
+**なぜの物語と、引くカタログの、対の2冊に割る。**
+割った2冊は [接ぎ木](patterns-wiki.md#接ぎ木) と同じで、必ず対で繋ぐ。
+この並びの例が [第1部](intro-wiki.md#育てる理由) と [第2部](patterns-wiki.md#読み方) の組。
+
+![上下巻](diagrams/patterns-slidewiki/上下巻.svg)
+
+<!--source-->
+名前は上下巻。内容は Alexander の2冊＝『時を超えた建設の道』（1979）が理論と物語、『パタン・ランゲージ』（1977）がカタログで、前者は後者の序説にあたる。カタログに序説を混ぜ込まず、対の別冊にして組で読ませる。

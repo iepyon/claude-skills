@@ -731,7 +731,7 @@ describe("WikiPattern — 出典", () => {
   // （patterns-wiki は出典を持たない側の前例なので、ここには並べない）
   it.each([
     ["patterns-meta.md", 13],
-    ["patterns-slidewiki.md", 2],
+    ["patterns-slidewiki.md", 3],
   ] as const)("配布中の %s は全%i枚に出典があり、どれも収まる", async (deckFile, count) => {
     const dir = join(__dirname, "..", "doc", "wiki")
     const md = readFileSync(join(dir, deckFile), "utf-8")
