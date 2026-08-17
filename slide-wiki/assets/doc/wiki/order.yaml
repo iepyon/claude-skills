@@ -32,7 +32,8 @@ groups:
 
   - title: スライドを育てる
     decks:
-      - patterns-slidewiki # 第2部にあたるカタログ。第1部（intro-slidewiki）は書けたら前に足す
+      - intro-slidewiki # 第1部: なぜスライドを育てるのか
+      - patterns-slidewiki # 第2部: スライドが育つパターン
 
   - title: 索引
     decks:

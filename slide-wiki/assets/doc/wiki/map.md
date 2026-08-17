@@ -40,5 +40,6 @@ tags: [索引, 目次, ナビゲーション]
 ### 語彙: [Wiki が育つパターン](patterns-wiki.md#読み方)
 ### 入門: [パターンを書きはじめる前に](intro-meta.md#パターンとは)
 ### 書く: [パターンを書くパターン](patterns-meta.md#読み方)
+### 動機: [なぜスライドを育てるのか](intro-slidewiki.md#育てるスライド)
 ### 実践: [スライドが育つパターン](patterns-slidewiki.md#読み方)
 ### 場面: [詰まったら引く](map.md#詰まったら)

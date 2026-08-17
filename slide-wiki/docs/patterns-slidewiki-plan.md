@@ -96,10 +96,10 @@ gen-okf-index --check 通過。lint --strict の警告は main と同一の既�
 
 ## 残作業
 
-- **intro-slidewiki（第1部）**: 上の「背景・目的」を読み手向けに書いた背景と物語のデッキ。
-  intro-meta が後から足された前例（#59, `a38abc2`）に従い、order.yaml の
-  「スライドを育てる」グループの先頭に挿す。
-  足したら patterns-slidewiki の `読み方` に `背景:` を1行足す
+- ~~**intro-slidewiki（第1部）**~~ → **実装済み**。上の「背景・目的」を読み手向けに
+  書き直した5枚のデッキ `assets/doc/wiki/intro-slidewiki.md`（なぜスライドを育てるのか）。
+  前例（#59, `a38abc2`）どおり order.yaml のグループ先頭に挿し、
+  patterns-slidewiki の `読み方` に `背景:`、`map.md` の入口に `動機:` を足した
 - **保留3枚**（`docs/patterns-slidewiki-sources.md` の売り場に名前だけ置いてある）:
   奥付（典拠は関連ではない）/ 渡し舟（移行路の同梱）/ 正本と写し（写しは機械が書く）。
   いずれも適用例3件か置き場が定まったら

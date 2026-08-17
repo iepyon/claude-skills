@@ -25,6 +25,7 @@ sources:
 ### 組む: [上下巻](patterns-slidewiki.md#上下巻)
 ### 守る: [実行可能な規約](patterns-slidewiki.md#実行可能な規約)
 ### 迎える: [読みを広く、書きを狭く](patterns-slidewiki.md#読みを広く書きを狭く)
+### 背景: [第1部 なぜスライドを育てるのか](intro-slidewiki.md#育てるスライド)
 ### 隣: [Wiki が育つパターン](patterns-wiki.md#読み方)
 ### 書き方: [パターンを書くパターン](patterns-meta.md#読み方)
 
