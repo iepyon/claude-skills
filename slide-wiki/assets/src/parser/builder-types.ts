@@ -34,6 +34,13 @@ export type RawSection = {
   heading?: string
   icon?: string
   body?: string
+  /** dashboard: `<!--kpi-->` でこのセルを KPI タイルにする */
+  kpi?: boolean
+  /** dashboard: `<!--chart:*-->` でこのセルをグラフにする */
+  chartType?: "bar" | "line" | "donut"
+  /** dashboard: グラフのデータ表。1行目（ヘッダ）と本体行を分けて運ぶ */
+  chartHeader?: string[]
+  chartRows?: string[][]
 }
 
 export type LayoutMode =

@@ -34,14 +34,16 @@ function setTable(slide: { pluginData?: Record<string, unknown> }, table: RawTab
 }
 
 /** Parse a pipe-delimited row into cell values, trimming whitespace */
-function parsePipeRow(text: string): string[] {
+// export されているのは dashboard プラグインがチャートのデータ表を同じ規則で
+// 読むため（パイプ行のパーサを2つ持たない）
+export function parsePipeRow(text: string): string[] {
   // Remove leading/trailing pipes and split
   const stripped = text.replace(/^\|/, "").replace(/\|$/, "")
   return stripped.split("|").map((cell) => cell.trim())
 }
 
 /** Check if a row is a separator row (e.g., | --- | --- |) */
-function isSeparatorRow(text: string): boolean {
+export function isSeparatorRow(text: string): boolean {
   const cells = parsePipeRow(text)
   return cells.every((cell) => /^[-:]+$/.test(cell))
 }

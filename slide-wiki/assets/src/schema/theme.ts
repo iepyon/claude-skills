@@ -94,6 +94,39 @@ export interface Theme {
     sourceSize: number
     sourceColor: string
   }
+  /**
+   * ダッシュボードの文字サイズと配色。`contentSlide` の外に置くのは wikiPattern と
+   * 同じ理由 — KPI の「大きな数字」がはみ出し縮小で黙って縮んだら意味を失う。
+   * 収まらないセルは縮む代わりに `validateLayout` がビルドを止める。
+   */
+  dashboard: {
+    headingSize: number
+    bodySize: number
+    /** KPI ラベル（見出し）の大きさ */
+    labelSize: number
+    /** KPI 値の数字部の大きさ */
+    valueSize: number
+    /** 通貨記号・単位の大きさ（valueSize に対する倍率） */
+    kpiUnitScale: number
+    deltaSize: number
+    deltaUpColor: string
+    deltaDownColor: string
+    /** 前期比ピルの下地色（薄い緑/赤。文字色は deltaUp/DownColor） */
+    deltaUpBackground: string
+    deltaDownBackground: string
+    /** 前期比の比較基準（「前年同期比」など）の脚注色 */
+    basisColor: string
+    /** セル上端の見出し帯の色と、その中の文字色 */
+    headingBackground: string
+    headingTextColor: string
+    tileBackground: string
+    /** ドーナツの扇形が順繰りに使う色。棒・折れ線は先頭色を使う */
+    chartPalette: string[]
+    /** SVG チャート内のラベル文字の大きさ（pt 相当） */
+    chartLabelSize: number
+    chartGridColor: string
+    sparklineColor: string
+  }
 }
 
 /**
@@ -198,6 +231,26 @@ export const DEFAULT_THEME: Theme = {
     sourceSize: 6,
     sourceColor: "94A3B8",
   },
+  dashboard: {
+    headingSize: 14,
+    bodySize: 12,
+    labelSize: 11,
+    valueSize: 32,
+    kpiUnitScale: 0.55,
+    deltaSize: 11,
+    deltaUpColor: "059669",
+    deltaDownColor: "DC2626",
+    deltaUpBackground: "D1FAE5",
+    deltaDownBackground: "FEE2E2",
+    basisColor: "6B7280",
+    headingBackground: "1E40AF",
+    headingTextColor: "FFFFFF",
+    tileBackground: "F8FAFC",
+    chartPalette: ["1E40AF", "0891B2", "059669", "D97706", "7C3AED"],
+    chartLabelSize: 9,
+    chartGridColor: "E5E7EB",
+    sparklineColor: "3B82F6",
+  },
 }
 
 function stripHashPrefix(value: unknown): unknown {
@@ -299,6 +352,26 @@ export function mergeTheme(partial: PartialTheme): Theme {
       bodySize: stripped.wikiPattern?.bodySize ?? DEFAULT_THEME.wikiPattern.bodySize,
       sourceSize: stripped.wikiPattern?.sourceSize ?? DEFAULT_THEME.wikiPattern.sourceSize,
       sourceColor: stripped.wikiPattern?.sourceColor ?? DEFAULT_THEME.wikiPattern.sourceColor,
+    },
+    dashboard: {
+      headingSize: stripped.dashboard?.headingSize ?? DEFAULT_THEME.dashboard.headingSize,
+      bodySize: stripped.dashboard?.bodySize ?? DEFAULT_THEME.dashboard.bodySize,
+      labelSize: stripped.dashboard?.labelSize ?? DEFAULT_THEME.dashboard.labelSize,
+      valueSize: stripped.dashboard?.valueSize ?? DEFAULT_THEME.dashboard.valueSize,
+      kpiUnitScale: stripped.dashboard?.kpiUnitScale ?? DEFAULT_THEME.dashboard.kpiUnitScale,
+      deltaSize: stripped.dashboard?.deltaSize ?? DEFAULT_THEME.dashboard.deltaSize,
+      deltaUpColor: stripped.dashboard?.deltaUpColor ?? DEFAULT_THEME.dashboard.deltaUpColor,
+      deltaDownColor: stripped.dashboard?.deltaDownColor ?? DEFAULT_THEME.dashboard.deltaDownColor,
+      deltaUpBackground: stripped.dashboard?.deltaUpBackground ?? DEFAULT_THEME.dashboard.deltaUpBackground,
+      deltaDownBackground: stripped.dashboard?.deltaDownBackground ?? DEFAULT_THEME.dashboard.deltaDownBackground,
+      basisColor: stripped.dashboard?.basisColor ?? DEFAULT_THEME.dashboard.basisColor,
+      headingBackground: stripped.dashboard?.headingBackground ?? DEFAULT_THEME.dashboard.headingBackground,
+      headingTextColor: stripped.dashboard?.headingTextColor ?? DEFAULT_THEME.dashboard.headingTextColor,
+      tileBackground: stripped.dashboard?.tileBackground ?? DEFAULT_THEME.dashboard.tileBackground,
+      chartPalette: stripped.dashboard?.chartPalette ?? DEFAULT_THEME.dashboard.chartPalette,
+      chartLabelSize: stripped.dashboard?.chartLabelSize ?? DEFAULT_THEME.dashboard.chartLabelSize,
+      chartGridColor: stripped.dashboard?.chartGridColor ?? DEFAULT_THEME.dashboard.chartGridColor,
+      sparklineColor: stripped.dashboard?.sparklineColor ?? DEFAULT_THEME.dashboard.sparklineColor,
     },
   }
 }

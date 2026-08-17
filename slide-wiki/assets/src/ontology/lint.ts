@@ -136,6 +136,38 @@ function gridCellCount(tokens: readonly Token[]): number | undefined {
   return grid && grid.type === "GridDirective" ? grid.rows * grid.cols : undefined
 }
 
+/**
+ * ダッシュボードの `###` 件数はディレクティブの行構成の和で決まる。
+ *
+ * grid と違い cardinality の宣言は `1..n`（行和は `rows*cols` の動的形で表せない）
+ * なので、checkCardinality に resolved を渡しても効かない。ここで直接見る。
+ * 変換も同じ不一致で止まる（converter が ParseError にする）が、lint はビルドを
+ * 走らせる前に行番号つきで報せるためにある。
+ */
+function checkDashboardCells(
+  layout: Layout,
+  tokens: readonly Token[],
+  h3Count: number,
+  line: number
+): Diagnostic[] {
+  if (layout.plugin !== "dashboard") return []
+  const directive = tokens.find(
+    (t) => t.type === "PluginDirective" && t.pluginId.startsWith("dashboard:")
+  )
+  if (!directive || directive.type !== "PluginDirective") return []
+  const spec = directive.pluginId.split(":")[1]
+  const expected = spec.split(",").reduce((sum, n) => sum + parseInt(n, 10), 0)
+  if (h3Count === expected) return []
+  return [
+    {
+      level: "warning",
+      check: "slot-cardinality",
+      line,
+      message: `### が ${h3Count} 件（<!--dashboard:${spec}--> は列数の合計 ${expected} 件を期待する）`,
+    },
+  ]
+}
+
 /** 1スライドぶんの見出しを1回の走査で仕分ける */
 interface Headings {
   readonly h3: readonly Token[]
@@ -225,6 +257,8 @@ function checkAnnotationScope(layout: Layout, tokens: readonly Token[]): Diagnos
     if (token.type === "TakeawayMarker") used.push({ name: "takeaway", token })
     if (token.type === "SourceMarker") used.push({ name: "source", token })
     if (token.type === "IdDirective") used.push({ name: "id", token })
+    if (token.type === "KpiMarker") used.push({ name: "kpi", token })
+    if (token.type === "ChartDirective") used.push({ name: "chart", token })
   }
   return used
     .filter((u) => !allowed.has(u.name))
@@ -667,6 +701,7 @@ export function lintTokens(tokens: readonly Token[], context: LintContext = {}):
     out.push(...checkAnnotationScope(layout, slide.tokens))
 
     const headings = collectHeadings(slide.tokens)
+    out.push(...checkDashboardCells(layout, slide.tokens, headings.h3.length, slide.line))
     const h4Slot = layout.slots.find((s) => s.marker === "####")
 
     let readsImages = false

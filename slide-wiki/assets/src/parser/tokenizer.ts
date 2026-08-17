@@ -17,6 +17,8 @@ export type Token =
   | { type: "IdDirective"; id: string; line: number }
   | { type: "TakeawayMarker"; line: number }
   | { type: "SourceMarker"; line: number }
+  | { type: "KpiMarker"; line: number }
+  | { type: "ChartDirective"; chartType: "bar" | "line" | "donut"; line: number }
   | { type: "PluginDirective"; pluginId: string; line: number }
   | { type: "Image"; alt: string; src: string; line: number }
   | { type: "CodeFenceOpen"; language: string; line: number }
@@ -152,6 +154,32 @@ const matchSourceMarker: TokenMatcher = (line, lineNum) =>
     }))
   )
 
+// KpiMarker: <!--kpi--> — Dashboard のセルを KPI タイルにする注釈。
+// 効くのは dashboard モードだけだが、トークンはコアで持つ（IdDirective と同じ理由 —
+// マッチャが無いと未知のコメントとして BodyText に落ち、本文として描かれる）。
+const matchKpiMarker: TokenMatcher = (line, lineNum) =>
+  pipe(
+    line.match(/^<!--kpi-->$/),
+    O.fromNullable,
+    O.map(() => ({
+      type: "KpiMarker" as const,
+      line: lineNum
+    }))
+  )
+
+// ChartDirective: <!--chart:bar--> — Dashboard のセルをグラフにする注釈。
+// 受ける種類は ontology.yaml の annotations（chart）の宣言と揃える。
+const matchChartDirective: TokenMatcher = (line, lineNum) =>
+  pipe(
+    line.match(/^<!--chart:(bar|line|donut)-->$/),
+    O.fromNullable,
+    O.map(m => ({
+      type: "ChartDirective" as const,
+      chartType: m[1] as "bar" | "line" | "donut",
+      line: lineNum
+    }))
+  )
+
 // Image: ![alt](src) — 行まるごとが画像参照のときだけ。
 // 行の一部に混ざった `![…](…)` は本文のまま（インライン画像は持たない）。
 const matchImage: TokenMatcher = (line, lineNum) =>
@@ -202,6 +230,8 @@ const coreMatchers: ReadonlyArray<TokenMatcher> = [
   matchIdDirective,
   matchTakeawayMarker,
   matchSourceMarker,
+  matchKpiMarker,
+  matchChartDirective,
   matchImage,
 ]
 

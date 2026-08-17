@@ -41,6 +41,10 @@ function richTextToHtml(runs: InlineTextRun[]): string {
     if (run.italic) {
       html = `<em>${html}</em>`
     }
+    // run 単位のフォントサイズ（PPTX の run オプションと同じ粒度）
+    if (run.fontSize !== undefined) {
+      html = `<span style="font-size: ${run.fontSize}pt">${html}</span>`
+    }
     // リンクは最も外側で包む（装飾ごとクリック可能にする）。
     // internal は #<slide> のアンカーなので、Wiki ビューアが無い単体 HTML でも
     // ただのページ内リンクとして無害に落ちる。
@@ -131,8 +135,10 @@ export function textBoxToHtml(box: TextBox, shapeId?: string, isTitleSlide: bool
   // しか持ち出せず（pptx-inspector）、AST インベントリも同じ規則で数える。
   const paraDataAttrs = (firstRun?: InlineTextRun): string => {
     const fontName = runFontFace(box, firstRun, "")
+    // フォントサイズも先頭 run 規則（InlineTextRun.fontSize の説明を見よ）
+    const fontSize = firstRun?.fontSize ?? box.fontSize
     return [
-      box.fontSize ? `data-font-size="${box.fontSize}"` : "",
+      fontSize ? `data-font-size="${fontSize}"` : "",
       box.color ? `data-color="${box.color}"` : "",
       firstRun?.bold || box.isBold ? `data-bold="true"` : "",
       isCentered(box, isTitleSlide) ? `data-alignment="CENTER"` : "",

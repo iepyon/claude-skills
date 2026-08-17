@@ -326,6 +326,27 @@ annotations:
     description: セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。
     guidance: 効くのは annotations に icon を挙げたレイアウトだけ。他では黙って捨てられる。
     example: "<!--icon:mi:search-->"
+  - name: kpi
+    syntax: "<!--kpi-->"
+    pattern: '^<!--kpi-->$'
+    applies-to: [section]
+    cardinality: one
+    description: Dashboard のセルを KPI タイルにする。本文1行目が値、2行目（任意）が前期比。
+    guidance: |
+      効くのは Dashboard レイアウトの中だけ。他のレイアウトに書くと黙って捨てられる
+      （lint が `annotation-scope` で報告する）。`<!--chart:-->` とは同居できない。
+    example: "<!--kpi-->"
+  - name: chart
+    syntax: "<!--chart:bar-->" # または <!--chart:line-->, <!--chart:donut-->
+    pattern: '^<!--chart:(bar|line|donut)-->$'
+    applies-to: [section]
+    cardinality: one
+    description: Dashboard のセルをグラフにする。直後のパイプ区切りの表がデータになる。
+    guidance: |
+      効くのは Dashboard レイアウトの中だけ。種類は bar / line / donut。
+      系列は1つだけ（表は「ラベル | 値」の2列。3列以上は変換が止まる）。
+      `<!--kpi-->` とは同居できない。
+    example: "<!--chart:line-->"
   - name: takeaway
     syntax: "<!--takeaway-->"
     pattern: '^<!--takeaway-->$'
@@ -669,6 +690,56 @@ layouts:
       | --- | --- | --- |
       | ユーザー数 | 5名 | 50名 |
       | サポート | メール | 優先対応 |
+
+  - name: Dashboard
+    label: Dashboard
+    plugin: dashboard
+    directives:
+      - syntax: "<!--dashboard:1,3,1-->"
+        pattern: '^<!--dashboard:(\d+(?:,\d+)*)-->$'
+    description: 行ごとに列数を指定するグリッドに、KPI タイルとグラフを並べるダッシュボード
+    guidance: |
+      引数は行ごとの列数（`1,3,1` = 1列・3列・1列の3行）。`###` セルは書いた順に
+      左上から行優先で埋まり、**件数は列数の合計と一致させる**（違うと変換が止まる）。
+      セルの種類は注釈で決まる: `<!--kpi-->` は KPI タイル、`<!--chart:bar|line|donut-->` は
+      グラフ、注釈なしは見出し+本文のテキストセル。
+
+      KPI タイルは本文1行目が値。**数字は大きく、通貨記号や単位は小さく**描かれる
+      （`¥1.2億` は ¥ と億が数字の 55% の大きさになる）。2行目（任意）は前期比で、
+      先頭の記号で色が決まる（`+` `▲` `↑` は緑、`-` `▼` `↓` は赤）。続けて
+      `- <数値>` の箇条書きを置くと、スパークライン（小さな推移線）になる。
+
+      グラフのデータはパイプ区切りの表（1列目=ラベル、2列目=値）。ヘッダ行は
+      描画されず、系列は1つだけ（3列以上の表は変換が止まる）。グラフは SVG として
+      描かれるので、PPTX 上では画像になる（PowerPoint での編集は不可）。
+
+      文字数に数えるのは見出し・本文・KPI の値と前期比・グラフのラベルで、
+      表の数値とスパークラインの数値は数えない（データの密度はグラフの可読性が
+      上限であって、散文の上限ではない）。
+    annotations: [id, kpi, chart]
+    max-chars: 400
+    slots:
+      - name: cells
+        marker: "###"
+        cardinality: "1..n"
+        heading: free
+        body: free
+        description: セル。件数は列数の合計に一致させる（合わないと変換が止まる）。
+    example: |
+      ## 経営ダッシュボード
+      <!--dashboard:1,2-->
+      ### 今月のハイライト
+      売上・新規顧客ともに目標を達成した。
+      ### 売上高
+      <!--kpi-->
+      ¥1.2億
+      +12% 前年同期比
+      ### 地域別売上
+      <!--chart:bar-->
+      | 地域 | 売上 |
+      | --- | --- |
+      | 東日本 | 120 |
+      | 西日本 | 90 |
 
   - name: CodeDisplay
     label: CodeDisplay

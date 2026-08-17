@@ -71,7 +71,8 @@ function textBoxToParagraph(
     text,
     ...(isCentered(box, isTitleSlide) ? { alignment: "CENTER" as const } : {}),
     font_name: runFontFace(box, firstRun, fontName),
-    font_size: box.fontSize ?? 16,
+    // フォントサイズも先頭 run 規則（InlineTextRun.fontSize の説明を見よ）
+    font_size: firstRun?.fontSize ?? box.fontSize ?? 16,
     ...(bold ? { bold: true } : {}),
     color: box.color ?? "000000",
   }

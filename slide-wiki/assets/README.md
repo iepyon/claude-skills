@@ -187,7 +187,7 @@ src/
     html/             LayoutResult → inline-styled HTML (slide-css.ts is shared with wiki/)
     wiki/             Many Presentations → one linked site (reuses html/renderSlide)
     syntax-highlighter.ts, icon-resolver.ts
-  plugins/            Self-registering layout plugins (11 registrations)
+  plugins/            Self-registering layout plugins (12 registrations)
   tools/              inventory, html-inspector, pptx-inspector, inventory-diff,
                       gen-ontology-doc (ontology.yaml → ontology.md + SKILL.md regions)
 ```
