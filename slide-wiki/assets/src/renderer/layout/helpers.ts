@@ -191,8 +191,11 @@ const FULL_WIDTH = /[ᄀ-ᅟ⺀-〾ぁ-㏿㐀-䶿一-鿿ꀀ-꓏가-힣豈-﫿︰
 /**
  * 1行の視覚的な幅を「全角文字何個ぶんか」で返す。
  * 半角は 0.5、全角は 1。
+ *
+ * export しているのは dashboard の前期比ピルが幅を文字数から決めるため
+ * （折返しの見積もりと同じ数え方でないと、ピルだけ幅の感覚がずれる）。
  */
-function visualWidthInEm(line: string): number {
+export function visualWidthInEm(line: string): number {
   let width = 0
   for (const char of line) {
     width += FULL_WIDTH.test(char) ? 1 : 0.5

@@ -30,6 +30,16 @@ export interface InlineTextRun {
   italic?: boolean
   code?: boolean
   link?: InlineLink
+  /**
+   * run 単位のフォントサイズ（pt）。省略時はボックスの fontSize。
+   * KPI の「数字は大きく単位は小さく」が使う。
+   *
+   * 3者比較の段落の font_size は**先頭 run** から採る（PPTX インスペクタが段落の
+   * 最初の `<a:rPr sz>` しか読めないため）。inventory.ts / element-renderers.ts の
+   * paraDataAttrs / pptx の run 変換の3箇所が同じ規則を見る — 共有した規則は
+   * 比較では守れないので、dashboard.test.ts が明示的に留めている。
+   */
+  fontSize?: number
 }
 
 // 段落。bullet があれば箇条書き項目として描画される。

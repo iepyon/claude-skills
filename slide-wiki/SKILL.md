@@ -1,6 +1,6 @@
 ---
 name: slide-wiki
-description: Builds a link-navigable slide wiki from Markdown decks, and renders the same decks to PowerPoint and HTML. Converts structured Markdown through a pipeline of parse → validate → layout → render, with layout plugins and wiki-style links that carry hover previews and backlinks across deck boundaries. Supports 16 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, and wiki patterns with a required SVG diagram. Use when building a linked slide wiki from several decks, creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
+description: Builds a link-navigable slide wiki from Markdown decks, and renders the same decks to PowerPoint and HTML. Converts structured Markdown through a pipeline of parse → validate → layout → render, with layout plugins and wiki-style links that carry hover previews and backlinks across deck boundaries. Supports 17 layout types including grid, icon columns, steps, tables, quotes, agenda, lean canvas, customer journey, dashboards with KPI tiles and charts, and wiki patterns with a required SVG diagram. Use when building a linked slide wiki from several decks, creating presentations, generating PPTX files, generating HTML slides, formatting markdown as slides, converting markdown to slides, or when the user wants to format content for presentation output.
 ---
 
 # slide-wiki
@@ -21,7 +21,7 @@ npx tsx src/cli.ts --lint input.md                   # 構造の検査だけ
 
 ## md の構造の正本
 
-このスキルが読む Markdown の構造 — 骨格要素・注釈・16レイアウトが `###` / `####` に何を期待するか・
+このスキルが読む Markdown の構造 — 骨格要素・注釈・17レイアウトが `###` / `####` に何を期待するか・
 見出しの語彙・文字数 — は [ontology.yaml](ontology.yaml) が唯一の正本。
 **書き方の全文リファレンスは [ontology.md](ontology.md)**（生成物）にあり、以下はその要約。
 `--lint` はその宣言に照らして md を検査する。
@@ -63,6 +63,7 @@ npx tsx src/cli.ts --lint input.md                   # 構造の検査だけ
 <!-- BEGIN GENERATED: limits -->
 - 1スライド **1000文字**を超えると ValidationError。本文と見出し（Markdown 構文を除く）。リンクは表示ラベルだけを数え、URL は数えない。
 - 読みやすさの目安は **240文字程度**（ツールでは強制しない）
+- Dashboard だけは **400文字**まで（レイアウトごとの上書き）
 - `CodeDisplay` は文字数を数えない（タイトルのみ）
 <!-- END GENERATED: limits -->
 
@@ -132,6 +133,7 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 | Agenda | `<!--agenda-->` | TOC/アジェンダ |
 | Quote | `<!--quote-->` | 引用・名言スライド |
 | Table | `<!--table-->` | テーブル表示（ディレクティブの後にパイプ区切りの表を置く） |
+| Dashboard | `<!--dashboard:1,3,1-->` | 行ごとに列数を指定するグリッドに、KPI タイルとグラフを並べるダッシュボード |
 | CodeDisplay | `` ```<language> `` | シンタックスハイライト付きコード |
 | TextOnly | `<!--text-only-->` | 自由形式テキスト |
 | Default | (なし) | セクションを縦に並べる |
@@ -152,6 +154,8 @@ PPTX はネイティブのバレット/自動番号、HTML は CSS 疑似要素�
 |---|---|---|---|
 | `id` | `<!--id:<slug>-->` | すべて | スライドの ID。`デッキ名.md#…` の解決先であり HTML の `#hash` でもある。 |
 | `icon` | `<!--icon:mi:<name>-->` | Steps・IconColumns・IconCards | セクションのアイコン。`mi:` 接頭辞で Material Icons、それ以外は絵文字。 |
+| `kpi` | `<!--kpi-->` | Dashboard | Dashboard のセルを KPI タイルにする。本文1行目が値、2行目（任意）が前期比。 |
+| `chart` | `<!--chart:bar-->` | Dashboard | Dashboard のセルをグラフにする。直後のパイプ区切りの表がデータになる。 |
 | `takeaway` | `<!--takeaway-->` | Steps・NumberedList・Table・TextOnly・Default・IconColumns・IconCards・Grid・LeftRight・TopBottom | スライド末尾のまとめ。マーカーの次の行以降が本文になる（典拠は source）。 |
 | `source` | `<!--source-->` | WikiPattern | そのスライドの主張の典拠。マーカーの次の行以降が本文になる。 |
 <!-- END GENERATED: annotations -->

@@ -164,7 +164,7 @@ md の記法そのものは [ontology.md](ontology.md) が正本。ここに書�
 `index.ts`（自己登録）/ `schema.ts` / `handler.ts` / `converter.ts` / `layout.ts` / `constants.ts`
 （`registry.ts` が派生ルックアップを、`plugins/index.ts` が side-effect import を持つ）。
 
-10ディレクトリ・**11プラグイン登録**（`icon-layout` だけが `icon-cols` と `icon-cards` の2つを
+11ディレクトリ・**12プラグイン登録**（`icon-layout` だけが `icon-cols` と `icon-cards` の2つを
 登録する）。パーサ側の受け取り方は2つあり、**排他ではなく併用可**:
 
 - `sectionRoute`: `###` セクションを `pluginData` の指定フィールドに集めるだけの標準ルート
@@ -208,6 +208,7 @@ steps / icon-layout / agenda / wiki-pattern は両方を持つ。wiki-pattern �
 | `ontology.test.ts` | 宣言の自己整合・宣言 ⇔ 実装・lint・生成物の鮮度 |
 | `wiki.test.ts` | デッキ合成・リンク解決・バックリンク・自己完結性・ビューア幾何 |
 | `wiki-pattern.test.ts` | WikiPattern の座標と2節の並べ替え、配布デッキの SVG 検査（実寸・禁止要素・定規で引いた線） |
+| `dashboard.test.ts` | Dashboard の記法・変換・座標、生成チャート SVG の禁止要素、run 単位 fontSize の3脚整合 |
 | `snapshot-comparison.test.ts` | コアレイアウト6種のインベントリ比較 |
 | `three-way-verify.test.ts` | 実在する全デッキの3者比較 + 食い違いの判定 |
 | `text-style.test.ts` | 3脚が共有する書式規則（共有したぶん比較では守れない） |

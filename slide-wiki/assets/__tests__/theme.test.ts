@@ -131,6 +131,26 @@ describe("Theme", () => {
           sourceSize: 5,
           sourceColor: "64748B",
         },
+        dashboard: {
+          headingSize: 13,
+          bodySize: 11,
+          labelSize: 10,
+          valueSize: 36,
+          kpiUnitScale: 0.5,
+          deltaSize: 10,
+          deltaUpColor: "10B981",
+          deltaDownColor: "EF4444",
+          deltaUpBackground: "ECFDF5",
+          deltaDownBackground: "FEF2F2",
+          basisColor: "9CA3AF",
+          headingBackground: "0F172A",
+          headingTextColor: "F8FAFC",
+          tileBackground: "F1F5F9",
+          chartPalette: ["1E40AF", "0891B2"],
+          chartLabelSize: 8,
+          chartGridColor: "F3F4F6",
+          sparklineColor: "2563EB",
+        },
       }
       const result = mergeTheme(custom)
       expect(result).toEqual(custom)

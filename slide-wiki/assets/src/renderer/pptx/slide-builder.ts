@@ -64,7 +64,7 @@ function inlineTextRunsToPptxRuns(
 ): Array<{ text: string; options: any }> {
   return runs.flatMap(run => {
     const options: any = {
-      fontSize: baseFontSize,
+      fontSize: run.fontSize ?? baseFontSize,
       color: baseColor,
       // 等幅に落とす規則は text-style.ts が持つ。baseFontFace は呼び出し側で
       // box.fontFace || theme.fonts.body に解決済みなので、fallback に渡せば足りる
