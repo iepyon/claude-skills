@@ -727,16 +727,21 @@ describe("WikiPattern — 出典", () => {
     await expect(Effect.runPromise(validateLayout(pres, DEFAULT_THEME))).rejects.toThrow()
   })
 
-  it("配布中の patterns-meta.md は13枚すべてに出典があり、どれも収まる", async () => {
+  // 出典付きで配布しているデッキと、その枚数。パターンを1枚足すたびにここを上げる
+  // （patterns-wiki は出典を持たない側の前例なので、ここには並べない）
+  it.each([
+    ["patterns-meta.md", 13],
+    ["patterns-slidewiki.md", 1],
+  ] as const)("配布中の %s は全%i枚に出典があり、どれも収まる", async (deckFile, count) => {
     const dir = join(__dirname, "..", "doc", "wiki")
-    const md = readFileSync(join(dir, "patterns-meta.md"), "utf-8")
+    const md = readFileSync(join(dir, deckFile), "utf-8")
     const pres = await Effect.runPromise(
       parseMarkdown(md, { baseDir: dir }).pipe(Effect.flatMap(validatePresentation))
     )
     const patterns = pres.slides.filter(
       (s) => (s as ContentSlide).layout?._tag === "WikiPattern"
     )
-    expect(patterns.length).toBe(13)
+    expect(patterns.length).toBe(count)
     for (const slide of patterns) {
       const layout = (slide as ContentSlide).layout as unknown as WikiPatternLayout
       expect(layout.source, `${(slide as ContentSlide).title} に出典が無い`).toBeTruthy()
