@@ -180,6 +180,46 @@ Adzic の "living documentation" の初出ページ。
 
 > 刻んだ文字列: `名前はこのサイトの散文が先に使っていた語。内容は新郷重夫のポカヨケ（『Zero Quality Control』1986）＝人の注意に頼らず、仕組みが誤りを源流で止める。文書側は Adzic『Specification by Example』（2011）＝検証され続ける仕様だけが古びない。`
 
+### 読みを広く、書きを狭く ○
+
+**名前は発明していない。** `ontology.yaml` のリンクの guidance が地の文で
+「読みを広く、書きを狭く。」と言い切っていた（`実行可能な規約` と同じく
+`ドメイン言語` — サイトが既に使っている語をそのまま名前に上げた）。
+
+**一次**: Jon Postel の堅牢性原則。RFC 761 (DoD standard TCP, 1980) §2.10
+"be conservative in what you do, be liberal in what you accept from others"。
+RFC 1122 (Requirements for Internet Hosts, 1989) §1.2.2 が送受信の語で言い直す:
+"Be liberal in what you accept, and conservative in what you send"。
+本文は未読（rfc-editor.org / ietf.org / ミラーまで egress 遮断）だが、
+逐語は**複数の独立した検索結果が一致して返した**ので、両方を刻んだ（○）。
+
+**線を引いておく。** Postel が言うのはプロトコル実装の受信と送信。
+このパターンの「書き」は送信ではなく**リポジトリに残す綴り**で、
+節度を書き手の注意ではなく lint に持たせる（そこは `実行可能な規約` の受け持ち）。
+この読み替えと「広い受理は他人の一枚を迎える入口になる」はこのデッキの適用。
+なお原則自体には**エコシステムを蝕むという批判**がある（IETF/IAB で議論が続き、
+draft "The Harmful Consequences of the Robustness Principle" 系の指摘。
+受理した誤り形が事実上の仕様になる、という筋）。このパターンは lint で
+書く形を1つに保つことでその批判に応えている — 広く受けた綴りを
+**放置しない**ことが対の半分。
+
+**適用例は3件。** すべて同じリポジトリだが、場面（リンク・見出し・バンドル）は
+別々。外部適用は Postel 原則そのものの適用史（HTML パーサ等）が無数にあるので、
+リポジトリ内3件は「このデッキでの再現」として数えた。
+
+| # | 場面 | 内容 |
+|---|---|---|
+| 1 | 内部リンクの綴り | 読む側は `./x.md` も `/x.md` も解決するが、書く形は `x.md#id` だけ。パーサに蹴らせると「見た目はリンクのまま黙って壊れる」（ontology.yaml のリンク guidance） |
+| 2 | パターンの見出し | `状況` / `どうする` の別名を受理して読み、lint は `いつ・なにが困るか` / `そこで` に絞る（wiki-pattern.test.ts） |
+| 3 | OKF の未知の型 | 他人のバンドルの未知の frontmatter 型は「ふつうの概念」として受け入れて描く。自分が書くときの型は lint が見る |
+
+**次に確認する点**: RFC 761 §2.10 / RFC 1122 §1.2.2 の前後の文
+（1122 は「悪意ある相手を想定せよ」まで言う、とされる）。
+堅牢性原則への批判は RFC 9413 (Maintaining Robustness) に整理されているはず —
+番号の確認込みで未読。
+
+> 刻んだ文字列: `名前は ontology.yaml の地の文。内容は Postel の堅牢性原則（RFC 761, 1980 / RFC 1122, 1989）＝ "be liberal in what you accept, and conservative in what you send"。送る側の節度を lint に持たせるのはこのデッキの適用。`
+
 ---
 
 ## 保留（売り場）

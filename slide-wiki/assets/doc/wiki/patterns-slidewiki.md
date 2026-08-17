@@ -24,6 +24,7 @@ sources:
 ### 繋ぐ: [赤リンク](patterns-slidewiki.md#赤リンク)
 ### 組む: [上下巻](patterns-slidewiki.md#上下巻)
 ### 守る: [実行可能な規約](patterns-slidewiki.md#実行可能な規約)
+### 迎える: [読みを広く、書きを狭く](patterns-slidewiki.md#読みを広く書きを狭く)
 ### 隣: [Wiki が育つパターン](patterns-wiki.md#読み方)
 ### 書き方: [パターンを書くパターン](patterns-meta.md#読み方)
 
@@ -118,3 +119,26 @@ sources:
 
 <!--source-->
 名前はこのサイトの散文が先に使っていた語。内容は新郷重夫のポカヨケ（『Zero Quality Control』1986）＝人の注意に頼らず、仕組みが誤りを源流で止める。文書側は Adzic『Specification by Example』（2011）＝検証され続ける仕様だけが古びない。
+
+---
+
+## 読みを広く、書きを狭く
+<!--id:読みを広く書きを狭く-->
+<!--pattern-->
+### いつ・なにが困るか
+他人のデッキも受け取るので、記法は広く許したい。
+一方で、手元の書き方は1つに揃えたい。
+
+**パーサに蹴らせた綴りは、黙って壊れて残る。**
+蹴られたリンクは見た目のまま、渡った先で折れる。
+かといって全部を許すと、綴りがいくつも育つ。
+
+### そこで
+**読む側は広く解決し、書く形は lint が1つに絞る。**
+絞った形は [実行可能な規約](patterns-slidewiki.md#実行可能な規約) として持つ。
+広い受理は、他人の一枚を迎える入口になる。
+
+![読みを広く、書きを狭く](diagrams/patterns-slidewiki/読みを広く書きを狭く.svg)
+
+<!--source-->
+名前は ontology.yaml の地の文。内容は Postel の堅牢性原則（RFC 761, 1980 / RFC 1122, 1989）＝ "be liberal in what you accept, and conservative in what you send"。送る側の節度を lint に持たせるのはこのデッキの適用。
