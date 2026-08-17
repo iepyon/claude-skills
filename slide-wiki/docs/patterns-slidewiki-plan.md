@@ -1,81 +1,116 @@
-# patterns-slidewiki の実装計画（引き継ぎ用）
+# patterns-slidewiki 計画と進捗（セッション引き継ぎ用）
 
-作成: 2026-08-17。起点はセッション「slide-wiki スキルのパターン整理」の計画 —
-ブランチ `claude/slide-wiki-skill-pattern-c0z5ms` のコミット `2323c72`
-（デッキの起こしと1枚目）、および同ブランチの
-[patterns-slidewiki-sources.md](patterns-slidewiki-sources.md)（領土の線引きと出典の作法）。
-**この文書は計画であって進捗表ではない** — 現在地はブランチの git log が正本で、
-ここには手順と判断だけを書く。
+## 背景 — なぜこのデッキを作るのか
 
-## 元の計画が決めたこと（変えない）
+slide-wiki のサンプル Wiki には、パターン集のデッキが2つあった。
+[patterns-wiki](../assets/doc/wiki/patterns-wiki.md) は **Wiki 一般を育てる話**
+（ノートの置き方・割り方・繋ぎ方。媒体を選ばない）、
+[patterns-meta](../assets/doc/wiki/patterns-meta.md) は
+**パターンという文章の書き方**（名前の付け方・出典の辿り方）である。
 
-- **新デッキ** `assets/doc/wiki/patterns-slidewiki.md`「スライドが育つパターン」
-  （short: `slide`、グループ「スライドを育てる」）。第1部（intro-slidewiki）は
-  書けたら前に足す — `order.yaml` のコメントに既記
-- **領土**: スライドを wiki のように育てる**書き手の判断**。
-  [patterns-wiki](../assets/doc/wiki/patterns-wiki.md)（媒体を選ばない Wiki 一般）とも
-  [patterns-meta](../assets/doc/wiki/patterns-meta.md)（パターンという文章形式の書き方）とも
-  重ねない。道具の実装規約（CLAUDE.md）はこのデッキに書かない
-- **1枚の形**: `<!--pattern-->` の2部構成（いつ・なにが困るか 2行 + 太字1行 + 2行 /
-  そこで 太字1行 + 2行）+ ラフ SVG + `<!--source-->` を 6pt・3行枠（0.3in）に刻む。
-  全体で5枚。門は `3ストライクで書く` — 適用例3件が立たない名前は
-  「保留（売り場）」に置いたまま書かない（奥付・渡し舟・正本と写し）
-- **出典の作法**: 検証度（◎/○/△）を行ごとに明示。egress が遮断されている間、
-  逐語は「複数の独立した検索結果が一致して返した文字列」まで。
-  もっともらしい系譜を作らない
+ところが、この道具のいちばん中心にある実践 —
+**スライドそのものをどう作り、発表のあとも育てるか** — には、まとまった置き場が無かった。
+枠に収める・リンクを先に張る・規約は検査で守る、といった判断のコツは
+CLAUDE.md や BACKLOG の散文に散らばっていて、困った人が場面から引ける形になっていなかった。
 
-## フェーズ1 — 残りのパターンを1枚ずつ刻む
+## 目的 — なにができれば終わりか
 
-1枚 = 1コミットで進める（1枚目「原稿用紙」`2323c72` が手本。未 push の下書きを
-コンテナに溜めない — リモートセッションのコンテナは回収されるため）。
-1枚ごとの手順:
+1. スライド作りの判断に**名前を付け、出典付きのパターン5枚**として
+   新デッキ `assets/doc/wiki/patterns-slidewiki.md`（スライドが育つパターン）に立てる
+2. 「発表して終わり」ではなく **wiki のように育てて読み直せるスライド**の作り方を、
+   困った場面から索引で引けるようにする（`map.md` に導線を張る）
+3. 全枚に典拠を刻み、**どこまでが先人の知見で、どこからがこのデッキの追加か**を
+   調査記録（[patterns-slidewiki-sources.md](patterns-slidewiki-sources.md)）で言えるようにする
 
-1. **検算**: 適用例3件が立つか（同一リポジトリ・同一書き手の例が過半なら、
-   その弱さを sources に明示する — 原稿用紙の前例）
-2. **本文**: `patterns-slidewiki.md` に追記。関連は文中に溶かす —
-   既存デッキへのリンクを最低1本（`不揃いの石畳` の3方向を意識する）。
-   枠に収まらなければ削る（このデッキの1枚目が言っていることを、デッキ自身が守る）
-3. **出典**: `<!--source-->` を3行枠に収まる長さで刻み、
-   [patterns-slidewiki-sources.md](patterns-slidewiki-sources.md) に検証度・
-   「次に確認する点」・刻んだ文字列を追記
-4. **図解**: `diagrams/patterns-slidewiki/名前.svg`。`<rect>`/`<line>` 等の定規線は
-   禁止（`wiki-pattern.test.ts` が見張る）。`roughen-svg.ts` で揺らし、
-   `trim-svg.ts` で viewBox を中身に寄せる（どちらも冪等）
-5. **導線**: デッキ先頭の「読み方」agenda に1行。読み手が踏む場面なら
-   `map.md` の「詰まったら」にも1行（原稿用紙は「収まらない:」で追加済み）
-6. **検証**: `cd assets && npm test && npm run typecheck`、
-   `npx tsx src/cli.ts --lint --strict doc/wiki`、
-   `npx tsx src/tools/gen-okf-index.ts --check`（index.md の鮮度）
-7. **コミットして push**（PR は頼まれてから）
+依頼の原文は「wiki パターンではなく slidewiki パターンを整理し直す」。
+これを**新デッキの新設**として実装した。書式は patterns-meta と過去の git log の慣例に従う。
 
-## フェーズ2 — デッキとしての仕上げ
+## 現在の状態: 5枚とも実装済み・push 済み
 
-- **読み方の再構成**: 5枚が揃ったら agenda を動詞の節で並べ直す
-  （現状は「削る: 原稿用紙」1行 + 隣接デッキへの2行）
-- **関係の型付け**: `relations.yaml` の `decks:` に `patterns-slidewiki.md` を足し、
-  本文の散文リンクに型を与える（BACKLOG-LATER の B-49 の1歩目。
-  デッキをまたぐ辺は `cross-deck` 免除のまま — 言語内と言語間は別の語彙）。
-  `relation-coverage` の「孤立させない」warning をゼロにする
-- **孤立ゼロの確認**: 各パターンが `map.md` か他パターンの本文から指されていること
-  （BACKLOG の B-42「孤立したスライドを誰も数えない」を手で先取りする）
-- **main の取り込み**: ブランチの基底は #64 で、main には #65（ダッシュボード）が
-  入っている。仕上げ前に main をマージし、`three-way-verify.test.ts`（全デッキの
-  3者比較）を新デッキ込みで通す
+| コミット | パターン | 内容 |
+|---|---|---|
+| `2323c72` | デッキ新設 + **原稿用紙** | 枠（2+3+3行・全角26字）は動かさず、中身を削る。出典: PechaKucha 20x20（Klein & Dytham, 2003） |
+| `78783c4` | **赤リンク** | 無い行き先へ先にリンクを書く。未解決一覧が次の1枚の畑。出典: Spinellis & Louridas（CACM, 2008）＋ c2 wiki の「?」リンク |
+| `2058d7f` | **上下巻** | なぜの物語と引くカタログを対の2冊に割る。出典: Alexander の2冊（1977/1979） |
+| `32a7558` | **実行可能な規約** | 決まりは文章ではなく検査で持つ。散文に2度先に現れていた名前の着地。出典: 新郷重夫のポカヨケ（1986）＋ Adzic（2011） |
+| `a11eb26` | **読みを広く、書きを狭く** | 読む側は広く解決し、書く形は lint が1つに絞る。名前は ontology.yaml:1216 の地の文。出典: Postel の堅牢性原則（RFC 761/1122） |
 
-## フェーズ3 — 畳んだあとに残るもの（このブランチではやらない）
+並びは書き手の動線: **削る → 繋ぐ → 組む → 守る → 迎える**。
 
-- **一次資料の◎化**: egress が開いたら sources の「次に確認する点」を
-  一次資料で当たる（現状 ◎ はゼロ、全て ○/△）
-- **intro-slidewiki（第1部）**: 背景とショートストーリー。他の2組
-  （intro-wiki / intro-meta）と同じ対の形で、書けたら同グループの前に足す
-- **B-48**（型の付いた関係がサイトに出ていない）/ **B-49 の残り**
-  （patterns-wiki の型付けと、またぐ辺の語彙）
-- **保留の売り場**: 奥付・渡し舟・正本と写し。適用例3件が立つか
-  置き場が定まるまで書かない
+検算はコミットごとに実施済み: 879テスト・型検査・3者比較・trim --check・
+gen-okf-index --check 通過。lint --strict の警告は main と同一の既知3件
+（B-49 の relation-coverage）のみ。
 
-## 進め方の注意
+## 既存パターンとの整理（3デッキの領土）
 
-計画の元になったセッションは同じブランチで作業を継続している
-（1枚ずつコミット・push する方針に切替済み）。**同じ枚に二重に着手しない** —
-このセッション側で引き継ぐのは、あちらが再び停滞して push が止まったときで、
-その場合も起点は必ず `origin/claude/slide-wiki-skill-pattern-c0z5ms` の最新にする。
+- **patterns-wiki（10枚・出典なし）**: Wiki 一般が育つ話。種ノート・育つ見出し・
+  一枚一義・接ぎ木・けもの道・剪定・収穫・動く北極星・動かない物差し・街灯の外へ
+- **patterns-meta（13枚・全枚出典）**: パターンという文章形式の書き方
+- **patterns-slidewiki（5枚・全枚出典）← 今回新設**: スライドを wiki のように
+  育てる実践。道具の実装規約（CLAUDE.md）ではなく、書き手が手を動かすときの判断だけ
+
+## 決めたパターンフォーマット（正本は ontology.yaml:396-481 の WikiPattern）
+
+1枚のテンプレート:
+
+```markdown
+## パターン名
+<!--id:パターン名-->
+<!--pattern-->
+### いつ・なにが困るか
+（場面 2行。1行は全角26字まで）
+
+**（困りごとの核 = 太字1文）**
+（理由 2行）
+
+### そこで
+**（打ち手 = 太字1文）** （同じ行に補足可）
+（補足 2行。関連パターンへのリンクはここに溶かす。末尾に「関連:」は積まない）
+
+![パターン名](diagrams/patterns-slidewiki/パターン名.svg)
+
+<!--source-->
+（典拠1行。6pt・3行枠 0.3in に収まる長さ。リンクにしない）
+```
+
+- 見出しは `いつ・なにが困るか` / `そこで` の2つだけ（語彙 `wiki-pattern-sections`、unknown: error）
+- 図は必須・外部 SVG。`<rect>`/`<line>` 等の素の図形で描き
+  `npx tsx src/tools/roughen-svg.ts <file>` → `npx tsx src/tools/trim-svg.ts <file>` を通す
+  （`<path>`/`<text>` のみになる。`<defs>`/`id=` 禁止、viewBox 実寸）
+- 命名は比喩・オノマトペ・ドメイン言語（サイトが既に使っている語はそのまま採る）
+- デッキ frontmatter: `short: slide`、`sources:` で調査記録を指す
+
+## 1枚足すときの定型（git log の慣例）
+
+1コミット = 5ファイル:
+
+1. `assets/doc/wiki/patterns-slidewiki.md` — 本文 +24行前後、`読み方` agenda に1行
+2. `assets/doc/wiki/diagrams/patterns-slidewiki/<名前>.svg` — 新規
+3. `assets/doc/wiki/map.md` — 索引 +1行（ただし「全部は並べない」— 詰まる場面のときだけ）
+4. `docs/patterns-slidewiki-sources.md` — 調査記録 +80行前後
+   （検証度◎○△・一次/併記・**線を引いておく**（食い違いの明示）・適用例3件・
+   「次に確認する点」・`> 刻んだ文字列:`）
+5. `assets/__tests__/wiki-pattern.test.ts` — it.each の枚数を ±1
+
+コミットメッセージは7項目型: なぜ足すか / 本文 / 図 / 出典 / 目次 / 調査記録 / 検算結果。
+
+## 残作業
+
+- **intro-slidewiki（第1部）**: 上の「背景・目的」を読み手向けに書いた背景と物語のデッキ。
+  intro-meta が後から足された前例（#59, `a38abc2`）に従い、order.yaml の
+  「スライドを育てる」グループの先頭に挿す。
+  足したら patterns-slidewiki の `読み方` に `背景:` を1行足す
+- **保留3枚**（`docs/patterns-slidewiki-sources.md` の売り場に名前だけ置いてある）:
+  奥付（典拠は関連ではない）/ 渡し舟（移行路の同梱）/ 正本と写し（写しは機械が書く）。
+  いずれも適用例3件か置き場が定まったら
+- **relations.yaml への参加**: 今回は見送り（B-49 が patterns-wiki の手前で
+  止まっているため）。patterns-wiki の型付けが済んだら追随
+- **出典の格上げ**: この回は egress 遮断で ◎ ゼロ。各節の「次に確認する点」を
+  一次資料で当たる（RFC の逐語・Alexander 序文の "two halves"・新郷の英訳本文など）
+
+## 引き継ぎの記録
+
+起草したセッション「slide-wiki スキルのパターン整理」
+（ブランチ `claude/slide-wiki-skill-pattern-c0z5ms`）は5枚を push してアーカイブ済み。
+以降の作業はブランチ `claude/neighboring-session-plan-31gawz` が
+main と当該ブランチをマージした上で続けている。この文書が引き継ぎの正本。

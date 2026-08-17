@@ -30,6 +30,10 @@ groups:
       - intro-meta # 第1部: パターンを書きはじめる前に（入門）
       - patterns-meta # 第2部: パターンを書くパターン
 
+  - title: スライドを育てる
+    decks:
+      - patterns-slidewiki # 第2部にあたるカタログ。第1部（intro-slidewiki）は書けたら前に足す
+
   - title: 索引
     decks:
       - map # 送りはここで止まるので、最後の1枚から先頭へ戻す

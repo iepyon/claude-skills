@@ -24,6 +24,9 @@ tags: [索引, 目次, ナビゲーション]
 ### 名前が出ない: [メタファ](patterns-meta.md#メタファ)
 ### 手順書に見える: [ザワつく状況](patterns-meta.md#ザワつく状況)
 ### 通じたか不明: [声に出して読む](patterns-meta.md#声に出して読む)
+### 収まらない: [原稿用紙](patterns-slidewiki.md#原稿用紙)
+### 次に迷う: [赤リンク](patterns-slidewiki.md#赤リンク)
+### 破られる: [実行可能な規約](patterns-slidewiki.md#実行可能な規約)
 
 ---
 
@@ -37,4 +40,5 @@ tags: [索引, 目次, ナビゲーション]
 ### 語彙: [Wiki が育つパターン](patterns-wiki.md#読み方)
 ### 入門: [パターンを書きはじめる前に](intro-meta.md#パターンとは)
 ### 書く: [パターンを書くパターン](patterns-meta.md#読み方)
+### 実践: [スライドが育つパターン](patterns-slidewiki.md#読み方)
 ### 場面: [詰まったら引く](map.md#詰まったら)
