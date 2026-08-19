@@ -30,6 +30,12 @@ groups:
       - intro-meta # 第1部: パターンを書きはじめる前に（入門）
       - patterns-meta # 第2部: パターンを書くパターン
 
+  # 種段階のデッキ。育ったら intro-self / patterns-self の対に割る（そのとき
+  # 「人が育てる Wiki」の対を畳む — 意図の正本は seeds-self.md の導入スライド）。
+  - title: slide-wiki を育てる
+    decks:
+      - seeds-self # この道具自身を育てるパターンの種
+
   - title: 索引
     decks:
       - map # 送りはここで止まるので、最後の1枚から先頭へ戻す
