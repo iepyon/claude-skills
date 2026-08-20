@@ -54,13 +54,16 @@ jobs:
       - name: Run tests
         run: npm test
 
-      # 【いったんの絞り込み】公開するのは「パターンを書く」の2本（meta）だけ。
+      # 【いったんの絞り込み】公開するのは「パターンを書く」の2本（meta）と索引（map）だけ。
+      # map を残すのは、送りが最後の1枚で止まったあと索引から先頭へ戻る読み方
+      # （order.yaml の「索引」グループの意図）を、絞った公開でも保つため。
+      # 非公開デッキへのリンクは赤い未解決リンクとして表示される（クリックは無効）。
       # 他のデッキが公開に耐える状態になったら、build を `doc/wiki` に戻し、
       # 未解決リンクの検査から下の許容フィルタを外す（Spec.md の見本ページも戻す）。
-      - name: Build the slide wiki (meta decks only)
+      - name: Build the slide wiki (meta decks + map only)
         run: >
           npx tsx src/cli.ts --wiki --site-title "Slide Wiki"
-          doc/wiki/intro-meta.md doc/wiki/patterns-meta.md
+          doc/wiki/intro-meta.md doc/wiki/patterns-meta.md doc/wiki/map.md
           _site/index.html
 
       - name: Fail if the wiki has unresolved links beyond the withheld decks
@@ -70,7 +73,7 @@ jobs:
           # 書き違いなど）は今まで通り止める。
           sed -n '/<details class="broken-report">/,/<\/details>/p' _site/index.html \
             | grep -oE '<li>[^<]*</li>' \
-            | grep -vE '→ (guide|intro-wiki|patterns-wiki|seeds-self|map)\.md' \
+            | grep -vE '→ (guide|intro-wiki|patterns-wiki|seeds-self)\.md' \
             > unexpected-broken.txt || true
           if [ -s unexpected-broken.txt ]; then
             echo "::error::The wiki contains unresolved links that do not point at withheld decks."
