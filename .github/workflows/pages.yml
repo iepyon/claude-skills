@@ -54,19 +54,27 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build the slide wiki
-        run: npx tsx src/cli.ts --wiki --site-title "Slide Wiki" doc/wiki _site/index.html
+      # 【いったんの絞り込み】公開するのは「パターンを書く」の2本（meta）だけ。
+      # 他のデッキが公開に耐える状態になったら、build を `doc/wiki` に戻し、
+      # 未解決リンクの検査から下の許容フィルタを外す（Spec.md の見本ページも戻す）。
+      - name: Build the slide wiki (meta decks only)
+        run: >
+          npx tsx src/cli.ts --wiki --site-title "Slide Wiki"
+          doc/wiki/intro-meta.md doc/wiki/patterns-meta.md
+          _site/index.html
 
-      # doc/Spec.md は全レイアウトの見本。Wiki と同じサイトに置いて
-      # 「従来のページめくり」も比較できるようにする。
-      - name: Build the layout reference deck
-        run: npx tsx src/cli.ts doc/Spec.md _site/spec.html --html
-
-      - name: Fail if the wiki has unresolved links
+      - name: Fail if the wiki has unresolved links beyond the withheld decks
         run: |
-          if grep -q "未解決リンク" _site/index.html; then
-            echo "::error::The wiki contains unresolved [[links]]. See the sidebar report."
-            grep -o "未解決リンク [0-9]* 件" _site/index.html
+          # meta だけの公開なので、非公開デッキへのリンクは未解決になるのが正しい。
+          # 許すのはその向きだけで、公開デッキ内で折れたリンク（フラグメントの
+          # 書き違いなど）は今まで通り止める。
+          sed -n '/<details class="broken-report">/,/<\/details>/p' _site/index.html \
+            | grep -oE '<li>[^<]*</li>' \
+            | grep -vE '→ (guide|intro-wiki|patterns-wiki|seeds-self|map)\.md' \
+            > unexpected-broken.txt || true
+          if [ -s unexpected-broken.txt ]; then
+            echo "::error::The wiki contains unresolved links that do not point at withheld decks."
+            cat unexpected-broken.txt
             exit 1
           fi
 
