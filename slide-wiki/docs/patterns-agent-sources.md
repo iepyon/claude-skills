@@ -31,16 +31,26 @@
 
 **通る経路が1本だけある。** `github.com` と `raw.githubusercontent.com` は許可されている
 （実測: `web.archive.org`・`arxiv.org`・`biorxiv.org`・`pubmed`・`nature.com` はいずれも接続不可）。
-著者自身がリポジトリを公開している研究なら、**著者の書いた文言をそのまま取れる**。
-Virtual Lab はこれで1段上げた（下記）。使えるのは公開リポジトリのある対象だけなので、
-ブログ記事（OpenAI / Anthropic）には効かない。
+`git clone` も通るので、**成果物そのものを取って自分で数えられる**。
+
+この経路で4件を ◎ に上げ、**数字の誤りを2件見つけた**（下記）。
+記事本文は依然として読めないので、ブログの主張そのもの（"harness とは…"の定義など）は ○ のまま。
+**取れるのは成果物と、著者がリポジトリに書いた断り書きである。**
+
+| 対象 | 経路 | 効いた先 |
+|---|---|---|
+| `zou-group/virtual-lab` | README | 投網を打つ・座長を立てる |
+| `anthropics/claudes-c-compiler` | README + shallow clone | 検品台が先・投網を打つ |
+| `Future-House/robin` | README | 判子は人が押す・投網を打つ |
+| `openai/codex` | AGENTS.md | 厨房ごと渡す |
 
 数字の一覧（照合の当たり先）:
 
 | 数字 | 出どころ | 検証 |
 |---|---|---|
 | 約100万行・5か月・人の手書きゼロ | OpenAI "Harness engineering" (2026) | ○ |
-| 16体・約2,000セッション・約2万ドル・10万行 | Anthropic "Building a C compiler…" (2026) | ○ |
+| 16体・約2,000セッション・約2万ドル | Anthropic "Building a C compiler…" (2026) | ○ |
+| 公開コンパイラ 186,696行（Rust） | `anthropics/claudes-c-compiler` を clone して数えた | ◎ |
 | 92個のナノボディを設計し実験で検証 | Swanson ら Virtual Lab（Nature 2025） | ◎ |
 | 60超の科学データベース | Claude Science (2026) | ○ |
 | 1,500本の論文・42,000行の解析コード | Kosmos（Edison Scientific / FutureHouse, 2026） | △ |
@@ -72,6 +82,19 @@ harness＝エージェントを取り囲む足場・制約・フィードバッ�
 **併記**: Anthropic "Building a C compiler with a team of parallel Claudes" (2026)＝
 労力の大半は Claude の周りの環境（テスト・環境・フィードバック）の設計に費やされた。
 
+**"golden principles" の実物が見られる（◎）。** `github.com/openai/codex` の `AGENTS.md` が、
+まさに「リポジトリに直接書き込まれた、意見の強い機械的な規則」である。抜粋:
+
+> - When using format! and you can inline variables into {}, always do that.
+> - Always collapse if statements per (clippy の該当ルール URL)
+> - Avoid bool or ambiguous `Option` parameters that force callers to write hard-to-read code
+>   such as `foo(false)` or `bar(None)`.
+> - If you change `ConfigToml` or nested config types, run `just write-config-schema` …
+
+**規則が、守らせたい相手の作業場に置いてある。**「頼むときに言う」のではなく
+「そこに書いてある」形。厨房ごと渡す が言っているのはこれで、
+ブログ本文は読めていないが、**仕組みのほうは実物で確かめられた**。
+
 **名前**: 借り物の比喩。文献に対応語は無く、このデッキの追加。
 
 ### 検品台が先 ○
@@ -81,9 +104,23 @@ harness＝エージェントを取り囲む足場・制約・フィードバッ�
 ビルド失敗・プレビュー異常・ルーブリック違反・見た目の食い違いを、
 エージェントがそのまま動ける機械可読なフィードバックとして返す。
 
-**併記**: 同 "Building a C compiler…"＝タスクの検証器はほぼ完璧である必要があり、
+**併記 ◎**: 同 "Building a C compiler…"＝タスクの検証器はほぼ完璧である必要があり、
 高品質なコンパイラのテスト群を集め、検証器とビルドスクリプトを書き、
-Claude の失敗を見張っては新しいテストを設計し続けた。
+Claude の失敗を見張っては新しいテストを設計し続けた（ここまでは ○）。
+
+**成果物の側から確認できた（◎）。** `github.com/anthropics/claudes-c-compiler` の README に、
+唯一この段落だけ人が書いたと断ったうえで、こうある。
+
+> 100% of the code and documentation in this repository was written by Claude Opus 4.6.
+> **A human guided some of this process by writing test cases that Claude was told to pass**,
+> but never interactively pair-programmed with Claude to debug or to provide feedback on code quality.
+
+**人の寄与がテストだけだった**と著者自身が書いている。検品台が先 の主張そのもので、
+このデッキで最も強い1件。デッキ本文もこの文言に寄せて書き直した。
+
+同じ段落は 現物合わせ にも効く。**"None of it has been validated for correctness."**
+**"The docs may be wrong and make claims that are false."** と続き、
+出来上がった物の見栄えと、確かめられているかが別であることを著者が明言している。
 
 **一人起業側**: 「問題 → 需要の確認 → 先に売る → MVP → 自動化」の順は
 2026年の solo founder 向け記事に繰り返し出る定型（△、個々の出どころは特定していない）。
@@ -92,8 +129,13 @@ Claude の失敗を見張っては新しいテストを設計し続けた。
 
 ### 投網を打つ ○
 
-**一次**: Anthropic "Building a C compiler…" (2026)＝16体の並列、約2,000セッション、
-約2万ドル、10万行、Linux 6.9 を x86 / ARM / RISC-V でビルドできる。
+**一次 ○ / 成果物 ◎**: Anthropic "Building a C compiler…" (2026)＝16体の並列、
+約2,000セッション、約2万ドル、Linux 6.9 を x86 / ARM / RISC-V でビルドできる。
+
+**行数を1件修正した。** 検索要約は「10万行」と言うが、公開リポジトリを
+`--depth 1` で clone して数えると **Rust 186,696行**だった（`target/` を除く全 `.rs`）。
+ブログ本文が別の数え方（コア部分のみ等）をしている可能性はあるが、**本文を開けていない以上、
+自分で数えた数字のほうを採る**。デッキは「18万行を超える」と書き直した。
 
 **一次 ◎**: Swanson, K., Wu, W., Bulaong, N.L. et al.
 "The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies"
@@ -199,9 +241,30 @@ harness は2本立てで、環境を整える initializer エージェントと�
 人は判断の要る決定をする」という言い方は、2026年のレビュー実務の議論に繰り返し現れる。
 **単一の一次文献に帰せない**ので、そう書いてある。
 
-**一次**: Robin（FutureHouse, 2025）＝加齢黄斑変性の治療仮説を2.5か月で自律的に立て、
-検証した。仮説・実験の選択・データ解析・図の生成はすべてエージェントが出し、
+**一次 ○ / 実装 ◎**: Robin（FutureHouse, 2025）＝加齢黄斑変性の治療仮説を2.5か月で
+自律的に立て、検証した。仮説・実験の選択・データ解析・図の生成はすべてエージェントが出し、
 **物理実験を実行したのは人の研究者**だった。
+
+**実装の側から確認できた（◎）。** `github.com/Future-House/robin` の README が、
+パイプラインの段を次のように区切っている。
+
+> - **Experimental Assay Generation:** Generates and ranks potential experimental assays.
+> - **Therapeutic Candidate Generation:** Based on the top assay, generates and ranks
+>   therapeutic candidates.
+> - **(Optional) Experimental Data Analysis:** **If you have experimental data**, this section
+>   can analyze it and feed insights back into candidate generation.
+
+**「実験データを持っていれば」という条件節が、人の持ち場をそのまま示している。**
+機械は仮説を出して順位を付けるところまでで、データを持ち込むのは人である。
+判子は人が押す の線引きが、コードの構造にそのまま現れている。
+
+**投網を打つ にも効く。** 同じ README は `num_queries` / `num_assays` / `num_candidates` を
+調整可能なパラメータとして挙げ、出力に `experimental_assay_ranking_results.csv`
+（総当たり比較の結果）と `ranked_therapeutic_candidates.csv` を並べる。
+**多く出して順位で絞る**という形が、そのまま実装されている。
+
+**座長を立てる にも効く。** 専門役が名前を持っている（文献の Crow / Falcon、
+データ解析の Finch）。
 
 **一次**: Virtual Lab（Zou ら）＝人が返すのは高次のフィードバックだけ。
 
@@ -222,6 +285,6 @@ egress が通る環境で、次の順に照合する。効き目の大きい順�
 1. OpenAI "Harness engineering"（厨房ごと渡す・毒味役を置く の2件が乗っている）
 2. Anthropic "Effective harnesses for long-running agents"（検品台が先・置き手紙 の2件）
 3. Anthropic "Building a C compiler…"（3件に散っている）
-4. Virtual Lab の論文本文（座長を立てる・毒味役を置く・判子は人が押す の3件）
+4. Virtual Lab の論文本文（毒味役を置く の批評役の記述。座長・92個は README で済んだ）
 5. △ の3件（Kosmos・一人起業の割合・Faros AI の441.5%）は、
    **母数と定義が読めなければ数字を落とす**。もっともらしい数字を残さない。

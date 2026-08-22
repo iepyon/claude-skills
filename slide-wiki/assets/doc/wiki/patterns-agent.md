@@ -139,7 +139,7 @@ Anthropic "Effective harnesses for long-running agents" (2026)＝検証は最後
 <!--id:検品台が先-例-->
 <!--grid:3x1-->
 ### C コンパイラ（Anthropic）
-検証器はほぼ完璧である必要があった。テスト群を集め、ビルド手順を書き、失敗の型を見つけては新しいテストを足し続けた。労力は落とす側に寄っている。
+人が手を入れたのはテストだけで、コードは1行も書いていない。検証器はほぼ完璧である必要があり、失敗の型を見つけては新しいテストを足し続けた。
 ### 捏造引用（研究）
 書式は正しく、実在の研究者に帰され、日付ももっともらしい。後から人が読んで見抜く検査は、この見栄えの前で止まる。
 ### 一人起業
@@ -167,7 +167,7 @@ Anthropic "Effective harnesses for long-running agents" (2026)＝検証は最後
 ![投網を打つ](diagrams/patterns-agent/投網を打つ.svg)
 
 <!--source-->
-Anthropic "Building a C compiler…" (2026)＝16体を並列に走らせ、約2,000セッション・約2万ドルで10万行のコンパイラを作った。／Swanson ら "The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies"（Nature, 2025, doi:10.1038/s41586-025-09442-9）＝ESM・AlphaFold-Multimer・Rosetta の計算パイプラインを組み、92個のナノボディを設計して実験で検証した。
+Anthropic "Building a C compiler…" (2026)＝16体を並列に走らせ、約2,000セッション・約2万ドルで作った。公開リポジトリ anthropics/claudes-c-compiler は Rust 18万行超。／Swanson ら "The Virtual Lab…"（Nature, 2025, doi:10.1038/s41586-025-09442-9）＝ESM・AlphaFold-Multimer・Rosetta のパイプラインを組み、92個のナノボディを設計して実験で検証した。
 
 ---
 
@@ -175,7 +175,7 @@ Anthropic "Building a C compiler…" (2026)＝16体を並列に走らせ、約2,
 <!--id:投網を打つ-例-->
 <!--grid:3x1-->
 ### C コンパイラ（Anthropic）
-16体を並列に走らせ、約2,000セッションで10万行を書いた。1体を賢くしたのではなく、数を投げてテストという篩に通した結果として通った。
+16体を並列に走らせ、約2,000セッションを回した。公開されたコンパイラは18万行を超える。1体を賢くしたのではなく、数を投げて篩に通した結果である。
 ### Virtual Lab（Stanford）
 92個のナノボディ候補を設計し、実験で有望だったのは数個。設計にかかったのは数日で、人なら数週間から数か月かかる。
 ### 一人起業
