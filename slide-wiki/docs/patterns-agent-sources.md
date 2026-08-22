@@ -29,13 +29,19 @@
 このデッキはそこに届いていない。**開けた日に照合できる形にしておくのがこの文書の役目**なので、
 数字は出どころを名指しで残し、丸めない。
 
+**通る経路が1本だけある。** `github.com` と `raw.githubusercontent.com` は許可されている
+（実測: `web.archive.org`・`arxiv.org`・`biorxiv.org`・`pubmed`・`nature.com` はいずれも接続不可）。
+著者自身がリポジトリを公開している研究なら、**著者の書いた文言をそのまま取れる**。
+Virtual Lab はこれで1段上げた（下記）。使えるのは公開リポジトリのある対象だけなので、
+ブログ記事（OpenAI / Anthropic）には効かない。
+
 数字の一覧（照合の当たり先）:
 
 | 数字 | 出どころ | 検証 |
 |---|---|---|
 | 約100万行・5か月・人の手書きゼロ | OpenAI "Harness engineering" (2026) | ○ |
 | 16体・約2,000セッション・約2万ドル・10万行 | Anthropic "Building a C compiler…" (2026) | ○ |
-| 92個のナノボディ候補 | Swanson ら Virtual Lab (bioRxiv 2024 / 2025) | ○ |
+| 92個のナノボディを設計し実験で検証 | Swanson ら Virtual Lab（Nature 2025） | ◎ |
 | 60超の科学データベース | Claude Science (2026) | ○ |
 | 1,500本の論文・42,000行の解析コード | Kosmos（Edison Scientific / FutureHouse, 2026） | △ |
 | 失敗の30〜40%が「静かな成功」 | 一人起業の実務報告（2026、個人ブログ） | △ |
@@ -89,9 +95,28 @@ Claude の失敗を見張っては新しいテストを設計し続けた。
 **一次**: Anthropic "Building a C compiler…" (2026)＝16体の並列、約2,000セッション、
 約2万ドル、10万行、Linux 6.9 を x86 / ARM / RISC-V でビルドできる。
 
-**一次**: Swanson, Zou ら "The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies"
-(bioRxiv 2024.11.11.623004 / 査読版 2025, PMID 40730228)＝92個のナノボディ候補を設計し、
-実験で有望だったのは一部。うち2個は新しい変異株と元のウイルスの両方に結合した。
+**一次 ◎**: Swanson, K., Wu, W., Bulaong, N.L. et al.
+"The Virtual Lab of AI agents designs new SARS-CoV-2 nanobodies"
+**Nature (2025), doi:10.1038/s41586-025-09442-9**。
+
+著者自身が公開している `github.com/zou-group/virtual-lab` の README から、
+著者の文言をそのまま取って確認した（`raw.githubusercontent.com` は通る）。
+
+> The Virtual Lab built a computational pipeline consisting of ESM, AlphaFold-Multimer,
+> and Rosetta and used it to design **92 nanobodies that were experimentally validated**.
+
+**ここで1件修正した。** 当初この文書とデッキは出典を
+「bioRxiv 2024 / 査読版 2025」と書いていたが、**掲載誌は Nature (2025)** である。
+巻号ではなく DOI で残す。また「実験で有望だったのは一部」という書き方も、
+著者は "92 nanobodies that were experimentally validated" と書いており、
+92個すべてが実験にかけられている。デッキ本文の「実験で有望だったのは数個」は
+二次記事（うち2個が新旧の変異株の両方に結合した、とする報道）に依っており、
+**一次と二次で粒度が違う**。デッキは「残ったのは数個」と書いてあるので誤りではないが、
+論文本文を開けたら「有望」の定義を確認して書き直すこと。
+
+**構造の語彙も README で確認した**: team meetings（全エージェントが議題を討議）と
+individual meetings（人と1体が個別の課題を解く）の2種類があり、
+座長を立てる が「議題を配る」と書いているのはこの前者に当たる。
 
 **「篩が固いときだけ数が効く」は、このデッキの追加。**
 どちらの文献も並列の効果は言うが、篩の固さを条件として立ててはいない。
@@ -190,6 +215,10 @@ harness は2本立てで、環境を整える initializer エージェントと�
 
 egress が通る環境で、次の順に照合する。効き目の大きい順。
 
+0. **まず環境の network policy を広げる。** 一次記事が開けないのは能力ではなく設定で、
+   環境を作るときに選んだ egress の許可範囲がすべてを決めている
+   （→ https://code.claude.com/docs/en/claude-code-on-the-web ）。
+   ここを直すのが、以下の1〜5をまとめて片付ける唯一の手である。
 1. OpenAI "Harness engineering"（厨房ごと渡す・毒味役を置く の2件が乗っている）
 2. Anthropic "Effective harnesses for long-running agents"（検品台が先・置き手紙 の2件）
 3. Anthropic "Building a C compiler…"（3件に散っている）
