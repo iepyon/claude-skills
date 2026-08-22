@@ -1,0 +1,25 @@
+<svg width="307" height="271" viewBox="16 6 307 271" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <text x="80" y="30" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9CA3AF">報告</text>
+  <path d="M26 43.2 Q81.5 43.5 137 44 Q137.4 103.8 137.8 163.6 Q82 162.4 26.1 162.5 Q24.3 103.4 23.9 44.2" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M26 43.2 Q81.5 41.6 137 44 Q137.8 103.8 137.8 163.6 Q82 161.4 26.1 162.5 Q23.1 101.7 24.1 40.8" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M37.3 66.2 Q78.8 65.3 120.1 67.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M37.3 66.2 Q78.7 65.6 120.1 67.7" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M38.9 84.7 Q81.5 85.9 124 84.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M38.9 84.7 Q81.5 86.3 124 84.5" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M37.4 104.7 Q80.2 104.7 123 104.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M37.4 104.7 Q80.2 102.9 123 104.4" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M39.8 127.3 Q70.1 127.1 100.5 126.3" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M39.8 127.3 Q70.2 128.1 100.5 126.3" fill="none" stroke="#9CA3AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="80" y="152" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">手順どおり済</text>
+  <text x="80" y="186" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9CA3AF">上出来に見える</text>
+
+  <path d="M145.6 97.7 Q164.7 96.7 183.8 97.2" fill="none" stroke="#1F2937" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M145.6 97.7 Q164.7 97.6 183.8 97.2" fill="none" stroke="#1F2937" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M194.3 98.2 Q187.9 94.6 181.9 90.4 Q184 95.3 185.5 100.5 Q189.9 99.3 194.3 98.2 Z" fill="#1F2937"/>
+  <path d="M194.5 112.6 Q174.9 111.5 155.3 111.1" fill="none" stroke="#1F2937" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M194.5 112.6 Q174.9 111.3 155.3 111.1" fill="none" stroke="#1F2937" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M144.4 110.4 Q149.8 109.6 155.2 109.3 Q156.8 111.9 158.1 114.7 Q151.3 112.6 144.4 110.4 Z" fill="#1F2937"/>
+  <text x="170" y="140" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#1F2937">翌日</text>
+
+  <text x="260" y="30" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1E40AF">現物</text>
+  <path d="M204.3 46.1 Q259.8 45.5 315.1 41.9 Q316.6 102.8 316.4 163.6 Q260.2 163.4 204.1 160.6 Q204.7 103.5 203.9 46.4" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M204.3 46.1 Q259.7 42.8 315.1 41.9 Q314.3 102.8 316.4 163.6 Q260.2 162.5 204.1 160.6 Q205.8 103.1 203.5 45.5" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M217.4 67.1 Q259.5 65.7 301.5 65.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><path d="M217.4 67.1 Q259.4 64.7 301.5 65.6" fill="none" stroke="#1E40AF" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="260" y="152" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">1行しかない</text>
+  <text x="260" y="186" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1E40AF">ここで差が出る</text>
+
+  <text x="170" y="238" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1F2937">いちばん危ないのは、静かな成功</text>
+  <text x="170" y="262" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#1F2937">失敗より見つけにくい</text>
+</svg>
